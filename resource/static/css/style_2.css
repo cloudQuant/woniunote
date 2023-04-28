@@ -1,0 +1,37 @@
+body {
+    font-family: "Microsoft YaHei", "Open Sans", "Helvetica", Arial, sans-serif;
+}
+ 
+footer a:hover {
+    border-bottom: 1rem solid black;
+}
+ 
+.edit-form {
+    display: none;
+}
+ 
+.collection-item {
+    border-bottom: 1rem solid #d5d5d5 !important;
+}
+ 
+.category-name {
+    font-size: 20rem;
+    font-weight: bold;
+}
+ 
+.delete-category {
+    display: none;
+}
+ 
+.move {
+    cursor: move;
+}
+ 
+@media (max-width: 600rem) {
+    .nav-button {
+        display: none;
+    }
+}
+ 
+ 
+ 

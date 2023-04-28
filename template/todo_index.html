@@ -1,0 +1,119 @@
+<DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="utf-8"/>
+    <title>yunjinqi's todo list</title>
+    <link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="/static/css/materialize.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="navbar">
+        <nav class="light-blue lighten-1" role="navigation">
+            <div class="nav-wrapper container"><a id="logo-container"  class="brand-logo">计划清单</a>
+                <ul class="right hide-on-med-and-down">
+                    
+                    <li><a class="waves-effect waves-light btn red signin">PCDA</a></li>
+                </ul>
+
+                <ul id="nav-mobile" class="side-nav">
+                    <li><a href="/todo/category/1">收件箱</a></li>
+                    <li><a href="/todo/category/2">已完成</a></li>
+                </ul>
+                <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+            </div>
+        </nav>
+    </div>
+
+    <span class="hide" id="category-count">{{ categories|length }}</span>
+    <span class="hide" id="items-count">{{ items|length }}</span>
+
+    <div class="container"><br>
+        <div class="row">
+            <form class="col s12 m10 l8 offset-m2 offset-l2" id="add-item-form" action="/todo" method="POST">
+                <div class="row">
+                    <div class="input-field col s4 m4">
+                        <select id="category-select" name="category">
+                            {% if category_now.id == 2 %}
+                            <option value="" selected disabled>选择分类</option>
+                            {% else %}
+                            <option value="{{ category_now.id }}" selected>{{ category_now.name }}</option>
+                            {% endif %}
+                            {% for category in categories %}
+                                {% if category != category_now and category.id != 2 %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endif %}
+                            {% endfor%}
+                        </select>
+                    </div>
+                    <div class="input-field col s8 m8">
+                        <input class="validate" id="item-input" type="text" name="item" placeholder="想要做些什么呢"
+                        onkeydown="if (event.keyCode == 13) document.getElementById('new-item').click()">
+                        <a class="waves-effect waves-light btn input-field right" id="new-item" href="#"><i class="material-icons right">add</i>OK</a>
+                    </div><br>
+                </div>
+            </form>
+        </div>
+
+        <div class="row">
+            <div class="col s12 m4 l4">
+                <div class="right-align nav-button">
+                    <a class="waves-effect waves-light btn blue center-align" href="/todo/category/1"><i class="material-icons left">email</i>收件箱 {{ categories[0].items|length }}</a>
+                    <br><br>
+                    <a class="waves-effect waves-light btn green center-align" href="/todo/category/2"><i class="material-icons left">done</i>已完成 {{ categories[1].items|length }}</a>
+                    <br><br>
+                </div>
+                <div class="row">
+                        <div class="collection col s12 m12 l8 right">
+                            {% for category in categories[2:] %}
+                            <span class="categories">
+                            <a href="/todo/delete_category/{{category.id}}" class="right delete-category red-text" title="delete it?">x</a>
+                            <a href="/todo/category/{{category.id}}" class="collection-item {% if category == category_now %}active{% endif %}"><span class="badge {% if category == category_now %}white-text{% endif %}">{{ category.items|length }}</span>{{ category.name }}</a>
+                            </span>
+                            {% endfor %}
+                        </div>
+                </div>
+                <div class="row">
+                <div class="col s6 m8 l6 right" >
+                    <form id="add-category-form" action="/todo/new_category" method="POST">
+                        <input class="validate" placeholder="新分类？" name="name" id="category-input" type="text">
+                        <a class="waves-effect waves-light btn small right" id="new-category" href="#!">添加</a>
+                    </form>
+                </div>
+                    </div>
+            </div>
+
+            <div class="col s12 m8 l6 items">
+               <span class="category-name">{{ category_now.name }}</span>
+                {% for item in items %}
+                <div>
+                    <p class="card-panel hoverable" id="item{{loop.index}}">
+                        {% if item.category.id == 2 %}
+                        <a><i class="material-icons left">done_all</i></a>
+                        <span><del>{{ item.body }}</del></span>
+                        {% else %}
+                        <a class="item-done right-align" href="/todo/done/{{item.id}}" title="done?"><i class="material-icons right">done</i></a>
+                        <span>{{ item.body }}</span>
+                        {% endif %}
+                        <a class="right delete-item" href="/todo/delete_item/{{item.id}}" title="delete it?"><i class="material-icons left">delete</i></a>
+                        <a class="edit-btn right" id="{{loop.index}}" href="#!"><i class="material-icons left">edit</i></a>
+                    </p>
+                    <form class="card-panel edit-form" id="form{{loop.index}}" action="/todo/edit_item/{{item.id}}" method="POST">
+                        <input placeholder="What to do next?" name="body" type="text" class="validate" value="{{ item.body }}">
+                        <a class="waves-effect waves-light btn confirm-btn" href="#!" onclick="document.getElementById('form{{loop.index}}').submit()">确定</a>
+                        <a class="waves-effect waves-light btn cancel-btn" href="#!">取消</a>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/materialize.min.js"></script>
+    <script src="/static/js/core.js" type="text/javascript"></script>
+</body>
+
+</html>
