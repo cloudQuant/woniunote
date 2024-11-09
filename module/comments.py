@@ -1,5 +1,5 @@
 import time
-from utils import model_join_list
+from woniunote.utils import model_join_list
 from flask import session
 from sqlalchemy import Table, Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship

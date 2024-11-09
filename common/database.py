@@ -2,7 +2,7 @@ from sqlalchemy import MetaData
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import os
-from utils import read_config
+from woniunote.utils import read_config
 
 
 config_result = read_config()

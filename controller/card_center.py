@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
 from woniunote.controller.user import *
-from utils import read_config
+from woniunote.utils import read_config
 from woniunote.common.create_database import Card, CardCategory
 import os
 import time

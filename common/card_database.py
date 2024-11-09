@@ -8,7 +8,7 @@ Created on Sat Nov 13 22:20:56 2021
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from utils import read_config
+from woniunote.utils import read_config
 
 
 config_result = read_config()

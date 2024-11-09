@@ -2,7 +2,7 @@ from datetime import datetime
 import re
 import redis
 from woniunote.common.database import dbconnect
-from utils import model_list
+from woniunote.utils import model_list
 from woniunote.module.articles import Article
 from woniunote.module.users import Users
 

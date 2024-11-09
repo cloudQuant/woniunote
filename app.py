@@ -2,7 +2,7 @@ import os
 from flask import Flask, redirect, render_template, session, request
 from flask_sslify import SSLify
 from woniunote.common.database import db, ARTICLE_TYPES
-from utils import read_config
+from woniunote.utils import read_config
 from woniunote.controller.admin import admin
 from woniunote.controller.article import article
 from woniunote.controller.card_center import card_center

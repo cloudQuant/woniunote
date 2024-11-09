@@ -3,7 +3,7 @@ import time
 from flask import Blueprint, render_template, request, jsonify
 import os
 
-from utils import compress_image
+from woniunote.utils import compress_image
 
 ueditor = Blueprint("ueditor", __name__)
 

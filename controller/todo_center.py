@@ -3,7 +3,7 @@ import os
 from flask import Flask, render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
 from woniunote.controller.user import *
-from utils import read_config
+from woniunote.utils import read_config
 
 app = Flask(__name__)
 # todo_app.config['SECRET_KEY'] = 'a secret string'
