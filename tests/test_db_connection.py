@@ -6,7 +6,7 @@ from sqlalchemy.exc import OperationalError
 def test_db_connection():
     """测试数据库连接是否成功"""
     # 数据库 URI 配置
-    SQLALCHEMY_DATABASE_URI = ("mysql://woniunote_user:Woniunote_password1!@localhost:3306/woniunote?"
+    SQLALCHEMY_DATABASE_URI = ("mysql://woniunote_user:Woniunote_password1!@127.0.0.1:3306/woniunote?"
                                "charset=utf8&autocommit=true")
     try:
         engine = create_engine(SQLALCHEMY_DATABASE_URI)
