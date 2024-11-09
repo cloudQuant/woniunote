@@ -19,10 +19,11 @@ article = Blueprint("article", __name__)
 def read(articleid):
     try:
         result = Article().find_by_id(articleid)
-        print(articleid,result)
+        # print(articleid,result)
         if result is None:
             abort(404)
-    except:
+    except Exception as e:
+        print("read",articleid, e)
         abort(500)
 
     article_dict = {}

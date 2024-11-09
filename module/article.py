@@ -22,10 +22,12 @@ class Article(DBase):
 
     # 根据id查询文章，数据格式：(Article, 'nickname')
     def find_by_id(self, articleid):
-        user = Users().find_by_userid(session.get('userid'))
-        print("begin to query by id",user.nickname,user.userid)
+        # print("run Users().find_by_userid")
+        # user = Users().find_by_userid(session.get('userid'))
+        # print("begin to query by id",user.nickname,user.userid)
         result = [i for i in Article().find_all() if i.articleid==articleid]
-        result.append(user.nickname)
+        # result.append(user.nickname)
+        result.append("yunjinqi")
         # row = dbsession.query(Article, Users.nickname).join(Users,
         #     Users.userid == Article.userid).filter(
         #     Article.hidden == 0, Article.drafted == 0, Article.checked == 1,
@@ -90,6 +92,7 @@ class Article(DBase):
         result = dbsession.query(Article.articleid, Article.headline).\
             filter(Article.hidden==0, Article.drafted==0, Article.checked==1)\
             .order_by(Article.articleid.desc()).limit(9).all()
+        # print("find_last_9",result)
         return result
 
     # 最多阅读
@@ -97,6 +100,7 @@ class Article(DBase):
         result = dbsession.query(Article.articleid, Article.headline).\
             filter(Article.hidden==0, Article.drafted==0, Article.checked==1)\
             .order_by(Article.readcount.desc()).limit(9).all()
+        # print("find_most_9",result)
         return result
 
     # 特别推荐，如果超过9篇，可以考虑order by rand()的方式随机显示9篇
@@ -104,6 +108,7 @@ class Article(DBase):
         result = dbsession.query(Article.articleid, Article.headline).\
             filter(Article.hidden==0, Article.drafted==0, Article.checked==1, Article.recommended==1)\
             .order_by(func.rand()).limit(9).all()
+        # print("find_recommended_9",result)
         return result
 
     # 一次性返回三个推荐数据

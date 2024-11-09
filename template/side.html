@@ -27,7 +27,8 @@
                 <div class="tip" align="center" >最新文章</div>
                 <ul id="last">
                     {% for row in last_articles %}
-                    <li> <a href="/article/{{row.article}}">{{loop.index}}.{{row.headline|truncate(12)}}</a></li>
+                    <!-- <li> <a href="/article/{{row.article}}">{{loop.index}}.{{row.headline|truncate(12)}}</a></li> -->
+                    <li> <a href="/article/{{row[0]}}">{{loop.index}}.{{row[1]|truncate(12)}}</a></li>
                     {% endfor %}
                     <!-- <li v-for="(article, index) in last_articles">
                         <a v-bind:href="'/article/' + article[0]">${index+1}. ${article[1].substr(0,15)}...</a>
@@ -42,7 +43,8 @@
                         <a :href="'/article/' + article[0]">${index+1}. ${article[1].substr(0,15)}...</a>
                     </li> -->
                     {% for row in most_articles %}
-                    <li> <a href="/article/{{row.article}}">{{loop.index}}.{{row.headline|truncate(12)}}</a></li>
+                    <!--<li> <a href="/article/{{row.article}}">{{loop.index}}.{{row.headline|truncate(12)}}</a></li> -->
+                    <li> <a href="/article/{{row[0]}}">{{loop.index}}.{{row[1]|truncate(12)}}</a></li>
                     {% endfor %}
                 </ul>
             </div>
@@ -54,7 +56,8 @@
                         <a v-bind:href="'/article/' + article[0]">${index+1}. ${article[1].substr(0,15)}...</a>
                     </li> -->
                     {% for row in recommended_articles %}
-                    <li> <a href="/article/{{row.article}}">{{loop.index}}.{{row.headline|truncate(12)}}</a></li>
+                    <!-- <li> <a href="/article/{{row.article}}">{{loop.index}}.{{row.headline|truncate(12)}}</a></li> -->
+                    <li> <a href="/article/{{row[0]}}">{{loop.index}}.{{row[1]|truncate(12)}}</a></li>
                     {% endfor %}
                 </ul>
                 <div class="col-12 side" onclick="gotoTop()" style="height: 40px; text-align: center; cursor: pointer">

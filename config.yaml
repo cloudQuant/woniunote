@@ -1,25 +1,25 @@
-# yaml文件，文件名为yamlData
+# yaml文件，文件名为config.yaml
 
 # 用于生成admin账户的用户名，昵称和密码
 admin:
-  username: admin_123
-  nickname: admin_123
-  password: admin_123
+  username: administrator
+  nickname: yunjinqi
+  password: high_gold_course
 
 # 用于生成编辑账户的用户名，昵称和密码
 editor:
-  username: editor_123
-  nickname: editor_123
-  password: editor_123
+  username: yunjinqi@qq.com
+  nickname: yunjinqi
+  password: yunjinqi2015
 
 # 用于生成一个普通账户的用户名，昵称和密码
 user:
-  username: user_123
-  nickname: user_123
-  password: user_123
+  username: yunjinqi
+  nickname: yunjinqi
+  password: iamyunjinqi
 
 database:
-  SQLALCHEMY_DATABASE_URI:  mysql://root:Woniunote123456@localhost:3306/woniunote?charset=utf8&autocommit=true
+  SQLALCHEMY_DATABASE_URI: mysql://debian-sys-maint:8vm5a0XBDt0HVTGC@localhost:3306/woniunote?charset=utf8&autocommit=true
 
 # 配置文章类型
 ARTICLE_TYPES:
