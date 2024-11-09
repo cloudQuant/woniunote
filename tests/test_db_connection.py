@@ -1,6 +1,7 @@
-import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
+import pymysql
+pymysql.install_as_MySQLdb()
 
 
 def test_db_connection():
