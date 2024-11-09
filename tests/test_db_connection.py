@@ -5,6 +5,7 @@ from sqlalchemy.exc import OperationalError
 
 def test_db_connection():
     """测试数据库连接是否成功"""
+    print("test_db_connection")
     # 数据库 URI 配置
     SQLALCHEMY_DATABASE_URI = ("mysql://woniunote_user:Woniunote_password1!@127.0.0.1:3306/woniunote?"
                                "charset=utf8&autocommit=true")
@@ -17,6 +18,7 @@ def test_db_connection():
             assert len(result) > 0
     except OperationalError as e:
         assert 0, "数据库连接失败：{}".format(e)
+    print("测试结束")
 
 
 if __name__ == "__main__":
