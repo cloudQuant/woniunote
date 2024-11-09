@@ -2,20 +2,14 @@ import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 
-# 数据库 URI 配置
-SQLALCHEMY_DATABASE_URI = ("mysql://woniunote_user:Woniunote_password1!@localhost:3306/woniunote?"
-                           "charset=utf8&autocommit=true")
 
-
-@pytest.fixture
-def engine():
-    """创建 SQLAlchemy 引擎"""
-    return create_engine(SQLALCHEMY_DATABASE_URI)
-
-
-def test_db_connection(engine):
+def test_db_connection():
     """测试数据库连接是否成功"""
+    # 数据库 URI 配置
+    SQLALCHEMY_DATABASE_URI = ("mysql://woniunote_user:Woniunote_password1!@localhost:3306/woniunote?"
+                               "charset=utf8&autocommit=true")
     try:
+        engine = create_engine(SQLALCHEMY_DATABASE_URI)
         # 尝试连接数据库
         with engine.connect() as connection:
             result = connection.execute(text("SELECT * from woniunote.users"))
@@ -26,4 +20,4 @@ def test_db_connection(engine):
 
 
 if __name__ == "__main__":
-    pytest.main(["-v"])
+    test_db_connection()
