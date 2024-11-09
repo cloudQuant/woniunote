@@ -2,7 +2,7 @@ import requests
 
 
 def test_local_requests():
-    url = 'http://127.0.0.1:5000/'
+    url = 'https://127.0.0.1:5000/'
     response = requests.get(url)
     assert response.status_code == 200
 
