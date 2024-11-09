@@ -14,6 +14,8 @@ from woniunote.controller.ucenter import ucenter
 from woniunote.controller.ueditor import ueditor
 from woniunote.controller.user import user
 from woniunote.module.users import Users
+import pymysql
+pymysql.install_as_MySQLdb()
 
 
 config_result = read_config()

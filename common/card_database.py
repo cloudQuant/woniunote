@@ -10,6 +10,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from utils import read_config
 
+
 config_result = read_config()
 SQLALCHEMY_DATABASE_URI = config_result['database']["SQLALCHEMY_DATABASE_URI"]
 app = Flask(__name__, template_folder='template', static_url_path='/', static_folder='resource')
