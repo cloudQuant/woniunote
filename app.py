@@ -2,7 +2,7 @@ import os
 from flask import Flask, redirect, render_template, session, request
 from flask_sslify import SSLify
 from woniunote.common.database import db, ARTICLE_TYPES
-from woniunote.utils import read_config
+from woniunote.utils import read_config, get_package_path
 from woniunote.controller.admin import admin
 from woniunote.controller.article import article
 from woniunote.controller.card_center import card_center
@@ -137,5 +137,6 @@ def math_train():
 
 
 if __name__ == '__main__':
-    app.run(host="127.0.0.1", debug=True, ssl_context=("cert.pem", "key.pem"))
+    path = get_package_path("woniunote")
+    app.run(host="127.0.0.1", debug=False, ssl_context=(path+"/cert.pem", path+"/key.pem"))
     # app.run(host="127.0.0.1", debug=True)

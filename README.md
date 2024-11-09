@@ -10,6 +10,7 @@
 2. git clone https://gitee.com/yunjinqi/woniunote.git
 3. cd woniunote
 4. nohup gunicorn -w 3 -b 0.0.0.0:8888 app:app > woniunote_run.log 2>&1 &
+5. 本地测试使用：nohup python app.py > woniunote_run.log 2>&1 &
 
 #### 待实现功能
 

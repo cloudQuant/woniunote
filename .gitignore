@@ -32,6 +32,7 @@ MANIFEST
 *.manifest
 *.spec
 .idea/
+.woniunote_run.log
 
 # Installer logs
 pip-log.txt
