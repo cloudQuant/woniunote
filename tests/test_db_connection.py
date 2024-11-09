@@ -18,8 +18,9 @@ def test_db_connection(engine):
     try:
         # 尝试连接数据库
         with engine.connect() as connection:
-            result = connection.execute(text("SELECT 1"))
-            assert result.scalar() == 1
+            result = connection.execute(text("SELECT * from woniunote.users"))
+            result = result.fetchall()
+            assert len(result) > 0
     except OperationalError as e:
         pytest.fail(f"数据库连接失败：{e}")
 
