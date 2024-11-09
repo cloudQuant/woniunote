@@ -136,5 +136,5 @@ def math_train():
 
 if __name__ == '__main__':
     # app.run(host="127.0.0.1",debug=False,ssl_context=("yunjinqi.top_bundle.pem","yunjinqi.top.key"))
-    app.run(host="127.0.0.1", debug=True, ssl_context=("cert.pem", "key.pem"))
-    # app.run(host="127.0.0.1", debug=True)
+    # app.run(host="127.0.0.1", debug=True, ssl_context=("cert.pem", "key.pem"))
+    app.run(host="127.0.0.1", debug=True)
