@@ -16,7 +16,7 @@ def test_db_connection():
             result = result.fetchall()
             assert len(result) > 0
     except OperationalError as e:
-        pytest.fail(f"数据库连接失败：{e}")
+        assert 0, "数据库连接失败：{}".format(e)
 
 
 if __name__ == "__main__":
