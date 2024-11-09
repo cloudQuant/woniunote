@@ -1,28 +1,29 @@
-from flask import Blueprint, render_template
-from flask_login import LoginManager,login_required,UserMixin,login_user,logout_user,current_user
-from woniunote.module.favorite import Favorite
+from flask import render_template
 from woniunote.controller.user import *
-from woniunote.module.article import Article
-from woniunote.module.comment import Comment
-from woniunote.common.database import db,ARTICLE_TYPES
-
+from woniunote.module.articles import Articles
+from woniunote.module.comments import Comments
+from woniunote.module.favorites import Favorites
 
 ucenter = Blueprint("ucenter", __name__)
 
+
 @ucenter.route('/ucenter')
 def user_center():
-    result = Favorite().find_my_favorite()
+    result = Favorites().find_my_favorite()
     return render_template('user-center.html', result=result)
+
 
 @ucenter.route('/user/favorite/<int:favoriteid>')
 def user_favorite(favoriteid):
-    canceled = Favorite().switch_favorite(favoriteid)
+    canceled = Favorites().switch_favorite(favoriteid)
     return str(canceled)
+
 
 @ucenter.route('/user/post')
 def user_post():
-    #return render_template('user-post.html',my_article_type=ARTICLE_TYPES)
+    # return render_template('user-post.html',my_article_type=ARTICLE_TYPES)
     return render_template('user-post.html')
+
 
 @ucenter.route('/user/article')
 def user_article():
@@ -30,22 +31,23 @@ def user_article():
     # return render_template("article-user.html")
     # name=request.cookies.get('username')
     userid = session.get("userid")
-    results = Article().find_all()
-    results = [[i.articleid,i] for i in results if i.userid == userid]
+    results = Articles().find_all()
+    results = [[i.articleid, i] for i in results if i.userid == userid]
     return render_template('user-center.html', result=results)
+
 
 @ucenter.route('/user/comment')
 def user_comment():
     # print(" get article")
     # return render_template("article-user.html")
     # name=request.cookies.get('username')
-    
+
     userid = session.get("userid")
-    results = Comment().find_all()
+    results = Comments().find_all()
     commentid_list = [i.articleid for i in results]
-    articles = Article().find_all()
-    articles = [[i.articleid,i] for i in articles if i.articleid in commentid_list]
-    # print(results)
+    articles = Articles().find_all()
+    articles = [[i.articleid, i] for i in articles if i.articleid in commentid_list]
+    print(userid)
     return render_template('user-center.html', result=articles)
 
 # @ucenter.route('/todo', methods=['GET', 'POST'])

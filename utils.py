@@ -1,7 +1,50 @@
-import random, string, time
+import random
+import string
+import time
+import yaml
 from datetime import datetime
+from email.header import Header
+from email.mime.text import MIMEText
 from io import BytesIO
+# 发送邮箱验证码
+from smtplib import SMTP_SSL
+import importlib
+import sys
+import os
+import requests
 from PIL import Image, ImageFont, ImageDraw
+
+
+def get_package_path(package_name="lv"):
+    """获取包的路径值
+    :param package_name: 包的名称
+    :return: 返回的路径值
+    """
+    try:
+        importlib.import_module(package_name)
+        package = sys.modules[package_name]
+    except KeyError:
+        print(f"Package {package_name} not found")
+        return None
+    if package.__file__ is not None:
+        return os.path.dirname(package.__file__)
+    else:
+        return package.__path__.__dict__["_path"][0]
+
+
+# 打开配置文件
+def read_config(config_file=None):
+    package_path = get_package_path("woniunote")
+    if config_file is None:
+        file_path = package_path + "/config.yaml"
+        with open(file_path, 'r', encoding='utf-8') as f:
+            config_result = yaml.load(f.read(), Loader=yaml.FullLoader)
+    else:
+        file_path = package_path + f"/{config_file}"
+        with open(file_path, 'r', encoding='utf-8') as f:
+            config_result = yaml.load(f.read(), Loader=yaml.FullLoader)
+    return config_result
+
 
 class ImageCode:
     # 生成用于绘制字符串的随机颜色
@@ -34,14 +77,15 @@ class ImageCode:
         # 创建图片对象，并设定背景色为白色
         im = Image.new('RGB', (width, height), 'white')
         # 选择使用何种字体及字体大小
-        font = ImageFont.truetype(font='arial.ttf', size=40)
+        # font = ImageFont.truetype(font='arial.ttf', size=40)
+        font = ImageFont.load_default(size=40)  # 使用 Pillow 自带的字体
         draw = ImageDraw.Draw(im)  # 新建ImageDraw对象
         # 绘制字符串
         for i in range(4):
             draw.text((5 + random.randint(-3, 3) + 23 * i, 5 + random.randint(-3, 3)),
                       text=code[i], fill=self.rand_color(), font=font)
         # 绘制干扰线
-        self.draw_lines(draw, 4, width, height)
+        # self.draw_lines(draw, 4, width, height)
         # im.show()   # 如需临时调试，可以直接将生成的图片显示出来
         return im, code
 
@@ -53,75 +97,74 @@ class ImageCode:
         bstring = buf.getvalue()
         return code, bstring
 
-# 发送邮箱验证码
-from smtplib import SMTP_SSL
-from email.mime.text import MIMEText
-from email.header import Header
 
 # 发送QQ邮箱验证码, 参数为收件箱地址和随机生成的验证码
 def send_email(receiver, ecode):
     sender = 'WoniuNote <15903523@qq.com>'  # 你的邮箱账号和发件者签名
     # 定义发送邮件的内容，支持HTML标签和CSS样式
     content = f"<br/>欢迎注册蜗牛笔记博客系统账号，您的邮箱验证码为：" \
-        f"<span style='color: red; font-size: 20px;'>{ecode}</span>，" \
-        f"请复制到注册窗口中完成注册，感谢您的支持。<br/>"
+              f"<span style='color: red; font-size: 20px;'>{ecode}</span>，" \
+              f"请复制到注册窗口中完成注册，感谢您的支持。<br/>"
     # 实例化邮件对象，并指定邮件的关键信息
     message = MIMEText(content, 'html', 'utf-8')
-    # 指定邮件的标题，同样使用utf-8编码
+    # 指定邮件的标题，同样使用utf-8 编码
     message['Subject'] = Header('蜗牛笔记的注册验证码', 'utf-8')
-    message['From'] = sender    # 指定发件人信息
-    message['To'] = receiver    # 指定收件人邮箱地址
+    message['From'] = sender  # 指定发件人信息
+    message['To'] = receiver  # 指定收件人邮箱地址
 
-    smtpObj = SMTP_SSL('smtp.qq.com')   # 建议与QQ邮件服务器的连接
+    smtp_obj = SMTP_SSL('smtp.qq.com')  # 建议与QQ邮件服务器的连接
     # 通过你的邮箱账号和获取到的授权码登录QQ邮箱
-    smtpObj.login(user='15903523@qq.com', password='uczmmmqvpxwjbjaf')
+    smtp_obj.login(user='15903523@qq.com', password='uczmmmqvpxwjbjaf')
     # 指定发件人，收件人和邮件内容
-    smtpObj.sendmail(sender, receiver, str(message))
-    smtpObj.quit()
+    smtp_obj.sendmail(sender, receiver, str(message))
+    smtp_obj.quit()
+
 
 # 生成6位随机字符串作为邮箱验证码
 def gen_email_code():
-    str = random.sample(string.ascii_letters + string.digits, 6)
-    return ''.join(str)
+    return ''.join(random.sample(string.ascii_letters + string.digits, 6))
+
 
 # 单个模型类转换为标准的Python List数据
 def model_list(result):
-    list = []
+    m_list = []
     for row in result:
-        dict = {}
+        m_dict = {}
         for k, v in row.__dict__.items():
             if not k.startswith('_sa_instance_state'):
                 # 如果某个字段的值是datetime类型，则将其格式为字符串
                 if isinstance(v, datetime):
                     v = v.strftime('%Y-%m-%d %H:%M:%S')
-                dict[k] = v
-        list.append(dict)
+                m_dict[k] = v
+        m_list.append(m_dict)
 
-    return list
+    return m_list
+
 
 # SQLAlchemy连接查询两张表的结果集转换为[{},{}]
 # Comment，Users， [(Comment, Users),(Comment, Users),(Comment, Users)]
 def model_join_list(result):
-    list = []  # 定义列表用于存放所有行
+    m_list = []  # 定义列表用于存放所有行
     for obj1, obj2 in result:
-        dict = {}
+        m_dict = {}
         for k1, v1 in obj1.__dict__.items():
             if not k1.startswith('_sa_instance_state'):
-                if not k1 in dict:  # 如果字典中已经存在相同的Key则跳过
-                    dict[k1] = v1
+                if k1 not in m_dict:  # 如果字典中已经存在相同的Key则跳过
+                    m_dict[k1] = v1
         for k2, v2 in obj2.__dict__.items():
             if not k2.startswith('_sa_instance_state'):
-                if not k2 in dict:  # 如果字典中已经存在相同的Key则跳过
-                    dict[k2] = v2
-        list.append(dict)
-    return list
+                if k2 not in m_dict:  # 如果字典中已经存在相同的Key则跳过
+                    m_dict[k2] = v2
+        m_list.append(m_dict)
+    return m_list
+
 
 # 压缩图片，通过参数width指定压缩后的图片大小
 def compress_image(source, dest, width):
     from PIL import Image
     # 如果图片宽度大于1200，则调整为1200的宽度
     im = Image.open(source)
-    x, y = im.size      # 获取源图片的宽和高
+    x, y = im.size  # 获取源图片的宽和高
     if x > width:
         # 等比例缩放
         ys = int(y * width / x)
@@ -133,6 +176,7 @@ def compress_image(source, dest, width):
     # 如果尺寸小于指定宽度则不缩减尺寸，只压缩保存
     else:
         im.save(dest, quality=80)
+
 
 # 解析文章内容中的图片地址
 def parse_image_url(content):
@@ -146,13 +190,14 @@ def parse_image_url(content):
         url_list.append(url)
     return url_list
 
+
 # 远程下载指定URL地址的图片，并保存到临时目录中
 def download_image(url, dest):
-    import requests
     response = requests.get(url)  # 获取图片的响应
     # 将图片以二进制方式保存到指定文件中
     with open(file=dest, mode='wb') as file:
         file.write(response.content)
+
 
 # 解析列表中的图片URL地址并生成缩略图，返回缩略图名称
 def generate_thumb(url_list):
@@ -171,7 +216,7 @@ def generate_thumb(url_list):
     # 直接将第一张图片作为缩略图，并生成基于时间戳的标准文件名
     url = url_list[0]
     filename = url.split('/')[-1]
-    suffix = filename.split('.')[-1]    # 取得文件的后缀名
+    suffix = filename.split('.')[-1]  # 取得文件的后缀名
     thumbname = time.strftime('%Y%m%d_%H%M%S.' + suffix)
     download_image(url, './resource/download/' + thumbname)
     compress_image('./resource/download/' + thumbname, './resource/thumb/' + thumbname, 400)
@@ -179,8 +224,8 @@ def generate_thumb(url_list):
     return thumbname  # 返回当前缩略图的文件名
 
 
-# if __name__ == '__main__':
-#
+if __name__ == '__main__':
+    read_config()
 #     content = '''
 #     <p style="text-align:left;text-indent:28px">
 # <span style="font-size:14px;font-family:宋体">文章编辑完成后当然就得发布文章，某种意义上来说就是一个请求而已。但是要优化好整个发布功能，其实要考虑的问题是很多的。</span></p>

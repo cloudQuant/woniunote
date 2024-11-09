@@ -1,34 +1,26 @@
+import os
+from flask import Flask, redirect, render_template, session, request
+from flask_sslify import SSLify
 from woniunote.common.database import db, ARTICLE_TYPES
-from woniunote.module.users import Users
-from woniunote.controller.ucenter import ucenter
-from woniunote.controller.todo_center import tcenter
-from woniunote.controller.card_center import card_center
+from utils import read_config
 from woniunote.controller.admin import admin
-from woniunote.controller.ueditor import ueditor
+from woniunote.controller.article import article
+from woniunote.controller.card_center import card_center
 from woniunote.controller.comment import comment
 from woniunote.controller.favorite import favorite
-from woniunote.controller.article import article
-from woniunote.controller.user import user
 from woniunote.controller.index import index
+from woniunote.controller.todo_center import tcenter
+from woniunote.controller.ucenter import ucenter
+from woniunote.controller.ueditor import ueditor
+from woniunote.controller.user import user
+from woniunote.module.users import Users
 
-from flask import Flask, abort,redirect, url_for,render_template, Blueprint, render_template, abort, jsonify, session, request
-import os
-import pymysql
-from OpenSSL import SSL
-from flask_sslify import SSLify
-import yaml
-with open('./config.yaml', 'r', encoding='utf-8') as f:
-    config_result = yaml.load(f.read(), Loader=yaml.FullLoader)
+
+config_result = read_config()
 SQLALCHEMY_DATABASE_URI = config_result['database']["SQLALCHEMY_DATABASE_URI"]
-
-
-pymysql.install_as_MySQLdb()    # ModuleNotFoundError: No module named 'MySQLdb'
-
-
 app = Flask(__name__, template_folder='template',
             static_url_path='/', static_folder='resource')
 app.config['SECRET_KEY'] = os.urandom(24)
-
 
 # 使用集成方式处理SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
@@ -51,28 +43,24 @@ app.register_blueprint(ucenter)
 app.register_blueprint(tcenter)
 app.register_blueprint(card_center)
 
+
 # 定义404错误页面
-
-
 @app.errorhandler(404)
 def page_not_found(e):
+    print(e)
     return render_template('error-404.html')
 
+
 # 定义500错误页面
-
-
 @app.errorhandler(500)
 def server_error(e):
+    print(e)
     return render_template('error-500.html')
 
+
 # 定义全局拦截器，实现自动登录
-
-
-
-
 @app.before_request
 def before():
-
     if request.url.startswith('http://'):
         url = request.url.replace('http://', 'https://', 1)
         return redirect(url, code=301)
@@ -86,7 +74,7 @@ def before():
     elif session.get('islogin') is None:
         username = request.cookies.get('username')
         password = request.cookies.get('password')
-        if username != None and password != None:
+        if username is not None and password is not None:
             user = Users()
             result = user.find_by_username(username)
             if len(result) == 1 and result[0].password == password:
@@ -96,9 +84,8 @@ def before():
                 session['nickname'] = result[0].nickname
                 session['role'] = result[0].role
 
+
 # 通过自定义过滤器来重构truncate原生过滤器
-
-
 def mytruncate(s, length, end='...'):
     count = 0
     new = ''
@@ -113,18 +100,13 @@ def mytruncate(s, length, end='...'):
     return new + end
 
 
-# 注册mytruncate过滤器
-app.jinja_env.filters.update(truncate=mytruncate)
-
 # 定义文章类型函数，供模板页面直接调用
-
-
 @app.context_processor
 def get_type():
     return dict(article_type=ARTICLE_TYPES)
+
+
 # app.jinja_env.globals.update(my_article_type=get_type)
-
-
 @app.route('/preupload')
 def pre_upload():
     return render_template('file-upload.html')
@@ -152,9 +134,7 @@ def math_train():
     return render_template("math_train.html")
 
 
-    
-
-
 if __name__ == '__main__':
     # app.run(host="127.0.0.1",debug=False,ssl_context=("yunjinqi.top_bundle.pem","yunjinqi.top.key"))
-    app.run(host="127.0.0.1",debug=True)
+    app.run(host="127.0.0.1", debug=True, ssl_context=("cert.pem", "key.pem"))
+    # app.run(host="127.0.0.1", debug=True)

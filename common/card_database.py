@@ -3,16 +3,14 @@
 """
 Created on Sat Nov 13 22:20:56 2021
 
-@author: ubuntu
+@author: cloudQuant
 """
-from flask import Flask, abort, render_template
-import os,hashlib
+import os
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-import pymysql
-pymysql.install_as_MySQLdb()    # ModuleNotFoundError: No module named 'MySQLdb'
-import yaml
-with open('./config.yaml', 'r', encoding='utf-8') as f:
-    config_result = yaml.load(f.read(), Loader=yaml.FullLoader)
+from utils import read_config
+
+config_result = read_config()
 SQLALCHEMY_DATABASE_URI = config_result['database']["SQLALCHEMY_DATABASE_URI"]
 app = Flask(__name__, template_folder='template', static_url_path='/', static_folder='resource')
 app.config['SECRET_KEY'] = os.urandom(24)
@@ -27,19 +25,20 @@ db = SQLAlchemy(app)
 dbsession = db.session
 DBase = db.Model
 
+
 # need to design a class to define the card attr
 
 class Card(db.Model):
     __tablename__ = "card"
 
-    id = db.Column(db.Integer,primary_key=True,nullable=False,autoincrement=True)
-    type = db.Column(db.Integer,default=1)
-    headline = db.Column(db.Text(200),nullable=False)
-    content = db.Column(db.TEXT(16777216),default="")
+    id = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
+    type = db.Column(db.Integer, default=1)
+    headline = db.Column(db.Text(200), nullable=False)
+    content = db.Column(db.TEXT(16777216), default="")
     createtime = db.Column(db.DateTime)
     updatetime = db.Column(db.DateTime)
     donetime = db.Column(db.DateTime)
-    usedtime = db.Column(db.Integer,default=0)
+    usedtime = db.Column(db.Integer, default=0)
     begintime = db.Column(db.DateTime)
     endtime = db.Column(db.DateTime)
     cardcategory_id = db.Column(
@@ -48,12 +47,12 @@ class Card(db.Model):
     # role_id = db.Column(db.Integer,db.ForeignKey("roles.id"))
 
 
-
 class CardCategory(db.Model):
     __tablename__ = "cardcategory"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64))
     cards = db.relationship('Card', backref='cardcategory')
+
 
 if __name__ == '__main__':
     # 删除所有的表
@@ -62,7 +61,7 @@ if __name__ == '__main__':
     db.create_all()
     # hashlib.md5("high_gold_course".encode()).hexdigest()
     # 先将admin_user对象添加到会话中，可以回滚。
-    
+
     inbox = CardCategory(name=u'待完成')
     done = CardCategory(name=u'已完成')
     work_list = CardCategory(name=u'工作清单')
@@ -75,6 +74,5 @@ if __name__ == '__main__':
     item7 = Card(headline=u'test card', cardcategory=done)
     item8 = Card(headline=u'do card', cardcategory=work_list)
     db.session.add_all(
-        [inbox, done,  item4, item5, item6, item7, item8])
+        [inbox, done, item4, item5, item6, item7, item8])
     db.session.commit()
-

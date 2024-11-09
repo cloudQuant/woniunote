@@ -1,8 +1,9 @@
 from flask import Blueprint, request, session
 
-from woniunote.module.favorite import Favorite
+from woniunote.module.favorites import Favorites
 
 favorite = Blueprint('favorite', __name__)
+
 
 @favorite.route('/favorite', methods=['POST'])
 def add_favorite():
@@ -11,16 +12,18 @@ def add_favorite():
         return 'not-login'
     else:
         try:
-            Favorite().insert_favorite(articleid)
+            Favorites().insert_favorite(articleid)
             return 'favorite-pass'
-        except:
+        except Exception as e:
+            print("add favorite", e)
             return 'favorite-fail'
+
 
 @favorite.route('/favorite/<int:articleid>', methods=['DELETE'])
 def cancel_favorite(articleid):
     try:
-        Favorite().cancel_favorite(articleid)
+        Favorites().cancel_favorite(articleid)
         return 'cancel-pass'
-    except:
+    except Exception as e:
+        print("cancel favorite", e)
         return 'cancel-fail'
-

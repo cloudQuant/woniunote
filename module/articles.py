@@ -1,81 +1,91 @@
 import time
 
 from flask import session
-from sqlalchemy import Table, func
+from sqlalchemy import Table, Column, Integer, String, Text, DateTime, func, ForeignKey
+from sqlalchemy.orm import relationship
 from woniunote.common.database import dbconnect
 from woniunote.module.users import Users
+from woniunote.common.create_database import Article
 
 dbsession, md, DBase = dbconnect()
-# print(dir(dbsession))
-# print("dbsession.is_active",dbsession.is_active)
-# print(dir(md))
-# print(dir(DBase))
-class Article(DBase):
-    __table__ = Table('article', md, autoload=True)
+
+
+class Articles(DBase):
+    __table__ = Table(
+        'article', md,
+        Column('articleid', Integer, primary_key=True, nullable=False, autoincrement=True),
+        Column('userid', Integer, ForeignKey('users.userid'), nullable=False),
+        Column('type', Integer, nullable=False),
+        Column('headline', String(100), nullable=False),
+        Column('content', Text(16777216)),
+        Column('thumbnail', String(30)),
+        Column('credit', Integer, default=0),
+        Column('readcount', Integer, default=0),
+        Column('replycount', Integer, default=0),
+        Column('recommended', Integer, default=0),
+        Column('hidden', Integer, default=0),
+        Column('drafted', Integer, default=0),
+        Column('checked', Integer, default=1),
+        Column('createtime', DateTime),
+        Column('updatetime', DateTime)
+    )
+
+    def __init__(self):
+        from woniunote.module.users import Users
+        self.user = relationship("Users", back_populates="Articles")
+
+    # 定义外键关系
+    # user = relationship("Users", foreign_keys=[__table__.c.userid], primaryjoin="Article.userid == Users.userid")
 
     # 查询所有文章
     def find_all(self):
         result = dbsession.query(Article).all()
-        # result = dbsession.query(Article, Users.nickname).join(Users, Users.userid==Article.userid).all()
-        # maybe need return result
         return result
 
     # 根据id查询文章，数据格式：(Article, 'nickname')
     def find_by_id(self, articleid):
-        # print("run Users().find_by_userid")
-        # user = Users().find_by_userid(session.get('userid'))
-        # print("begin to query by id",user.nickname,user.userid)
-        result = [i for i in Article().find_all() if i.articleid==articleid]
-        # result.append(user.nickname)
+        result = [i for i in Articles().find_all() if i.articleid == articleid]
         result.append("yunjinqi")
-        # row = dbsession.query(Article, Users.nickname).join(Users,
-        #     Users.userid == Article.userid).filter(
-        #     Article.hidden == 0, Article.drafted == 0, Article.checked == 1,
-        #     Article.articleid == articleid).first()
-        # return row
         return result
 
     # 指定分页的limit和offset的参数值，同时与用户表做连接查询
     def find_limit_with_users(self, start, count):
-        # result = dbsession.query(Article, Users.nickname).join(Users, Users.userid==Article.userid)\
-        #     .filter(Article.hidden==0, Article.drafted==0, Article.checked==1)\
-        #     .order_by(Article.articleid.asc()).limit(count).offset(start).all()
-        result = dbsession.query(Article, Users.nickname).join(Users, Users.userid==Article.userid)\
+        result = dbsession.query(Article, Users.nickname).join(Users, Users.userid == Article.userid) \
             .all()
         begin = start
-        end = start+count
-        if begin==-10:
+        end = start + count
+        if begin == -10:
             result = result[begin:]
         else:
             result = result[begin:end]
-        # print("find_limit_with_users",begin,end,len(result))
         result = result[::-1]
         return result
 
     # 统计一下当前文章的总数量
     def get_total_count(self):
-        count = dbsession.query(Article).filter(Article.hidden==0, Article.drafted==0, Article.checked==1).count()
+        count = dbsession.query(Article).filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1).count()
         return count
 
     # 根据文章类型获取文章
-    def find_by_type(self, type, start, count):
-        result = dbsession.query(Article, Users.nickname).join(Users,Users.userid == Article.userid) \
-            .filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1, Article.type==type) \
+    def find_by_type(self, article_type, start, count):
+        result = dbsession.query(Article, Users.nickname).join(Users, Users.userid == Article.userid) \
+            .filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1, Article.type == article_type) \
             .order_by(Article.articleid.desc()).limit(count).offset(start).all()
         return result
 
     # 根据文章类型来获取总数量
-    def get_count_by_type(self, type):
+    def get_count_by_type(self, article_type):
         count = dbsession.query(Article).filter(Article.hidden == 0,
                                                 Article.drafted == 0,
                                                 Article.checked == 1,
-                                                Article.type == type).count()
+                                                Article.type == article_type).count()
         return count
 
     # 根据文章标题进行模糊搜索
     def find_by_headline(self, headline, start, count):
         result = dbsession.query(Article, Users.nickname).join(Users, Users.userid == Article.userid) \
-            .filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1, Article.headline.like('%' + headline +'%')) \
+            .filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1,
+                    Article.headline.like('%' + headline + '%')) \
             .order_by(Article.articleid.desc()).limit(count).offset(start).all()
         return result
 
@@ -84,31 +94,28 @@ class Article(DBase):
         count = dbsession.query(Article).filter(Article.hidden == 0,
                                                 Article.drafted == 0,
                                                 Article.checked == 1,
-                                                Article.headline.like('%' + headline +'%')).count()
+                                                Article.headline.like('%' + headline + '%')).count()
         return count
 
     # 最新文章[(id, headline),(id, headline)]
     def find_last_9(self):
-        result = dbsession.query(Article.articleid, Article.headline).\
-            filter(Article.hidden==0, Article.drafted==0, Article.checked==1)\
+        result = dbsession.query(Article.articleid, Article.headline). \
+            filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1) \
             .order_by(Article.articleid.desc()).limit(9).all()
-        # print("find_last_9",result)
         return result
 
     # 最多阅读
     def find_most_9(self):
-        result = dbsession.query(Article.articleid, Article.headline).\
-            filter(Article.hidden==0, Article.drafted==0, Article.checked==1)\
+        result = dbsession.query(Article.articleid, Article.headline). \
+            filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1) \
             .order_by(Article.readcount.desc()).limit(9).all()
-        # print("find_most_9",result)
         return result
 
     # 特别推荐，如果超过9篇，可以考虑order by rand()的方式随机显示9篇
     def find_recommended_9(self):
-        result = dbsession.query(Article.articleid, Article.headline).\
-            filter(Article.hidden==0, Article.drafted==0, Article.checked==1, Article.recommended==1)\
+        result = dbsession.query(Article.articleid, Article.headline). \
+            filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1, Article.recommended == 1) \
             .order_by(func.rand()).limit(9).all()
-        # print("find_recommended_9",result)
         return result
 
     # 一次性返回三个推荐数据
@@ -122,7 +129,7 @@ class Article(DBase):
     def update_read_count(self, articleid):
         article = dbsession.query(Article).filter_by(articleid=articleid).first()
         if article.readcount is None:
-            article.readcount=0
+            article.readcount = 0
         article.readcount += 1
         dbsession.commit()
 
@@ -131,36 +138,41 @@ class Article(DBase):
         row = dbsession.query(Article.headline).filter_by(articleid=articleid).first()
         return row.headline
 
-    # 获取当前文章的上一篇和下一篇
+    # 获取当前文章的 上一篇和下一篇
     def find_prev_next_by_id(self, articleid):
-        dict = {}
+        m_dict = {}
 
         # 查询比当前编号小的当中最大的一个
-        row = dbsession.query(Article).filter(Article.hidden==0, Article.drafted==0, Article.checked==1,
-              Article.articleid<articleid).order_by(Article.articleid.desc()).limit(1).first()
+        row = dbsession.query(Article).filter(Article.hidden == 0,
+                                              Article.drafted == 0,
+                                              Article.checked == 1,
+                                              Article.articleid < articleid).order_by(
+            Article.articleid.desc()).limit(1).first()
         # 如果当前已经是第一篇，上一篇也是当前文章
         if row is None:
             prev_id = articleid
         else:
             prev_id = row.articleid
 
-        dict['prev_id'] = prev_id
-        dict['prev_headline'] = self.find_headline_by_id(prev_id)
-
+        m_dict['prev_id'] = prev_id
+        m_dict['prev_headline'] = self.find_headline_by_id(prev_id)
 
         # 查询比当前编号大的当中最小的一个
-        row = dbsession.query(Article).filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1,
-              Article.articleid > articleid).order_by(Article.articleid).limit(1).first()
+        row = dbsession.query(Article).filter(Article.hidden == 0,
+                                              Article.drafted == 0,
+                                              Article.checked == 1,
+                                              Article.articleid > articleid).order_by(
+            Article.articleid).limit(1).first()
         # 如果当前已经是最后一篇，下一篇也是当前文章
         if row is None:
             next_id = articleid
         else:
             next_id = row.articleid
 
-        dict['next_id'] = next_id
-        dict['next_headline'] = self.find_headline_by_id(next_id)
+        m_dict['next_id'] = next_id
+        m_dict['next_headline'] = self.find_headline_by_id(next_id)
 
-        return dict
+        return m_dict
 
     # 当发表或者回复评论后，为文章表字段replycount加1
     def update_replycount(self, articleid):
@@ -168,14 +180,13 @@ class Article(DBase):
         row.replycount += 1
         dbsession.commit()
 
-
     # 插入一篇新的文章，草稿或投稿通过参数进行区分
-    def insert_article(self, type, headline, content, thumbnail, credit, drafted=0, checked=1):
+    def insert_article(self, article_type, headline, content, thumbnail, credit, drafted=0, checked=1):
         now = time.strftime('%Y-%m-%d %H:%M:%S')
         userid = session.get('userid')
         # 其他字段在数据库中均已设置好默认值，无须手工插入
-        article = Article(userid=userid, type=type, headline=headline, content=content,
-                          thumbnail=thumbnail, credit=credit, drafted=drafted,readcount=0,
+        article = Article(userid=userid, type=article_type, headline=headline, content=content,
+                          thumbnail=thumbnail, credit=credit, drafted=drafted, readcount=0,
                           checked=checked, createtime=now, updatetime=now)
         dbsession.add(article)
         dbsession.commit()
@@ -183,10 +194,10 @@ class Article(DBase):
         return article.articleid  # 将新的文章编号返回，便于前端页面跳转
 
     # 根据文章编号更新文章的内容，可用于文章编辑或草稿修改，以及基于草稿的发布
-    def update_article(self, articleid, type, headline, content, thumbnail, credit, drafted=0, checked=1):
+    def update_article(self, articleid, article_type, headline, content, thumbnail, credit, drafted=0, checked=1):
         now = time.strftime('%Y-%m-%d %H:%M:%S')
         row = dbsession.query(Article).filter_by(articleid=articleid).first()
-        row.type = type
+        row.type = article_type
         row.headline = headline
         row.content = content
         row.thumbnail = thumbnail
@@ -196,7 +207,6 @@ class Article(DBase):
         row.updatetime = now  # 修改文章的更新时间
         dbsession.commit()
         return articleid  # 继续将文章ID返回调用处
-
 
     # =========== 以下方法主要用于后台管理类操作 ================== #
 
@@ -212,23 +222,23 @@ class Article(DBase):
         return count
 
     # 按照文章分类进行查询（不含草稿，该方法直接返回文章总数量用于分页）
-    def find_by_type_except_draft(self, start, count, type):
+    def find_by_type_except_draft(self, start, count, article_type):
         if type == 0:
             result = self.find_all_except_draft(start, count)
             total = self.get_count_except_draft()
         else:
             result = dbsession.query(Article).filter(Article.drafted == 0,
-                     Article.type == type).order_by(Article.articleid.desc())\
-                     .limit(count).offset(start).all()
+                                                     Article.type == article_type).order_by(Article.articleid.desc()) \
+                .limit(count).offset(start).all()
             total = dbsession.query(Article).filter(Article.drafted == 0,
-                     Article.type == type).count()
-        return result, total    # 返回分页结果集和不分页的总数量
+                                                    Article.type == article_type).count()
+        return result, total  # 返回分页结果集和不分页的总数量
 
     # 按照标题模糊查询（不含草稿，不分页）
     def find_by_headline_except_draft(self, headline):
         result = dbsession.query(Article).filter(Article.drafted == 0,
-                Article.headline.like('%' + headline + '%'))\
-                .order_by(Article.articleid.desc()).all()
+                                                 Article.headline.like('%' + headline + '%')) \
+            .order_by(Article.articleid.desc()).all()
         return result
 
     # 切换文章的隐藏状态：1表示隐藏，0表示显示
@@ -239,7 +249,7 @@ class Article(DBase):
         else:
             row.hidden = 1
         dbsession.commit()
-        return row.hidden   # 将当前最新状态返回给控制层
+        return row.hidden  # 将当前最新状态返回给控制层
 
     # 切换文章的推荐状态：1表示推荐，0表示正常
     def switch_recommended(self, articleid):
@@ -261,6 +271,6 @@ class Article(DBase):
         dbsession.commit()
         return row.checked
 
-if __name__ =="__main__":
-    print(1,Article().find_by_id(3))
-    print(Article().find_all())
+
+if __name__ == "__main__":
+    article_instance = Articles()

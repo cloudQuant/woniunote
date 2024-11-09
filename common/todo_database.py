@@ -5,16 +5,16 @@ Created on Sat Nov 13 22:20:56 2021
 
 @author: ubuntu
 """
-from woniunote.common.database import SQLALCHEMY_DATABASE_URI
-from flask import Flask, abort, render_template
 import os
-import hashlib
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-import pymysql
-pymysql.install_as_MySQLdb()    # ModuleNotFoundError: No module named 'MySQLdb'
+from woniunote.common.database import SQLALCHEMY_DATABASE_URI
+from woniunote.common.create_database import Item, Category
 
-app = Flask(__name__, template_folder='template',
-            static_url_path='/', static_folder='resource')
+app = Flask(__name__,
+            template_folder='template',
+            static_url_path='/',
+            static_folder='resource')
 app.config['SECRET_KEY'] = os.urandom(24)
 
 # 使用集成方式处理SQLAlchemy
@@ -26,20 +26,6 @@ db = SQLAlchemy(app)
 
 dbsession = db.session
 DBase = db.Model
-
-
-class Item(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    body = db.Column(db.Text)
-    category_id = db.Column(
-        db.Integer, db.ForeignKey('category.id'), default=1)
-
-
-class Category(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64))
-    items = db.relationship('Item', backref='category')
-
 
 if __name__ == '__main__':
     # 删除所有的表
@@ -66,7 +52,6 @@ if __name__ == '__main__':
     db.session.add_all(
         [inbox, done, item, item2, item3, item4, item5, item6, item7, item8])
     db.session.commit()
-
 
 # import os
 

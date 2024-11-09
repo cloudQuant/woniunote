@@ -1,17 +1,19 @@
 from flask import Blueprint, request, session, jsonify
 
-from woniunote.module.article import Article
-from woniunote.module.comment import Comment
-from woniunote.module.credit import Credit
+from woniunote.module.articles import Articles
+from woniunote.module.comments import Comments
+from woniunote.module.credits import Credits
 from woniunote.module.users import Users
 
 comment = Blueprint('comment', __name__)
+
 
 @comment.before_request
 def before_comment():
     if session.get('islogin') is None or session.get('islogin') != 'true':
         # return '你还没有登录，不能发表评论'
         return 'not-login'
+
 
 @comment.route('/comment', methods=['POST'])
 def add():
@@ -23,16 +25,17 @@ def add():
     if len(content) < 5 or len(content) > 1000:
         return 'content-invalid'
 
-    comment = Comment()
-    if not comment.check_limit_per_5():
+    comment_instance = Comments()
+    if not comment_instance.check_limit_per_5():
         try:
-            comment.insert_comment(articleid, content, ipaddr)
+            comment_instance.insert_comment(articleid, content, ipaddr)
             # 评论成功后，更新积分明细和剩余积分，及文章回复数量
-            Credit().insert_detail(type='添加评论', target=articleid, credit=2)
+            Credits().insert_detail(credit_type='添加评论', target=articleid, credit=2)
             Users().update_credit(2)
-            Article().update_replycount(articleid)
+            Articles().update_replycount(articleid)
             return 'add-pass'
-        except:
+        except Exception as e:
+            print("add comment error: ", e)
             return 'add-fail'
     else:
         return 'add-limit'
@@ -49,18 +52,19 @@ def reply():
     if len(content) < 5 or len(content) > 1000:
         return 'content-invalid'
 
-    comment = Comment()
+    comment_instance = Comments()
     # 没有超出限制才能发表评论
-    if not comment.check_limit_per_5():
+    if not comment_instance.check_limit_per_5():
         try:
-            comment.insert_reply(articleid=articleid, commentid=commentid,
-                                 content=content, ipaddr=ipaddr)
+            comment_instance.insert_reply(articleid=articleid, commentid=commentid,
+                                          content=content, ipaddr=ipaddr)
             # 评论成功后，同步更新credit表明细、users表积分和article表回复数
-            Credit().insert_detail(type='回复评论', target=articleid, credit=2)
+            Credits().insert_detail(credit_type='回复评论', target=articleid, credit=2)
             Users().update_credit(2)
-            Article().update_replycount(articleid)
+            Articles().update_replycount(articleid)
             return 'reply-pass'
-        except:
+        except Exception as e:
+            print("reply comment error: ", e)
             return 'reply-fail'
     else:
         return 'reply-limit'
@@ -71,6 +75,5 @@ def reply():
 @comment.route('/comment/<int:articleid>-<int:page>')
 def comment_page(articleid, page):
     start = (page - 1) * 10
-    comment = Comment()
-    list = comment.get_comment_user_list(articleid, start, 10)
-    return jsonify(list)
+    comment_instance = Comments()
+    return jsonify(comment_instance.get_comment_user_list(articleid, start, 10))

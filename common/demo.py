@@ -24,7 +24,6 @@
 # print("压缩图片大小为：%d KB" % size)
 
 
-
 # source = '''
 # <p style="text-align:left;text-indent:28px">
 # <span style="font-size:14px;font-family:宋体">文章编辑完成后当然就得发布文章，某种意义上来说就是一个请求而已。但是要优化好整个发布功能，其实要考虑的问题是很多的。</span></p>
@@ -48,7 +47,6 @@
 #         resp = requests.get(item)
 #         with open('D:/download.jpg', 'wb') as file:
 #             file.write(resp.content)
-
 
 
 # import socket                 # 引入Python的socket类
@@ -75,7 +73,6 @@
 # print(r.decode())               # 通过get命令读取变量phone的值
 
 
-
 # import redis
 
 # 指定Redis服务器的IP地址，端口号和数据库进行连接
@@ -94,25 +91,28 @@
 # print(dict)
 
 
-
 import hashlib
 import datetime
-#import sys
-def Findmd5(args):
-    md="10a99b8bfa26650a562ecb14f8a14260"
-    starttime=datetime.datetime.now()
+
+
+# import sys
+def find_md5(args):
+    md = "10a99b8bfa26650a562ecb14f8a14260"
+    starttime = datetime.datetime.now()
     for i in open(args.file):
-        md5=hashlib.md5()   #获取一个md5加密算法对象
-        rs=i.strip()    #去掉行尾的换行符
-        md5.update(rs.encode('utf-8'))  #指定需要加密的字符串
-        newmd5=md5.hexdigest()  #获取加密后的16进制字符串
-        #print newmd5
-        if newmd5==md:
-            print ('明文是：'+rs )   #打印出明文字符串
+        md5 = hashlib.md5()  # 获取一个md5加密算法对象
+        rs = i.strip()  # 去掉行尾的换行符
+        md5.update(rs.encode('utf-8'))  # 指定需要加密的字符串
+        newmd5 = md5.hexdigest()  # 获取加密后的16进制字符串
+        # print newmd5
+        if newmd5 == md:
+            print('明文是：' + rs)  # 打印出明文字符串
             break
         else:
             pass
 
-    endtime=datetime.datetime.now()
-    print (endtime-starttime)	#计算用时，非必须
-Findmd5("10a99b8bfa26650a562ecb14f8a14260")
+    endtime = datetime.datetime.now()
+    print(endtime - starttime)  # 计算用时，非必须
+
+
+

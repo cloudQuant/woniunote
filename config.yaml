@@ -19,7 +19,7 @@ user:
   password: iamyunjinqi
 
 database:
-  SQLALCHEMY_DATABASE_URI: mysql://debian-sys-maint:8vm5a0XBDt0HVTGC@localhost:3306/woniunote?charset=utf8&autocommit=true
+  SQLALCHEMY_DATABASE_URI: mysql://woniunote_user:Woniunote_password1!@localhost:3306/woniunote?charset=utf8&autocommit=true
 
 # 配置文章类型
 ARTICLE_TYPES:
