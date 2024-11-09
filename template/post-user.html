@@ -1,17 +1,49 @@
 {% extends 'base.html' %}   {# 将当前页面继承至base.html母版 #}
 {% block content %}
 
-<script type="text/javascript" src="/ue/ueditor.config.js"></script>
-<script type="text/javascript" src="/ue/ueditor.all.min.js"> </script>
-<script type="text/javascript" src="/ue/lang/zh-cn/zh-cn.js"></script>
-
+{#<script type="text/javascript" src="/ue/ueditor.config.js"></script>#}
+{#<script type="text/javascript" src="/ue/ueditor.all.min.js"> </script>#}
+{#<script type="text/javascript" src="/ue/lang/zh-cn/zh-cn.js"></script>#}
+{##}
+{#<script type="text/javascript">#}
+{#    var ue = UE.getEditor('content', {#}
+{#        initialFrameHeight: 400,#}
+{#        autoHeightEnabled: true,#}
+{#        serverUrl: '/uedit',#}
+{#    });#}
+{#</script>#}
+    <script type="text/plain" style="height:300px;"></script>
+<script type="text/javascript" src="/ueditor/ueditor.config.js"></script>
+<script type="text/javascript" src="/ueditor/ueditor.all.js"></script>
 <script type="text/javascript">
-    var ue = UE.getEditor('content', {
-        initialFrameHeight: 400,
-        autoHeightEnabled: true,
-        serverUrl: '/uedit',
-    });
-</script>
+        var ue = UE.getEditor('content',{
+            // autoHeightEnabled: false,
+            initialFrameHeight: 400,
+            autoHeightEnabled: true,
+            serverUrl: '/uedit',
+
+        });
+        ue.on('contentchange', function () {
+            // console.log('contentchange', ue.getContent());
+        });
+
+        function isFocus(e) {
+            alert(UE.getEditor('content').isFocus());
+            UE.dom.domUtils.preventDefault(e)
+        }
+
+        function setBlur(e) {
+            UE.getEditor('content').blur();
+            UE.dom.domUtils.preventDefault(e)
+        }
+
+        function getSelectText() {
+            var range = UE.getEditor('content').selection.getRange();
+            range.select();
+            var txt = UE.getEditor('content').selection.getText();
+            alert(txt)
+        }
+    </script>
 
 <!-- 中部区域布局 -->
 <div class="container" style="margin-top: 20px; background-color: white; padding: 20px;">
