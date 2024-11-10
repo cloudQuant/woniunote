@@ -1,2 +1,2 @@
 # woniunote
-a blog and website written by python, flask, html, css, javascript
+A blog and website written by python, flask, html, css, javascript
