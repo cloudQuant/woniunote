@@ -1,0 +1,275 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>日常算术训练</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: lightblue;
+        font-family: Arial, sans-serif;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 30px;
+      }
+      .header {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			font-size: 20px;
+			font-weight: bold;
+			padding: 20px;
+			background-color: lightblue;
+		  }
+		  #id_M{
+			display: inline-block;
+			vertical-align: middle;
+			font-size: 30px;
+			margin: 0 5px;
+			color: #333;
+		  }
+		  #id_S {
+			display: inline-block;
+			vertical-align: middle;
+			font-size: 30px;
+			margin: 0 5px;
+			color: #333;
+		  }
+      .timer {
+        font-size: 2rem;
+        margin-left: 10px;
+      }
+      .content {
+        width: 100%;
+
+      }
+      .content-1 {
+        width: 100%;
+        height: 50px;
+        line-height: 50px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.2rem;
+        color: #ffffff;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      }
+      .content-1 input {
+        width: 50px;
+        height: 30px;
+        margin-left: 10px;
+        border-radius: 5px;
+        border: none;
+        text-align: center;
+        font-size: 1.2rem;
+      }
+      .content-1 input:focus {
+        outline: none;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+      }
+      .content-1 input.correct {
+        background-color: #1abc9c;
+        color: #ffffff;
+      }
+      .content-1 input.incorrect {
+        background-color: #e74c3c;
+        color: #ffffff;
+      }
+      .footer {
+        width: 50%;
+        margin-top: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      form {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .footer input {
+        width: 80px;
+        height: 40px;
+        margin-right: 10px;
+        border-radius: 5px;
+        border: none;
+        font-size: 1.2rem;
+        color: #ffffff;
+        background-color: #3498db;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+      .footer input:hover {
+        background-color: #2980b9;
+      }
+      #bt2 {
+        margin-left: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+	<body>
+		<!-- 底部标签 -->
+		<div class="footer">
+		<form action="" method="">
+			<input type="button" id="bt1" value="判断" />
+			<input type="button" id="bt2" value="生成计算" />
+		</form>
+		</div>
+		<!-- 头部信息 -->
+		<div class="header">
+		  <p>我的日常算术训练---每天5-10分钟<br>当前计算使用的时间&nbsp;&nbsp;</p>
+		  <span id="id_M">00</span>
+		  <p>:</p>
+		  <span id="id_S">00</span>
+		</div>
+		<!-- 出题内容 -->
+		<div class="content">
+			<script type="text/javascript">
+			var contentDiv = document.querySelector('.content');
+			for (var i = 0; i < 10; i++) {
+			  var rowDiv = document.createElement('div');
+			  rowDiv.classList.add('row');
+			  for (var j = 0; j < 5; j++) {
+				var cellDiv = document.createElement('div');
+				cellDiv.classList.add('content-1');
+				var span = document.createElement('span');
+				span.classList.add('sp');
+				span.innerText = '3 + 3 = ';
+				var input = document.createElement('input');
+				input.classList.add('answer');
+				input.setAttribute('type', 'text');
+				input.setAttribute('value', '');
+				cellDiv.appendChild(span);
+				cellDiv.appendChild(input);
+				rowDiv.appendChild(cellDiv);
+			  }
+			  contentDiv.appendChild(rowDiv);
+
+
+			}
+			</script>
+		</div>
+
+
+		<!-- JS脚本 -->
+		<script type="text/javascript">
+			// 计时变量
+			var c = 0
+			var timer = null
+
+			var oBt1 = document.getElementById("bt1")
+			var oBt2 = document.getElementById("bt2")
+			var oContent = document.getElementsByClassName("sp")
+			var Answer = document.getElementsByClassName("answer")
+			var id_S = document.getElementById("id_S")
+			var id_M = document.getElementById("id_M")
+
+			// 获取所有的 input 标签
+		  var inputs = document.querySelectorAll(".answer");
+
+		  // 为每个 input 标签绑定 keydown 事件
+		  for (var i = 0; i < inputs.length; i++) {
+			inputs[i].addEventListener("keydown", function(event) {
+			  // 如果按下的键是 Enter 键，则获取下一个 input 标签并使其获得焦点
+			  if (event.keyCode === 13) {
+				var index = Array.prototype.indexOf.call(inputs, event.target);
+				inputs[index + 1].focus();
+				event.preventDefault();
+			  }
+			});
+		  }
+			// console.log(Answer)
+			// strs = str.split(",")
+			// console.log(oContent)
+			oBt1.onclick = function(){
+				var count = 0
+				for(var i = 0;i < oContent.length;i++){
+					strs = oContent[i].innerHTML.split(" ")
+					Ans = Answer[i].value
+					// console.log(Ans)
+					var add1 = strs[0]
+					var operator = strs[1]
+					var add2 = strs[2]
+					// console.log(strs)
+					// console.log(operator)
+					if(operator == "+"){
+						// alert(222)
+						if(Number(add1) + Number(add2) == Number(Ans)){
+							count++;
+						}else{
+							Answer[i].style.backgroundColor = "red";
+						}
+					}
+					if(operator == "-"){
+						if(Number(add1) - Number(add2) == Number(Ans)){
+							count++;
+						}else{
+							Answer[i].style.backgroundColor = "red";
+						}
+					}
+				}
+
+				// 新增计时功能，结束计时
+				c = 0
+				//数据清零
+				Min = id_M.innerText
+				S = id_S.innerText
+				id_S.innerHTML = "00"
+				id_M.innerHTML = "00"
+
+				alert("恭喜你答对了"+count+"题!"+"共用时"+Min+"分"+S+"秒！")
+			}
+
+			// 下一页 开始计时
+			oBt2.onclick = function(){
+				alert("success")
+				for(var i = 0;i < oContent.length;i++){
+					Answer[i].style.backgroundColor = "white";
+					Answer[i].value = " "
+					var add1 = parseInt(Math.random()*100)
+					var add2 = parseInt(Math.random()*100)
+					var ope = Math.round(Math.random())
+					strs = oContent[i].innerHTML.split(" ")
+					if(ope == 0){
+						strs[1] = "+"
+					}
+					if(ope == 1){
+						strs[1] = "-"
+					}
+					// console.log(oContent[i].innerText)
+					// console.log(strs)
+					strs[0] = add1
+					strs[2] = add2
+					// console.log(strs)
+					oContent[i].innerText = strs[0]+" "+strs[1]+" "+strs[2]+" "+strs[3]+" "+strs[4]+" "
+				}
+
+				// 新增计时功能，开始计时
+				timer = setInterval(function() {
+				    c++;
+				    // console.log(c)
+				        // 需要改变页面上时分秒的值
+				    // console.log($("id_S"))
+				    id_S.innerHTML = showNum(c % 60)
+				    id_M.innerHTML = showNum(parseInt(c / 60) % 60)
+				},1000)
+			}
+			//封装一个处理单位数字的函数
+			function showNum(num) {
+			    if (num < 10) {
+			        return '0' + num
+			    }
+			    return num
+			}
+		</script>
+	</body>
+</html>
+

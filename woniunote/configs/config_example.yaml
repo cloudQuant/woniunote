@@ -1,0 +1,37 @@
+# yaml文件，文件名为config_example.yaml, 把内容修改好之后保存为一个config.yaml文件，代码会使用到这些配置，这些配置不会上传到github上。
+# 根据需要，修改配置自己的用户名和密码、文章类型
+# 用于生成admin账户的用户名，昵称和密码
+admin:
+  username: woniunote_admin
+  nickname: admin
+  password: woniunote_admin_password1!
+
+# 用于生成编辑账户的用户名，昵称和密码
+editor:
+  username: woniunote_editor
+  nickname: editor
+  password: woniunote_editor_password1!
+
+# 用于生成一个普通账户的用户名，昵称和密码
+user:
+  username: woniunote_user
+  nickname: user
+  password: woniunote_user_password1!
+
+database:
+  SQLALCHEMY_DATABASE_URI: mysql://woniunote_user:Woniunote_password1!@127.0.0.1:3306/woniunote?charset=utf8&autocommit=true
+
+# 配置文章类型
+ARTICLE_TYPES:
+  1: 量化思考
+  2: 量化框架
+  3: 交易策略
+  4: 股票
+  5: 期货
+  6: 期权
+  7: 基金
+  8: 债券
+  9: 理财
+  10: 保险
+  11: 学习与感悟
+  12: 公益
