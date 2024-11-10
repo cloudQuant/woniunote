@@ -5,7 +5,8 @@ server {
         rewrite ^(.*)$ https://$host$1 permanent;
         location / {
         index index.html index.htm;}}
-server {                                                                                listen 443;
+server {
+        listen 443;
         server_name www.yunjinqi.top;
         ssl on;
         root html;
