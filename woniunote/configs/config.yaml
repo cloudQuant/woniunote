@@ -83,9 +83,10 @@ ARTICLE_TYPES:
   85: 历史
   86: 科技
   9: 公益信息
-  91: ib_tws_api_翻译
+  91: woniunote入门教程
   92: backtrader基础教程
   93: airflow入门教程
   94: arrow入门教程
   95: 量化交易入门教程
   96: 机器学习入门教程
+  97: ib_tws_api入门教程
