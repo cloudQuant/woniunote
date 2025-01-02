@@ -15,10 +15,10 @@ from woniunote.controller.ueditor import ueditor
 from woniunote.controller.user import user
 from woniunote.module.users import Users
 import pymysql
+
 pymysql.install_as_MySQLdb()
-
-
 config_result = read_config()
+
 SQLALCHEMY_DATABASE_URI = config_result['database']["SQLALCHEMY_DATABASE_URI"]
 app = Flask(__name__, template_folder='template',
             static_url_path='/', static_folder='resource')
@@ -45,19 +45,25 @@ app.register_blueprint(ucenter)
 app.register_blueprint(tcenter)
 app.register_blueprint(card_center)
 
+package_path = get_package_path("woniunote")
+
 
 # 定义404错误页面
 @app.errorhandler(404)
 def page_not_found(e):
     print(e)
-    return render_template('error-404.html')
+    # file_path = os.path.join(package_path, 'template', 'error-404.html')
+    file_path = "error-404.html"
+    return render_template(file_path)
 
 
 # 定义500错误页面
 @app.errorhandler(500)
 def server_error(e):
     print(e)
-    return render_template('error-500.html')
+    # file_path = os.path.join(package_path, 'template', 'error-500.html')
+    file_path = "error-500.html"
+    return render_template(file_path)
 
 
 # 定义全局拦截器，实现自动登录
@@ -111,7 +117,9 @@ def get_type():
 # app.jinja_env.globals.update(my_article_type=get_type)
 @app.route('/preupload')
 def pre_upload():
-    return render_template('file-upload.html')
+    # file_path = os.path.join(package_path, 'template', 'file-upload.html')
+    file_path = "file-upload.html"
+    return render_template(file_path)
 
 
 @app.route('/upload', methods=['POST'])
@@ -133,10 +141,12 @@ def do_upload():
 
 @app.route("/math_train", methods=["POST", "GET"])
 def math_train():
-    return render_template("math_train.html")
+    # file_path = os.path.join(package_path, 'template', 'math_train.html')
+    file_path = math_train.html
+    return render_template(file_path)
 
 
 if __name__ == '__main__':
     path = get_package_path("woniunote")
-    app.run(host="127.0.0.1", debug=False, ssl_context=(path+"/configs/cert.pem", path+"/configs/key.pem"))
+    app.run(host="127.0.0.1", debug=False, ssl_context=(path + "/configs/cert.pem", path + "/configs/key.pem"))
     # app.run(host="127.0.0.1", debug=True)
