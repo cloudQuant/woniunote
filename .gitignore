@@ -1,6 +1,7 @@
 # woniunote
 .woniunote_run.log
-.woniunote/configs/config.yaml
+woniunote/configs/user_password_config.yaml
+
 .DS_Store
 
 # Byte-compiled / optimized / DLL files

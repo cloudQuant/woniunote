@@ -35,6 +35,7 @@ def dbconnect():
 
 
 # dict
+article_config = read_config("/configs/article_type_config.yaml")
 ARTICLE_TYPES = config_result['ARTICLE_TYPES']
 
 if __name__ == '__main__':

@@ -36,7 +36,7 @@ def get_package_path(package_name="lv"):
 def read_config(config_file=None):
     package_path = get_package_path("woniunote")
     if config_file is None:
-        file_path = package_path + "/configs/config.yaml"
+        file_path = package_path + "/configs/user_password_config.yaml"
         with open(file_path, 'r', encoding='utf-8') as f:
             config_result = yaml.load(f.read(), Loader=yaml.FullLoader)
     else:
