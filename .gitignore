@@ -1,3 +1,9 @@
+# woniunote
+.woniunote_run.log
+woniunote/configs/user_password_config.yaml
+
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -32,7 +38,7 @@ MANIFEST
 *.manifest
 *.spec
 .idea/
-.woniunote_run.log
+
 
 # Installer logs
 pip-log.txt
