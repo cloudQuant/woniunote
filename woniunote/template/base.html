@@ -57,7 +57,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                 <div class="navbar-nav">
-                    {% for main_key, main_value in article_type.items() if main_key < 10 %}
+                    {% for main_key, main_value in article_type.items() if main_key < 100 %}
                         <div class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="dropdown{{ main_key }}" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 {{ main_value }}
