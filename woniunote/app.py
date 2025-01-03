@@ -149,4 +149,7 @@ def math_train():
 if __name__ == '__main__':
     path = get_package_path("woniunote")
     # 本地测试
-    app.run(host="127.0.0.1", debug=False, ssl_context=(path + "/configs/cert.pem", path + "/configs/key.pem"))
+    app.run(host="127.0.0.1",
+            debug=False,
+            port=8888,
+            ssl_context=(path + "/configs/cert.pem", path + "/configs/key.pem"))
