@@ -28,8 +28,8 @@ http {
         index index.html index.htm;
 
         # SSL 证书和密钥路径
-        ssl_certificate /home/ubuntu/anaconda3/lib/python3.11/site-packages/woniunote/yunjinqi.top_bundle.pem;
-        ssl_certificate_key /home/ubuntu/anaconda3/lib/python3.11/site-packages/woniunote/yunjinqi.top.key;
+        ssl_certificate /home/ubuntu/anaconda3/lib/python3.11/site-packages/woniunote/configs/yunjinqi.top_bundle.pem;
+        ssl_certificate_key /home/ubuntu/anaconda3/lib/python3.11/site-packages/woniunote/configs/yunjinqi.top.key;
 
         # SSL 配置
         ssl_session_timeout 5m;
