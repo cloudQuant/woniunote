@@ -111,7 +111,8 @@ def mytruncate(s, length, end='...'):
 # 定义文章类型函数，供模板页面直接调用
 @app.context_processor
 def get_type():
-    return dict(article_type=ARTICLE_TYPES)
+    content = dict(article_type=ARTICLE_TYPES)
+    return content
 
 
 # app.jinja_env.globals.update(my_article_type=get_type)
