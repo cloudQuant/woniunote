@@ -6,9 +6,8 @@ server {
         location / {
         index index.html index.htm;}}
 server {
-        listen 443;
+        listen 443 ssl;
         server_name www.yunjinqi.top;
-        ssl on;
         root html;
         index index.html index.htm;
         ssl_certificate /home/ubuntu/anaconda3/lib/python3.11/site-packages/woniunote/yunjinqi.top_bundle.pem;   # 证书
