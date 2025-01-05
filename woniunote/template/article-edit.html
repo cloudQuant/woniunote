@@ -69,18 +69,21 @@
     <div class="row form-group" style="margin-top: 20px; padding-top: 10px;">
         <label for="type" class="col-1">类型：</label>
         <select class="form-control col-2" id="type">
-            <option value="1">量化思考</option>
-            <option value="2">量化框架</option>
-            <option value="3">交易策略</option>
-            <option value="4">股票</option>
-            <option value="5">期货</option>
-            <option value="6">期权</option>
-            <option value="7">基金</option>
-            <option value="8">债券</option>
-            <option value="9">理财</option>
-            <option value="10">保险</option>
-            <option value="11">学习与感悟</option>
-            <option value="12">公益</option>
+            {% for main_key, main_value in article_type.items()%}
+            <option value="{{ main_key }}">{{ main_value }}</option>
+        {% endfor %}
+{#            <option value="1">量化思考</option>#}
+{#            <option value="2">量化框架</option>#}
+{#            <option value="3">交易策略</option>#}
+{#            <option value="4">股票</option>#}
+{#            <option value="5">期货</option>#}
+{#            <option value="6">期权</option>#}
+{#            <option value="7">基金</option>#}
+{#            <option value="8">债券</option>#}
+{#            <option value="9">理财</option>#}
+{#            <option value="10">保险</option>#}
+{#            <option value="11">学习与感悟</option>#}
+{#            <option value="12">公益</option>#}
             
         </select>
         <label class="col-1"></label>
