@@ -1,5 +1,5 @@
 import time
-
+import traceback
 from flask import session
 from sqlalchemy import Table, Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
@@ -35,48 +35,68 @@ class Favorites(DBase):
 
     # 播入文章收藏数据
     def insert_favorite(self, articleid):
-        row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=session.get('userid')).first()
-        if row is not None:
-            row.canceled = 0
-        else:
-            now = time.strftime('%Y-%m-%d %H:%M:%S')
-            favorite = Favorite(articleid=articleid, userid=session.get('userid'), canceled=0, createtime=now,
-                                updatetime=now)
-            dbsession.add(favorite)
-        dbsession.commit()
+        try:
+            row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=session.get('userid')).first()
+            if row is not None:
+                row.canceled = 0
+            else:
+                now = time.strftime('%Y-%m-%d %H:%M:%S')
+                favorite = Favorite(articleid=articleid, userid=session.get('userid'), canceled=0, createtime=now,
+                                    updatetime=now)
+                dbsession.add(favorite)
+            dbsession.commit()
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
 
     # 取消收藏
     def cancel_favorite(self, articleid):
-        row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=session.get('userid')).first()
-        row.canceled = 1
-        dbsession.commit()
+        try:
+            row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=session.get('userid')).first()
+            row.canceled = 1
+            dbsession.commit()
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
 
     # 判断是否已经被收藏
     def check_favorite(self, articleid):
-        row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=session.get('userid')).first()
-        if row is None:
-            return False
-        elif row.canceled == 1:
-            return False
-        else:
-            return True
+        try:
+            row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=session.get('userid')).first()
+            if row is None:
+                return False
+            elif row.canceled == 1:
+                return False
+            else:
+                return True
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
 
     # 为用户中心查询我的收藏添加数据操作方法
     def find_my_favorite(self):
-        result = dbsession.query(Favorite, Article).join(Article, Favorite.articleid ==
-                                                         Article.articleid).filter(
-            Favorite.userid == session.get('userid')).all()
-        return result
+        try:
+            result = dbsession.query(Favorite, Article).join(Article, Favorite.articleid ==
+                                                             Article.articleid).filter(
+                Favorite.userid == session.get('userid')).all()
+            return result
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
 
     # 切换收藏和取消收藏的状态
     def switch_favorite(self, favoriteid):
-        row = dbsession.query(Favorite).filter_by(favoriteid=favoriteid).first()
-        if row.canceled == 1:
-            row.canceled = 0
-        else:
-            row.canceled = 1
-        dbsession.commit()
-        return row.canceled
+        try:
+            row = dbsession.query(Favorite).filter_by(favoriteid=favoriteid).first()
+            if row.canceled == 1:
+                row.canceled = 0
+            else:
+                row.canceled = 1
+            dbsession.commit()
+            return row.canceled
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
 
 
 if __name__ == '__main__':

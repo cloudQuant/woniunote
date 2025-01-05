@@ -5,6 +5,7 @@ from woniunote.common.database import dbconnect
 from woniunote.module.users import Users
 from woniunote.common.create_database import Credit
 import time
+import traceback
 
 dbsession, md, DBase = dbconnect()
 
@@ -34,19 +35,27 @@ class Credits(DBase):
 
     # 插入积分明细数据
     def insert_detail(self, credit_type, target, credit):
-        now = time.strftime('%Y-%m-%d %H:%M:%S')
-        credit = Credit(userid=session.get('userid'), category=credit_type, target=target,
-                        credit=credit, createtime=now, updatetime=now)
-        dbsession.add(credit)
-        dbsession.commit()
+        try:
+            now = time.strftime('%Y-%m-%d %H:%M:%S')
+            credit = Credit(userid=session.get('userid'), category=credit_type, target=target,
+                            credit=credit, createtime=now, updatetime=now)
+            dbsession.add(credit)
+            dbsession.commit()
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
 
     # 判断用户是否已经消耗积分
     def check_payed_article(self, articleid):
-        result = dbsession.query(Credit).filter_by(userid=session.get('userid'), target=articleid).all()
-        if len(result) > 0:
-            return True
-        else:
-            return False
+        try:
+            result = dbsession.query(Credit).filter_by(userid=session.get('userid'), target=articleid).all()
+            if len(result) > 0:
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
 
 
 if __name__ == '__main__':

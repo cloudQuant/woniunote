@@ -3,52 +3,66 @@ from woniunote.controller.user import *
 from woniunote.module.articles import Articles
 from woniunote.module.comments import Comments
 from woniunote.module.favorites import Favorites
+import traceback
 
 ucenter = Blueprint("ucenter", __name__)
 
 
 @ucenter.route('/ucenter')
 def user_center():
-    result = Favorites().find_my_favorite()
-    return render_template('user-center.html', result=result)
+    try:
+        result = Favorites().find_my_favorite()
+        return render_template('user-center.html', result=result)
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
 
 
 @ucenter.route('/user/favorite/<int:favoriteid>')
 def user_favorite(favoriteid):
-    canceled = Favorites().switch_favorite(favoriteid)
-    return str(canceled)
+    try:
+        canceled = Favorites().switch_favorite(favoriteid)
+        return str(canceled)
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
 
 
 @ucenter.route('/user/post')
 def user_post():
-    # return render_template('user-post.html',my_article_type=ARTICLE_TYPES)
-    return render_template('user-post.html')
+    try:
+        # return render_template('user-post.html',my_article_type=ARTICLE_TYPES)
+        return render_template('user-post.html')
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
 
 
 @ucenter.route('/user/article')
 def user_article():
-    # print(" get article")
-    # return render_template("article-user.html")
-    # name=request.cookies.get('username')
-    userid = session.get("userid")
-    results = Articles().find_all()
-    results = [[i.articleid, i] for i in results if i.userid == userid]
-    return render_template('user-center.html', result=results)
+    try:
+        userid = session.get("userid")
+        results = Articles().find_all()
+        results = [[i.articleid, i] for i in results if i.userid == userid]
+        return render_template('user-center.html', result=results)
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
 
 
 @ucenter.route('/user/comment')
 def user_comment():
-    # print(" get article")
-    # return render_template("article-user.html")
-    # name=request.cookies.get('username')
-
-    userid = session.get("userid")
-    results = Comments().find_all()
-    commentid_list = [i.articleid for i in results]
-    articles = Articles().find_all()
-    articles = [[i.articleid, i] for i in articles if i.articleid in commentid_list]
-    print(userid)
-    return render_template('user-center.html', result=articles)
+    try:
+        userid = session.get("userid")
+        results = Comments().find_all()
+        commentid_list = [i.articleid for i in results]
+        articles = Articles().find_all()
+        articles = [[i.articleid, i] for i in articles if i.articleid in commentid_list]
+        print(userid)
+        return render_template('user-center.html', result=articles)
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
 
 # @ucenter.route('/todo', methods=['GET', 'POST'])
 # def todo():
