@@ -6,6 +6,7 @@ from woniunote.module.credits import Credits
 from woniunote.module.favorites import Favorites
 from woniunote.module.users import Users
 from woniunote.common.timer import can_use_minute
+from woniunote.common.database import ARTICLE_TYPES
 import math
 
 article = Blueprint("article", __name__)
@@ -92,7 +93,10 @@ def pre_post():
 @article.route('/edit/<int:articleid>')
 def go_edit(articleid):
     result = Articles().find_by_id(articleid)
-    return render_template("article-edit.html", result=result)
+
+    target_html = "article-edit.html"
+    article_type = ARTICLE_TYPES
+    return render_template(target_html, result=result, article_type=article_type)
 
 
 # 处理文章编辑请求

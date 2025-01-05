@@ -5,3 +5,4 @@ A blog and website written by python, flask, html, css, javascript and mysql.
 使用flask、html、css和mysql建的个人博客，目前已经在个人网站(yunjinqi.top)上运行
 
 #### Software Architecture
+article-edit.html: 文章编辑页面，可以对文章进行编辑、删除、发布等操作

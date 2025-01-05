@@ -1,17 +1,6 @@
 {% extends 'base.html' %}   {# 将当前页面继承至base.html母版 #}
 {% block content %}
 
-{#<script type="text/javascript" src="/ue/ueditor.config.js"></script>#}
-{#<script type="text/javascript" src="/ue/ueditor.all.min.js"> </script>#}
-{#<script type="text/javascript" src="/ue/lang/zh-cn/zh-cn.js"></script>#}
-{##}
-{#<script type="text/javascript">#}
-{#    var ue = UE.getEditor('content', {#}
-{#        initialFrameHeight: 400,#}
-{#        autoHeightEnabled: true,#}
-{#        serverUrl: '/uedit',#}
-{#    });#}
-{#</script>#}
 <script type="text/plain" style="height:300px;"></script>
 <script type="text/javascript" src="/ueditor/ueditor.config.js"></script>
 <script type="text/javascript" src="/ueditor/ueditor.all.js"></script>
@@ -69,9 +58,15 @@
     <div class="row form-group" style="margin-top: 20px; padding-top: 10px;">
         <label for="type" class="col-1">类型：</label>
         <select class="form-control col-2" id="type">
-            {% for main_key, main_value in article_type.items()%}
-            <option value="{{ main_key }}">{{ main_value }}</option>
+            {% for main_key, main_value in article_type.items() %}
+            <option value="{{ main_key }}"
+                    {% if result[0].type == main_key %} selected {% endif %}>
+                {{ main_value }}
+            </option>
         {% endfor %}
+{#            {% for main_key, main_value in article_type.items()%}#}
+{#            <option value="{{ main_key }}">{{ main_value }}</option>#}
+{#        {% endfor %}#}
 {#            <option value="1">量化思考</option>#}
 {#            <option value="2">量化框架</option>#}
 {#            <option value="3">交易策略</option>#}
