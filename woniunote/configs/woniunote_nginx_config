@@ -1,3 +1,8 @@
+# 添加 events 块
+events {
+    # 可以留空，或者根据需要配置事件模型
+}
+
 http {
     # HTTP 服务器块，用于将 HTTP 请求重定向到 HTTPS
     server {
