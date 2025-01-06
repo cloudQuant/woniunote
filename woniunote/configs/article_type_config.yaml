@@ -47,9 +47,8 @@ ARTICLE_TYPES:
   703: cython
   704: java
   705: javascript
-  706: cython
+  706: swing
   707: pybind11
-  708: swing
   8: 笔记
   801: 幸福
   802: 金融
@@ -57,6 +56,8 @@ ARTICLE_TYPES:
   804: 哲学
   805: 历史
   806: 科技
+  807: 读书笔记
+  808: 其他笔记
   9: 教程
   901: woniunote入门教程
   902: backtrader基础教程
