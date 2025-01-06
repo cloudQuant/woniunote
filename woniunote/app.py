@@ -14,6 +14,8 @@ from woniunote.controller.ucenter import ucenter
 from woniunote.controller.ueditor import ueditor
 from woniunote.controller.user import user
 from woniunote.module.users import Users
+from woniunote.module.articles import Articles
+from woniunote.common.timer import can_use_minute
 import pymysql
 
 pymysql.install_as_MySQLdb()
@@ -145,6 +147,30 @@ def math_train():
     # file_path = os.path.join(package_path, 'template', 'math_train.html')
     file_path = math_train.html
     return render_template(file_path)
+
+@app.route('/type/<int:type>/<int:page>')
+def classify(class_type, page):
+    print("class_type", class_type, "classify run")
+    try:
+        start = (page - 1) * 10
+        article = Articles()
+        result = article.find_by_type(class_type, start, 10)
+        total = math.ceil(article.get_count_by_type(class_type) / 10)
+        print("result = ", result)
+        print("total = ", total)
+        last, most, recommended = article.find_last_most_recommended()
+        return render_template('type.html',
+                               result=result,
+                               page=page,
+                               total=total,
+                               can_use_minute=can_use_minute(),
+                               type=class_type,
+                               last_articles=last,
+                               most_articles=most,
+                               recommended_articles=recommended)
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
 
 
 if __name__ == '__main__':
