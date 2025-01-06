@@ -100,7 +100,7 @@ def paginate(page):
         traceback.print_exc()
 
 
-@index.route('/type/<int:type>/<int:page>')
+@index.route('/type/<int:class_type>/<int:page>')
 def classify(class_type, page):
     print("class_type", class_type, "classify run")
     try:
