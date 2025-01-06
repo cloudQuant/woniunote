@@ -15,7 +15,8 @@
                     <!-- 如果需要文章编辑的菜单  if article.userid == session.get('userid') -->
                 </div>
                 <div class="col-12 info">
-                    作者：{{article.nickname}}&nbsp;&nbsp;&nbsp;类别：{{article_type[article.type | string]}}&nbsp;&nbsp;&nbsp;
+                    作者：{{article.nickname}}&nbsp;&nbsp;&nbsp;
+                    类别：{{article_type[article.type//100]}}&nbsp;&nbsp;&nbsp;
                     日期：{{article.createtime}}&nbsp;&nbsp;&nbsp;
                     阅读：{{article.readcount}} 次&nbsp;&nbsp;&nbsp;消耗积分：{{article.credit}} 分
                 </div>

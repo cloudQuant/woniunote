@@ -39,7 +39,8 @@
                 </div>
                 <div class="col-sm-9 col-xs-12 detail">
                     <div class="title"><a href="/article/{{article.articleid}}">{{article.headline}}</a></div>
-                    <div class="info">作者：{{nickname}}&nbsp;&nbsp;&nbsp;类别：{{ article_type.get(article.type | string, "未知类别") }}&nbsp;&nbsp;&nbsp;
+                    <div class="info">作者：{{nickname}}&nbsp;&nbsp;&nbsp;
+                        类别：{{ article_type.get(article.type//100, "未知类别") }}&nbsp;&nbsp;&nbsp;
                         日期：{{article.createtime}}&nbsp;&nbsp;&nbsp;阅读：{{article.readcount}} 次&nbsp;&nbsp;&nbsp;消耗积分：{{article.credit}} 分</div>
                     <div class="intro">
                         {{article.content | striptags | truncate(80)}}
