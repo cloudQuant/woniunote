@@ -150,30 +150,6 @@ def math_train():
     file_path = math_train.html
     return render_template(file_path)
 
-@app.route('/type/<int:class_type>/<int:page>')
-def classify(class_type, page):
-    print("class_type", class_type, "classify run")
-    try:
-        start = (page - 1) * 10
-        article = Articles()
-        result = article.find_by_type(class_type, start, 10)
-        total = math.ceil(article.get_count_by_type(class_type) / 10)
-        print("result = ", result)
-        print("total = ", total)
-        last, most, recommended = article.find_last_most_recommended()
-        return render_template('type.html',
-                               result=result,
-                               page=page,
-                               total=total,
-                               can_use_minute=can_use_minute(),
-                               type=class_type,
-                               last_articles=last,
-                               most_articles=most,
-                               recommended_articles=recommended)
-    except Exception as e:
-        print(e)
-        traceback.print_exc()
-
 
 if __name__ == '__main__':
     path = get_package_path("woniunote")
