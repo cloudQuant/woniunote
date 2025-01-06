@@ -89,7 +89,7 @@
 
         // 定义子类型数据
         const subTypesData = {
-            {% for key, value in ARTICLE_TYPES.items() %}
+            {% for key, value in article_type.items() %}
                 {% if key >= 100 %}
                     {% set main_id = key // 100 %}
                     {% if main_id not in subTypesData %}
