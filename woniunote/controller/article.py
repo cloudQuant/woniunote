@@ -107,7 +107,8 @@ def pre_post():
 def go_edit(articleid):
     try:
         result = Articles().find_by_id(articleid)
-        print("go_edit", articleid, result)
+        print("go_edit", articleid)
+        print("result = ", result)
         target_html = "article-edit.html"
         article_type = ARTICLE_TYPES
         return render_template(target_html, result=result, article_type=article_type)
