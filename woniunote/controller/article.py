@@ -106,6 +106,7 @@ def pre_post():
 @article.route('/edit/<int:articleid>')
 def go_edit(articleid):
     try:
+        print("go_edit", articleid)
         result = Articles().find_by_id(articleid)
         target_html = "article-edit.html"
         article_type = ARTICLE_TYPES
