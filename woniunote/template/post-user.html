@@ -56,33 +56,24 @@
         </script>
     </div>
     <!-- 类型、积分、提交修改 -->
-    <div class="row form-group" style="margin-top: 20px; padding-top: 10px;">
-        <!-- 类型 -->
-        <label for="type" class="col-1">类型：</label>
-        <select class="form-control col-2" id="main-type">
-            {% for key, value in article_type.items() %}
-                {% if key < 100 %}
-                <option value="{{ key }}"
-                        {% if result[0].type // 100 == key %} selected {% endif %}>
-                    {{ value }}
-                </option>
-                {% endif %}
-            {% endfor %}
-        </select>
-
-        <!-- 子类型 -->
-        <select class="form-control col-2" id="sub-type">
-            {% if result[0].type %}
-                {% for key, value in article_type.items() %}
-                    {% if key >= 100 and key // 100 == result[0].type // 100 %}
-                    <option value="{{ key }}"
-                            {% if result[0].type == key %} selected {% endif %}>
-                        {{ value }}
-                    </option>
-                    {% endif %}
-                {% endfor %}
+<div class="row form-group" style="margin-top: 20px; padding-top: 10px;">
+    <!-- 类型 -->
+    <label for="type" class="col-1">类型：</label>
+    <select class="form-control col-2" id="main-type">
+        {% for key, value in article_type.items() %}
+            {% if key < 100 %}
+            <option value="{{ key }}">
+                {{ value }}
+            </option>
             {% endif %}
-        </select>
+        {% endfor %}
+    </select>
+
+    <!-- 子类型 -->
+    <select class="form-control col-2" id="sub-type">
+        <!-- 初始时子类型为空 -->
+    </select>
+</div>
 
         <!-- 积分 -->
         <label for="credit" class="col-1">积分：</label>
@@ -187,7 +178,20 @@
     const subTypeSelect = document.getElementById('sub-type');
 
     // 定义子类型数据（由后端生成并传递给前端）
-    const subTypesData = {{ subTypesData | tojson | safe }};
+    const subTypesData = {
+        {% for key, value in article_type.items() %}
+            {% if key >= 100 %}
+                {% set main_id = key // 100 %}
+                {% if main_id not in subTypesData %}
+                    {{ main_id }}: {
+                {% endif %}
+                {{ key }}: "{{ value }}",
+                {% if loop.last or (loop.nextitem is defined and loop.nextitem[0] // 100 != main_id) %}
+                    },
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    };
 
     // 主类型变化时更新子类型
     mainTypeSelect.addEventListener('change', function () {

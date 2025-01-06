@@ -96,7 +96,15 @@ def read_all():
 @article.route('/prepost')
 def pre_post():
     try:
-        return render_template('post-user.html')
+        article_type = ARTICLE_TYPES
+        subTypesData = {}
+        for key, value in article_type.items():
+            if key >= 100:
+                main_id = key // 100
+                if main_id not in subTypesData:
+                    subTypesData[main_id] = {}
+                subTypesData[main_id][key] = value
+        return render_template('post-user.html', article_type=article_type, subTypesData=subTypesData)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -118,7 +126,7 @@ def go_edit(articleid):
                 if main_id not in subTypesData:
                     subTypesData[main_id] = {}
                 subTypesData[main_id][key] = value
-        return render_template(target_html, result=result, article_type=article_type,subTypesData=subTypesData)
+        return render_template(target_html, result=result, article_type=article_type, subTypesData=subTypesData)
     except Exception as e:
         print(e)
         traceback.print_exc()
