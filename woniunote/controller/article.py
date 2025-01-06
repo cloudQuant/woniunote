@@ -111,7 +111,14 @@ def go_edit(articleid):
         print("result = ", result)
         target_html = "article-edit.html"
         article_type = ARTICLE_TYPES
-        return render_template(target_html, result=result, article_type=article_type)
+        subTypesData = {}
+        for key, value in article_type.items():
+            if key >= 100:
+                main_id = key // 100
+                if main_id not in subTypesData:
+                    subTypesData[main_id] = {}
+                subTypesData[main_id][key] = value
+        return render_template(target_html, result=result, article_type=article_type,subTypesData=subTypesData)
     except Exception as e:
         print(e)
         traceback.print_exc()
