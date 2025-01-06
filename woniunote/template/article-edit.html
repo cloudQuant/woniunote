@@ -55,7 +55,7 @@
 {#            </option>#}
 {#            {% endfor %}#}
 {#        </select>#}
-        <div class="row form-group" style="margin-top: 20px; padding-top: 10px;">
+       <div class="row form-group" style="margin-top: 20px; padding-top: 10px;">
     <label for="type" class="col-1">类型：</label>
 
     <!-- 主类型下拉框 -->
@@ -85,48 +85,7 @@
     </select>
 </div>
 
-    <script>
-    // 获取主类型和子类型下拉框
-    const mainTypeSelect = document.getElementById('main-type');
-    const subTypeSelect = document.getElementById('sub-type');
 
-    // 定义子类型数据（由后端生成并传递给前端）
-    const subTypesData = {
-        {% for key, value in article_type.items() %}
-            {% if key >= 100 %}
-                {% set main_id = key // 100 %}
-                {% if main_id not in subTypesData %}
-                    {{ main_id }}: {
-                {% endif %}
-                {{ key }}: "{{ value }}",
-                {% if loop.last or (loop.nextitem is defined and loop.nextitem.key // 100 != main_id) %}
-                    },
-                {% endif %}
-            {% endif %}
-        {% endfor %}
-    };
-
-    // 主类型变化时更新子类型
-    mainTypeSelect.addEventListener('change', function () {
-        const selectedMainType = parseInt(this.value);
-        const subTypes = subTypesData[selectedMainType];
-
-        // 清空子类型选项
-        subTypeSelect.innerHTML = '';
-
-        // 添加新的子类型选项
-        for (const [subId, subName] of Object.entries(subTypes)) {
-            const option = document.createElement('option');
-            option.value = subId;
-            option.textContent = subName;
-            subTypeSelect.appendChild(option);
-        }
-    });
-
-    // 初始化时触发一次 change 事件，确保子类型选项正确
-    mainTypeSelect.dispatchEvent(new Event('change'));
-</script>
-    </script>
         <label class="col-1"></label>
         <label for="credit" class="col-1">积分：</label>
         <select class="form-control col-2" id="credit">
@@ -192,5 +151,45 @@
     
     
 </script>
+<script>
+    // 获取主类型和子类型下拉框
+    const mainTypeSelect = document.getElementById('main-type');
+    const subTypeSelect = document.getElementById('sub-type');
 
+    // 定义子类型数据（由后端生成并传递给前端）
+    const subTypesData = {
+        {% for key, value in article_type.items() %}
+            {% if key >= 100 %}
+                {% set main_id = key // 100 %}
+                {% if main_id not in subTypesData %}
+                    {{ main_id }}: {
+                {% endif %}
+                {{ key }}: "{{ value }}",
+                {% if loop.last or (loop.nextitem is defined and loop.nextitem[0] // 100 != main_id) %}
+                    },
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    };
+
+    // 主类型变化时更新子类型
+    mainTypeSelect.addEventListener('change', function () {
+        const selectedMainType = parseInt(this.value);
+        const subTypes = subTypesData[selectedMainType];
+
+        // 清空子类型选项
+        subTypeSelect.innerHTML = '';
+
+        // 添加新的子类型选项
+        for (const [subId, subName] of Object.entries(subTypes)) {
+            const option = document.createElement('option');
+            option.value = subId;
+            option.textContent = subName;
+            subTypeSelect.appendChild(option);
+        }
+    });
+
+    // 初始化时触发一次 change 事件，确保子类型选项正确
+    mainTypeSelect.dispatchEvent(new Event('change'));
+</script>
 {% endblock %}
