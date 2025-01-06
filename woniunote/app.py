@@ -34,7 +34,8 @@ app.config['SQLALCHEMY_POOL_SIZE'] = 100  # 数据库连接池的大小。默认
 db.init_app(app)
 sslify = SSLify(app)
 
-app.register_blueprint(index)
+# app.register_blueprint(index)
+app.register_blueprint(index, url_prefix='/index')
 app.register_blueprint(user)
 app.register_blueprint(article)
 app.register_blueprint(favorite)
