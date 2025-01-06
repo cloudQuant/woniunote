@@ -55,24 +55,36 @@
         <script id="content" name="content" type="text/plain">
         </script>
     </div>
+    <!-- 类型、积分、提交修改 -->
     <div class="row form-group" style="margin-top: 20px; padding-top: 10px;">
+        <!-- 类型 -->
         <label for="type" class="col-1">类型：</label>
-        <select class="form-control col-2" id="type">
-            <option value="1">量化思考</option>
-            <option value="2">量化框架</option>
-            <option value="3">交易策略</option>
-            <option value="4">股票</option>
-            <option value="5">期货</option>
-            <option value="6">期权</option>
-            <option value="7">基金</option>
-            <option value="8">债券</option>
-            <option value="9">理财</option>
-            <option value="10">保险</option>
-            <option value="11">学习与感悟</option>
-            <option value="12">公益</option>
-            
+        <select class="form-control col-2" id="main-type">
+            {% for key, value in article_type.items() %}
+                {% if key < 100 %}
+                <option value="{{ key }}"
+                        {% if result[0].type // 100 == key %} selected {% endif %}>
+                    {{ value }}
+                </option>
+                {% endif %}
+            {% endfor %}
         </select>
-        <label class="col-1"></label>
+
+        <!-- 子类型 -->
+        <select class="form-control col-2" id="sub-type">
+            {% if result[0].type %}
+                {% for key, value in article_type.items() %}
+                    {% if key >= 100 and key // 100 == result[0].type // 100 %}
+                    <option value="{{ key }}"
+                            {% if result[0].type == key %} selected {% endif %}>
+                        {{ value }}
+                    </option>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </select>
+
+        <!-- 积分 -->
         <label for="credit" class="col-1">积分：</label>
         <select class="form-control col-2" id="credit">
             <option value="0">免费</option>
@@ -83,6 +95,7 @@
             <option value="20">20分</option>
             <option value="50">50分</option>
         </select>
+
         <label class="col-1"></label>
         <button class="form-control btn-default col-2" onclick="doDraft()">保存草稿</button>
         <button class="form-control btn-primary col-2" onclick="doPost()">发布文章</button>
@@ -166,6 +179,37 @@
             }
         });
     }
+</script>
+
+    <script>
+    // 获取主类型和子类型下拉框
+    const mainTypeSelect = document.getElementById('main-type');
+    const subTypeSelect = document.getElementById('sub-type');
+
+    // 定义子类型数据（由后端生成并传递给前端）
+    const subTypesData = {{ subTypesData | tojson | safe }};
+
+    // 主类型变化时更新子类型
+    mainTypeSelect.addEventListener('change', function () {
+        const selectedMainType = parseInt(this.value);
+        const subTypes = subTypesData[selectedMainType];
+
+        // 清空子类型选项
+        subTypeSelect.innerHTML = '';
+
+        // 添加新的子类型选项
+        if (subTypes) {
+            for (const [subId, subName] of Object.entries(subTypes)) {
+                const option = document.createElement('option');
+                option.value = subId;
+                option.textContent = subName;
+                subTypeSelect.appendChild(option);
+            }
+        }
+    });
+
+    // 初始化时触发一次 change 事件，确保子类型选项正确
+    mainTypeSelect.dispatchEvent(new Event('change'));
 </script>
 
 {% endblock %}

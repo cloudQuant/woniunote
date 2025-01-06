@@ -7,8 +7,10 @@ A blog and website (https://www.yunjinqi.top) written by python, flask, html, cs
 
 ### 安装教程
 ```bash
-# 克隆项目
+# 国内克隆项目
 git clone https://gitee.com/yunjinqi/woniunote.git
+# 国外克隆项目
+git clone https://github.com/cloudQuant/woniunote.git
 # 安装依赖包
 pip install -r ./woniunote/requirements.txt
 # 进入woniunote目录，在configs目录下创建config.py文件，内容参考config_example.py，修改数据库配置
