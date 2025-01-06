@@ -107,6 +107,8 @@ def classify(class_type, page):
         article = Articles()
         result = article.find_by_type(class_type, start, 10)
         total = math.ceil(article.get_count_by_type(class_type) / 10)
+        print("result = ", result)
+        print("total = ", total)
         last, most, recommended = article.find_last_most_recommended()
         return render_template('type.html',
                                result=result,
