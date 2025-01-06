@@ -71,48 +71,48 @@
 {#                {% endif %}#}
 {#            </div>#}
         <div class="col-12 paginate">
-                <!-- 上一页 -->
-                {% if page == 1 %}
-                    <a href="/page/1" class="disabled">上一页</a>&nbsp;&nbsp;
+            <!-- 上一页 -->
+            {% if page == 1 %}
+                <a href="/page/1" class="disabled">上一页</a>&nbsp;&nbsp;
+            {% else %}
+                <a href="/page/{{ page - 1 }}">上一页</a>&nbsp;&nbsp;
+            {% endif %}
+
+            <!-- 页码范围 -->
+            {% set start_page = [1, page - 5] | max %}  {# 计算起始页码，确保不小于 1 #}
+            {% set end_page = [total, page + 5] | min %}  {# 计算结束页码，确保不大于总页数 #}
+
+            {% if start_page > 1 %}
+                <a href="/page/1">1</a>&nbsp;&nbsp;
+                {% if start_page > 2 %}
+                    <span>...</span>&nbsp;&nbsp;  {# 显示省略号 #}
+                {% endif %}
+            {% endif %}
+
+            {% for i in range(start_page, end_page + 1) %}
+                {% if i == page %}
+                    <!-- 当前页码，设置红色样式 -->
+                    <a href="/page/{{ i }}" class="current-page" style="color: red;">{{ i }}</a>&nbsp;&nbsp;
                 {% else %}
-                    <a href="/page/{{ page - 1 }}">上一页</a>&nbsp;&nbsp;
+                    <a href="/page/{{ i }}">{{ i }}</a>&nbsp;&nbsp;
                 {% endif %}
+            {% endfor %}
 
-                <!-- 页码范围 -->
-                {% set start_page = [1, page - 5] | max %}  {# 计算起始页码，确保不小于 1 #}
-                {% set end_page = [total, page + 5] | min %}  {# 计算结束页码，确保不大于总页数 #}
-
-                {% if start_page > 1 %}
-                    <a href="/page/1">1</a>&nbsp;&nbsp;
-                    {% if start_page > 2 %}
-                        <span>...</span>&nbsp;&nbsp;  {# 显示省略号 #}
-                    {% endif %}
+            {% if end_page < total %}
+                {% if end_page < total - 1 %}
+                    <span>...</span>&nbsp;&nbsp;  {# 显示省略号 #}
                 {% endif %}
+                <a href="/page/{{ total }}">{{ total }}</a>&nbsp;&nbsp;
+            {% endif %}
 
-                {% for i in range(start_page, end_page + 1) %}
-                    {% if i == page %}
-                        <a href="/page/{{ i }}" class="current-page">{{ i }}</a>&nbsp;&nbsp;
-                    {% else %}
-                        <a href="/page/{{ i }}">{{ i }}</a>&nbsp;&nbsp;
-                    {% endif %}
-                {% endfor %}
-
-                {% if end_page < total %}
-                    {% if end_page < total - 1 %}
-                        <span>...</span>&nbsp;&nbsp;  {# 显示省略号 #}
-                    {% endif %}
-                    <a href="/page/{{ total }}">{{ total }}</a>&nbsp;&nbsp;
-                {% endif %}
-
-                <!-- 下一页 -->
-                {% if page == total %}
-                    <a href="/page/{{ total }}" class="disabled">下一页</a>
-                {% else %}
-                    <a href="/page/{{ page + 1 }}">下一页</a>
-                {% endif %}
-            </div>
-
+            <!-- 下一页 -->
+            {% if page == total %}
+                <a href="/page/{{ total }}" class="disabled">下一页</a>
+            {% else %}
+                <a href="/page/{{ page + 1 }}">下一页</a>
+            {% endif %}
         </div>
+
 
         {# 按需引入side.html，首页需要 #}
         {% include 'side.html' %}
