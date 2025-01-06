@@ -57,10 +57,10 @@
 {#        </select>#}
         <!-- 主类型下拉框 -->
         <select class="form-control col-2" id="main-type">
-            {% for key, value in ARTICLE_TYPES.items() %}
+            {% for key, value in article_type.items() %}
                 {% if key < 100 %}
                 <option value="{{ key }}"
-                        {% if result[0].type == key %} selected {% endif %}>
+                        {% if result[0].type//100 == key %} selected {% endif %}>
                     {{ value }}
                 </option>
                 {% endif %}
@@ -70,10 +70,10 @@
         <!-- 子类型下拉框 -->
         <select class="form-control col-2" id="sub-type">
             {% if result[0].type %}
-                {% for key, value in ARTICLE_TYPES.items() %}
-                    {% if key >= 100 and key // 100 == result[0].type %}
+                {% for key, value in article_type.items() %}
+                    {% if key >= 100 and result[0].type // 100 == key %}
                     <option value="{{ key }}"
-                            {% if result[0].subtype == key %} selected {% endif %}>
+                            {% if result[0].type == key %} selected {% endif %}>
                         {{ value }}
                     </option>
                     {% endif %}
