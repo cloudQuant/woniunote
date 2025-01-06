@@ -50,23 +50,67 @@
             {% endfor %}
 
 
-            <div class="col-12 paginate">
-                {% if page == 1 %}
-            	<a href="/type/{{type-1}}">上一页</a>&nbsp;&nbsp;
-                {% else %}
-                <a href="/type/{{type}}-{{page-1}}">上一页</a>&nbsp;&nbsp;
-                {% endif %}
+{#            <div class="col-12 paginate">#}
+{#                {% if page == 1 %}#}
+{#            	<a href="/type/{{type-1}}">上一页</a>&nbsp;&nbsp;#}
+{#                {% else %}#}
+{#                <a href="/type/{{type}}-{{page-1}}">上一页</a>&nbsp;&nbsp;#}
+{#                {% endif %}#}
+{##}
+{#                {% for i in range(total) %}#}
+{#                <a href="/type/{{type}}-{{i+1}}">{{i+1}}</a>&nbsp;&nbsp;#}
+{#                {% endfor %}#}
+{##}
+{#                {% if page == total %}#}
+{#            	<a href="/type/{{type}}-{{total}}">下一页</a>#}
+{#                {% else %}#}
+{#                <a href="/type/{{type}}-{{page+1}}">下一页</a>#}
+{#                {% endif %}#}
+{#            </div>#}
 
-                {% for i in range(total) %}
-                <a href="/type/{{type}}-{{i+1}}">{{i+1}}</a>&nbsp;&nbsp;
-                {% endfor %}
+        <div class="col-12 paginate">
+            <!-- 上一页 -->
+            {% if page <= 1 %}
+                <a href="#" class="disabled">上一页</a>&nbsp;&nbsp;
+            {% else %}
+                <a href="/type/{{ type }}/{{ page - 1 }}">上一页</a>&nbsp;&nbsp;
+            {% endif %}
 
-                {% if page == total %}
-            	<a href="/type/{{type}}-{{total}}">下一页</a>
-                {% else %}
-                <a href="/type/{{type}}-{{page+1}}">下一页</a>
+            <!-- 页码范围 -->
+            {% set start_page = [1, page - 5] | max %}  {# 确保起始页码不小于 1 #}
+            {% set end_page = [total, page + 5] | min %}  {# 确保结束页码不大于总页数 #}
+
+            {% if start_page > 1 %}
+                <a href="/type/{{ type }}/1">1</a>&nbsp;&nbsp;
+                {% if start_page > 2 %}
+                    <span>...</span>&nbsp;&nbsp;  {# 显示省略号 #}
                 {% endif %}
-            </div>
+            {% endif %}
+
+            {% for i in range(start_page, end_page + 1) %}
+                {% if i == page %}
+                    <!-- 当前页高亮显示 -->
+                    <a href="/type/{{ type }}/{{ i }}" class="current-page" style="color: red; font-weight: bold;">{{ i }}</a>&nbsp;&nbsp;
+                {% else %}
+                    <a href="/type/{{ type }}/{{ i }}">{{ i }}</a>&nbsp;&nbsp;
+                {% endif %}
+            {% endfor %}
+
+            {% if end_page < total %}
+                {% if end_page < total - 1 %}
+                    <span>...</span>&nbsp;&nbsp;  {# 显示省略号 #}
+                {% endif %}
+                <a href="/type/{{ type }}/{{ total }}">{{ total }}</a>&nbsp;&nbsp;
+            {% endif %}
+
+            <!-- 下一页 -->
+            {% if page >= total %}
+                <a href="#" class="disabled">下一页</a>
+            {% else %}
+                <a href="/type/{{ type }}/{{ page + 1 }}">下一页</a>
+            {% endif %}
+        </div>
+
 
         </div>
 

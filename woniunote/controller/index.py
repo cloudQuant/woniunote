@@ -100,7 +100,7 @@ def paginate(page):
         traceback.print_exc()
 
 
-@index.route('/type/<int:type>-<int:page>')
+@index.route('/type/<int:type>/<int:page>')
 def classify(class_type, page):
     try:
         start = (page - 1) * 10
@@ -122,8 +122,6 @@ def classify(class_type, page):
     except Exception as e:
         print(e)
         traceback.print_exc()
-
-
 
 @index.route('/search/<int:page>-<keyword>')
 def search(page, keyword):
