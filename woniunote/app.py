@@ -17,6 +17,8 @@ from woniunote.module.users import Users
 from woniunote.module.articles import Articles
 from woniunote.common.timer import can_use_minute
 import pymysql
+import math
+import traceback
 
 pymysql.install_as_MySQLdb()
 config_result = read_config()
@@ -148,7 +150,7 @@ def math_train():
     file_path = math_train.html
     return render_template(file_path)
 
-@app.route('/type/<int:type>/<int:page>')
+@app.route('/type/<int:class_type>/<int:page>')
 def classify(class_type, page):
     print("class_type", class_type, "classify run")
     try:
