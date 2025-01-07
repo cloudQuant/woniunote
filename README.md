@@ -13,13 +13,12 @@ git clone https://gitee.com/yunjinqi/woniunote.git
 git clone https://github.com/cloudQuant/woniunote.git
 # 安装依赖包
 pip install -r ./woniunote/requirements.txt
-# 进入woniunote目录，在configs目录下创建config.py文件，内容参考config_example.py，修改数据库配置
 cd woniunote/woniunote
 # 创建账户名和密码的配置文件
 touch user_password_config.yaml
 # 打开文件，写入账户名和密码，参考user_password_config_example.yaml
 nano user_password_config.yaml
-# 如果需要本地测试，运行
+# 如果需要本地测试，在configs目录下，运行
 openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365
 # 返回到主目录
 cd ../../..
