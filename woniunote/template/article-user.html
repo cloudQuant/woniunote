@@ -97,12 +97,11 @@
 
 <script>
     // Initialize highlight.js after page load
-    document.addEventListener('DOMContentLoaded', function () {
-        // Use highlight.js to apply syntax highlighting on code blocks
-        document.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightElement(block); // Modern method for highlighting individual code blocks
-        });
+    document.getElementById('content').innerHTML = '{{ article.content | safe }}';
+    document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
     });
+
 
     // Other functions like readAll, addFavorite, cancelFavorite, etc.
 
