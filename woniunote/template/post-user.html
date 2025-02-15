@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+
 {% block content %}
 
 <!-- 引入 UEditor 配置和脚本 -->
@@ -75,7 +76,9 @@
     // 子类型数据
     const subTypesData = {
         {% for key, value in article_type.items() if key >= 100 %}
-            {{ key // 100 }}: { {{ key }}: "{{ value }}" },
+            "{{ key // 100 }}": {
+                "{{ key }}": "{{ value }}"
+            },
         {% endfor %}
     };
 
@@ -84,19 +87,34 @@
         const mainTypeSelect = document.getElementById('main-type');
         const subTypeSelect = document.getElementById('sub-type');
 
-        mainTypeSelect.addEventListener('change', function () {
-            const selectedMainType = this.value;
+        // 设置子类型
+        function updateSubTypes() {
+            const selectedMainType = mainTypeSelect.value;
             const subTypes = subTypesData[selectedMainType] || {};
+
+            // 清空子类型选择框
             subTypeSelect.innerHTML = '';
+
+            // 添加默认的空选项
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '请选择子类型';
+            subTypeSelect.appendChild(defaultOption);
+
+            // 添加子类型选项
             for (const [subId, subName] of Object.entries(subTypes)) {
                 const option = document.createElement('option');
                 option.value = subId;
                 option.textContent = subName;
                 subTypeSelect.appendChild(option);
             }
-        });
+        }
 
-        mainTypeSelect.dispatchEvent(new Event('change')); // 初始化子类型
+        // 监听主类型选择变化事件
+        mainTypeSelect.addEventListener('change', updateSubTypes);
+
+        // 初始化子类型
+        updateSubTypes();
     }
 
     // 保存文章逻辑（草稿或发布）
@@ -164,6 +182,7 @@
 </script>
 
 {% endblock %}
+
 
 
 {#{% extends 'base.html' %}#}
