@@ -73,12 +73,10 @@
 <script>
     var ARTICLEID = 0;  // 全局变量保存文章 ID
 
-    // 子类型数据
+    // 子类型数据，这部分可以通过 Django 后端动态生成或调整
     const subTypesData = {
         {% for key, value in article_type.items() if key >= 100 %}
-            "{{ key // 100 }}": {
-                "{{ key }}": "{{ value }}"
-            },
+            "{{ key }}": "{{ value }}",
         {% endfor %}
     };
 
@@ -87,33 +85,42 @@
         const mainTypeSelect = document.getElementById('main-type');
         const subTypeSelect = document.getElementById('sub-type');
 
-        // 设置子类型
+        // 更新子类型内容
         function updateSubTypes() {
             const selectedMainType = mainTypeSelect.value;
-            const subTypes = subTypesData[selectedMainType] || {};
 
-            // 清空子类型选择框
-            subTypeSelect.innerHTML = '';
+            // 如果当前没有选中主类型，清空子类型
+            if (!selectedMainType) {
+                subTypeSelect.innerHTML = "<option value=''>请选择子类型</option>";
+                return;
+            }
 
-            // 添加默认的空选项
-            const defaultOption = document.createElement('option');
-            defaultOption.value = '';
-            defaultOption.textContent = '请选择子类型';
+            // 清空现有的子类型选项
+            subTypeSelect.innerHTML = "";
+
+            // 添加默认选项
+            const defaultOption = document.createElement("option");
+            defaultOption.value = "";
+            defaultOption.text = "请选择子类型";
             subTypeSelect.appendChild(defaultOption);
 
-            // 添加子类型选项
+            // 动态加载子类型选项
+            // 假设 `subTypesData` 是一个映射，使用主类型值来查找子类型
+            // 你可以根据后端返回的数据填充子类型
+            const subTypes = subTypesData[selectedMainType] || {};
+
             for (const [subId, subName] of Object.entries(subTypes)) {
-                const option = document.createElement('option');
+                const option = document.createElement("option");
                 option.value = subId;
-                option.textContent = subName;
+                option.text = subName;
                 subTypeSelect.appendChild(option);
             }
         }
 
-        // 监听主类型选择变化事件
-        mainTypeSelect.addEventListener('change', updateSubTypes);
+        // 主类型变化时触发子类型更新
+        mainTypeSelect.addEventListener("change", updateSubTypes);
 
-        // 初始化子类型
+        // 初始化时调用一次更新
         updateSubTypes();
     }
 
@@ -182,6 +189,7 @@
 </script>
 
 {% endblock %}
+
 
 
 
