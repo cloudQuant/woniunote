@@ -16,9 +16,20 @@
     <meta name="description" content="关注个人成长和用量化思维做投资理财，包括但不限于股票、期货、期权、外汇、基金、理财、保险">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>云子量化</title>
-    <link rel="stylesheet" href="/css/bootstrap.css" type="text/css">
-    <link rel="stylesheet" href="/css/woniunote.css" type="text/css">
-    <link rel="stylesheet" href="icon/font/css/open-iconic-bootstrap.css" type="text/css">
+    <!-- 优化后的 CSS 加载方式 -->
+
+<!-- 使用 preload 提前加载关键的 Bootstrap 样式表 -->
+<link rel="preload" href="/css/bootstrap.css" as="style" type="text/css" crossorigin="anonymous">
+
+<!-- 使用 media="print" 推迟加载非关键的 CSS 文件，并在加载完成后立即应用 -->
+<link rel="stylesheet" href="/css/woniunote.css" type="text/css" media="print" onload="this.media='all'">
+
+<!-- 使用 media="print" 推迟加载非关键的图标样式表，并在加载完成后立即应用 -->
+<link rel="stylesheet" href="icon/font/css/open-iconic-bootstrap.css" type="text/css" media="print" onload="this.media='all'">
+
+{#    <link rel="stylesheet" href="/css/bootstrap.css" type="text/css">#}
+{#    <link rel="stylesheet" href="/css/woniunote.css" type="text/css">#}
+{#    <link rel="stylesheet" href="icon/font/css/open-iconic-bootstrap.css" type="text/css">#}
     <script defer src="/js/jquery-3.4.1.min.js"></script>
     <script defer src="/js/bootstrap.js"></script>
     <script defer src="/js/bootbox.min.js"></script>
