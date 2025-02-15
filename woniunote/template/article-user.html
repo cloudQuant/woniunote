@@ -39,6 +39,10 @@
         </div>
         <div class="col-12 content" id="content">
             {{article.content | safe}}  <!-- 渲染文章内容 -->
+            <pre><code class="python">
+            def hello_world():
+                print("Hello, World!")
+                </code></pre>
         </div>
 
         <!-- 只有需要消耗积分的文章且用户并未消耗过时才显示阅读全文按钮 -->
@@ -96,23 +100,29 @@
 </div>
 
 <script>
-    // Initialize highlight.js after page load
-    document.getElementById('content').innerHTML = '{{ article.content | safe }}';
-    document.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightElement(block);
+    // 初始化 highlight.js
+    function initHighlightJS() {
+        document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+        });
+    }
+
+    // 在页面加载完成后初始化 highlight.js
+    document.addEventListener('DOMContentLoaded', function () {
+        initHighlightJS();
     });
 
-
-    // Other functions like readAll, addFavorite, cancelFavorite, etc.
-
+    // 如果文章内容是动态加载的（例如通过 AJAX），在加载完成后重新初始化
     function readAll() {
         var param = 'articleid={{article.articleid}}&position={{position}}';
         $.post('/readall', param, function (data) {
             $("#content").append(data);
             $(".readall").hide();
+            initHighlightJS(); // 重新初始化 highlight.js
         });
     }
 
+    // 其他函数（如 addFavorite、cancelFavorite 等）
     function addFavorite(articleid) {
         $.post('/favorite', 'articleid='+articleid, function (data) {
             if (data == 'not-login') {
