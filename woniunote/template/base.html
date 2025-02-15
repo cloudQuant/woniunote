@@ -16,18 +16,16 @@
     <meta name="description" content="关注个人成长和用量化思维做投资理财，包括但不限于股票、期货、期权、外汇、基金、理财、保险">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>云子量化</title>
-    <link rel="stylesheet" href="/css/bootstrap.css" type="text/css">
-    <link rel="stylesheet" href="/css/woniunote.css" type="text/css">
-    <link rel="stylesheet" href="icon/font/css/open-iconic-bootstrap.css" type="text/css">
-    <script defer src="/js/jquery-3.4.1.min.js"></script>
-    <script defer src="/js/bootstrap.js"></script>
-    <script defer src="/js/bootbox.min.js"></script>
-    <script defer src="/js/woniunote.js"></script>
+    <!-- 1. 预加载关键CSS -->
+    <link rel="preload" href="/css/woniunote.css" as="style" type="text/css" crossorigin="anonymous">
+    <!-- 2. 延迟加载非关键CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.css" type="text/css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="icon/font/css/open-iconic-bootstrap.css" type="text/css" media="print" onload="this.media='all'">
+
+    <!-- 3. 内联关键CSS，确保首屏快速渲染 -->
     <style>
-        .header h4 {
-            font-size: 18px;
-            color: #2b6db4;
-        }
+        body { font-family: Arial, sans-serif; }
+        .header { background-color: #f5f5f5; }
         .scrolling-text {
             white-space: nowrap;
             overflow: hidden;
@@ -38,6 +36,34 @@
             100% { transform: translateX(100%); }
         }
     </style>
+
+    <!-- 4. 推迟加载非关键JS -->
+    <script defer src="/js/jquery-3.4.1.min.js"></script>
+    <script defer src="/js/bootstrap.js"></script>
+    <script defer src="/js/bootbox.min.js"></script>
+    <script defer src="/js/woniunote.js"></script>
+{#    <link rel="stylesheet" href="/css/bootstrap.css" type="text/css">#}
+{#    <link rel="stylesheet" href="/css/woniunote.css" type="text/css">#}
+{#    <link rel="stylesheet" href="icon/font/css/open-iconic-bootstrap.css" type="text/css">#}
+{#    <script defer src="/js/jquery-3.4.1.min.js"></script>#}
+{#    <script defer src="/js/bootstrap.js"></script>#}
+{#    <script defer src="/js/bootbox.min.js"></script>#}
+{#    <script defer src="/js/woniunote.js"></script>#}
+{#    <style>#}
+{#        .header h4 {#}
+{#            font-size: 18px;#}
+{#            color: #2b6db4;#}
+{#        }#}
+{#        .scrolling-text {#}
+{#            white-space: nowrap;#}
+{#            overflow: hidden;#}
+{#            animation: scrolling 20s linear infinite;#}
+{#        }#}
+{#        @keyframes scrolling {#}
+{#            0% { transform: translateX(-20%); }#}
+{#            100% { transform: translateX(100%); }#}
+{#        }#}
+{#    </style>#}
 </head>
 
 

@@ -6,7 +6,7 @@ EGG_INFO_DIR="woniunote.egg-info"
 BENCHMARKS_DIR=".benchmarks"
 
 # 切换到上一级目录
-cd ..
+cd ../..
 
 # 安装 requirements.txt 中的依赖
 pip install -U -r ./woniunote/requirements.txt
