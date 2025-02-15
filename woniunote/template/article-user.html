@@ -39,24 +39,21 @@
         </div>
         <div class="col-12 content" id="content">
             {{article.content | safe}}  <!-- 渲染文章内容 -->
-            <pre><code class="python">
+
+            <pre class="brush:python;toolbar:false;">
+                <code>
             def hello_world():
                 print("Hello, World!")
-                </code></pre>
-            <pre class="brush:python;toolbar:false;">
-    <code>
-def hello_world():
-    print("Hello, World!")
-    </code>
-</pre>
+                </code>
+            </pre>
 
-<pre class="brush:javascript;toolbar:false;">
-    <code>
-function sayHello() {
-    console.log("Hello, World!");
-}
-    </code>
-</pre>
+        <pre class="brush:javascript;toolbar:false;">
+            <code>
+        function sayHello() {
+            console.log("Hello, World!");
+        }
+            </code>
+        </pre>
 
 <pre class="brush:html;toolbar:false;">
     <code>
@@ -121,25 +118,25 @@ function sayHello() {
 
 <script>
     function initHighlightJS() {
-    // Select all <pre> elements with class starting with "brush:"
     document.querySelectorAll('pre[class*="brush:"]').forEach((block) => {
-        // Extract the language class from the "brush:" prefix, e.g., brush:python -> python
+        console.log('Processing block:', block);
+
+        // Extract the language class from the "brush:" prefix (e.g., brush:python -> python)
         const languageClass = block.className.match(/brush:(\S+)/);
 
         if (languageClass) {
-            const language = languageClass[1]; // Extract language, like "python", "javascript", etc.
-            block.classList.add(language); // Add class like "python" for highlighting
-            block.classList.remove(`brush:${language}`); // Remove the "brush:" part
+            const language = languageClass[1]; // Extracted language, like "python"
 
-            // Ensure the syntax highlighting happens for the code block inside <pre>
-            const codeBlock = block.querySelector('code');
-            if (codeBlock) {
-                hljs.highlightElement(codeBlock); // Highlight the code inside <code>
-            }
+            // Add the language class (like "python") to the <pre> element
+            block.classList.add(language);
+            // Remove the "brush:" part of the class
+            block.classList.remove(`brush:${language}`);
+
+            // Highlight the content of the <pre> tag directly
+            hljs.highlightElement(block); // Apply syntax highlighting to the <pre> block itself
         }
     });
 }
-
 // Initialize highlight.js when the page is loaded
 document.addEventListener('DOMContentLoaded', function () {
     initHighlightJS(); // Call the function to initialize syntax highlighting
