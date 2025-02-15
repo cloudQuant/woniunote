@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-
 {% block content %}
 
 <!-- 引入 UEditor 配置和脚本 -->
@@ -64,8 +63,8 @@
     <!-- 提交按钮 -->
     <div class="form-group row text-center">
         <div class="col">
-            <button class="btn btn-secondary" onclick="saveArticle(true)">保存草稿</button>
-            <button class="btn btn-primary" onclick="saveArticle(false)">发布文章</button>
+            <button class="btn btn-secondary" onclick="doDraft()">保存草稿</button>
+            <button class="btn btn-primary" onclick="doPost()">发布文章</button>
         </div>
     </div>
 </div>
@@ -73,133 +72,128 @@
 <script>
     var ARTICLEID = 0;  // 全局变量保存文章 ID
 
-    // 子类型数据，这部分可以通过 Django 后端动态生成或调整
-    const subTypesData = {
-        {% for key, value in article_type.items() if key >= 100 %}
-            "{{ key }}": [
-                {% for sub_key, sub_value in sub_types[key].items() %}
-                    { "id": "{{ sub_key }}", "name": "{{ sub_value }}" },
-                {% endfor %}
-            ],
-        {% endfor %}
-    };
+    // 文章发布逻辑
+    function doPost() {
+        var headline = $.trim($("#headline").val());
+        var contentPlain = UE.getEditor("content").getContentTxt();
 
-    // 初始化子类型
-    function initSubTypes() {
-        const mainTypeSelect = document.getElementById('main-type');
-        const subTypeSelect = document.getElementById('sub-type');
-
-        // 更新子类型内容
-        function updateSubTypes() {
-            const selectedMainType = mainTypeSelect.value;
-
-            // 如果当前没有选中主类型，清空子类型
-            if (!selectedMainType || !subTypesData[selectedMainType]) {
-                subTypeSelect.innerHTML = "<option value=''>请选择子类型</option>";
-                return;
-            }
-
-            // 清空现有的子类型选项
-            subTypeSelect.innerHTML = "";
-
-            // 添加默认选项
-            const defaultOption = document.createElement("option");
-            defaultOption.value = "";
-            defaultOption.text = "请选择子类型";
-            subTypeSelect.appendChild(defaultOption);
-
-            // 获取当前主类型的所有子类型
-            const subTypes = subTypesData[selectedMainType];
-            subTypes.forEach(sub => {
-                const option = document.createElement("option");
-                option.value = sub.id;
-                option.text = sub.name;
-                subTypeSelect.appendChild(option);
-            });
-
-            // 默认选择第一个子类型
-            if (subTypes.length > 0) {
-                subTypeSelect.value = subTypes[0].id;
-            }
-        }
-
-        // 主类型变化时触发子类型更新
-        mainTypeSelect.addEventListener("change", updateSubTypes);
-
-        // 初始化时调用一次更新
-        updateSubTypes();
-    }
-
-    // 保存文章逻辑（草稿或发布）
-    function saveArticle(isDraft) {
-        const headline = $.trim($("#headline").val());
-        const contentPlain = UE.getEditor("content").getContentTxt();
-        const minHeadlineLength = isDraft ? 5 : 5; // 草稿和发布标题最小长度
-        const minContentLength = isDraft ? 10 : 100; // 草稿和发布内容最小长度
-
-        if (headline.length < minHeadlineLength) {
-            showError(`标题不能少于${minHeadlineLength}个字`);
+        if (headline.length < 5) {
+            bootbox.alert({ title: "错误提示", message: "标题不能少于5个字" });
             return false;
-        } else if (contentPlain.length < minContentLength) {
-            showError(`内容不能低于${minContentLength}个字`);
+        } else if (contentPlain.length < 100) {
+            bootbox.alert({ title: "错误提示", message: "内容不能低于100个字" });
             return false;
         }
 
-        const param = {
+        var param = {
             headline: headline,
             content: UE.getEditor("content").getContent(),
             type: $("#main-type").val(),
             subtype: $("#sub-type").val(),
             credit: $("#credit").val(),
-            drafted: isDraft ? 1 : 0,
+            drafted: 0,
             checked: 1,
             articleid: ARTICLEID,
         };
 
         $.post('/article', param, function (data) {
-            handlePostResponse(data, isDraft);
+            handlePostResponse(data);
+        });
+    }
+
+    // 保存草稿逻辑
+    function doDraft() {
+        var headline = $.trim($("#headline").val());
+        var contentPlain = UE.getEditor("content").getContentTxt();
+
+        if (headline.length < 5) {
+            bootbox.alert({ title: "错误提示", message: "草稿标题不能少于5个字" });
+            return false;
+        } else if (contentPlain.length < 10) {
+            bootbox.alert({ title: "错误提示", message: "草稿内容不能低于10个字" });
+            return false;
+        }
+
+        var param = {
+            headline: headline,
+            content: UE.getEditor("content").getContent(),
+            type: $("#main-type").val(),
+            subtype: $("#sub-type").val(),
+            credit: $("#credit").val(),
+            drafted: 1,
+            checked: 1,
+            articleid: ARTICLEID,
+        };
+
+        $.post('/article', param, function (data) {
+            handlePostResponse(data);
         });
     }
 
     // 处理发布和保存草稿的响应
-    function handlePostResponse(data, isDraft) {
+    function handlePostResponse(data) {
         if (data === 'perm-denied') {
-            showError("权限不足，无法操作。");
+            bootbox.alert({ title: "错误提示", message: "权限不足，无法操作。" });
         } else if (data === 'post-fail') {
-            showError("操作失败，请联系管理员。");
+            bootbox.alert({ title: "错误提示", message: "操作失败，请联系管理员。" });
         } else if (/^\d+$/.test(data)) {
-            showSuccess("操作成功！");
+            bootbox.alert({ title: "信息提示", message: "操作成功！" });
             ARTICLEID = parseInt(data);
-            if (!isDraft) {
+            if (!param.drafted) {
                 setTimeout(() => { location.href = '/article/' + data; }, 1000);
             }
         } else {
-            showError("操作失败，可能没有权限。");
+            bootbox.alert({ title: "错误提示", message: "操作失败，可能没有权限。" });
         }
     }
 
-    // 显示错误提示
-    function showError(message) {
-        bootbox.alert({ title: "错误提示", message: message });
+    // 主类型与子类型联动
+    const mainTypeSelect = document.getElementById('main-type');
+    const subTypeSelect = document.getElementById('sub-type');
+
+    const subTypesData = {
+        {% for key, value in article_type.items() if key >= 100 %}
+            {{ key // 100 }}: { {{ key }}: "{{ value }}" },
+        {% endfor %}
+    };
+
+    // 动态加载子类型并默认选中第一个子类型
+    function updateSubTypes() {
+        const selectedMainType = mainTypeSelect.value;
+        const subTypes = subTypesData[selectedMainType] || {};
+        subTypeSelect.innerHTML = ''; // 清空子类型下拉框
+
+        let firstSubTypeId = null;
+        for (const [subId, subName] of Object.entries(subTypes)) {
+            const option = document.createElement('option');
+            option.value = subId;
+            option.textContent = subName;
+            subTypeSelect.appendChild(option);
+
+            // 记录第一个子类型的ID
+            if (firstSubTypeId === null) {
+                firstSubTypeId = subId;
+            }
+        }
+
+        // 默认选中第一个子类型
+        if (firstSubTypeId !== null) {
+            subTypeSelect.value = firstSubTypeId;
+        }
     }
 
-    // 显示成功提示
-    function showSuccess(message) {
-        bootbox.alert({ title: "信息提示", message: message });
-    }
+    // 监听主类型变化
+    mainTypeSelect.addEventListener('change', updateSubTypes);
 
-    // 初始化页面逻辑
-    $(document).ready(function () {
-        initSubTypes(); // 初始化子类型
+    // 页面加载时初始化子类型
+    window.addEventListener('load', function () {
+        updateSubTypes(); // 初始化子类型
     });
 </script>
 
 {% endblock %}
 
-
-
-
-
+{##}
 {#{% extends 'base.html' %}#}
 {#{% block content %}#}
 {##}
