@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session, request, jsonify
+from flask import Blueprint, render_template, session
 from woniunote.module.articles import Articles
 import math
 import traceback
@@ -24,7 +24,8 @@ def sys_admin():
         articles_instance = Articles()
         result = articles_instance.find_all_except_draft(0, pagesize)
         total = math.ceil(articles_instance.get_count_except_draft() / pagesize)
-        return render_template('system-admin.html', page=1, result=result, total=total)
+        html_file = 'system-admin.html'
+        return render_template(html_file, page=1, result=result, total=total)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -38,7 +39,8 @@ def admin_article(page):
         articles_instance = Articles()
         result = articles_instance.find_all_except_draft(start, pagesize)
         total = math.ceil(articles_instance.get_count_except_draft() / pagesize)
-        return render_template('system-admin.html', page=page, result=result, total=total)
+        html_file = 'system-admin.html'
+        return render_template(html_file, page=page, result=result, total=total)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -51,7 +53,8 @@ def admin_search_type(admin_type, page):
         start = (page - 1) * pagesize
         result, total = Articles().find_by_type_except_draft(start, pagesize, admin_type)
         total = math.ceil(total / pagesize)
-        return render_template('system-admin.html', page=page, result=result, total=total)
+        html_file = 'system-admin.html'
+        return render_template(html_file, page=page, result=result, total=total)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -61,7 +64,8 @@ def admin_search_type(admin_type, page):
 def admin_search_headline(keyword):
     try:
         result = Articles().find_by_headline_except_draft(keyword)
-        return render_template('system-admin.html', page=1, result=result, total=1)
+        html_file = 'system-admin.html'
+        return render_template(html_file, page=1, result=result, total=1)
     except Exception as e:
         print(e)
         traceback.print_exc()

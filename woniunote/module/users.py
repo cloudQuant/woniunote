@@ -26,7 +26,8 @@ class Users(DBase):
     )
 
     # 查询用户名，可用于注册时判断用户名是否已注册，也可用于登录校验
-    def find_by_username(self, username):
+    @staticmethod
+    def find_by_username(username):
         try:
             result = dbsession.query(Users).filter_by(username=username).all()
             return result
@@ -37,7 +38,8 @@ class Users(DBase):
     # 实现注册，首次注册时用户只需要输入用户名和密码，所以只需要两个参数
     # 注册时，在模型类中为其他字段尽力生成一些可用的值，虽不全面，但可用
     # 通常用户注册时不建议填写太多资料，影响体验，可待用户后续逐步完善
-    def do_register(self, username, password):
+    @staticmethod
+    def do_register(username, password):
         try:
             now = time.strftime('%Y-%m-%d %H:%M:%S')
             nickname = username.split('@')[0]  # 默认将邮箱账号前缀作为昵称
@@ -52,7 +54,8 @@ class Users(DBase):
             traceback.print_exc()
 
     # 修改用户剩余积分，积分为正数表示增加积分，为负数表示减少积分
-    def update_credit(self, credit):
+    @staticmethod
+    def update_credit(credit):
         try:
             user = dbsession.query(Users).filter_by(userid=session.get('userid')).one()
             user.credit = int(user.credit) + credit
@@ -61,7 +64,8 @@ class Users(DBase):
             print(e)
             traceback.print_exc()
 
-    def find_by_userid(self, userid):
+    @staticmethod
+    def find_by_userid(userid):
         try:
             user = dbsession.query(Users).filter_by(userid=userid).one()
             return user

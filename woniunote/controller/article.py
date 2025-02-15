@@ -58,8 +58,8 @@ def read(articleid):
         total = math.ceil(count / 10)
         article_instance = Articles()
         last, most, recommended = article_instance.find_last_most_recommended()
-
-        return render_template('article-user.html', article=article_dict, position=position, payed=payed,
+        html_file = 'article-user.html'
+        return render_template(html_file, article=article_dict, position=position, payed=payed,
                                is_favorited=is_favorited, prev_next=prev_next,
                                can_use_minute=can_use_minute(),
                                total=total, last_articles=last, most_articles=most,
@@ -104,7 +104,8 @@ def pre_post():
                 if main_id not in subTypesData:
                     subTypesData[main_id] = {}
                 subTypesData[main_id][key] = value
-        return render_template('post-user.html', article_type=article_type, subTypesData=subTypesData)
+        html_file = 'post-user.html'
+        return render_template(html_file, article_type=article_type, subTypesData=subTypesData)
     except Exception as e:
         print(e)
         traceback.print_exc()

@@ -34,7 +34,8 @@ class Credits(DBase):
         self.user = relationship("Users", back_populates="credits")
 
     # 插入积分明细数据
-    def insert_detail(self, credit_type, target, credit):
+    @staticmethod
+    def insert_detail(credit_type, target, credit):
         try:
             now = time.strftime('%Y-%m-%d %H:%M:%S')
             credit = Credit(userid=session.get('userid'), category=credit_type, target=target,
@@ -46,7 +47,8 @@ class Credits(DBase):
             traceback.print_exc()
 
     # 判断用户是否已经消耗积分
-    def check_payed_article(self, articleid):
+    @staticmethod
+    def check_payed_article(articleid):
         try:
             result = dbsession.query(Credit).filter_by(userid=session.get('userid'), target=articleid).all()
             if len(result) > 0:

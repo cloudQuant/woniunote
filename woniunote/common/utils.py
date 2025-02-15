@@ -9,11 +9,30 @@ from io import BytesIO
 # 发送邮箱验证码
 from smtplib import SMTP_SSL
 import importlib
+import hashlib
 import sys
 import os
 import requests
 from PIL import Image, ImageFont, ImageDraw
 
+
+def find_md5(args):
+    md = "10a99b8bfa26650a562ecb14f8a14260"
+    starttime = datetime.now()
+    for i in open(args.file):
+        md5 = hashlib.md5()  # 获取一个md5加密算法对象
+        rs = i.strip()  # 去掉行尾的换行符
+        md5.update(rs.encode('utf-8'))  # 指定需要加密的字符串
+        newmd5 = md5.hexdigest()  # 获取加密后的16进制字符串
+        # print newmd5
+        if newmd5 == md:
+            print('明文是：' + rs)  # 打印出明文字符串
+            break
+        else:
+            pass
+
+    endtime = datetime.now()
+    print(endtime - starttime)  # 计算用时，非必须
 
 def get_package_path(package_name="lv"):
     """获取包的路径值
@@ -77,7 +96,6 @@ class ImageCode:
         # 创建图片对象，并设定背景色为白色
         im = Image.new('RGB', (width, height), 'white')
         # 选择使用何种字体及字体大小
-        # font = ImageFont.truetype(font='arial.ttf', size=40)
         font = ImageFont.load_default(size=40)  # 使用 Pillow 自带的字体
         draw = ImageDraw.Draw(im)  # 新建ImageDraw对象
         # 绘制字符串
@@ -94,8 +112,8 @@ class ImageCode:
         image, code = self.draw_verify_code()
         buf = BytesIO()
         image.save(buf, 'jpeg')
-        bstring = buf.getvalue()
-        return code, bstring
+        b_string = buf.getvalue()
+        return code, b_string
 
 
 # 发送QQ邮箱验证码, 参数为收件箱地址和随机生成的验证码
@@ -206,17 +224,17 @@ def generate_thumb(url_list):
     # 先遍历url_list，查找里面是否存在本地上传图片，找到即处理，代码运行结束
     for url in url_list:
         if url.startswith('/upload/'):
-            filename = url.split('/')[-1]
+            filename_ = url.split('/')[-1]
             # 找到本地图片后对其进行压缩处理，设置缩略图宽度为400像素即可
-            compress_image('./resource/upload/' + filename,
-                           './resource/thumb/' + filename, 400)
-            return filename
+            compress_image('./resource/upload/' + filename_,
+                           './resource/thumb/' + filename_, 400)
+            return filename_
 
     # 如果在内容中没有找到本地图片，则需要先将网络图片下载到本地再处理
     # 直接将第一张图片作为缩略图，并生成基于时间戳的标准文件名
     url = url_list[0]
-    filename = url.split('/')[-1]
-    suffix = filename.split('.')[-1]  # 取得文件的后缀名
+    filename_ = url.split('/')[-1]
+    suffix = filename_.split('.')[-1]  # 取得文件的后缀名
     thumbname = time.strftime('%Y%m%d_%H%M%S.' + suffix)
     download_image(url, './resource/download/' + thumbname)
     compress_image('./resource/download/' + thumbname, './resource/thumb/' + thumbname, 400)
@@ -224,34 +242,19 @@ def generate_thumb(url_list):
     return thumbname  # 返回当前缩略图的文件名
 
 
-def convert_image_to_webp(folder, filename):
+def convert_image_to_webp(folder_, filename_):
     # 打开 JPG 图片
-    img = Image.open(folder + filename)
-    new_filename = filename.split('.')[0] + '.webp'
+    img = Image.open(folder_ + filename_)
+    new_filename = filename_.split('.')[0] + '.webp'
     # 转换并保存为 WebP 格式
-    img.save(folder+new_filename, "WEBP")
+    img.save(folder_+new_filename, "WEBP")
 
 if __name__ == '__main__':
     # read_config()
     folder = 'D:\\source_code\\woniunote\\woniunote\\resource\\img\\'
     filename = "my_paper.bmp"
     convert_image_to_webp(folder, filename)
-#     content = '''
-#     <p style="text-align:left;text-indent:28px">
-# <span style="font-size:14px;font-family:宋体">文章编辑完成后当然就得发布文章，某种意义上来说就是一个请求而已。但是要优化好整个发布功能，其实要考虑的问题是很多的。</span></p>
-# <p><img srcx="/upload/image.png" title="image.png" alt="image.png"/></p>
-# <p><span style="font-size:14px;font-family:宋体">首先要解决的问题是图片压缩的问题，作者发布文章时，并不会去关注图片有多大，只是简单的上传并确保前端能正常显示。</span></p>
-# <p><img src="http://www.woniuxy.com/page/img/banner/newBank.jpg"/></p>
-# <p><span style="font-size:14px;font-family:宋体">图片压缩分两种压缩方式，一种是压缩图片的尺寸，另外一种是压缩图片的大小。
-# </span><img src="http://ww1.sinaimg.cn/large/68b02e3bgy1g2rzifbr5fj215n0kg1c3.jpg"/>
-# </p>
-#     '''
-#
-#     list = parse_image_url(content)
-#
-#     thumb = generate_thumb(list)
-#
-#     print(thumb)
+
 
 
 

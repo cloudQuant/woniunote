@@ -13,8 +13,8 @@ user = Blueprint('user', __name__)
 @user.route('/vcode')
 def vcode():
     try:
-        code, bstring = ImageCode().get_code()
-        response = make_response(bstring)
+        code, b_string = ImageCode().get_code()
+        response = make_response(b_string)
         response.headers['Content-Type'] = 'image/jpeg'
         session['vcode'] = code.lower()
         return response

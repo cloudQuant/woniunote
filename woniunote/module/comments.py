@@ -40,7 +40,8 @@ class Comments(DBase):
     #                        primaryjoin="Comment.articleid == Article.articleid")
 
     # 新增一条评论
-    def insert_comment(self, articleid, content, ipaddr):
+    @staticmethod
+    def insert_comment(articleid, content, ipaddr):
         try:
             now = time.strftime('%Y-%m-%d %H:%M:%S')
             comment = Comment(userid=session.get('userid'), articleid=articleid,
@@ -52,7 +53,8 @@ class Comments(DBase):
             traceback.print_exc()
 
     # 根据文章编号查询所有评论
-    def find_by_articleid(self, articleid):
+    @staticmethod
+    def find_by_articleid(articleid):
         try:
             result = dbsession.query(Comment).filter_by(articleid=articleid, hidden=0, replyid=0).all()
             return result
@@ -61,7 +63,8 @@ class Comments(DBase):
             traceback.print_exc()
 
     # 根据用户编号和日期进行查询是否已经超过每天5条限制
-    def check_limit_per_5(self):
+    @staticmethod
+    def check_limit_per_5():
         try:
             start = time.strftime("%Y-%m-%d 00:00:00")  # 当天的起始时间
             end = time.strftime("%Y-%m-%d 23:59:59")  # 当天的结束时间
@@ -76,7 +79,8 @@ class Comments(DBase):
             traceback.print_exc()
 
     # 查询评论与用户信息，注意评论也需要分页 [(Comment, Users), (Comment, Users)]
-    def find_limit_with_user(self, articleid, start, count):
+    @staticmethod
+    def find_limit_with_user(articleid, start, count):
         try:
             result = dbsession.query(Comment, Users).join(Users, Users.userid == Comment.userid).filter(
                 Comment.articleid == articleid, Comment.hidden == 0).order_by(
@@ -86,7 +90,8 @@ class Comments(DBase):
             print(e)
             traceback.print_exc()
 
-    def find_all(self):
+    @staticmethod
+    def find_all():
         try:
             result = dbsession.query(Comment).all()
             return result
@@ -95,7 +100,8 @@ class Comments(DBase):
             traceback.print_exc()
 
     # 新增一条回复，将原始评论的ID作为新评论的replyid字段来进行关联
-    def insert_reply(self, articleid, commentid, content, ipaddr):
+    @staticmethod
+    def insert_reply(articleid, commentid, content, ipaddr):
         try:
             now = time.strftime('%Y-%m-%d %H:%M:%S')
             comment = Comment(userid=session.get('userid'), articleid=articleid,
@@ -108,7 +114,8 @@ class Comments(DBase):
             traceback.print_exc()
 
     # 查询原始评论与对应的用户信息，带分页参数
-    def find_comment_with_user(self, articleid, start, count):
+    @staticmethod
+    def find_comment_with_user(articleid, start, count):
         try:
             result = dbsession.query(Comment, Users).join(
                 Users, Users.userid == Comment.userid).filter(
@@ -122,7 +129,8 @@ class Comments(DBase):
             traceback.print_exc()
 
     # 查询回复评论，回复评论不需要分页
-    def find_reply_with_user(self, replyid):
+    @staticmethod
+    def find_reply_with_user(replyid):
         try:
             result = dbsession.query(Comment, Users).join(Users, Users.userid ==
                                                           Comment.userid).filter(Comment.replyid == replyid,
@@ -149,7 +157,8 @@ class Comments(DBase):
             traceback.print_exc()
 
     # 查询某篇文章的原始评论总数量
-    def get_count_by_article(self, articleid):
+    @staticmethod
+    def get_count_by_article(articleid):
         try:
             count = dbsession.query(Comment).filter_by(articleid=articleid, hidden=0, replyid=0).count()
             return count

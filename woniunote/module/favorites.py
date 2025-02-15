@@ -1,11 +1,10 @@
 import time
 import traceback
 from flask import session
-from sqlalchemy import Table, Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Table, Column, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from woniunote.common.database import dbconnect
 from woniunote.module.articles import Article
-from woniunote.module.users import Users
 from woniunote.common.create_database import Favorite
 
 dbsession, md, DBase = dbconnect()
@@ -34,7 +33,8 @@ class Favorites(DBase):
     #                        primaryjoin="Favorite.articleid == Article.articleid")
 
     # 播入文章收藏数据
-    def insert_favorite(self, articleid):
+    @staticmethod
+    def insert_favorite(articleid):
         try:
             row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=session.get('userid')).first()
             if row is not None:
@@ -50,7 +50,8 @@ class Favorites(DBase):
             traceback.print_exc()
 
     # 取消收藏
-    def cancel_favorite(self, articleid):
+    @staticmethod
+    def cancel_favorite(articleid):
         try:
             row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=session.get('userid')).first()
             row.canceled = 1
@@ -60,7 +61,8 @@ class Favorites(DBase):
             traceback.print_exc()
 
     # 判断是否已经被收藏
-    def check_favorite(self, articleid):
+    @staticmethod
+    def check_favorite(articleid):
         try:
             row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=session.get('userid')).first()
             if row is None:
@@ -74,7 +76,8 @@ class Favorites(DBase):
             traceback.print_exc()
 
     # 为用户中心查询我的收藏添加数据操作方法
-    def find_my_favorite(self):
+    @staticmethod
+    def find_my_favorite():
         try:
             result = dbsession.query(Favorite, Article).join(Article, Favorite.articleid ==
                                                              Article.articleid).filter(
@@ -85,7 +88,8 @@ class Favorites(DBase):
             traceback.print_exc()
 
     # 切换收藏和取消收藏的状态
-    def switch_favorite(self, favoriteid):
+    @staticmethod
+    def switch_favorite(favoriteid):
         try:
             row = dbsession.query(Favorite).filter_by(favoriteid=favoriteid).first()
             if row.canceled == 1:

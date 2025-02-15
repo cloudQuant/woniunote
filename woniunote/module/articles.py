@@ -38,7 +38,8 @@ class Articles(DBase):
     # user = relationship("Users", foreign_keys=[__table__.c.userid], primaryjoin="Article.userid == Users.userid")
 
     # 查询所有文章
-    def find_all(self):
+    @staticmethod
+    def find_all():
         try:
             result = dbsession.query(Article).all()
             return result
@@ -47,7 +48,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 根据id查询文章，数据格式：(Article, 'nickname')
-    def find_by_id(self, articleid):
+    @staticmethod
+    def find_by_id(articleid):
         try:
             result = [i for i in Articles().find_all() if i.articleid == articleid]
             result.append("yunjinqi")
@@ -57,7 +59,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 指定分页的limit和offset的参数值，同时与用户表做连接查询
-    def find_limit_with_users(self, start, count):
+    @staticmethod
+    def find_limit_with_users(start, count):
         try:
             result = dbsession.query(Article, Users.nickname).join(Users, Users.userid == Article.userid) \
                 .all()
@@ -74,7 +77,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 统计一下当前文章的总数量
-    def get_total_count(self):
+    @staticmethod
+    def get_total_count():
         try:
             count = dbsession.query(Article).filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1).count()
             return count
@@ -83,7 +87,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 根据文章类型获取文章
-    def find_by_type(self, article_type, start, count):
+    @staticmethod
+    def find_by_type(article_type, start, count):
         try:
             result = dbsession.query(Article, Users.nickname).join(Users, Users.userid == Article.userid) \
                 .filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1, Article.type == article_type) \
@@ -94,7 +99,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 根据文章类型来获取总数量
-    def get_count_by_type(self, article_type):
+    @staticmethod
+    def get_count_by_type(article_type):
         try:
             count = dbsession.query(Article).filter(Article.hidden == 0,
                                                     Article.drafted == 0,
@@ -106,7 +112,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 根据文章标题进行模糊搜索
-    def find_by_headline(self, headline, start, count):
+    @staticmethod
+    def find_by_headline(headline, start, count):
         try:
             result = dbsession.query(Article, Users.nickname).join(Users, Users.userid == Article.userid) \
                 .filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1,
@@ -118,7 +125,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 统计分页总数量
-    def get_count_by_headline(self, headline):
+    @staticmethod
+    def get_count_by_headline(headline):
         try:
             count = dbsession.query(Article).filter(Article.hidden == 0,
                                                     Article.drafted == 0,
@@ -130,7 +138,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 最新文章[(id, headline),(id, headline)]
-    def find_last_9(self):
+    @staticmethod
+    def find_last_9():
         try:
             result = dbsession.query(Article.articleid, Article.headline). \
                 filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1) \
@@ -141,7 +150,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 最多阅读
-    def find_most_9(self):
+    @staticmethod
+    def find_most_9():
         try:
             result = dbsession.query(Article.articleid, Article.headline). \
                 filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1) \
@@ -152,7 +162,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 特别推荐，如果超过9篇，可以考虑order by rand()的方式随机显示9篇
-    def find_recommended_9(self):
+    @staticmethod
+    def find_recommended_9():
         try:
             result = dbsession.query(Article.articleid, Article.headline). \
                 filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1, Article.recommended == 1) \
@@ -174,7 +185,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 每阅读一次文章，阅读次数+1
-    def update_read_count(self, articleid):
+    @staticmethod
+    def update_read_count(articleid):
         try:
             article = dbsession.query(Article).filter_by(articleid=articleid).first()
             if article.readcount is None:
@@ -186,7 +198,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 根据文章编号查询文章标题
-    def find_headline_by_id(self, articleid):
+    @staticmethod
+    def find_headline_by_id(articleid):
         try:
             row = dbsession.query(Article.headline).filter_by(articleid=articleid).first()
             return row.headline
@@ -235,7 +248,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 当发表或者回复评论后，为文章表字段replycount加1
-    def update_replycount(self, articleid):
+    @staticmethod
+    def update_replycount(articleid):
         try:
             row = dbsession.query(Article).filter_by(articleid=articleid).first()
             row.replycount += 1
@@ -245,7 +259,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 插入一篇新的文章，草稿或投稿通过参数进行区分
-    def insert_article(self, article_type, headline, content, thumbnail, credit, drafted=0, checked=1):
+    @staticmethod
+    def insert_article(article_type, headline, content, thumbnail, credit, drafted=0, checked=1):
         try:
             now = time.strftime('%Y-%m-%d %H:%M:%S')
             userid = session.get('userid')
@@ -262,7 +277,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 根据文章编号更新文章的内容，可用于文章编辑或草稿修改，以及基于草稿的发布
-    def update_article(self, articleid, article_type, headline, content, thumbnail, credit, drafted=0, checked=1):
+    @staticmethod
+    def update_article(articleid, article_type, headline, content, thumbnail, credit, drafted=0, checked=1):
         try:
             now = time.strftime('%Y-%m-%d %H:%M:%S')
             row = dbsession.query(Article).filter_by(articleid=articleid).first()
@@ -283,7 +299,8 @@ class Articles(DBase):
     # =========== 以下方法主要用于后台管理类操作 ================== #
 
     # 查询article表中除草稿外的所有数据并返回结果集
-    def find_all_except_draft(self, start, count):
+    @staticmethod
+    def find_all_except_draft(start, count):
         try:
             result = dbsession.query(Article).filter(Article.drafted == 0).order_by(
                 Article.articleid.desc()).limit(count).offset(start).all()
@@ -293,7 +310,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 查询除草稿外的所有文章的总数量
-    def get_count_except_draft(self):
+    @staticmethod
+    def get_count_except_draft():
         try:
             count = dbsession.query(Article).filter(Article.drafted == 0).count()
             return count
@@ -319,7 +337,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 按照标题模糊查询（不含草稿，不分页）
-    def find_by_headline_except_draft(self, headline):
+    @staticmethod
+    def find_by_headline_except_draft(headline):
         try:
             result = dbsession.query(Article).filter(Article.drafted == 0,
                                                      Article.headline.like('%' + headline + '%')) \
@@ -330,7 +349,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 切换文章的隐藏状态：1表示隐藏，0表示显示
-    def switch_hidden(self, articleid):
+    @staticmethod
+    def switch_hidden(articleid):
         try:
             row = dbsession.query(Article).filter_by(articleid=articleid).first()
             if row.hidden == 1:
@@ -344,7 +364,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 切换文章的推荐状态：1表示推荐，0表示正常
-    def switch_recommended(self, articleid):
+    @staticmethod
+    def switch_recommended(articleid):
         try:
             row = dbsession.query(Article).filter_by(articleid=articleid).first()
             if row.recommended == 1:
@@ -358,7 +379,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 切换文章的审核状态：1表示已审，0表示待审
-    def switch_checked(self, articleid):
+    @staticmethod
+    def switch_checked(articleid):
         try:
             row = dbsession.query(Article).filter_by(articleid=articleid).first()
             if row.checked == 1:

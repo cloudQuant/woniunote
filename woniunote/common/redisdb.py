@@ -29,7 +29,7 @@ def redis_connect():
 
 
 def redis_mysql_string():
-    from common.database import dbconnect
+    from woniunote.common.database import dbconnect
 
     red = redis_connect()  # 连接到Redis服务器
 
@@ -44,7 +44,7 @@ def redis_mysql_string():
 
 
 def redis_mysql_hash():
-    from common.database import dbconnect
+    from woniunote.common.database import dbconnect
 
     red = redis_connect()  # 连接到Redis服务器
 
