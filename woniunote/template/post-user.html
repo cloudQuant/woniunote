@@ -27,23 +27,32 @@
 
     <!-- 类型、子类型、积分、提交按钮 -->
     <div class="form-group row align-items-center">
-        <!-- 主类型 -->
-        <label for="main-type" class="col-2 col-form-label text-right">类型：</label>
-        <div class="col-2">
-            <select class="form-control" id="main-type">
-                {% for key, value in article_type.items() if key < 100 %}
-                    <option value="{{ key }}">{{ value }}</option>
-                {% endfor %}
-            </select>
-        </div>
+        <!-- 类型 -->
+        <label for="type" class="col-1">类型：</label>
+        <select class="form-control col-2" id="main-type">
+            {% for key, value in article_type.items() %}
+                {% if key < 100 %}
+                <option value="{{ key }}"
+                        {% if result[0].type // 100 == key %} selected {% endif %}>
+                    {{ value }}
+                </option>
+                {% endif %}
+            {% endfor %}
+        </select>
 
         <!-- 子类型 -->
-        <label for="sub-type" class="col-2 col-form-label text-right">子类型：</label>
-        <div class="col-2">
-            <select class="form-control" id="sub-type">
-                <!-- 子类型初始为空，动态加载 -->
-            </select>
-        </div>
+        <select class="form-control col-2" id="sub-type">
+            {% if result[0].type %}
+                {% for key, value in article_type.items() %}
+                    {% if key >= 100 and key // 100 == result[0].type // 100 %}
+                    <option value="{{ key }}"
+                            {% if result[0].type == key %} selected {% endif %}>
+                        {{ value }}
+                    </option>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </select>
 
         <!-- 积分 -->
         <label for="credit" class="col-2 col-form-label text-right">积分：</label>
