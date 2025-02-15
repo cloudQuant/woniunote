@@ -76,7 +76,11 @@
     // 子类型数据，这部分可以通过 Django 后端动态生成或调整
     const subTypesData = {
         {% for key, value in article_type.items() if key >= 100 %}
-            "{{ key }}": "{{ value }}",
+            "{{ key }}": [
+                {% for sub_key, sub_value in sub_types[key].items() %}
+                    { "id": "{{ sub_key }}", "name": "{{ sub_value }}" },
+                {% endfor %}
+            ],
         {% endfor %}
     };
 
@@ -90,7 +94,7 @@
             const selectedMainType = mainTypeSelect.value;
 
             // 如果当前没有选中主类型，清空子类型
-            if (!selectedMainType) {
+            if (!selectedMainType || !subTypesData[selectedMainType]) {
                 subTypeSelect.innerHTML = "<option value=''>请选择子类型</option>";
                 return;
             }
@@ -104,16 +108,18 @@
             defaultOption.text = "请选择子类型";
             subTypeSelect.appendChild(defaultOption);
 
-            // 动态加载子类型选项
-            // 假设 `subTypesData` 是一个映射，使用主类型值来查找子类型
-            // 你可以根据后端返回的数据填充子类型
-            const subTypes = subTypesData[selectedMainType] || {};
-
-            for (const [subId, subName] of Object.entries(subTypes)) {
+            // 获取当前主类型的所有子类型
+            const subTypes = subTypesData[selectedMainType];
+            subTypes.forEach(sub => {
                 const option = document.createElement("option");
-                option.value = subId;
-                option.text = subName;
+                option.value = sub.id;
+                option.text = sub.name;
                 subTypeSelect.appendChild(option);
+            });
+
+            // 默认选择第一个子类型
+            if (subTypes.length > 0) {
+                subTypeSelect.value = subTypes[0].id;
             }
         }
 
@@ -189,6 +195,7 @@
 </script>
 
 {% endblock %}
+
 
 
 
