@@ -13,11 +13,31 @@
         </script>
     </div>
     <div class="row form-group" style="margin-top: 20px; padding-top: 10px;">
+       <!-- 类型 -->
         <label for="type" class="col-1">类型：</label>
-        <select class="form-control col-2" id="type">
+        <select class="form-control col-2" id="main-type">
             {% for key, value in article_type.items() %}
-            <option value="{{key}}">{{value}}</option>
+                {% if key < 100 %}
+                <option value="{{ key }}"
+                        {% if result[0].type // 100 == key %} selected {% endif %}>
+                    {{ value }}
+                </option>
+                {% endif %}
             {% endfor %}
+        </select>
+
+        <!-- 子类型 -->
+        <select class="form-control col-2" id="sub-type">
+            {% if result[0].type %}
+                {% for key, value in article_type.items() %}
+                    {% if key >= 100 and key // 100 == result[0].type // 100 %}
+                    <option value="{{ key }}"
+                            {% if result[0].type == key %} selected {% endif %}>
+                        {{ value }}
+                    </option>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
         </select>
         <label class="col-1"></label>
         <label for="credit" class="col-1">积分：</label>
