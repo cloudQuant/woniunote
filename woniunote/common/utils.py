@@ -224,8 +224,18 @@ def generate_thumb(url_list):
     return thumbname  # 返回当前缩略图的文件名
 
 
+def convert_image_to_webp(folder, filename):
+    # 打开 JPG 图片
+    img = Image.open(folder + filename)
+    new_filename = filename.split('.')[0] + '.webp'
+    # 转换并保存为 WebP 格式
+    img.save(folder+new_filename, "WEBP")
+
 if __name__ == '__main__':
-    read_config()
+    # read_config()
+    folder = 'D:\\source_code\\woniunote\\woniunote\\resource\\img\\'
+    filename = "my_paper.bmp"
+    convert_image_to_webp(folder, filename)
 #     content = '''
 #     <p style="text-align:left;text-indent:28px">
 # <span style="font-size:14px;font-family:宋体">文章编辑完成后当然就得发布文章，某种意义上来说就是一个请求而已。但是要优化好整个发布功能，其实要考虑的问题是很多的。</span></p>
@@ -242,3 +252,6 @@ if __name__ == '__main__':
 #     thumb = generate_thumb(list)
 #
 #     print(thumb)
+
+
+
