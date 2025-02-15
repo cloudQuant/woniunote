@@ -8,6 +8,10 @@
     var ue = UE.getEditor('content', {
         initialFrameHeight: 400,
         autoHeightEnabled: true,
+        // 启用代码块功能
+        enableCodeBlock: true,
+        // 设置代码块的样式类名
+        codeBlockClass: 'hljs',
         serverUrl: '/uedit',
     });
     ue.on('contentchange', function () {
