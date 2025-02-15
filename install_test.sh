@@ -9,7 +9,7 @@ BENCHMARKS_DIR=".benchmarks"
 cd ..
 
 # 安装 requirements.txt 中的依赖
-pip install -U -r ./woniunote/requirements.txt
+#pip install -U -r ./woniunote/requirements.txt
 
 # 安装 woniunote 包
 pip install -U --no-build-isolation ./woniunote
