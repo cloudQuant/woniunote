@@ -34,6 +34,7 @@ def find_md5(args):
     endtime = datetime.now()
     print(endtime - starttime)  # 计算用时，非必须
 
+
 def get_package_path(package_name="lv"):
     """获取包的路径值
     :param package_name: 包的名称
@@ -247,14 +248,11 @@ def convert_image_to_webp(folder_, filename_):
     img = Image.open(folder_ + filename_)
     new_filename = filename_.split('.')[0] + '.webp'
     # 转换并保存为 WebP 格式
-    img.save(folder_+new_filename, "WEBP")
+    img.save(folder_ + new_filename, "WEBP")
+
 
 if __name__ == '__main__':
     # read_config()
-    folder = 'D:\\source_code\\woniunote\\woniunote\\resource\\img\\'
-    filename = "my_paper.bmp"
+    folder = '/Users/yunjinqi/Downloads/woniunote/woniunote/resource/img/'
+    filename = "noperm.jpg"
     convert_image_to_webp(folder, filename)
-
-
-
-
