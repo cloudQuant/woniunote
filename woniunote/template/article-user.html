@@ -1,4 +1,4 @@
-{% extends 'base.html' %}   {# 将当前页面继承至base.html母版 #}
+{% extends 'base.html' %}
 {% block content %}
 
 <!-- 引入 highlight.js -->
@@ -17,9 +17,13 @@
         </div>
         <div class="col-3 favorite">
             {% if is_favorited == True %}
-            <label class="favorite-btn" onclick="cancelFavorite('{{article.articleid}}')"><span class="oi oi-heart" aria-hidden="true"></span> 取消收藏</label>
+            <label class="favorite-btn" onclick="cancelFavorite('{{article.articleid}}')">
+                <span class="oi oi-heart" aria-hidden="true"></span> 取消收藏
+            </label>
             {% else %}
-            <label class="favorite-btn" onclick="addFavorite('{{article.articleid}}')"><span class="oi oi-heart" aria-hidden="true"></span> 收藏本文</label>
+            <label class="favorite-btn" onclick="addFavorite('{{article.articleid}}')">
+                <span class="oi oi-heart" aria-hidden="true"></span> 收藏本文
+            </label>
             {% endif %}
         </div>
         <div class="col-12 info">
@@ -34,7 +38,7 @@
             {% endif %}
         </div>
         <div class="col-12 content" id="content">
-            {{article.content | safe}}  {# 渲染文章内容 #}
+            {{article.content | safe}}  <!-- 渲染文章内容 -->
         </div>
 
         <!-- 只有需要消耗积分的文章且用户并未消耗过时才显示阅读全文按钮 -->
@@ -83,7 +87,7 @@
         <div class="col-12 paginate">
             <label onclick="gotoPage({{article['articleid']}}, 'prev')">上一页</label>&nbsp;&nbsp;
             {% for i in range(total) %}
-            <label onclick="gotoPage({{article['articleid']}}, '{{i+1}}')">{{i + 1}}</label>&nbsp;&nbsp;
+            <label onclick="gotoPage({{ article['articleid'] }}, {{ i + 1 }})">{{ i + 1 }}</label>&nbsp;&nbsp;
             {% endfor %}
             <label onclick="gotoPage({{article['articleid']}}, 'next')">下一页</label>
         </div>
@@ -92,12 +96,15 @@
 </div>
 
 <script>
-    // 初始化 highlight.js
+    // Initialize highlight.js after page load
     document.addEventListener('DOMContentLoaded', function () {
+        // Use highlight.js to apply syntax highlighting on code blocks
         document.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightBlock(block);
+            hljs.highlightElement(block); // Modern method for highlighting individual code blocks
         });
     });
+
+    // Other functions like readAll, addFavorite, cancelFavorite, etc.
 
     function readAll() {
         var param = 'articleid={{article.articleid}}&position={{position}}';
@@ -143,9 +150,7 @@
         });
     }
 
-    var PAGE = 1;
-    var TOTAL = {{total}};
-
+    // Vue for comments
     var v = new Vue({
         el: '#commentDiv',
         delimiters: ['${', '}'],
@@ -163,10 +168,10 @@
     };
 </script>
 
-{# 按需引入side.html，首页需要 #}
 {% include 'side.html' %}
 
 {% endblock %}
+
 
 
 {#{% extends 'base.html' %}   {# 将当前页面继承至base.html母版 #}
