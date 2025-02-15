@@ -120,31 +120,31 @@ function sayHello() {
 </div>
 
 <script>
-    // 初始化 highlight.js
     function initHighlightJS() {
-    // Select all <pre> elements with a class that starts with "brush:"
+    // Select all <pre> elements with class starting with "brush:"
     document.querySelectorAll('pre[class*="brush:"]').forEach((block) => {
-        // Extract the language name from the class (e.g., "brush:python" -> "python")
+        // Extract the language class from the "brush:" prefix, e.g., brush:python -> python
         const languageClass = block.className.match(/brush:(\S+)/);
 
         if (languageClass) {
-            const language = languageClass[1]; // Extracted language (e.g., "python")
+            const language = languageClass[1]; // Extract language, like "python", "javascript", etc.
+            block.classList.add(language); // Add class like "python" for highlighting
+            block.classList.remove(`brush:${language}`); // Remove the "brush:" part
 
-            // Add the correct language class for highlight.js (e.g., "python")
-            block.classList.add(language);
-            // Remove the "brush:" part from the class
-            block.classList.remove(`brush:${language}`);
-
-            // Highlight the code block using highlight.js
-            hljs.highlightElement(block.querySelector('code')); // Apply syntax highlighting to the code inside <pre>
+            // Ensure the syntax highlighting happens for the code block inside <pre>
+            const codeBlock = block.querySelector('code');
+            if (codeBlock) {
+                hljs.highlightElement(codeBlock); // Highlight the code inside <code>
+            }
         }
     });
 }
 
-    // 在页面加载完成后初始化 highlight.js
-    document.addEventListener('DOMContentLoaded', function () {
-        initHighlightJS();
-    });
+// Initialize highlight.js when the page is loaded
+document.addEventListener('DOMContentLoaded', function () {
+    initHighlightJS(); // Call the function to initialize syntax highlighting
+});
+
 
     // 如果文章内容是动态加载的（例如通过 AJAX），在加载完成后重新初始化
     function readAll() {
