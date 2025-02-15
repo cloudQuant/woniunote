@@ -16,29 +16,18 @@
     <meta name="description" content="关注个人成长和用量化思维做投资理财，包括但不限于股票、期货、期权、外汇、基金、理财、保险">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>云子量化</title>
-    <!-- 优化后的 CSS 加载方式 -->
+    <!-- 1. 使用 preload 提前加载 bootstrap.css 和关键的样式 -->
+    <link rel="preload" href="/css/bootstrap.css" as="style" type="text/css" crossorigin="anonymous">
 
-<!-- 使用 preload 提前加载关键的 Bootstrap 样式表 -->
-<link rel="preload" href="/css/bootstrap.css" as="style" type="text/css" onload="this.media='all'">
+    <!-- 2. 使用 media="print" 延迟加载非关键 CSS 样式，直到页面加载完成 -->
+    <link rel="stylesheet" href="/css/woniunote.css" type="text/css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="icon/font/css/open-iconic-bootstrap.css" type="text/css" media="print" onload="this.media='all'">
 
-<!-- 使用 media="print" 推迟加载非关键的 CSS 文件，并在加载完成后立即应用 -->
-<link rel="stylesheet" href="/css/woniunote.css" type="text/css" media="print" onload="this.media='all'">
-
-<!-- 使用 media="print" 推迟加载非关键的图标样式表，并在加载完成后立即应用 -->
-<link rel="stylesheet" href="icon/font/css/open-iconic-bootstrap.css" type="text/css" media="print" onload="this.media='all'">
-
-{#    <link rel="stylesheet" href="/css/bootstrap.css" type="text/css">#}
-{#    <link rel="stylesheet" href="/css/woniunote.css" type="text/css">#}
-{#    <link rel="stylesheet" href="icon/font/css/open-iconic-bootstrap.css" type="text/css">#}
-    <script defer src="/js/jquery-3.4.1.min.js"></script>
-    <script defer src="/js/bootstrap.js"></script>
-    <script defer src="/js/bootbox.min.js"></script>
-    <script defer src="/js/woniunote.js"></script>
+    <!-- 3. 内联关键 CSS，用于优化首屏渲染 -->
     <style>
-        .header h4 {
-            font-size: 18px;
-            color: #2b6db4;
-        }
+        /* 关键 CSS 样式，直接内联到页面中 */
+        body { font-family: Arial, sans-serif; }
+        .header { background-color: #f5f5f5; }
         .scrolling-text {
             white-space: nowrap;
             overflow: hidden;
@@ -48,7 +37,37 @@
             0% { transform: translateX(-20%); }
             100% { transform: translateX(100%); }
         }
+        /* 在这里可以内联更多首屏需要的样式 */
     </style>
+
+    <!-- 4. 保持 JavaScript 文件的 defer 属性，确保它们在 DOM 完成解析后再执行 -->
+    <script defer src="/js/jquery-3.4.1.min.js"></script>
+    <script defer src="/js/bootstrap.js"></script>
+    <script defer src="/js/bootbox.min.js"></script>
+    <script defer src="/js/woniunote.js"></script>
+
+{#    <link rel="stylesheet" href="/css/bootstrap.css" type="text/css">#}
+{#    <link rel="stylesheet" href="/css/woniunote.css" type="text/css">#}
+{#    <link rel="stylesheet" href="icon/font/css/open-iconic-bootstrap.css" type="text/css">#}
+{#    <script defer src="/js/jquery-3.4.1.min.js"></script>#}
+{#    <script defer src="/js/bootstrap.js"></script>#}
+{#    <script defer src="/js/bootbox.min.js"></script>#}
+{#    <script defer src="/js/woniunote.js"></script>#}
+{#    <style>#}
+{#        .header h4 {#}
+{#            font-size: 18px;#}
+{#            color: #2b6db4;#}
+{#        }#}
+{#        .scrolling-text {#}
+{#            white-space: nowrap;#}
+{#            overflow: hidden;#}
+{#            animation: scrolling 20s linear infinite;#}
+{#        }#}
+{#        @keyframes scrolling {#}
+{#            0% { transform: translateX(-20%); }#}
+{#            100% { transform: translateX(100%); }#}
+{#        }#}
+{#    </style>#}
 </head>
 
 
