@@ -152,6 +152,7 @@ def math_train():
     file_path = math_train.html
     return render_template(file_path)
 
+# todo why need @app.route('/favicon.ico')
 @app.route('/favicon.ico')
 def favicon():
     # 打印请求头信息

@@ -1,6 +1,5 @@
 ### changelog
-favicon.ico
-/vcode
+-[ ] 2025-02-16: why need @app.route('/favicon.ico')? todo
 -[x] 2025-02-16: compress the js file and fix some bugs
 -[x] 2025-02-15: change png to webp format for better performance
 -[x] 2025-02-15: compress the CSS file in the source code
