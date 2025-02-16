@@ -27,6 +27,8 @@ SQLALCHEMY_DATABASE_URI = config_result['database']["SQLALCHEMY_DATABASE_URI"]
 app = Flask(__name__, template_folder='template',
             static_url_path='/', static_folder='resource')
 app.config['SECRET_KEY'] = os.urandom(24)
+# 启动调试功能，生产环境注释掉
+app.config['DEBUG'] = True
 
 # 使用集成方式处理SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
