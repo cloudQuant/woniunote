@@ -124,6 +124,7 @@ def classify(class_type, page):
                                most_articles=most,
                                recommended_articles=recommended)
     except Exception as e:
+        print("出现错误")
         print(e)
         traceback.print_exc()
 
