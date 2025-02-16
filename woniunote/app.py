@@ -152,6 +152,12 @@ def math_train():
     file_path = math_train.html
     return render_template(file_path)
 
+@app.route('/favicon.ico')
+def favicon():
+    # 打印请求头信息
+    print("Request Headers:", request.headers)
+    return '/static/favicon.ico'
+
 
 if __name__ == '__main__':
     path = get_package_path("woniunote")
