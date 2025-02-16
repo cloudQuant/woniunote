@@ -155,7 +155,7 @@ def math_train():
 @app.route('/favicon.ico')
 def favicon():
     # 打印请求头信息
-    print("Request Headers:", request.headers)
+    # print("Request Headers:", request.headers)
     return '/static/favicon.ico'
 
 
