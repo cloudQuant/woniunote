@@ -251,8 +251,107 @@ def convert_image_to_webp(folder_, filename_):
     img.save(folder_ + new_filename, "WEBP")
 
 
+def get_system_font_path():
+    import platform
+    # 根据操作系统选择字体路径
+    if platform.system() == "Windows":
+        font_path = "C:/Windows/Fonts/msyh.ttc"  # 微软雅黑路径
+    elif platform.system() == "Darwin":  # macOS
+        font_path = "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"  # 微软雅黑路径
+    else:  # Linux (Ubuntu)
+        font_path = "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"  # 文泉驿微米黑路径
+    return font_path
+
+
+def generate_random_color():
+    """生成一个随机的鲜艳颜色"""
+    return random.randint(100, 255), random.randint(100, 255), random.randint(100, 255)
+
+def generate_gradient_background(width, height):
+    """生成一个更加鲜艳的背景渐变"""
+    # 随机选择两种颜色作为背景渐变的起始和终止颜色
+    start_color = generate_random_color()
+    end_color = generate_random_color()
+
+    gradient = Image.new('RGB', (width, height), start_color)
+    for y in range(height):
+        blend_factor = y / height
+        r = int(start_color[0] * (1 - blend_factor) + end_color[0] * blend_factor)
+        g = int(start_color[1] * (1 - blend_factor) + end_color[1] * blend_factor)
+        b = int(start_color[2] * (1 - blend_factor) + end_color[2] * blend_factor)
+        for x in range(width):
+            gradient.putpixel((x, y), (r, g, b))
+    return gradient
+
+def create_thumb_png():
+    # 从文件加载 YAML 内容
+    yaml_file_path = '../configs/article_type_config.yaml'
+
+    # 确保文件存在
+    if not os.path.exists(yaml_file_path):
+        raise FileNotFoundError(f"配置文件 {yaml_file_path} 不存在!")
+
+    # 读取并解析 YAML 文件
+    with open(yaml_file_path, 'r', encoding='utf-8') as file:
+        yaml_content = file.read()
+
+    # 解析 YAML 内容
+    article_types = yaml.safe_load(yaml_content)["ARTICLE_TYPES"]
+
+    # 输出查看
+    print(article_types)
+
+    # Directory to save images
+    output_dir = "../resource/thumb/"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Font configuration
+    font_path = get_system_font_path()
+    image_size = (541, 273)  # (width, height)
+
+    # Generate images
+    for key, value in article_types.items():
+        image = generate_gradient_background(*image_size)  # Create gradient background
+        draw = ImageDraw.Draw(image)
+
+        # Dynamically adjust font size and text wrapping
+        font_size = 60  # Initial font size
+        font = ImageFont.truetype(font_path, font_size)
+
+        # Check text width and adjust font size to fit
+        text_bbox = draw.textbbox((0, 0), value, font=font)
+        while text_bbox[2] - text_bbox[0] > image_size[0] * 0.9 or text_bbox[3] - text_bbox[1] > image_size[1] * 0.9:
+            font_size -= 2
+            font = ImageFont.truetype(font_path, font_size)
+            text_bbox = draw.textbbox((0, 0), value, font=font)
+
+        # Center the text
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+        position = ((image_size[0] - text_width) // 2, (image_size[1] - text_height) // 2)
+
+        # Draw text with shadow effect for better visibility
+        shadow_offset = 2
+        shadow_color = (50, 50, 50)  # Shadow color (dark gray)
+        draw.text((position[0] + shadow_offset, position[1] + shadow_offset), value, fill=shadow_color, font=font)
+
+        # Text color (randomly generated fresh colors)
+        text_color = generate_random_color()
+        draw.text(position, value, fill=text_color, font=font)
+
+        # Optionally, add a border around the image
+        border_thickness = 10
+        draw.rectangle([0, 0, image_size[0] - 1, image_size[1] - 1], outline=(0, 0, 0), width=border_thickness)
+
+        # Save image
+        filename = os.path.join(output_dir, f"{key}.png")
+        image.save(filename)
+
+    print(f"Images saved to {output_dir}")
+
 if __name__ == '__main__':
     # read_config()
-    folder = '/Users/yunjinqi/Downloads/woniunote/woniunote/resource/img/'
-    filename = "noperm.jpg"
-    convert_image_to_webp(folder, filename)
+    # folder = '/Users/yunjinqi/Downloads/woniunote/woniunote/resource/img/'
+    # filename = "noperm.jpg"
+    # convert_image_to_webp(folder, filename)
+    create_thumb_png()
