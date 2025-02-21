@@ -89,8 +89,8 @@ def before():
         username = request.cookies.get('username')
         password = request.cookies.get('password')
         if username is not None and password is not None:
-            user = Users()
-            result = user.find_by_username(username)
+            user_ = Users()
+            result = user_.find_by_username(username)
             if len(result) == 1 and result[0].password == password:
                 session['islogin'] = 'true'
                 session['userid'] = result[0].userid

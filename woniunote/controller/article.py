@@ -59,6 +59,7 @@ def read(articleid):
         article_instance = Articles()
         last, most, recommended = article_instance.find_last_most_recommended()
         html_file = 'article-user.html'
+        print("article_dict", article_dict["headline"])
         return render_template(html_file, article=article_dict, position=position, payed=payed,
                                is_favorited=is_favorited, prev_next=prev_next,
                                can_use_minute=can_use_minute(),

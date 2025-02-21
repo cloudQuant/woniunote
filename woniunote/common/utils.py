@@ -311,7 +311,7 @@ def create_thumb_png():
 
     # Generate images
     for key, value in article_types.items():
-        image = generate_gradient_background(*image_size)  # Create gradient background
+        image = generate_gradient_background(*image_size)  # Create a gradient background
         draw = ImageDraw.Draw(image)
 
         # Dynamically adjust font size and text wrapping
