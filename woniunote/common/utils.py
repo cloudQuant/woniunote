@@ -307,7 +307,7 @@ def create_thumb_png():
 
     # Font configuration
     font_path = get_system_font_path()
-    image_size = (541, 273)  # (width, height)
+    image_size = (226, 136)  # (width, height)
 
     # Generate images
     for key, value in article_types.items():
