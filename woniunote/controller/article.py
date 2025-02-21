@@ -60,7 +60,7 @@ def read(articleid):
         article_instance = Articles()
         last, most, recommended = article_instance.find_last_most_recommended()
         html_file = 'article-user.html'
-        print("article_dict", article_dict["headline"])
+        # print("article_dict", article_dict["headline"])
         return render_template(html_file, article=article_dict, position=position, payed=payed,
                                is_favorited=is_favorited, prev_next=prev_next,
                                can_use_minute=can_use_minute(),
@@ -116,7 +116,7 @@ def pre_post():
 # 编辑文章的前端页面渲染
 @article.route('/edit/<int:articleid>')
 def go_edit(articleid):
-    print("go to edit article")
+    # print("go to edit article")
     try:
         result = Articles().find_by_id(articleid)
         # print("go_edit", articleid)
@@ -139,7 +139,7 @@ def go_edit(articleid):
 # 处理文章编辑请求
 @article.route("/edit", methods=["PUT", "POST"])
 def edit_article():
-    print("begin to edit article")
+    # print("begin to edit article")
     try:
         headline = request.form.get('headline')
         content = request.form.get('content')
@@ -149,7 +149,7 @@ def edit_article():
         checked = int(request.form.get('checked'))
         articleid = int(request.form.get('articleid'))
         article_instance = Articles()
-        print("new_headline", headline)
+        # print("new_headline", headline)
         try:
             row = article_instance.find_by_id(articleid)
             article_id = article_instance.update_article(articleid=articleid,
@@ -179,7 +179,7 @@ def add_article():
         drafted = int(request.form.get('drafted'))
         checked = int(request.form.get('checked'))
         articleid = int(request.form.get('articleid'))
-        print(f"headline:{headline},article_type:{article_type},articleid:{articleid}")
+        # print(f"headline:{headline},article_type:{article_type},articleid:{articleid}")
         if session.get('userid') is None:
             return 'perm-denied'
         else:

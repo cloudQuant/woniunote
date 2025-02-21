@@ -4,6 +4,9 @@
 <script type="text/plain" style="height:300px;"></script>
 <script type="text/javascript" src="/ueditor/ueditor.config.js"></script>
 <script type="text/javascript" src="/ueditor/ueditor.all.js"></script>
+    <!-- 引入 Bootbox.js -->
+<script type="text/javascript" src="/js/bootbox.min.js"></script>
+
 <script type="text/javascript">
     let ue = UE.getEditor('content', {
         initialFrameHeight: 400,
@@ -43,7 +46,7 @@
         <input type="text" class="col-11" id="headline" value="{{ result[0].headline }}" />
     </div>
     <div class="row">
-        <script id="content" name="content" type="text/plain">
+        <script id="content" type="text/plain">
             {{ result[0].content | safe }}
         </script>
     </div>
