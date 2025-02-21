@@ -4,7 +4,7 @@
 <!-- 引入 highlight.js -->
 <!--<script src="/js/vue.js"></script>>-->
 
-<div class="col-sm-9 col-12" id="left" style="padding: 0px;">
+<div class="col-sm-9 col-12" id="left" style="padding: 0;">
     <div class="col-12 row article-detail">
         <div class="col-9 title">
             {{article.headline}}
@@ -93,34 +93,34 @@
 
 <script>
     function initHighlightJS() {
-    document.querySelectorAll('pre[class*="brush:"]').forEach((block) => {
-        console.log('Processing block:', block);
+        document.querySelectorAll('pre[class*="brush:"]').forEach((block) => {
+            console.log('Processing block:', block);
 
-        // Extract the language class from the "brush:" prefix (e.g., brush:python -> python)
-        const languageClass = block.className.match(/brush:(\S+)/);
+            // Extract the language class from the "brush:" prefix (e.g., brush:python -> python)
+            const languageClass = block.className.match(/brush:(\S+)/);
 
-        if (languageClass) {
-            const language = languageClass[1]; // Extracted language, like "python"
+            if (languageClass) {
+                const language = languageClass[1]; // Extracted language, like "python"
 
-            // Add the language class (like "python") to the <pre> element
-            block.classList.add(language);
-            // Remove the "brush:" part of the class
-            block.classList.remove(`brush:${language}`);
+                // Add the language class (like "python") to the <pre> element
+                block.classList.add(language);
+                // Remove the "brush:" part of the class
+                block.classList.remove(`brush:${language}`);
 
-            // Highlight the content of the <pre> tag directly
-            hljs.highlightElement(block); // Apply syntax highlighting to the <pre> block itself
-        }
+                // Highlight the content of the <pre> tag directly
+                hljs.highlightElement(block); // Apply syntax highlighting to the <pre> block itself
+            }
+        });
+    }
+    // Initialize highlight.js when the page is loaded
+    document.addEventListener('DOMContentLoaded', function () {
+        initHighlightJS(); // Call the function to initialize syntax highlighting
     });
-}
-// Initialize highlight.js when the page is loaded
-document.addEventListener('DOMContentLoaded', function () {
-    initHighlightJS(); // Call the function to initialize syntax highlighting
-});
 
 
     // 如果文章内容是动态加载的（例如通过 AJAX），在加载完成后重新初始化
     function readAll() {
-        var param = 'articleid={{article.articleid}}&position={{position}}';
+        let param = 'articleid={{article.articleid}}&position={{position}}';
         $.post('/readall', param, function (data) {
             $("#content").append(data);
             $(".readall").hide();
@@ -130,43 +130,49 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 其他函数（如 addFavorite、cancelFavorite 等）
     function addFavorite(articleid) {
-        $.post('/favorite', 'articleid='+articleid, function (data) {
-            if (data == 'not-login') {
-                bootbox.alert({title:"错误提示", message:"你还没有登录，不能收藏文章."});
-            }
-            else if (data == 'favorite-pass') {
-                bootbox.alert({title:"信息提示", message:"文章收藏成功，可在我的收藏中查看."});
-                $(".favorite-btn").html('<span class="oi oi-heart" aria-hidden="true"></span> 感谢收藏');
-                $(".favorite-btn").attr('onclick','').unbind('click');
-            }
-            else {
-                bootbox.alert({title:"错误提示", message:"收藏文章出错，请联系管理员."});
-            }
-        });
+    // 缓存选择器
+    let $favoriteBtn = $(".favorite-btn");
+
+    $.post('/favorite', 'articleid=' + articleid, function (data) {
+        if (data === 'not-login') {
+            bootbox.alert({ title: "错误提示", message: "你还没有登录，不能收藏文章." });
+        }
+        else if (data === 'favorite-pass') {
+            bootbox.alert({ title: "信息提示", message: "文章收藏成功，可在我的收藏中查看." });
+            $favoriteBtn.html('<span class="oi oi-heart" aria-hidden="true"></span> 感谢收藏');
+            $favoriteBtn.attr('onclick', '').unbind('click');
+        }
+        else {
+            bootbox.alert({ title: "错误提示", message: "收藏文章出错，请联系管理员." });
+        }
+    });
     }
 
     function cancelFavorite(articleid) {
+        // 缓存选择器
+        let $favoriteBtn = $(".favorite-btn");
+
         $.ajax({
             url: '/favorite/' + articleid,
             type: 'delete',
             success: function (data) {
-                if (data == 'not-login') {
-                    bootbox.alert({title:"错误提示", message:"你还没有登录，不能取消收藏文章."});
+                if (data === 'not-login') {
+                    bootbox.alert({title: "错误提示", message: "你还没有登录，不能取消收藏文章."});
                 }
-                else if (data == 'cancel-pass') {
-                    bootbox.alert({title:"信息提示", message:"取消收藏成功."});
-                    $(".favorite-btn").html('<span class="oi oi-heart aria-hidden="true"></span> 欢迎再来');
-                    $(".favorite-btn").attr('onclick', '').unbind('click');
+                else if (data === 'cancel-pass') {
+                    bootbox.alert({title: "信息提示", message: "取消收藏成功."});
+                    $favoriteBtn.html('<span class="oi oi-heart" aria-hidden="true"></span> 欢迎再来');
+                    $favoriteBtn.attr('onclick', '').unbind('click');
                 }
-                else if (data == 'cancel-fail') {
-                    bootbox.alert({title:"错误提示", message:"取消收藏出错，请联系管理员."});
+                else if (data === 'cancel-fail') {
+                    bootbox.alert({title: "错误提示", message: "取消收藏出错，请联系管理员."});
                 }
             }
         });
     }
 
     // Vue for comments
-    var v = new Vue({
+    let v = new Vue({
         el: '#commentDiv',
         delimiters: ['${', '}'],
         data: {commentList: []}

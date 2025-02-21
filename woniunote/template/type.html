@@ -4,7 +4,7 @@
         <div class="col-sm-9 col-12" style="padding: 0 10px;" id="left">
             <!-- 轮播图组件应用，除了修改图片路径外，其它内容可不修改 -->
             <div id="carouselExampleIndicators" class="col-12 carousel slide"
-                 data-ride="carousel" style="padding: 0px">
+                 data-ride="carousel" style="padding: 0">
                 <ol class="carousel-indicators">
                     <li data-target="#carouselExampleIndicators" data-slide-to="0"
                         class="active"></li>
@@ -35,7 +35,7 @@
             <div class="col-12 row article-list">
                 <div class="col-sm-3 col-3 thumb d-none d-sm-block">
                     <!--<img src="/img/{{article.thumbnail}}" class="img-fluid" > -->
-                    <img src="/thumb/{{article.type}}.png"  class="img-fluid" >
+                    <img src="/thumb/{{article.type}}.png"  class="img-fluid" alt="thumb_type">
                 </div>
                 <div class="col-sm-9 col-xs-12 detail">
                     <div class="title"><a href="/article/{{article.articleid}}">{{article.headline}}</a></div>

@@ -5,7 +5,7 @@
 <script type="text/javascript" src="/ueditor/ueditor.config.js"></script>
 <script type="text/javascript" src="/ueditor/ueditor.all.js"></script>
 <script type="text/javascript">
-    var ue = UE.getEditor('content', {
+    let ue = UE.getEditor('content', {
         initialFrameHeight: 400,
         autoHeightEnabled: true,
         serverUrl: '/uedit',
@@ -70,12 +70,12 @@
 </div>
 
 <script>
-    var ARTICLEID = 0;  // 全局变量保存文章 ID
+    let ARTICLEID = 0;  // 全局变量保存文章 ID
 
     // 文章发布逻辑
     function doPost() {
-        var headline = $.trim($("#headline").val());
-        var contentPlain = UE.getEditor("content").getContentTxt();
+        let headline = $.trim($("#headline").val());
+        let contentPlain = UE.getEditor("content").getContentTxt();
 
         if (headline.length < 5) {
             bootbox.alert({ title: "错误提示", message: "标题不能少于5个字" });
@@ -85,7 +85,7 @@
             return false;
         }
 
-        var param = {
+        let param = {
             headline: headline,
             content: UE.getEditor("content").getContent(),
             type: $("#main-type").val(),
@@ -103,8 +103,8 @@
 
     // 保存草稿逻辑
     function doDraft() {
-        var headline = $.trim($("#headline").val());
-        var contentPlain = UE.getEditor("content").getContentTxt();
+        let headline = $.trim($("#headline").val());
+        let contentPlain = UE.getEditor("content").getContentTxt();
 
         if (headline.length < 5) {
             bootbox.alert({ title: "错误提示", message: "草稿标题不能少于5个字" });
@@ -114,7 +114,7 @@
             return false;
         }
 
-        var param = {
+        let param = {
             headline: headline,
             content: UE.getEditor("content").getContent(),
             type: $("#main-type").val(),

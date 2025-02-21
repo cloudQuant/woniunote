@@ -19,7 +19,7 @@
 
 <script>
     function doUpload() {
-        var data = new FormData();	// 带附件上传
+        let data = new FormData();	// 带附件上传
         data.append("headline",$.trim($("#headline").val()));
         data.append("content",$.trim($("#content").val()));
         <!-- 此处为JavaScript添加文件的方式 -->
@@ -33,9 +33,9 @@
             processData: false,
             contentType: false,
             success : function(result) {
-                if(result == "Done"){
+                if(result === "Done"){
                     window.alert('恭喜你,上传成功.');
-                }else if (result == 'Invalid') {
+                }else if (result === 'Invalid') {
                     window.alert('文件类型不匹配.');
                 }
             },

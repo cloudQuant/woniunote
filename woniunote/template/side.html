@@ -69,7 +69,7 @@
             return false;
         }
 
-        var keyword = $.trim($("#keyword").val());
+        let keyword = $.trim($("#keyword").val());
         if (keyword.length == 0 || keyword.length > 10 || keyword.indexOf('%')>=0 ) {
             bootbox.alert({'title':'错误提示', 'message':"你输入的关键字不合法"});
             $("#keyword").focus();
@@ -80,11 +80,11 @@
 
     // 利用JS来截取字符串，中文1个，英文0.5个。
     function truncate(headline, length) {
-        var count = 0;
-        var output = '';
-        for (var i in headline) {
+        let count = 0;
+        let output = '';
+        for (let i in headline) {
             output += headline.charAt(i);
-            var code = headline.charCodeAt(i);
+            let code = headline.charCodeAt(i);
             if (code <= 128) {
                 count += 0.5;
             }
@@ -103,23 +103,23 @@
         // 第一步：发送Ajax请求去访问/recommend接口，获取JSON
         $.get('/recommend', function (data) {
             // 获取响应并动态填充到对应的推荐栏中
-            var lastData = data[0];
-            var mostData = data[1];
-            var recommendedData = data[2];
+            let lastData = data[0];
+            let mostData = data[1];
+            let recommendedData = data[2];
 
-            var v1 = new Vue({
+            let v1 = new Vue({
                 el: '#last',
                 data: {content: lastData},
                 delimiters: ['${', '}']
             });
 
-            var v2 = new Vue({
+            let v2 = new Vue({
                 el: '#most',
                 data: {content: mostData},
                 delimiters: ['${', '}']
             });
 
-            var v3 = new Vue({
+            let v3 = new Vue({
                 el: '#recommended',
                 data: {content: recommendedData},
                 delimiters: ['${', '}']
@@ -129,10 +129,10 @@
 
     $(document).ready(function(){
         // 利用浏览器的user-agent属性判断浏览器类型
-        var userAgentInfo = navigator.userAgent.toLowerCase();
-        var agents = ["android", "iphone", "symbianOS", "windows phone", "ipad", "ipod"];
-        var flag = true;    // 表示是PC端
-        for (var v = 0; v < agents.length; v++) {
+        let userAgentInfo = navigator.userAgent.toLowerCase();
+        let agents = ["android", "iphone", "symbianOS", "windows phone", "ipad", "ipod"];
+        let flag = true;    // 表示是PC端
+        for (let v = 0; v < agents.length; v++) {
             if (userAgentInfo.indexOf(agents[v]) >= 0) {
                 flag = false;   // 表示这是移动端
                 break;
@@ -140,17 +140,17 @@
         }
 
         // 是PC端时才进行右侧停靠
-        if (flag == true) {
-            var fixedDiv = document.getElementById("fixedmenu");
-            var H = 0;
-            var Y = fixedDiv;
+        if (flag === true) {
+            let fixedDiv = document.getElementById("fixedmenu");
+            let H = 0;
+            let Y = fixedDiv;
             while (Y) {
                 H += Y.offsetTop;
                 Y = Y.offsetParent;
             }
 
             window.onscroll = function () {
-                var s = document.body.scrollTop || document.documentElement.scrollTop;
+                let s = document.body.scrollTop || document.documentElement.scrollTop;
                 if (s > H + 500) {
                     fixedDiv.style = "position:fixed; top:0; margin-top:0; width: 306px;";
                 } else {

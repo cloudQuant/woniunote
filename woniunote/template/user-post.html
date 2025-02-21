@@ -60,7 +60,7 @@
 <script type="text/javascript" src="/ue/ueditor.all.min.js"> </script>
 <script type="text/javascript" src="/ue/lang/zh-cn/zh-cn.js"></script>
 <script type="text/javascript">
-    var ue = UE.getEditor('content', {
+    let ue = UE.getEditor('content', {
         initialFrameHeight: 400,
         autoHeightEnabled: true,
         serverUrl: '/uedit',
@@ -68,8 +68,8 @@
 
     // 发布用户投稿
     function doUserPost() {
-        var headline = $.trim($("#headline").val());
-        var contentPlain = UE.getEditor("content").getContentTxt();
+        let headline = $.trim($("#headline").val());
+        let contentPlain = UE.getEditor("content").getContentTxt();
 
         if (headline.length < 5) {
             bootbox.alert({title:"错误提示", message:"标题不能少于5个字"});
@@ -81,16 +81,16 @@
         }
 
         // 发送请求时，带上articleid
-        var param = "headline=" + headline;
+        let param = "headline=" + headline;
             param += "&content=" + encodeURIComponent(UE.getEditor("content").getContent());
             param += "&type=" + $("#type").val();
             param += "&credit=" + $("#credit").val();
             param += "&drafted=0&checked=0&articleid=0";
         $.post('/article', param, function (data) {
-            if (data == 'perm-denied') {
+            if (data === 'perm-denied') {
                 bootbox.alert({title:"错误提示", message:"权限不足，无法投稿."});
             }
-            else if (data == 'post-fail') {
+            else if (data === 'post-fail') {
                 bootbox.alert({title:"错误提示", message:"投稿失败，请联系管理员."});
             }
             else if (data.match(/^\d+$/)) {

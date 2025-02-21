@@ -1,53 +1,55 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日常算术训练</title>
     <style>
+      :root {
+        --bg-color: lightblue;
+        --btn-bg: #3498db;
+        --btn-bg-hover: #2980b9;
+        --correct-bg: #1abc9c;
+        --incorrect-bg: #e74c3c;
+        --input-width: 50px;
+        --input-height: 30px;
+        --font-size: 1.2rem;
+        --timer-font-size: 2rem;
+      }
+
       body {
         margin: 0;
         padding: 0;
-        background-color: lightblue;
+        background-color: var(--bg-color);
         font-family: Arial, sans-serif;
       }
+
       .container {
         display: flex;
         flex-direction: column;
         align-items: center;
         margin-top: 30px;
       }
+
       .header {
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			font-size: 20px;
-			font-weight: bold;
-			padding: 20px;
-			background-color: lightblue;
-		  }
-		  #id_M{
-			display: inline-block;
-			vertical-align: middle;
-			font-size: 30px;
-			margin: 0 5px;
-			color: #333;
-		  }
-		  #id_S {
-			display: inline-block;
-			vertical-align: middle;
-			font-size: 30px;
-			margin: 0 5px;
-			color: #333;
-		  }
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 20px;
+        font-weight: bold;
+        padding: 20px;
+        background-color: var(--bg-color);
+      }
+
       .timer {
-        font-size: 2rem;
+        font-size: var(--timer-font-size);
         margin-left: 10px;
       }
+
       .content {
         width: 100%;
-
       }
+
       .content-1 {
         width: 100%;
         height: 50px;
@@ -56,31 +58,36 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        font-size: 1.2rem;
+        font-size: var(--font-size);
         color: #ffffff;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
       }
+
       .content-1 input {
-        width: 50px;
-        height: 30px;
+        width: var(--input-width);
+        height: var(--input-height);
         margin-left: 10px;
         border-radius: 5px;
         border: none;
         text-align: center;
-        font-size: 1.2rem;
+        font-size: var(--font-size);
       }
+
       .content-1 input:focus {
         outline: none;
         box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
       }
+
       .content-1 input.correct {
-        background-color: #1abc9c;
+        background-color: var(--correct-bg);
         color: #ffffff;
       }
+
       .content-1 input.incorrect {
-        background-color: #e74c3c;
+        background-color: var(--incorrect-bg);
         color: #ffffff;
       }
+
       .footer {
         width: 50%;
         margin-top: 30px;
@@ -88,26 +95,30 @@
         justify-content: center;
         align-items: center;
       }
+
       form {
         display: flex;
         justify-content: center;
         align-items: center;
       }
+
       .footer input {
         width: 80px;
         height: 40px;
         margin-right: 10px;
         border-radius: 5px;
         border: none;
-        font-size: 1.2rem;
+        font-size: var(--font-size);
         color: #ffffff;
-        background-color: #3498db;
+        background-color: var(--btn-bg);
         cursor: pointer;
         transition: background-color 0.2s ease;
       }
+
       .footer input:hover {
-        background-color: #2980b9;
+        background-color: var(--btn-bg-hover);
       }
+
       #bt2 {
         margin-left: auto;
       }
@@ -115,161 +126,98 @@
   </head>
   <body>
     <div class="container">
-	<body>
-		<!-- 底部标签 -->
-		<div class="footer">
-		<form action="" method="">
-			<input type="button" id="bt1" value="判断" />
-			<input type="button" id="bt2" value="生成计算" />
-		</form>
-		</div>
-		<!-- 头部信息 -->
-		<div class="header">
-		  <p>我的日常算术训练---每天5-10分钟<br>当前计算使用的时间&nbsp;&nbsp;</p>
-		  <span id="id_M">00</span>
-		  <p>:</p>
-		  <span id="id_S">00</span>
-		</div>
-		<!-- 出题内容 -->
-		<div class="content">
-			<script type="text/javascript">
-			var contentDiv = document.querySelector('.content');
-			for (var i = 0; i < 10; i++) {
-			  var rowDiv = document.createElement('div');
-			  rowDiv.classList.add('row');
-			  for (var j = 0; j < 5; j++) {
-				var cellDiv = document.createElement('div');
-				cellDiv.classList.add('content-1');
-				var span = document.createElement('span');
-				span.classList.add('sp');
-				span.innerText = '3 + 3 = ';
-				var input = document.createElement('input');
-				input.classList.add('answer');
-				input.setAttribute('type', 'text');
-				input.setAttribute('value', '');
-				cellDiv.appendChild(span);
-				cellDiv.appendChild(input);
-				rowDiv.appendChild(cellDiv);
-			  }
-			  contentDiv.appendChild(rowDiv);
+      <div class="footer">
+        <form>
+          <input type="button" id="bt1" value="判断" />
+          <input type="button" id="bt2" value="生成计算" />
+        </form>
+      </div>
+      <div class="header">
+        <p>我的日常算术训练---每天5-10分钟<br>当前计算使用的时间&nbsp;&nbsp;</p>
+        <span id="id_M">00</span><p>:</p><span id="id_S">00</span>
+      </div>
+      <div class="content" id="content"></div>
+    </div>
 
+    <script>
+      // 获取DOM元素
+      const oBt1 = document.getElementById("bt1");
+      const oBt2 = document.getElementById("bt2");
+      const contentDiv = document.getElementById("content");
+      const id_S = document.getElementById("id_S");
+      const id_M = document.getElementById("id_M");
 
-			}
-			</script>
-		</div>
+      let timer = null;
+      let c = 0; // 计时器变量
 
+      // 创建题目
+      function createQuestions() {
+        contentDiv.innerHTML = ""; // 清空现有内容
+        for (let i = 0; i < 10; i++) {
+          const rowDiv = document.createElement('div');
+          rowDiv.classList.add('content-1');
+          for (let j = 0; j < 5; j++) {
+            const span = document.createElement('span');
+            span.classList.add('sp');
+            span.innerText = '3 + 3 = ';
+            const input = document.createElement('input');
+            input.classList.add('answer');
+            input.type = 'text';
+            rowDiv.appendChild(span);
+            rowDiv.appendChild(input);
+          }
+          contentDiv.appendChild(rowDiv);
+        }
+      }
 
-		<!-- JS脚本 -->
-		<script type="text/javascript">
-			// 计时变量
-			var c = 0
-			var timer = null
+      // 更新计时器
+      function updateTimer() {
+        c++;
+        id_S.innerText = showNum(c % 60);
+        id_M.innerText = showNum(parseInt(c / 60) % 60);
+      }
 
-			var oBt1 = document.getElementById("bt1")
-			var oBt2 = document.getElementById("bt2")
-			var oContent = document.getElementsByClassName("sp")
-			var Answer = document.getElementsByClassName("answer")
-			var id_S = document.getElementById("id_S")
-			var id_M = document.getElementById("id_M")
+      // 处理时间格式
+      function showNum(num) {
+        return num < 10 ? '0' + num : num;
+      }
 
-			// 获取所有的 input 标签
-		  var inputs = document.querySelectorAll(".answer");
+      // 判断答案
+      oBt1.onclick = function() {
+        let count = 0;
+        const inputs = document.querySelectorAll('.answer');
+        const questions = document.querySelectorAll('.sp');
 
-		  // 为每个 input 标签绑定 keydown 事件
-		  for (var i = 0; i < inputs.length; i++) {
-			inputs[i].addEventListener("keydown", function(event) {
-			  // 如果按下的键是 Enter 键，则获取下一个 input 标签并使其获得焦点
-			  if (event.keyCode === 13) {
-				var index = Array.prototype.indexOf.call(inputs, event.target);
-				inputs[index + 1].focus();
-				event.preventDefault();
-			  }
-			});
-		  }
-			// console.log(Answer)
-			// strs = str.split(",")
-			// console.log(oContent)
-			oBt1.onclick = function(){
-				var count = 0
-				for(var i = 0;i < oContent.length;i++){
-					strs = oContent[i].innerHTML.split(" ")
-					Ans = Answer[i].value
-					// console.log(Ans)
-					var add1 = strs[0]
-					var operator = strs[1]
-					var add2 = strs[2]
-					// console.log(strs)
-					// console.log(operator)
-					if(operator == "+"){
-						// alert(222)
-						if(Number(add1) + Number(add2) == Number(Ans)){
-							count++;
-						}else{
-							Answer[i].style.backgroundColor = "red";
-						}
-					}
-					if(operator == "-"){
-						if(Number(add1) - Number(add2) == Number(Ans)){
-							count++;
-						}else{
-							Answer[i].style.backgroundColor = "red";
-						}
-					}
-				}
+        inputs.forEach((input, index) => {
+          const [num1, operator, num2] = questions[index].innerText.split(' ');
+          const correctAnswer = operator === '+' ? (+num1 + +num2) : (+num1 - +num2);
+          if (Number(input.value) === correctAnswer) {
+            count++;
+          } else {
+            input.classList.add('incorrect');
+          }
+        });
 
-				// 新增计时功能，结束计时
-				c = 0
-				//数据清零
-				Min = id_M.innerText
-				S = id_S.innerText
-				id_S.innerHTML = "00"
-				id_M.innerHTML = "00"
+        // 停止计时器
+        clearInterval(timer);
+        alert(`恭喜你答对了 ${count} 题! 共用时 ${id_M.innerText} 分 ${id_S.innerText} 秒！`);
+      };
 
-				alert("恭喜你答对了"+count+"题!"+"共用时"+Min+"分"+S+"秒！")
-			}
+      // 开始计时并生成新题目
+      oBt2.onclick = function() {
+        // 清除输入框样式
+        document.querySelectorAll('.answer').forEach(input => input.classList.remove('incorrect'));
+        createQuestions();
 
-			// 下一页 开始计时
-			oBt2.onclick = function(){
-				alert("success")
-				for(var i = 0;i < oContent.length;i++){
-					Answer[i].style.backgroundColor = "white";
-					Answer[i].value = " "
-					var add1 = parseInt(Math.random()*100)
-					var add2 = parseInt(Math.random()*100)
-					var ope = Math.round(Math.random())
-					strs = oContent[i].innerHTML.split(" ")
-					if(ope == 0){
-						strs[1] = "+"
-					}
-					if(ope == 1){
-						strs[1] = "-"
-					}
-					// console.log(oContent[i].innerText)
-					// console.log(strs)
-					strs[0] = add1
-					strs[2] = add2
-					// console.log(strs)
-					oContent[i].innerText = strs[0]+" "+strs[1]+" "+strs[2]+" "+strs[3]+" "+strs[4]+" "
-				}
+        // 重置计时
+        c = 0;
+        timer = setInterval(updateTimer, 1000);
+      };
 
-				// 新增计时功能，开始计时
-				timer = setInterval(function() {
-				    c++;
-				    // console.log(c)
-				        // 需要改变页面上时分秒的值
-				    // console.log($("id_S"))
-				    id_S.innerHTML = showNum(c % 60)
-				    id_M.innerHTML = showNum(parseInt(c / 60) % 60)
-				},1000)
-			}
-			//封装一个处理单位数字的函数
-			function showNum(num) {
-			    if (num < 10) {
-			        return '0' + num
-			    }
-			    return num
-			}
-		</script>
-	</body>
+      // 初始化
+      createQuestions();
+    </script>
+  </body>
 </html>
+
 
