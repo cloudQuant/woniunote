@@ -94,43 +94,6 @@
     </div>
 </div>
 
-{#<script>#}
-{#    function doEdit() {#}
-{#        var headline = $.trim($("#headline").val());#}
-{#        var contentPlain = UE.getEditor("content").getContentTxt();#}
-{#        // 输出headline的内容#}
-{#        console.log("Headline 内容: " + headline);#}
-{#        if (headline.length < 5) {#}
-{#            bootbox.alert({ title: "错误提示", message: "标题不能少于5个字" });#}
-{#            return false;#}
-{#        } else if (contentPlain.length < 100) {#}
-{#            bootbox.alert({ title: "错误提示", message: "内容不能低于100个字" });#}
-{#            return false;#}
-{#        }#}
-{##}
-{#        var param = "headline=" + headline;#}
-{#        param += "&content=" + encodeURIComponent(UE.getEditor("content").getContent());#}
-{#        param += "&type=" + $("#sub-type").val();  // 使用子类型的值#}
-{#        param += "&credit=" + $("#credit").val();#}
-{#        param += "&drafted=0&checked=0";#}
-{#        param += "&articleid={{ result[0].articleid }}";#}
-{##}
-{#        $.post('/edit', param, function (data) {#}
-{#            if (data == 'perm-denied') {#}
-{#                bootbox.alert({ title: "错误提示", message: "权限不足，无法发布文章." });#}
-{#            } else if (data == 'post-fail') {#}
-{#                bootbox.alert({ title: "错误提示", message: "文章发布失败，请联系管理员." });#}
-{#            } else if (data.match(/^\d+$/)) {#}
-{#                bootbox.alert({ title: "信息提示", message: "恭喜你，文章发布成功." });#}
-{#                setTimeout(function () {#}
-{#                    location.href = '/article/{{ result[0].articleid }}';#}
-{#                }, 1000);#}
-{#            } else {#}
-{#                bootbox.alert({ title: "错误提示", message: "文章发布失败，可能没有权限." });#}
-{#            }#}
-{#        });#}
-{#    }#}
-{#</script>#}
 <script>
 function doEdit() {
     const headline = $.trim($("#headline").val());
@@ -147,7 +110,7 @@ function doEdit() {
         return false;
     }
 
-    let param = "headline=" + headline;
+    let param = "headline=" + encodeURIComponent(headline);
     param += "&content=" + encodeURIComponent(UE.getEditor("content").getContent());
     param += "&type=" + $("#sub-type").val();  // 使用子类型的值
     param += "&credit=" + $("#credit").val();
