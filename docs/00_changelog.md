@@ -1,4 +1,5 @@
 ### changelog
+-[x] 2025-02-21: fix phone header show, change '量化交易与量化自我' to '专注量化'
 -[x] 2025-02-21: fix phone show not perfectly about previous page and next page
 -[x] 2025-02-20: beauty the thumb/picture by update the `create_thumb_png` function
 -[ ] 2025-02-16: why need @app.route('/favicon.ico')? todo
