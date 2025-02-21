@@ -15,6 +15,7 @@ article = Blueprint("article", __name__)
 
 @article.route('/article/<int:articleid>')
 def read(articleid):
+    print("begin to read article {}".format(articleid))
     try:
         try:
             result = Articles().find_by_id(articleid)
@@ -115,6 +116,7 @@ def pre_post():
 # 编辑文章的前端页面渲染
 @article.route('/edit/<int:articleid>')
 def go_edit(articleid):
+    print("go to edit article")
     try:
         result = Articles().find_by_id(articleid)
         # print("go_edit", articleid)
@@ -137,6 +139,7 @@ def go_edit(articleid):
 # 处理文章编辑请求
 @article.route("/edit", methods=["PUT", "POST"])
 def edit_article():
+    print("begin to edit article")
     try:
         headline = request.form.get('headline')
         content = request.form.get('content')
@@ -181,7 +184,7 @@ def add_article():
             return 'perm-denied'
         else:
             user = Users().find_by_userid(session.get('userid'))
-            print("user", user, user.role)
+            # print("user", user, user.role)
             if user.role == 'editor':
                 # 权限合格，可以执行发布文章的代码
                 # 首先为文章生成缩略图，优先从内容中找，找不到则随机生成一张
