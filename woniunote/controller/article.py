@@ -146,6 +146,7 @@ def edit_article():
         checked = int(request.form.get('checked'))
         articleid = int(request.form.get('articleid'))
         article_instance = Articles()
+        print("new_headline", headline)
         try:
             row = article_instance.find_by_id(articleid)
             article_id = article_instance.update_article(articleid=articleid,
