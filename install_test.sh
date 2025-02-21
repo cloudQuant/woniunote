@@ -45,4 +45,4 @@ echo "All .log files deleted."
 
 echo "enter woniunote and run app"
 cd ./woniunote
-gunicorn -w 3 -b 0.0.0.0:8888 app:app
+gunicorn -w 3 -b 0.0.0.0:8888 --log-level debug app:app

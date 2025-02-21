@@ -106,7 +106,7 @@ def paginate(page):
 
 @index.route('/type/<int:class_type>/<int:page>')
 def classify(class_type, page):
-    print("class_type", class_type, "classify run")
+    # print("class_type", class_type, "classify run")
     try:
         start = (page - 1) * 10
         article = Articles()
