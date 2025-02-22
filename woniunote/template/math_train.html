@@ -3,147 +3,190 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日常算术训练</title>
+    <title>每日算术训练</title>
     <style>
       :root {
-        --bg-color: lightblue;
-        --btn-bg: #3498db;
-        --btn-bg-hover: #2980b9;
-        --correct-bg: #1abc9c;
-        --incorrect-bg: #e74c3c;
-        --input-width: 50px;
-        --input-height: 30px;
-        --font-size: 1.2rem;
-        --timer-font-size: 2rem;
+        --bg-color: #f0f7ff;
+        --btn-bg: #4a90e2;
+        --btn-bg-hover: #357abd;
+        --correct-bg: #7ed321;
+        --incorrect-bg: #ff4757;
+        --input-width: 65px;
+        --input-height: 38px;
+        --font-size: 1.3rem;
+        --timer-font-size: 2.2rem;
+        --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
 
       body {
         margin: 0;
-        padding: 0;
-        background-color: var(--bg-color);
-        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        min-height: 100vh;
       }
 
       .container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: 30px;
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: var(--shadow);
       }
 
       .header {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 20px;
-        font-weight: bold;
-        padding: 20px;
-        background-color: var(--bg-color);
+        text-align: center;
+        margin-bottom: 30px;
       }
 
-      .timer {
+      .title {
+        font-size: 2rem;
+        color: #2c3e50;
+        margin-bottom: 10px;
+        font-weight: 600;
+      }
+
+      .timer-container {
+        display: flex;
+        justify-content: center;
+        align-items: baseline;
+        gap: 5px;
         font-size: var(--timer-font-size);
-        margin-left: 10px;
+        color: #3498db;
+        margin: 20px 0;
       }
 
-      .content {
-        width: 100%;
-      }
-
-      .content-1 {
-        width: 100%;
-        height: 50px;
-        line-height: 50px;
-        margin-bottom: 20px;
+      .controls {
         display: flex;
         justify-content: center;
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        background-color: var(--btn-bg);
+        color: white;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow);
+      }
+
+      .btn:hover {
+        background-color: var(--btn-bg-hover);
+        transform: translateY(-2px);
+      }
+
+      .questions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 25px;
+        padding: 20px;
+      }
+
+      .question-row {
+        display: flex;
         align-items: center;
-        font-size: var(--font-size);
-        color: #000000; /* 数字字体颜色为黑色 */
+        gap: 15px;
+        padding: 12px;
+        background: #f8f9ff;
+        border-radius: 8px;
+        transition: transform 0.2s;
       }
 
-      .content-1 span {
-        margin: 0 10px; /* 增加算术题左右间隔 */
+      .question-row:hover {
+        transform: translateY(-3px);
       }
 
-      .content-1 .operator {
-        color: red; /* 算术符号颜色为红色 */
+      .question-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
       }
 
-      .content-1 input {
+      .number {
+        color: #2c3e50;
+        font-weight: 500;
+      }
+
+      .operator {
+        color: #ff4757;
+        font-weight: bold;
+      }
+
+      .answer-input {
         width: var(--input-width);
         height: var(--input-height);
-        margin-left: 10px;
-        border-radius: 5px;
-        border: none;
+        border: 2px solid #dfe6ec;
+        border-radius: 6px;
         text-align: center;
         font-size: var(--font-size);
+        transition: all 0.2s;
       }
 
-      .content-1 input:focus {
+      .answer-input:focus {
+        border-color: #4a90e2;
+        box-shadow: 0 0 8px rgba(74, 144, 226, 0.3);
         outline: none;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
       }
 
-      .content-1 input.correct {
+      .answer-input.correct {
         background-color: var(--correct-bg);
-        color: #ffffff;
+        color: white;
+        border-color: transparent;
       }
 
-      .content-1 input.incorrect {
+      .answer-input.incorrect {
         background-color: var(--incorrect-bg);
-        color: #ffffff;
+        color: white;
+        border-color: transparent;
       }
 
-      .footer {
-        width: 50%;
-        margin-top: 30px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
+      @media (max-width: 768px) {
+        .container {
+          padding: 20px;
+          margin: 10px;
+        }
 
-      form {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
+        .questions-grid {
+          grid-template-columns: 1fr;
+        }
 
-      .footer input {
-        width: 80px;
-        height: 40px;
-        margin-right: 10px;
-        border-radius: 5px;
-        border: none;
-        font-size: var(--font-size);
-        color: #ffffff;
-        background-color: var(--btn-bg);
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-      }
+        .question-row {
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 10px;
+        }
 
-      .footer input:hover {
-        background-color: var(--btn-bg-hover);
-      }
-
-      #bt2 {
-        margin-left: auto;
+        .btn {
+          width: 100%;
+          padding: 15px;
+        }
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="footer">
-        <form>
-          <input type="button" id="bt1" value="判断" />
-          <input type="button" id="bt2" value="生成计算" />
-        </form>
+      <header class="header">
+        <h1 class="title">每日算术训练</h1>
+        <div class="timer-container">
+          <span id="id_M">00</span>
+          <span>:</span>
+          <span id="id_S">00</span>
+        </div>
+      </header>
+
+      <div class="controls">
+        <button class="btn" id="bt1">检查答案</button>
+        <button class="btn" id="bt2">新题生成</button>
       </div>
-      <div class="header">
-        <p>我的日常算术训练---每天5-10分钟<br>当前计算使用的时间&nbsp;&nbsp;</p>
-        <span id="id_M">00</span><p>:</p><span id="id_S">00</span>
-      </div>
-      <div class="content" id="content"></div>
+
+      <div class="questions-grid" id="content"></div>
     </div>
 
     <script>
@@ -155,79 +198,85 @@
       const id_M = document.getElementById("id_M");
 
       let timer = null;
-      let c = 0; // 计时器变量
+      let c = 0;
 
       // 创建题目
       function createQuestions() {
-        contentDiv.innerHTML = ""; // 清空现有内容
-        for (let i = 0; i < 10; i++) {
+        contentDiv.innerHTML = "";
+        for (let i = 0; i < 8; i++) { // 减少行数提高可读性
           const rowDiv = document.createElement('div');
-          rowDiv.classList.add('content-1');
-          for (let j = 0; j < 5; j++) {
-            const span = document.createElement('span');
-            span.classList.add('sp');
+          rowDiv.className = 'question-row';
 
-            // 随机生成两个数字和一个运算符
-            const num1 = Math.floor(Math.random() * 10) + 1; // 随机数字1 (1-10)
-            const num2 = Math.floor(Math.random() * 10) + 1; // 随机数字2 (1-10)
-            const operator = Math.random() < 0.5 ? '+' : '-'; // 随机选择加号或减号
+          for (let j = 0; j < 3; j++) { // 每行3题更合理
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-item';
 
-            // 设置题目
-            span.innerHTML = `${num1} <span class="operator">${operator}</span> ${num2} = `;
+            const num1 = Math.floor(Math.random() * 15) + 1; // 扩大数字范围
+            const num2 = Math.floor(Math.random() * 15) + 1;
+            const operator = Math.random() < 0.5 ? '+' : '-';
+
+            questionDiv.innerHTML = `
+              <span class="number">${num1}</span>
+              <span class="operator">${operator}</span>
+              <span class="number">${num2}</span>
+              <span class="operator">=</span>
+            `;
 
             const input = document.createElement('input');
-            input.classList.add('answer');
-            input.type = 'text';
-            rowDiv.appendChild(span);
-            rowDiv.appendChild(input);
+            input.className = 'answer-input';
+            input.type = 'number'; // 改为数字输入类型
+            input.placeholder = '?';
+
+            questionDiv.appendChild(input);
+            rowDiv.appendChild(questionDiv);
           }
           contentDiv.appendChild(rowDiv);
         }
       }
 
-      // 更新计时器
+      // 计时功能
       function updateTimer() {
         c++;
-        id_S.innerText = showNum(c % 60);
-        id_M.innerText = showNum(parseInt(c / 60) % 60);
+        id_S.textContent = c % 60 < 10 ? `0${c % 60}` : c % 60;
+        id_M.textContent = Math.floor(c / 60) < 10 ? `0${Math.floor(c / 60)}` : Math.floor(c / 60);
       }
 
-      // 处理时间格式
-      function showNum(num) {
-        return num < 10 ? '0' + num : num;
-      }
+      // 答案检查
+      oBt1.addEventListener('click', () => {
+        let correctCount = 0;
+        const inputs = document.querySelectorAll('.answer-input');
 
-      // 判断答案
-      oBt1.onclick = function() {
-        let count = 0;
-        const inputs = document.querySelectorAll('.answer');
-        const questions = document.querySelectorAll('.sp');
+        inputs.forEach(input => {
+          const [num1, operator, num2] = input.parentElement.querySelectorAll('.number, .operator');
+          const a = parseInt(num1.textContent);
+          const b = parseInt(num2.textContent);
+          const correct = operator.textContent === '+' ? a + b : a - b;
 
-        inputs.forEach((input, index) => {
-          const [num1, operator, num2] = questions[index].innerText.split(' ');
-          const correctAnswer = operator === '+' ? (+num1 + +num2) : (+num1 - +num2);
-          if (Number(input.value) === correctAnswer) {
-            count++;
+          if (parseInt(input.value) === correct) {
+            correctCount++;
+            input.classList.add('correct');
+            input.classList.remove('incorrect');
           } else {
             input.classList.add('incorrect');
+            input.classList.remove('correct');
           }
         });
 
-        // 停止计时器
         clearInterval(timer);
-        alert(`恭喜你答对了 ${count} 题! 共用时 ${id_M.innerText} 分 ${id_S.innerText} 秒！`);
-      };
+        const timeUsed = `${id_M.textContent}分${id_S.textContent}秒`;
+        alert(`正确题数: ${correctCount}/${inputs.length}\n用时: ${timeUsed}`);
+      });
 
-      // 开始计时并生成新题目
-      oBt2.onclick = function() {
-        // 清除输入框样式
-        document.querySelectorAll('.answer').forEach(input => input.classList.remove('incorrect'));
+      // 新题生成
+      oBt2.addEventListener('click', () => {
+        document.querySelectorAll('.answer-input').forEach(input => {
+          input.classList.remove('correct', 'incorrect');
+          input.value = '';
+        });
         createQuestions();
-
-        // 重置计时
         c = 0;
         timer = setInterval(updateTimer, 1000);
-      };
+      });
 
       // 初始化
       createQuestions();
