@@ -14,6 +14,7 @@ import sys
 import os
 import requests
 import pymysql
+from pymysql.cursors import DictCursor
 from PIL import Image, ImageFont, ImageDraw
 from urllib.parse import urlparse
 
@@ -21,10 +22,10 @@ from urllib.parse import urlparse
 # 初始化数据库连接
 def get_db_connection(database_info):
     return pymysql.connect(
-        host=MYSQL_HOST,
-        user=MYSQL_USER,
-        password=MYSQL_PASSWORD,
-        database=MYSQL_DB,
+        host=database_info['host'],
+        user=database_info['user'],
+        password=database_info['password'],
+        database=database_info['database'],
         cursorclass=DictCursor
     )
 
