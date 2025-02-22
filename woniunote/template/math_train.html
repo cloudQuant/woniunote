@@ -262,7 +262,13 @@
             correctAnswer = num1 * num2;
           } else {
             operatorSymbol = '÷';
-            correctAnswer = Math.floor(num1 / num2); // 保证除法结果为整数
+            // 确保除数不为0，且结果是整数
+            let divisor = num2;
+            while (divisor === 0) {
+              divisor = Math.floor(Math.random() * 20) + 1; // 如果除数为0，重新生成
+            }
+            const dividend = num1 * divisor; // 被除数 = num1 * divisor
+            correctAnswer = dividend / divisor; // 结果一定是整数
           }
 
           const question = document.createElement('div');
@@ -307,7 +313,7 @@
         if (operator === '+') correct = a + b;
         else if (operator === '-') correct = a - b;
         else if (operator === '×') correct = a * b;
-        else if (operator === '÷') correct = Math.floor(a / b); // 确保除法结果为整数
+        else if (operator === '÷') correct = a * b / b;
 
         if (parseInt(input.value) === correct) {
           correctCount++;
@@ -343,6 +349,7 @@
   </script>
 </body>
 </html>
+
 
 
 
