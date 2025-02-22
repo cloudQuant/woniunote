@@ -7,27 +7,36 @@
   <link rel="stylesheet" href="/css/math_train.css">
 </head>
 <body>
-  <div class="navbar-right">
-  <button class="navbar-btn" onclick="window.location.href='/math_train_user'">用户中心</button>
-  <button class="navbar-btn" id="logoutBtn" style="display: none;">退出</button>
-  <button class="navbar-btn" id="showLoginModalBtn">登录</button>
-  <button class="navbar-btn" id="showRegisterModalBtn">注册</button>
-</div>
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <!-- 左侧：速算训练营、新题生成、提交答案 -->
+      <div class="navbar-left">
+        <span class="navbar-title">速算训练营</span>
+        <button class="navbar-btn" id="newBtn">新题生成</button>
+        <button class="navbar-btn" id="checkBtn">提交答案</button>
+      </div>
+
+      <!-- 中间：时间显示 -->
+      <div class="navbar-center">
+        <div class="timer">
+          <span id="minutes">00</span>:<span id="seconds">00</span>
+        </div>
+      </div>
+
+      <!-- 右侧：登录、注册、登出、用户中心 -->
+      <div class="navbar-right">
+        <span class="navbar-username" id="navbarUsername" style="display: none;"></span>
+        <button class="navbar-btn" id="showLoginModalBtn">登录</button>
+        <button class="navbar-btn" id="showRegisterModalBtn">注册</button>
+        <button class="navbar-btn" id="logoutBtn" style="display: none;">退出</button>
+        <button class="navbar-btn" id="userCenterBtn" style="display: none;" onclick="window.location.href='/math_train_user'">用户中心</button>
+      </div>
+    </div>
+  </nav>
 
   <!-- 主内容 -->
   <div class="container">
-    <header class="header">
-      <h1 class="title">速算训练营</h1>
-      <div class="timer">
-        <span id="minutes">00</span>:<span id="seconds">00</span>
-      </div>
-    </header>
-
-    <div class="controls">
-      <button class="btn" id="checkBtn">提交答案</button>
-      <button class="btn" id="newBtn">新题生成</button>
-    </div>
-
     <div class="question-grid" id="grid"></div>
   </div>
 
