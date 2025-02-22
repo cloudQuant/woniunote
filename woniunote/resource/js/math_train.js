@@ -1,235 +1,276 @@
-// 获取导航栏元素
+// ==================== 常量定义 ====================
+const OPERATORS = ['+', '-', '×', '÷'];
+const QUESTIONS_PER_ROW = 4;
+const TOTAL_ROWS = 5;
+const INITIAL_TIME = 0;
+
+// ==================== DOM元素引用 ====================
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
 const loginBtn = document.getElementById('loginBtn');
 const registerBtn = document.getElementById('registerBtn');
-
 const grid = document.getElementById('grid');
 const checkBtn = document.getElementById('checkBtn');
 const newBtn = document.getElementById('newBtn');
 const minutes = document.getElementById('minutes');
 const seconds = document.getElementById('seconds');
+
+// ==================== 状态变量 ====================
 let inputsArray = [];
 let currentIndex = 0;
 let timer = null;
-let time = 0;
+let time = INITIAL_TIME;
+let correctCount = 0;
 
-// 初始化输入框数组
-function initInputsArray() {
+// ==================== 核心功能 ====================
+// 初始化题目输入框数组
+const initInputsArray = () => {
   inputsArray = Array.from(document.querySelectorAll('.answer-input'));
   inputsArray.forEach((input, index) => input.dataset.index = index);
-}
+};
 
-// 键盘导航
-function handleKeyNavigation(e) {
-  if (document.activeElement.classList.contains('answer-input')) {
-    currentIndex = parseInt(document.activeElement.dataset.index);
+// 生成单个题目
+const generateQuestion = () => {
+  let num1 = Math.floor(Math.random() * 20) + 1;
+  let num2 = Math.floor(Math.random() * 20) + 1;
+  const operator = OPERATORS[Math.floor(Math.random() * OPERATORS.length)];
 
-    switch (e.key) {
-      case 'ArrowRight':
-      case 'ArrowDown':
-      case 'Enter':
-        e.preventDefault();
-        navigate(1);
-        break;
-      case 'ArrowLeft':
-      case 'ArrowUp':
-        e.preventDefault();
-        navigate(-1);
-        break;
-    }
+  // 处理除法特殊情况
+  if (operator === '÷') {
+    while (num2 === 0) num2 = Math.floor(Math.random() * 20) + 1;
+    const dividend = num1 * num2;
+    return { num1: dividend, num2, operator };
   }
-}
 
-// 导航逻辑
-function navigate(direction) {
-  currentIndex += direction;
-  if (currentIndex >= inputsArray.length) currentIndex = 0;
-  if (currentIndex < 0) currentIndex = inputsArray.length - 1;
-  const target = inputsArray[currentIndex];
-  target.focus();
-  target.classList.add('current-focus');
-  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
+  return { num1, num2, operator };
+};
 
-// 生成题目
-function generateQuestions() {
+// 创建题目DOM元素
+const createQuestionElement = ({ num1, num2, operator }) => {
+  const question = document.createElement('div');
+  question.className = 'question-item';
+
+  question.innerHTML = `
+    <span class="number">${num1}</span>
+    <span class="operator">${operator}</span>
+    <span class="number">${num2}</span>
+    <span class="operator">=</span>
+    <input class="answer-input" type="number" placeholder="?">
+  `;
+
+  return question;
+};
+
+// 生成所有题目
+const generateQuestions = () => {
   grid.innerHTML = '';
-  for (let i = 0; i < 5; i++) {
-    for (let j = 0; j < 4; j++) {
-      let num1 = Math.floor(Math.random() * 20) + 1;
-      let num2 = Math.floor(Math.random() * 20) + 1;
-      const operator = Math.random();
-      let operatorSymbol;
-      let correctAnswer;
+  const fragment = document.createDocumentFragment();
 
-      if (operator < 0.25) {
-        operatorSymbol = '+';
-        correctAnswer = num1 + num2;
-      } else if (operator < 0.5) {
-        operatorSymbol = '-';
-        correctAnswer = num1 - num2;
-      } else if (operator < 0.75) {
-        operatorSymbol = '×';
-        correctAnswer = num1 * num2;
-      } else {
-        operatorSymbol = '÷';
-        // 确保除数不为0
-        while (num2 === 0) {
-          num2 = Math.floor(Math.random() * 20) + 1; // 如果除数为0，重新生成
-        }
-        const dividend = num1 * num2; // 生成被除数
-        correctAnswer = dividend / num2; // 结果为整数
-        num1 = dividend; // 更新 num1 为被除数
-      }
+  for (let i = 0; i < TOTAL_ROWS; i++) {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'question-row';
 
-      const question = document.createElement('div');
-      question.className = 'question-item';
-
-      question.innerHTML = `
-        <span class="number">${num1}</span>
-        <span class="operator">${operatorSymbol}</span>
-        <span class="number">${num2}</span>
-        <span class="operator">=</span>
-      `;
-
-      const input = document.createElement('input');
-      input.className = 'answer-input';
-      input.type = 'number';
-      input.placeholder = '?';
-      question.appendChild(input);
-      grid.appendChild(question);
+    for (let j = 0; j < QUESTIONS_PER_ROW; j++) {
+      rowDiv.appendChild(createQuestionElement(generateQuestion()));
     }
+    fragment.appendChild(rowDiv);
   }
-  initInputsArray(); // 更新输入框数组
-}
 
-// 更新计时器
-function updateTimer() {
+  grid.appendChild(fragment);
+  initInputsArray();
+};
+
+// ==================== 计时器功能 ====================
+const updateTimer = () => {
   time++;
   minutes.textContent = String(Math.floor(time / 60)).padStart(2, '0');
   seconds.textContent = String(time % 60).padStart(2, '0');
-}
+};
 
-// 检查答案
-checkBtn.addEventListener('click', () => {
-  let correctCount = 0;
+const startTimer = () => {
+  timer = setInterval(updateTimer, 1000);
+};
+
+const resetTimer = () => {
+  time = INITIAL_TIME;
+  minutes.textContent = '00';
+  seconds.textContent = '00';
+};
+
+// ==================== 答案检查功能 ====================
+const calculateCorrectAnswer = (operator, a, b) => {
+  const operations = {
+    '+': (x, y) => x + y,
+    '-': (x, y) => x - y,
+    '×': (x, y) => x * y,
+    '÷': (x, y) => x / y
+  };
+  return operations[operator](a, b);
+};
+
+const validateAnswers = () => {
+  correctCount = 0;
   const inputs = document.querySelectorAll('.answer-input');
+
   inputs.forEach(input => {
     const numbers = input.parentElement.querySelectorAll('.number');
     const operator = input.parentElement.querySelector('.operator').textContent;
     const a = parseInt(numbers[0].textContent);
     const b = parseInt(numbers[1].textContent);
-    let correct;
 
-    if (operator === '+') correct = a + b;
-    else if (operator === '-') correct = a - b;
-    else if (operator === '×') correct = a * b;
-    else if (operator === '÷') correct = a / b;
+    const correct = calculateCorrectAnswer(operator, a, b);
+    const userAnswer = parseInt(input.value);
 
-    if (parseInt(input.value) === correct) {
-      correctCount++;
-      input.classList.add('correct');
-      input.classList.remove('wrong');
-    } else {
-      input.classList.add('wrong');
-      input.classList.remove('correct');
-    }
+    input.classList.toggle('correct', userAnswer === correct);
+    input.classList.toggle('wrong', userAnswer !== correct);
+
+    if (userAnswer === correct) correctCount++;
   });
+
+  return { correctCount, total: inputs.length };
+};
+
+// ==================== 用户交互功能 ====================
+const handleKeyNavigation = (e) => {
+  if (!e.target.classList.contains('answer-input')) return;
+
+  currentIndex = parseInt(e.target.dataset.index);
+  const directionMap = {
+    'ArrowRight': 1, 'ArrowDown': 1, 'Enter': 1,
+    'ArrowLeft': -1, 'ArrowUp': -1
+  };
+
+  if (directionMap[e.key] !== undefined) {
+    e.preventDefault();
+    navigate(directionMap[e.key]);
+  }
+};
+
+const navigate = (direction) => {
+  currentIndex = (currentIndex + direction + inputsArray.length) % inputsArray.length;
+  const target = inputsArray[currentIndex];
+
+  target.focus();
+  target.classList.add('current-focus');
+  target.scrollIntoView({
+    behavior: 'smooth',
+    block: 'center',
+    inline: 'center'
+  });
+};
+
+// ==================== 网络请求功能 ====================
+const apiRequest = async (url, method, data) => {
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return await response.json();
+  } catch (error) {
+    console.error(`${method}请求失败:`, error);
+    throw error;
+  }
+};
+
+// ==================== 事件监听 ====================
+checkBtn.addEventListener('click', () => {
+  const { correctCount: count, total } = validateAnswers();
   clearInterval(timer);
-  alert(`正确率：${correctCount}/${inputs.length}\n用时：${minutes.textContent}分${seconds.textContent}秒`);
+
+  // 保存结果到服务器
+  apiRequest('/save_result', 'POST', {
+    correct_count: count,
+    total_questions: total,
+    time_spent: time
+  }).catch(() => alert('保存结果失败'));
+
+  alert(`正确率：${count}/${total}\n用时：${minutes.textContent}分${seconds.textContent}秒`);
 });
 
-// 生成新题
 newBtn.addEventListener('click', () => {
   generateQuestions();
-  time = 0;
+  resetTimer();
   clearInterval(timer);
-  timer = setInterval(updateTimer, 1000);
-  document.querySelectorAll('.answer-input').forEach(input => {
-    input.value = '';
-    input.classList.remove('correct', 'wrong');
-  });
+  startTimer();
 });
 
-// 添加键盘导航
 document.addEventListener('keydown', handleKeyNavigation);
-fetch('/save_result', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    correct_count: correctCount,
-    total_questions: inputs.length,
-    time_spent: time
-  })
-});
 
-// 初始化
-generateQuestions();
-timer = setInterval(updateTimer, 1000);
-
-// 登录功能
 loginBtn.addEventListener('click', async () => {
-  const username = usernameInput.value;
-  const password = passwordInput.value;
-
-  if (!username || !password) {
-    alert('请输入用户名和密码');
-    return;
+  if (!usernameInput.value || !passwordInput.value) {
+    return alert('请输入用户名和密码');
   }
 
   try {
-    const response = await fetch('/math_train_login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
+    const result = await apiRequest('/math_train_login', 'POST', {
+      username: usernameInput.value,
+      password: passwordInput.value
     });
 
-    const result = await response.json();
-    if (result.success) {
-      alert('登录成功');
-      window.location.href = '/math_train';
-    } else {
-      alert(result.message || '登录失败');
-    }
-  } catch (error) {
-    console.error('登录失败:', error);
+    result.success ? window.location.href = '/math_train' : alert(result.message);
+  } catch {
     alert('登录失败，请稍后重试');
   }
 });
 
-// 注册功能
 registerBtn.addEventListener('click', async () => {
-  const username = usernameInput.value;
-  const password = passwordInput.value;
-
-  if (!username || !password) {
-    alert('请输入用户名和密码');
-    return;
+  if (!usernameInput.value || !passwordInput.value) {
+    return alert('请输入用户名和密码');
   }
 
   try {
-    const response = await fetch('/math_train_register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
+    const result = await apiRequest('/math_train_register', 'POST', {
+      username: usernameInput.value,
+      password: passwordInput.value
     });
 
-    const result = await response.json();
-    if (result.success) {
-      alert('注册成功');
-      window.location.href = '/math_train_login';
-    } else {
-      alert(result.message || '注册失败');
-    }
-  } catch (error) {
-    console.error('注册失败:', error);
+    result.success ? window.location.href = '/math_train_login' : alert(result.message);
+  } catch {
     alert('注册失败，请稍后重试');
   }
 });
+
+// 获取对话框相关元素
+    const loginModal = document.getElementById('loginModal');
+    const registerModal = document.getElementById('registerModal');
+    const showLoginModalBtn = document.getElementById('showLoginModalBtn');
+    const showRegisterModalBtn = document.getElementById('showRegisterModalBtn');
+    const switchToRegister = document.getElementById('switchToRegister');
+    const switchToLogin = document.getElementById('switchToLogin');
+
+    // 显示登录对话框
+    showLoginModalBtn.addEventListener('click', () => {
+      loginModal.style.display = 'flex';
+      registerModal.style.display = 'none';
+    });
+
+    // 显示注册对话框
+    showRegisterModalBtn.addEventListener('click', () => {
+      registerModal.style.display = 'flex';
+      loginModal.style.display = 'none';
+    });
+
+    // 切换到注册对话框
+    switchToRegister.addEventListener('click', () => {
+      registerModal.style.display = 'flex';
+      loginModal.style.display = 'none';
+    });
+
+    // 切换到登录对话框
+    switchToLogin.addEventListener('click', () => {
+      loginModal.style.display = 'flex';
+      registerModal.style.display = 'none';
+    });
+
+    // 关闭对话框（点击外部区域）
+    window.addEventListener('click', (event) => {
+      if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+      }
+    });
+
+// ==================== 初始化 ====================
+generateQuestions();
+startTimer();

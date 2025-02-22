@@ -1,28 +1,26 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>算术训练优化版</title>
-    <link rel="stylesheet" href="/css/math_train.css">
-    <script src="/js/math_train.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>算术训练优化版</title>
+  <link rel="stylesheet" href="/css/math_train.css">
 </head>
 <body>
-  <!-- 新增导航栏 -->
+  <!-- 导航栏 -->
   <nav class="navbar">
     <div class="navbar-container">
       <div class="navbar-left">
         <span class="navbar-title">速算训练营</span>
       </div>
       <div class="navbar-right">
-        <input type="text" id="username" class="navbar-input" placeholder="用户名">
-        <input type="password" id="password" class="navbar-input" placeholder="密码">
-        <button class="navbar-btn" id="loginBtn">登录</button>
-        <button class="navbar-btn" id="registerBtn">注册</button>
+        <button class="navbar-btn" id="showLoginModalBtn">登录</button>
+        <button class="navbar-btn" id="showRegisterModalBtn">注册</button>
       </div>
     </div>
   </nav>
 
+  <!-- 主内容 -->
   <div class="container">
     <header class="header">
       <h1 class="title">速算训练营</h1>
@@ -38,6 +36,31 @@
 
     <div class="question-grid" id="grid"></div>
   </div>
+
+  <!-- 登录对话框 -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <h2>登录</h2>
+      <input type="text" id="loginUsername" placeholder="用户名">
+      <input type="password" id="loginPassword" placeholder="密码">
+      <button id="loginBtn">登录</button>
+      <p class="switch-mode" id="switchToRegister">没有账号？立即注册</p>
+    </div>
+  </div>
+
+  <!-- 注册对话框 -->
+  <div id="registerModal" class="modal">
+    <div class="modal-content">
+      <h2>注册</h2>
+      <input type="text" id="registerUsername" placeholder="用户名">
+      <input type="password" id="registerPassword" placeholder="密码">
+      <button id="registerBtn">注册</button>
+      <p class="switch-mode" id="switchToLogin">已有账号？立即登录</p>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="/js/math_train.js"></script>
 </body>
 </html>
 
