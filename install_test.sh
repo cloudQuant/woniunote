@@ -5,13 +5,15 @@ BUILD_DIR="build"
 EGG_INFO_DIR="woniunote.egg-info"
 BENCHMARKS_DIR=".benchmarks"
 
+# git pull new code
+git pull
+
 # 切换到上一级目录
 cd ..
 
 # 安装 requirements.txt 中的依赖
 #pip install -U -r ./woniunote/requirements.txt
-# git pull new code
-git pull
+
 
 # 安装 woniunote 包
 pip install -U --no-build-isolation ./woniunote
