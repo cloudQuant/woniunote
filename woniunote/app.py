@@ -18,9 +18,9 @@ from woniunote.controller.user import user
 from woniunote.module.users import Users
 from woniunote.module.articles import Articles
 from woniunote.common.timer import can_use_minute
-# import pymysql
-# pymysql.install_as_MySQLdb()
-import MySQLdb
+import pymysql
+pymysql.install_as_MySQLdb()
+# import MySQLdb
 import math
 import traceback
 config_result = read_config()
