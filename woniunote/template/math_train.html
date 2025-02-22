@@ -1,4 +1,4 @@
-<!DOC<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
@@ -136,6 +136,17 @@
       color: white !important;
       border-color: transparent !important;
     }
+    /* 新增焦点样式 */
+    .answer-input:focus {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+    }
+
+    /* 当前焦点标识 */
+    .current-focus {
+      border-color: #e74c3c !important;
+      background: #fff9f9;
+    }
 
     @media (max-width: 992px) {
       .question-grid {
@@ -161,6 +172,77 @@
       }
     }
   </style>
+    <script>
+// 在原有代码基础上新增以下功能
+
+let inputsArray = []; // 存储所有输入框的数组
+let currentIndex = 0; // 当前焦点索引
+
+// 初始化输入框数组
+function initInputsArray() {
+  inputsArray = Array.from(document.querySelectorAll('.answer-input'));
+  inputsArray.forEach((input, index) => {
+    input.dataset.index = index; // 添加索引标记
+  });
+}
+
+// 键盘导航功能
+function handleKeyNavigation(e) {
+  const key = e.key;
+  const activeElement = document.activeElement;
+
+  // 只在输入框聚焦时响应
+  if (!activeElement.classList.contains('answer-input')) return;
+
+  currentIndex = parseInt(activeElement.dataset.index);
+
+  switch(key) {
+    case 'ArrowRight':
+    case 'ArrowDown':
+    case 'Enter':
+      e.preventDefault();
+      navigate(1);
+      break;
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      e.preventDefault();
+      navigate(-1);
+      break;
+  }
+}
+
+// 导航逻辑
+function navigate(direction) {
+  currentIndex += direction;
+
+  // 边界处理
+  if (currentIndex >= inputsArray.length) currentIndex = 0;
+  if (currentIndex < 0) currentIndex = inputsArray.length - 1;
+
+  inputsArray[currentIndex].focus();
+}
+
+// 在生成新题时更新输入框数组
+function generateQuestions() {
+  // ...原有生成逻辑...
+  initInputsArray(); // 新增初始化数组
+}
+
+// 添加事件监听
+document.addEventListener('keydown', handleKeyNavigation);
+
+// 初始化时获取输入框
+window.addEventListener('DOMContentLoaded', () => {
+  initInputsArray();
+  if (inputsArray.length > 0) inputsArray[0].focus();
+});
+
+// 修改原有newBtn点击事件
+newBtn.addEventListener('click', () => {
+  // ...原有逻辑...
+  setTimeout(() => inputsArray[0]?.focus(), 0); // 生成后自动聚焦第一个
+});
+</script>
 </head>
 <body>
   <div class="container">
@@ -188,6 +270,15 @@
 
     let timer = null;
     let time = 0;
+
+    // 在input事件中添加自动跳转
+    document.querySelectorAll('.answer-input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        if (e.target.value.length >= 3) { // 输入满3位自动跳转
+          navigate(1);
+        }
+      });
+    });
 
     // 生成题目
     function generateQuestions() {
@@ -264,6 +355,29 @@
         input.classList.remove('correct', 'wrong');
       });
     });
+
+    // 增强的navigate函数
+    function navigate(direction) {
+  // 移除旧焦点样式
+  inputsArray[currentIndex]?.classList.remove('current-focus');
+
+  currentIndex += direction;
+
+  // 边界处理（循环模式）
+  currentIndex = (currentIndex + inputsArray.length) % inputsArray.length;
+
+  // 添加新焦点样式
+  const target = inputsArray[currentIndex];
+  target.classList.add('current-focus');
+  target.focus();
+
+  // 自动滚动到可见区域
+  target.scrollIntoView({
+    behavior: 'smooth',
+    block: 'center',
+    inline: 'center'
+  });
+}
 
     // 初始化
     generateQuestions();
