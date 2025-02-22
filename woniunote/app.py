@@ -249,8 +249,9 @@ def math_train_check_login():
 @app.route("/math_train_user")
 def math_train_user():
     if 'user_id' not in session:
-        return redirect(url_for('math_train_login'))
-    return render_template("math_train_user.html")
+        return redirect(url_for('math_train'))
+    target_html = "math_train_user.html"
+    return render_template(target_html)
 
 
 # 获取用户训练数据
