@@ -37,6 +37,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # True: 跟踪数据库的修改，及时发送信号
 app.config['SQLALCHEMY_POOL_SIZE'] = 100  # 数据库连接池的大小。默认是数据库引擎的默认值（通常是 5）
 # app.config['SQLALCHEMY_POOL_RECYCLE'] = -1
+app.config['MYSQL_DB'] = 'math_train'
+# 初始化 MySQL
+mysql = MySQL(app)
 # 实例化db对象
 # db = SQLAlchemy(app)
 db.init_app(app)
@@ -161,7 +164,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        cur = MySQL.connection.cursor()
+        cur = mysql.connection.cursor()
         cur.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
         user = cur.fetchone()
         cur.close()
@@ -183,14 +186,14 @@ def register():
         username = request.form['username']
         password = generate_password_hash(request.form['password'])
 
-        cur = MySQL.connection.cursor()
+        cur = mysql.connection.cursor()
         try:
             cur.execute("INSERT INTO math_train_users (username, password) VALUES (%s, %s)", (username, password))
-            MySQL.connection.commit()
+            mysql.connection.commit()
             flash('注册成功，请登录', 'success')
             return redirect(url_for('login'))
         except Exception as e:
-            MySQL.connection.rollback()
+            mysql.connection.rollback()
             flash('用户名已存在', 'error')
         finally:
             cur.close()
@@ -218,12 +221,12 @@ def save_result():
     total_questions = data['total_questions']
     time_spent = data['time_spent']
 
-    cur = MySQL.connection.cursor()
+    cur = mysql.connection.cursor()
     cur.execute("""
         INSERT INTO math_train_results (user_id, math_level, correct_count, total_questions, time_spent, created_at)
         VALUES (%s, %s, %s, %s, %s, NOW())
     """, (session['user_id'], math_level, correct_count, total_questions, time_spent))
-    MySQL.connection.commit()
+    mysql.connection.commit()
     cur.close()
 
     return {'status': 'success'}
