@@ -1,10 +1,10 @@
 ### changelog
 -[ ] 2025-02-21: `todo` try to fix why `https://www.yunjinqi.top/type/101/1` not right sometime
--[ ] 2025-02-21: `todo` try to fix the headline not show '+' sign
+-[x] 2025-02-21: try to fix the headline not show '+' sign
 -[x] 2025-02-21: fix phone header show, change '量化交易与量化自我' to '专注量化'
 -[x] 2025-02-21: fix phone show not perfectly about previous page and next page
 -[x] 2025-02-20: beauty the thumb/picture by update the `create_thumb_png` function
--[ ] 2025-02-16: why need @app.route('/favicon.ico')? todo
+-[ ] 2025-02-16: `todo` why need @app.route('/favicon.ico')? 
 -[x] 2025-02-16: compress the js file and fix some bugs
 -[x] 2025-02-15: change png to webp format for better performance
 -[x] 2025-02-15: compress the CSS file in the source code

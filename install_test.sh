@@ -43,6 +43,17 @@ echo "Deleting all .log files..."
 find . -type f -name "*.log" -exec rm -f {} \;
 echo "All .log files deleted."
 
+# 检测并杀掉运行中的gunicorn进程
+echo "Checking for running gunicorn processes..."
+pid=$(ps aux | grep 'gunicorn' | grep 'app:app' | awk '{print $2}')
+if [ -n "$pid" ]; then
+  echo "Found running gunicorn process with PID $pid, killing it..."
+  kill -9 $pid
+else
+  echo "No running gunicorn process found."
+fi
+
 echo "enter woniunote and run app"
 cd ./woniunote
+
 gunicorn -w 3 -b 0.0.0.0:8888 --log-level debug app:app

@@ -149,7 +149,7 @@ def do_upload():
 @app.route("/math_train", methods=["POST", "GET"])
 def math_train():
     # file_path = os.path.join(package_path, 'template', 'math_train.html')
-    file_path = math_train.html
+    file_path = "math_train.html"
     return render_template(file_path)
 
 # todo why need @app.route('/favicon.ico')
