@@ -245,8 +245,8 @@
       grid.innerHTML = '';
       for (let i = 0; i < 5; i++) {
         for (let j = 0; j < 4; j++) {
-          const num1 = Math.floor(Math.random() * 20) + 1;
-          const num2 = Math.floor(Math.random() * 20) + 1;
+          let num1 = Math.floor(Math.random() * 20) + 1;
+          let num2 = Math.floor(Math.random() * 20) + 1;
           const operator = Math.random();
           let operatorSymbol;
           let correctAnswer;
@@ -263,12 +263,11 @@
           } else {
             operatorSymbol = '÷';
             // 确保除数不为0，且结果是整数
-            let divisor = num2;
-            while (divisor === 0) {
-              divisor = Math.floor(Math.random() * 20) + 1; // 如果除数为0，重新生成
+            while (num2 === 0) {
+              num2 = Math.floor(Math.random() * 20) + 1; // 如果除数为0，重新生成
             }
-            const dividend = num1 * divisor; // 被除数 = num1 * divisor
-            correctAnswer = dividend / divisor; // 结果一定是整数
+            correctAnswer = num1;
+            num1 = num1*num2;
           }
 
           const question = document.createElement('div');
