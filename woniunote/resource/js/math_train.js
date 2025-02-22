@@ -283,6 +283,7 @@ window.addEventListener('click', (event) => {
 });
 
 // 检查登录状态
+// 改进的检查登录状态函数
 const checkLoginStatus = async () => {
   try {
     const response = await fetch('/math_train_check_login');
@@ -298,18 +299,21 @@ const updateNavbar = (loggedIn, username) => {
   const loginBtn = document.getElementById('showLoginModalBtn');
   const registerBtn = document.getElementById('showRegisterModalBtn');
   const logoutBtn = document.getElementById('logoutBtn');
+  const userCenterBtn = document.getElementById('userCenterBtn'); // 新增
   const usernameSpan = document.getElementById('navbarUsername');
 
   if (loggedIn) {
     loginBtn.style.display = 'none';
     registerBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-block';
+    userCenterBtn.style.display = 'inline-block'; // 新增
     usernameSpan.textContent = username;
     usernameSpan.style.display = 'inline-block';
   } else {
     loginBtn.style.display = 'inline-block';
     registerBtn.style.display = 'inline-block';
     logoutBtn.style.display = 'none';
+    userCenterBtn.style.display = 'none'; // 新增
     usernameSpan.style.display = 'none';
   }
 };
@@ -317,6 +321,7 @@ const updateNavbar = (loggedIn, username) => {
 // 退出功能
 document.getElementById('logoutBtn').addEventListener('click', () => {
   window.location.href = '/math_train_logout';
+  setTimeout(() => window.location.reload(), 100); // 强制刷新页面
 });
 
 // 修改登录成功后的跳转
