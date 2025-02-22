@@ -13,7 +13,46 @@ import hashlib
 import sys
 import os
 import requests
+import pymysql
 from PIL import Image, ImageFont, ImageDraw
+from urllib.parse import urlparse
+
+
+# 初始化数据库连接
+def get_db_connection(database_info):
+    return pymysql.connect(
+        host=MYSQL_HOST,
+        user=MYSQL_USER,
+        password=MYSQL_PASSWORD,
+        database=MYSQL_DB,
+        cursorclass=DictCursor
+    )
+
+def parse_db_uri(db_uri):
+    """
+    解析 SQLALCHEMY_DATABASE_URI，提取数据库连接信息
+    """
+    # 解析 URI
+    parsed = urlparse(db_uri)
+
+    # 提取用户名和密码
+    username = parsed.username
+    password = parsed.password
+
+    # 提取主机和端口
+    host = parsed.hostname
+    port = parsed.port or 3306  # 如果未指定端口，默认为 3306
+
+    # 提取数据库名称
+    database = parsed.path.lstrip('/')  # 去掉路径开头的斜杠
+
+    return {
+        'host': host,
+        'port': port,
+        'user': username,
+        'password': password,
+        'database': database
+    }
 
 
 def find_md5(args):

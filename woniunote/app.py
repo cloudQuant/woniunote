@@ -2,9 +2,10 @@ import os
 from flask import Flask, redirect, render_template, session, request, url_for, flash
 from flask_sslify import SSLify
 from flask_mysqldb import MySQL
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from woniunote.common.database import db, ARTICLE_TYPES
-from woniunote.common.utils import read_config, get_package_path
+from woniunote.common.utils import read_config, get_package_path, get_db_connection, parse_db_uri
 from woniunote.controller.admin import admin
 from woniunote.controller.article import article
 from woniunote.controller.card_center import card_center
@@ -38,22 +39,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # True: 跟踪数据库的修改，及时发送信号
 app.config['SQLALCHEMY_POOL_SIZE'] = 100  # 数据库连接池的大小。默认是数据库引擎的默认值（通常是 5）
 # app.config['SQLALCHEMY_POOL_RECYCLE'] = -1
-# 提取用户名和密码
-user_info = SQLALCHEMY_DATABASE_URI.split("://")[1].split("@")[0]
-MYSQL_USER = user_info.split(":")[0]
-MYSQL_PASSWORD = user_info.split(":")[1]
-# 提取主机地址
-MYSQL_HOST = SQLALCHEMY_DATABASE_URI.split("@")[1].split(":")[0]
-MYSQL_DB = SQLALCHEMY_DATABASE_URI.split("@")[1].split("/")[0].split("?")[0]
-# 初始化数据库连接
-def get_db_connection():
-    return pymysql.connect(
-        host=MYSQL_HOST,
-        user=MYSQL_USER,
-        password=MYSQL_PASSWORD,
-        database=MYSQL_DB,
-        cursorclass=DictCursor
-    )
+DATABASE_INFO = parse_db_uri(SQLALCHEMY_DATABASE_URI)
 # 实例化db对象
 # db = SQLAlchemy(app)
 db.init_app(app)
@@ -179,7 +165,7 @@ def math_train_login():
         password = request.form['password']
 
         # 使用 pymysql 连接数据库
-        connection = get_db_connection()
+        connection = get_db_connection(DATABASE_INFO)
         try:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
@@ -206,7 +192,7 @@ def math_train_register():
         password = generate_password_hash(request.form['password'])
 
         # 使用 pymysql 连接数据库
-        connection = get_db_connection()
+        connection = get_db_connection(DATABASE_INFO)
         try:
             with connection.cursor() as cursor:
                 cursor.execute("INSERT INTO math_train_users (username, password) VALUES (%s, %s)", (username, password))
@@ -244,7 +230,7 @@ def math_train_save_result():
     time_spent = data['time_spent']
 
     # 使用 pymysql 连接数据库
-    connection = get_db_connection()
+    connection = get_db_connection(DATABASE_INFO)
     try:
         with connection.cursor() as cursor:
             cursor.execute("""
