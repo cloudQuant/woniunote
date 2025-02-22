@@ -158,27 +158,66 @@ def math_train():
 
 @app.route('/math_train_login', methods=['POST'])
 def math_train_login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    connection = get_db_connection(DATABASE_INFO)
     try:
-        print("username:", username)
-        print("password:", password)
+        # 添加请求内容类型验证
+        if not request.is_json:
+            print("错误请求格式，收到内容类型:", request.content_type)
+            return jsonify({'success': False, 'message': '请求必须为JSON格式'}), 400
+
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+
+        # 调试打印（生产环境应移除）
+        print("[调试] 登录尝试 - 用户名:", username)
+        print("[调试] 登录尝试 - 密码:", password)
+
+        if not username or not password:
+            print("缺少用户名或密码字段")
+            return jsonify({'success': False, 'message': '用户名和密码不能为空'}), 400
+
+        connection = get_db_connection(DATABASE_INFO)
         with connection.cursor() as cursor:
             cursor.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
             user = cursor.fetchone()
-        print(user['password'])
-        if user and check_password_hash(user['password'], password):
-            session['username'] = username
-            session['user_id'] = user['id']
-            return jsonify({'success': True, 'redirect': url_for('math_train')})
-        else:
-            return jsonify({'success': False, 'message': '用户名或密码错误'})
+
+            # 调试数据库查询结果
+            print("[调试] 数据库查询结果:", user)
+
+            if not user:
+                print("用户不存在:", username)
+                return jsonify({'success': False, 'message': '用户不存在'}), 401
+
+            # 调试密码哈希对比
+            print("[调试] 数据库存储的哈希:", user['password'])
+            print("[调试] 密码验证结果:", check_password_hash(user['password'], password))
+
+            if check_password_hash(user['password'], password):
+                session['username'] = username
+                session['user_id'] = user['id']
+                print("登录成功，用户ID:", user['id'])
+                return jsonify({
+                    'success': True,
+                    'redirect': url_for('math_train_user'),  # 修正跳转地址
+                    'username': username
+                })
+            else:
+                print("密码验证失败")
+                return jsonify({'success': False, 'message': '密码错误'}), 401
+
+    except pymysql.Error as e:
+        print("数据库错误:", str(e))
+        return jsonify({'success': False, 'message': '数据库操作失败'}), 500
+    except KeyError as e:
+        print("字段缺失错误:", str(e))
+        return jsonify({'success': False, 'message': '数据字段不完整'}), 400
     except Exception as e:
-        return jsonify({'success': False, 'message': '服务器错误'})
+        print("服务器未知错误:", str(e))
+        traceback.print_exc()  # 打印完整堆栈信息
+        return jsonify({'success': False, 'message': '服务器内部错误'}), 500
     finally:
-        connection.close()
+        if 'connection' in locals():
+            connection.close()
 
 @app.route('/math_train_register', methods=['POST'])
 def math_train_register():
