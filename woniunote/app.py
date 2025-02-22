@@ -19,6 +19,7 @@ from woniunote.module.users import Users
 from woniunote.module.articles import Articles
 from woniunote.common.timer import can_use_minute
 import pymysql
+from pymysql.cursors import DictCursor
 pymysql.install_as_MySQLdb()
 # import MySQLdb
 import math
@@ -43,12 +44,16 @@ MYSQL_USER = user_info.split(":")[0]
 MYSQL_PASSWORD = user_info.split(":")[1]
 # 提取主机地址
 MYSQL_HOST = SQLALCHEMY_DATABASE_URI.split("@")[1].split(":")[0]
-app.config['MYSQL_HOST'] = MYSQL_HOST
-app.config['MYSQL_USER'] = MYSQL_USER
-app.config['MYSQL_PASSWORD'] = MYSQL_PASSWORD
-app.config['MYSQL_DB'] = 'math_train'
-# 初始化 MySQL
-mysql = MySQL(app)
+MYSQL_DB = SQLALCHEMY_DATABASE_URI.split("@")[1].split("/")[0].split("?")[0]
+# 初始化数据库连接
+def get_db_connection():
+    return pymysql.connect(
+        host=MYSQL_HOST,
+        user=MYSQL_USER,
+        password=MYSQL_PASSWORD,
+        database=MYSQL_DB,
+        cursorclass=DictCursor
+    )
 # 实例化db对象
 # db = SQLAlchemy(app)
 db.init_app(app)
@@ -168,44 +173,52 @@ def math_train():
 
 
 @app.route('/math_train_login', methods=['GET', 'POST'])
-def login():
+def math_train_login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
 
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
-        user = cur.fetchone()
-        cur.close()
+        # 使用 pymysql 连接数据库
+        connection = get_db_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
+                user = cursor.fetchone()
 
-        if user and check_password_hash(user[2], password):
-            session['username'] = username
-            session['user_id'] = user[0]
-            return redirect(url_for('math_train'))
-        else:
-            flash('用户名或密码错误', 'error')
+            if user and check_password_hash(user['password'], password):
+                session['username'] = username
+                session['user_id'] = user['id']
+                return redirect(url_for('math_train'))
+            else:
+                flash('用户名或密码错误', 'error')
+        finally:
+            connection.close()
+
     target_html = "math_train_login.html"
     return render_template(target_html)
 
 
 # 注册页面
 @app.route('/math_train_register', methods=['GET', 'POST'])
-def register():
+def math_train_register():
     if request.method == 'POST':
         username = request.form['username']
         password = generate_password_hash(request.form['password'])
 
-        cur = mysql.connection.cursor()
+        # 使用 pymysql 连接数据库
+        connection = get_db_connection()
         try:
-            cur.execute("INSERT INTO math_train_users (username, password) VALUES (%s, %s)", (username, password))
-            mysql.connection.commit()
-            flash('注册成功，请登录', 'success')
-            return redirect(url_for('login'))
-        except Exception as e:
-            mysql.connection.rollback()
+            with connection.cursor() as cursor:
+                cursor.execute("INSERT INTO math_train_users (username, password) VALUES (%s, %s)", (username, password))
+                connection.commit()
+                flash('注册成功，请登录', 'success')
+                return redirect(url_for('login'))
+        except pymysql.Error as e:
+            connection.rollback()
             flash('用户名已存在', 'error')
         finally:
-            cur.close()
+            connection.close()
+
     target_html = 'math_train_register.html'
     return render_template(target_html)
 
@@ -219,8 +232,8 @@ def register():
 
 
 # 保存训练结果
-@app.route('/save_result', methods=['POST'])
-def save_result():
+@app.route('/math_train_save_result', methods=['POST'])
+def math_train_save_result():
     if 'username' not in session:
         return redirect(url_for('login'))
 
@@ -230,20 +243,26 @@ def save_result():
     total_questions = data['total_questions']
     time_spent = data['time_spent']
 
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        INSERT INTO math_train_results (user_id, math_level, correct_count, total_questions, time_spent, created_at)
-        VALUES (%s, %s, %s, %s, %s, NOW())
-    """, (session['user_id'], math_level, correct_count, total_questions, time_spent))
-    mysql.connection.commit()
-    cur.close()
-
-    return {'status': 'success'}
+    # 使用 pymysql 连接数据库
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO math_train_results (user_id, math_level, correct_count, total_questions, time_spent, created_at)
+                VALUES (%s, %s, %s, %s, %s, NOW())
+            """, (session['user_id'], math_level, correct_count, total_questions, time_spent))
+            connection.commit()
+        return {'status': 'success'}
+    except pymysql.Error as e:
+        connection.rollback()
+        return {'status': 'error', 'message': str(e)}
+    finally:
+        connection.close()
 
 
 # 退出登录
-@app.route('/logout')
-def logout():
+@app.route('/math_train_logout')
+def math_train_logout():
     session.pop('username', None)
     session.pop('user_id', None)
     return redirect(url_for('login'))
