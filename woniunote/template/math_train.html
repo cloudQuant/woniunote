@@ -159,7 +159,15 @@
           for (let j = 0; j < 5; j++) {
             const span = document.createElement('span');
             span.classList.add('sp');
-            span.innerText = '3 + 3 = ';
+
+            // 随机生成两个数字和一个运算符
+            const num1 = Math.floor(Math.random() * 10) + 1; // 随机数字1 (1-10)
+            const num2 = Math.floor(Math.random() * 10) + 1; // 随机数字2 (1-10)
+            const operator = Math.random() < 0.5 ? '+' : '-'; // 随机选择加号或减号
+
+            // 设置题目
+            span.innerText = `${num1} ${operator} ${num2} = `;
+
             const input = document.createElement('input');
             input.classList.add('answer');
             input.type = 'text';
@@ -219,5 +227,6 @@
     </script>
   </body>
 </html>
+
 
 
