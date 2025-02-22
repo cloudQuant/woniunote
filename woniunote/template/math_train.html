@@ -262,12 +262,13 @@
             correctAnswer = num1 * num2;
           } else {
             operatorSymbol = '÷';
-            // 确保除数不为0，且结果是整数
+            // 确保除数不为0
             while (num2 === 0) {
               num2 = Math.floor(Math.random() * 20) + 1; // 如果除数为0，重新生成
             }
-            correctAnswer = Math.floor(num1);
-            num1 = num1*num2;
+            const dividend = num1 * num2; // 生成被除数
+            correctAnswer = dividend / num2; // 结果为整数
+            num1 = dividend; // 更新 num1 为被除数
           }
 
           const question = document.createElement('div');
