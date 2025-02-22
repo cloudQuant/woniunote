@@ -1,4 +1,6 @@
 ### changelog
+-[x] 2025-02-22: try to remove pymysql package
+-[ ] 2025-02-22: update math_train function
 -[ ] 2025-02-21: `todo` try to fix why `https://www.yunjinqi.top/type/101/1` not right sometime
 -[x] 2025-02-21: try to fix the headline not show '+' sign
 -[x] 2025-02-21: fix phone header show, change '量化交易与量化自我' to '专注量化'

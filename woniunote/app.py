@@ -18,11 +18,10 @@ from woniunote.controller.user import user
 from woniunote.module.users import Users
 from woniunote.module.articles import Articles
 from woniunote.common.timer import can_use_minute
-import pymysql
+# import pymysql
 import math
 import traceback
-
-pymysql.install_as_MySQLdb()
+# pymysql.install_as_MySQLdb()
 config_result = read_config()
 
 SQLALCHEMY_DATABASE_URI = config_result['database']["SQLALCHEMY_DATABASE_URI"]
