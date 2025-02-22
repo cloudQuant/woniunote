@@ -1,6 +1,8 @@
 import os
-from flask import Flask, redirect, render_template, session, request
+from flask import Flask, redirect, render_template, session, request, url_for, flash
 from flask_sslify import SSLify
+from flask_mysqldb import MySQL
+from werkzeug.security import generate_password_hash, check_password_hash
 from woniunote.common.database import db, ARTICLE_TYPES
 from woniunote.common.utils import read_config, get_package_path
 from woniunote.controller.admin import admin
@@ -151,6 +153,88 @@ def math_train():
     # file_path = os.path.join(package_path, 'template', 'math_train.html')
     file_path = "math_train.html"
     return render_template(file_path)
+
+
+@app.route('/math_train_login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        cur = MySQL.connection.cursor()
+        cur.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
+        user = cur.fetchone()
+        cur.close()
+
+        if user and check_password_hash(user[2], password):
+            session['username'] = username
+            session['user_id'] = user[0]
+            return redirect(url_for('math_train'))
+        else:
+            flash('用户名或密码错误', 'error')
+    target_html = "math_train_login.html"
+    return render_template(target_html)
+
+
+# 注册页面
+@app.route('/math_train_register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = generate_password_hash(request.form['password'])
+
+        cur = MySQL.connection.cursor()
+        try:
+            cur.execute("INSERT INTO math_train_users (username, password) VALUES (%s, %s)", (username, password))
+            MySQL.connection.commit()
+            flash('注册成功，请登录', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            MySQL.connection.rollback()
+            flash('用户名已存在', 'error')
+        finally:
+            cur.close()
+    target_html = 'math_train_register.html'
+    return render_template(target_html)
+
+
+# 算术训练页面
+@app.route('/math_train')
+def math_train():
+    if 'username' not in session:
+        return redirect(url_for('math_train_login'))
+    return render_template('math_train.html')
+
+
+# 保存训练结果
+@app.route('/save_result', methods=['POST'])
+def save_result():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    data = request.json
+    math_level = data['math_level']
+    correct_count = data['correct_count']
+    total_questions = data['total_questions']
+    time_spent = data['time_spent']
+
+    cur = MySQL.connection.cursor()
+    cur.execute("""
+        INSERT INTO math_train_results (user_id, math_level, correct_count, total_questions, time_spent, created_at)
+        VALUES (%s, %s, %s, %s, %s, NOW())
+    """, (session['user_id'], math_level, correct_count, total_questions, time_spent))
+    MySQL.connection.commit()
+    cur.close()
+
+    return {'status': 'success'}
+
+
+# 退出登录
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    session.pop('user_id', None)
+    return redirect(url_for('login'))
 
 # todo why need @app.route('/favicon.ico')
 @app.route('/favicon.ico')

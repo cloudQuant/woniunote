@@ -1,0 +1,209 @@
+:root {
+  --primary-color: #2c3e50;
+  --accent-color: #e74c3c;
+  --btn-bg: #3498db;
+  --btn-hover: #2980b9;
+  --correct-bg: #2ecc71;
+  --wrong-bg: #e74c3c;
+  --input-border: #bdc3c7;
+  --card-bg: #ffffff;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  --border-radius: 12px;
+  --transition: all 0.2s ease;
+}
+
+/* 通用样式 */
+body {
+  margin: 0;
+  padding: 2rem;
+  background: #f8f9fa;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+}
+
+/* 登录/注册容器 */
+.auth-container {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 20px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+/* 头部 */
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.title {
+  color: var(--primary-color);
+  font-size: 2.2rem;
+  margin-bottom: 1rem;
+}
+
+.timer {
+  font-size: 1.8rem;
+  color: #7f8c8d;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* 控制按钮 */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.btn {
+  padding: 0.8rem 2rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--btn-bg);
+  color: white;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn:hover {
+  background: var(--btn-hover);
+  transform: translateY(-2px);
+}
+
+/* 题目网格 */
+.question-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.question-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.question-item:hover {
+  transform: translateY(-3px);
+}
+
+.number {
+  font-size: 1.3rem;
+  color: var(--primary-color);
+  min-width: 30px;
+  text-align: center;
+}
+
+.operator {
+  color: var(--accent-color);
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+
+/* 输入框 */
+.answer-input {
+  width: 70px;
+  height: 40px;
+  border: 2px solid var(--input-border);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 1.2rem;
+  transition: var(--transition);
+}
+
+.answer-input:focus {
+  border-color: var(--btn-bg);
+  box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+  outline: none;
+  transform: scale(1.05);
+}
+
+/* 正确/错误状态 */
+.correct {
+  background: var(--correct-bg) !important;
+  color: white !important;
+  border-color: transparent !important;
+}
+
+.wrong {
+  background: var(--wrong-bg) !important;
+  color: white !important;
+  border-color: transparent !important;
+}
+
+/* 当前焦点标识 */
+.current-focus {
+  border-color: var(--accent-color) !important;
+  background: #fff9f9;
+}
+
+/* 表单样式 */
+.form-group {
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+}
+
+a {
+  color: var(--btn-bg);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 992px) {
+  .question-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .container, .auth-container {
+    padding: 1rem;
+  }
+
+  .question-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .question-item {
+    justify-content: center;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}

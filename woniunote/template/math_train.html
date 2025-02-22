@@ -4,175 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>算术训练优化版</title>
-  <style>
-    :root {
-      --primary-color: #2c3e50;
-      --accent-color: #e74c3c;
-      --btn-bg: #3498db;
-      --btn-hover: #2980b9;
-      --correct-bg: #2ecc71;
-      --wrong-bg: #e74c3c;
-      --input-border: #bdc3c7;
-      --card-bg: #ffffff;
-    }
-
-    body {
-      margin: 0;
-      padding: 2rem;
-      background: #f8f9fa;
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      min-height: 100vh;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: var(--card-bg);
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      padding: 2rem;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .title {
-      color: var(--primary-color);
-      font-size: 2.2rem;
-      margin-bottom: 1rem;
-    }
-
-    .timer {
-      font-size: 1.8rem;
-      color: #7f8c8d;
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .btn {
-      padding: 0.8rem 2rem;
-      border: none;
-      border-radius: 8px;
-      background: var(--btn-bg);
-      color: white;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn:hover {
-      background: var(--btn-hover);
-      transform: translateY(-2px);
-    }
-
-    .question-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1.5rem;
-      padding: 1rem;
-    }
-
-    .question-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 1rem;
-      background: #f8f9fa;
-      border-radius: 8px;
-      transition: transform 0.2s;
-    }
-
-    .question-item:hover {
-      transform: translateY(-3px);
-    }
-
-    .number {
-      font-size: 1.3rem;
-      color: var(--primary-color);
-      min-width: 30px;
-      text-align: center;
-    }
-
-    .operator {
-      color: var(--accent-color);
-      font-weight: 700;
-      font-size: 1.4rem;
-    }
-
-    .answer-input {
-      width: 70px;
-      height: 40px;
-      border: 2px solid var(--input-border);
-      border-radius: 6px;
-      text-align: center;
-      font-size: 1.2rem;
-      transition: all 0.2s;
-    }
-
-    .answer-input:focus {
-      border-color: var(--btn-bg);
-      box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
-      outline: none;
-    }
-
-    .correct {
-      background: var(--correct-bg) !important;
-      color: white !important;
-      border-color: transparent !important;
-    }
-
-    .wrong {
-      background: var(--wrong-bg) !important;
-      color: white !important;
-      border-color: transparent !important;
-    }
-
-    /* 新增焦点样式 */
-    .answer-input:focus {
-      transform: scale(1.05);
-      box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
-    }
-
-    /* 当前焦点标识 */
-    .current-focus {
-      border-color: #e74c3c !important;
-      background: #fff9f9;
-    }
-
-    @media (max-width: 992px) {
-      .question-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 576px) {
-      .container {
-        padding: 1rem;
-      }
-
-      .question-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .question-item {
-        justify-content: center;
-      }
-
-      .btn {
-        width: 100%;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="/css/math_train.css">
 </head>
 <body>
   <div class="container">
@@ -342,6 +174,17 @@
 
     // 添加键盘导航
     document.addEventListener('keydown', handleKeyNavigation);
+    fetch('/save_result', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        correct_count: correctCount,
+        total_questions: inputs.length,
+        time_spent: time
+      })
+    });
 
     // 初始化
     generateQuestions();
