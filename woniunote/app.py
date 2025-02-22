@@ -1,8 +1,6 @@
 import os
-from flask import Flask, redirect, render_template, session, request, url_for, flash
+from flask import Flask, redirect, render_template, session, request, url_for, jsonify
 from flask_sslify import SSLify
-from flask_mysqldb import MySQL
-
 from werkzeug.security import generate_password_hash, check_password_hash
 from woniunote.common.database import db, ARTICLE_TYPES
 from woniunote.common.utils import read_config, get_package_path, get_db_connection, parse_db_uri
@@ -158,63 +156,50 @@ def math_train():
     return render_template(file_path)
 
 
-@app.route('/math_train_login', methods=['GET', 'POST'])
+@app.route('/math_train_login', methods=['POST'])
 def math_train_login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
 
-        # 使用 pymysql 连接数据库
-        connection = get_db_connection(DATABASE_INFO)
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
-                user = cursor.fetchone()
+    connection = get_db_connection(DATABASE_INFO)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
+            user = cursor.fetchone()
 
-            if user and check_password_hash(user['password'], password):
-                session['username'] = username
-                session['user_id'] = user['id']
-                return redirect(url_for('math_train'))
-            else:
-                flash('用户名或密码错误', 'error')
-        finally:
-            connection.close()
+        if user and check_password_hash(user['password'], password):
+            session['username'] = username
+            session['user_id'] = user['id']
+            return jsonify({'success': True, 'redirect': url_for('math_train')})
+        else:
+            return jsonify({'success': False, 'message': '用户名或密码错误'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': '服务器错误'})
+    finally:
+        connection.close()
 
-    target_html = "math_train_login.html"
-    return render_template(target_html)
-
-
-# 注册页面
-@app.route('/math_train_register', methods=['GET', 'POST'])
+@app.route('/math_train_register', methods=['POST'])
 def math_train_register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = generate_password_hash(request.form['password'])
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
 
-        # 使用 pymysql 连接数据库
-        connection = get_db_connection(DATABASE_INFO)
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("INSERT INTO math_train_users (username, password) VALUES (%s, %s)", (username, password))
-                connection.commit()
-                flash('注册成功，请登录', 'success')
-                return redirect(url_for('login'))
-        except pymysql.Error as e:
-            connection.rollback()
-            flash('用户名已存在', 'error')
-        finally:
-            connection.close()
-
-    target_html = 'math_train_register.html'
-    return render_template(target_html)
-
-
-# 算术训练页面
-# @app.route('/math_train')
-# def math_train():
-#     if 'username' not in session:
-#         return redirect(url_for('math_train_login'))
-#     return render_template('math_train.html')
+    hashed_password = generate_password_hash(password)
+    connection = get_db_connection(DATABASE_INFO)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO math_train_users (username, password) VALUES (%s, %s)", (username, hashed_password))
+            connection.commit()
+            return jsonify({'success': True, 'message': '注册成功，请登录'})
+    except pymysql.IntegrityError:  # 捕获唯一性约束错误
+        connection.rollback()
+        return jsonify({'success': False, 'message': '用户名已存在'})
+    except Exception as e:
+        connection.rollback()
+        return jsonify({'success': False, 'message': '注册失败'})
+    finally:
+        connection.close()
 
 
 # 保存训练结果
@@ -251,7 +236,14 @@ def math_train_save_result():
 def math_train_logout():
     session.pop('username', None)
     session.pop('user_id', None)
-    return redirect(url_for('login'))
+    return redirect(url_for('math_train'))  # 修正重定向到登录页面
+
+@app.route('/math_train_check_login')
+def math_train_check_login():
+    if 'username' in session:
+        return jsonify({'loggedIn': True, 'username': session['username']})
+    else:
+        return jsonify({'loggedIn': False})
 
 # todo why need @app.route('/favicon.ico')
 @app.route('/favicon.ico')

@@ -15,6 +15,14 @@ const newBtn = document.getElementById('newBtn');
 const minutes = document.getElementById('minutes');
 const seconds = document.getElementById('seconds');
 
+// 获取对话框相关元素
+const loginModal = document.getElementById('loginModal');
+const registerModal = document.getElementById('registerModal');
+const showLoginModalBtn = document.getElementById('showLoginModalBtn');
+const showRegisterModalBtn = document.getElementById('showRegisterModalBtn');
+const switchToRegister = document.getElementById('switchToRegister');
+const switchToLogin = document.getElementById('switchToLogin');
+
 // ==================== 状态变量 ====================
 let inputsArray = [];
 let currentIndex = 0;
@@ -180,11 +188,13 @@ checkBtn.addEventListener('click', () => {
   clearInterval(timer);
 
   // 保存结果到服务器
-  apiRequest('/save_result', 'POST', {
+  // 在checkBtn的事件处理中
+  apiRequest('/math_train_save_result', 'POST', {
+    math_level: 'basic', // 根据实际需要调整难度级别
     correct_count: count,
     total_questions: total,
     time_spent: time
-  }).catch(() => alert('保存结果失败'));
+  })
 
   alert(`正确率：${count}/${total}\n用时：${minutes.textContent}分${seconds.textContent}秒`);
 });
@@ -199,77 +209,118 @@ newBtn.addEventListener('click', () => {
 document.addEventListener('keydown', handleKeyNavigation);
 
 loginBtn.addEventListener('click', async () => {
-  if (!usernameInput.value || !passwordInput.value) {
+  const username = document.getElementById('loginUsername').value;
+  const password = document.getElementById('loginPassword').value;
+
+  if (!username || !password) {
     return alert('请输入用户名和密码');
   }
 
   try {
-    const result = await apiRequest('/math_train_login', 'POST', {
-      username: usernameInput.value,
-      password: passwordInput.value
-    });
-
-    result.success ? window.location.href = '/math_train' : alert(result.message);
+    const result = await apiRequest('/math_train_login', 'POST', { username, password });
+    if (result.success) {
+      window.location.href = '/math_train'; // 重定向到训练页面
+    } else {
+      alert(result.message);
+    }
   } catch {
     alert('登录失败，请稍后重试');
   }
 });
 
 registerBtn.addEventListener('click', async () => {
-  if (!usernameInput.value || !passwordInput.value) {
+  const username = document.getElementById('registerUsername').value;
+  const password = document.getElementById('registerPassword').value;
+
+  if (!username || !password) {
     return alert('请输入用户名和密码');
   }
 
   try {
-    const result = await apiRequest('/math_train_register', 'POST', {
-      username: usernameInput.value,
-      password: passwordInput.value
-    });
-
-    result.success ? window.location.href = '/math_train_login' : alert(result.message);
+    const result = await apiRequest('/math_train_register', 'POST', { username, password });
+    if (result.success) {
+      alert('注册成功，请登录');
+      // 切换到登录对话框
+      document.getElementById('registerModal').style.display = 'none';
+      document.getElementById('loginModal').style.display = 'flex';
+    } else {
+      alert(result.message);
+    }
   } catch {
     alert('注册失败，请稍后重试');
   }
 });
 
-// 获取对话框相关元素
-    const loginModal = document.getElementById('loginModal');
-    const registerModal = document.getElementById('registerModal');
-    const showLoginModalBtn = document.getElementById('showLoginModalBtn');
-    const showRegisterModalBtn = document.getElementById('showRegisterModalBtn');
-    const switchToRegister = document.getElementById('switchToRegister');
-    const switchToLogin = document.getElementById('switchToLogin');
+// 显示登录对话框
+showLoginModalBtn.addEventListener('click', () => {
+  loginModal.style.display = 'flex';
+  registerModal.style.display = 'none';
+});
 
-    // 显示登录对话框
-    showLoginModalBtn.addEventListener('click', () => {
-      loginModal.style.display = 'flex';
-      registerModal.style.display = 'none';
-    });
+// 显示注册对话框
+showRegisterModalBtn.addEventListener('click', () => {
+  registerModal.style.display = 'flex';
+  loginModal.style.display = 'none';
+});
 
-    // 显示注册对话框
-    showRegisterModalBtn.addEventListener('click', () => {
-      registerModal.style.display = 'flex';
-      loginModal.style.display = 'none';
-    });
+// 切换到注册对话框
+switchToRegister.addEventListener('click', () => {
+  registerModal.style.display = 'flex';
+  loginModal.style.display = 'none';
+});
 
-    // 切换到注册对话框
-    switchToRegister.addEventListener('click', () => {
-      registerModal.style.display = 'flex';
-      loginModal.style.display = 'none';
-    });
+// 切换到登录对话框
+switchToLogin.addEventListener('click', () => {
+  loginModal.style.display = 'flex';
+  registerModal.style.display = 'none';
+});
 
-    // 切换到登录对话框
-    switchToLogin.addEventListener('click', () => {
-      loginModal.style.display = 'flex';
-      registerModal.style.display = 'none';
-    });
+// 关闭对话框（点击外部区域）
+window.addEventListener('click', (event) => {
+  if (event.target.classList.contains('modal')) {
+    event.target.style.display = 'none';
+  }
+});
 
-    // 关闭对话框（点击外部区域）
-    window.addEventListener('click', (event) => {
-      if (event.target.classList.contains('modal')) {
-        event.target.style.display = 'none';
-      }
-    });
+// 检查登录状态
+const checkLoginStatus = async () => {
+  try {
+    const response = await fetch('/math_train_check_login');
+    const data = await response.json();
+    updateNavbar(data.loggedIn, data.username);
+  } catch (error) {
+    console.error('检查登录状态失败:', error);
+  }
+};
+
+// 更新导航栏显示
+const updateNavbar = (loggedIn, username) => {
+  const loginBtn = document.getElementById('showLoginModalBtn');
+  const registerBtn = document.getElementById('showRegisterModalBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const usernameSpan = document.getElementById('navbarUsername');
+
+  if (loggedIn) {
+    loginBtn.style.display = 'none';
+    registerBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+    usernameSpan.textContent = username;
+    usernameSpan.style.display = 'inline-block';
+  } else {
+    loginBtn.style.display = 'inline-block';
+    registerBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+    usernameSpan.style.display = 'none';
+  }
+};
+
+// 退出功能
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  window.location.href = '/math_train_logout';
+});
+
+// 页面加载时检查登录状态
+checkLoginStatus();
 
 // ==================== 初始化 ====================
 generateQuestions();
