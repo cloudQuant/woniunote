@@ -161,13 +161,14 @@ def math_train_login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-
+    print("username:", username)
+    print("password:", password)
     connection = get_db_connection(DATABASE_INFO)
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
             user = cursor.fetchone()
-
+        print(user['password'])
         if user and check_password_hash(user['password'], password):
             session['username'] = username
             session['user_id'] = user['id']
