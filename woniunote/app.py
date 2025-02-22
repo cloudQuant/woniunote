@@ -161,10 +161,10 @@ def math_train_login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    print("username:", username)
-    print("password:", password)
     connection = get_db_connection(DATABASE_INFO)
     try:
+        print("username:", username)
+        print("password:", password)
         with connection.cursor() as cursor:
             cursor.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
             user = cursor.fetchone()
