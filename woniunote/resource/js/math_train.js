@@ -28,7 +28,9 @@ let state = {
   currentIndex: 0,
   timer: null,
   time: INITIAL_TIME,
-  correctCount: 0
+  correctCount: 0,
+  loggedIn: false,   // 默认未登录
+  username: ''       // 存储用户名
 };
 
 // ==================== 核心功能 ====================
@@ -99,32 +101,6 @@ const timerManager = {
   }
 };
 
-// ==================== 答案验证 ====================
-const validateAnswers = () => {
-  state.correctCount = 0;
-  document.querySelectorAll('.answer-input').forEach(input => {
-    const elements = input.parentElement;
-    const [a, b] = Array.from(elements.querySelectorAll('.number')).map(n => parseInt(n.textContent));
-    const operator = elements.querySelector('.operator').textContent;
-
-    const operations = {
-      '+': (x, y) => x + y,
-      '-': (x, y) => x - y,
-      '×': (x, y) => x * y,
-      '÷': (x, y) => x / y
-    };
-
-    const correct = operations[operator](a, b);
-    const userAnswer = parseInt(input.value);
-
-    input.classList.toggle('correct', userAnswer === correct);
-    input.classList.toggle('wrong', userAnswer !== correct);
-    if (userAnswer === correct) state.correctCount++;
-  });
-
-  return { count: state.correctCount, total: state.inputsArray.length };
-};
-
 // ==================== 网络请求 ====================
 const apiRequest = async (url, method, data) => {
   try {
@@ -146,26 +122,37 @@ const authManager = {
     try {
       const response = await fetch('/math_train_check_login');
       const data = await response.json();
-      this.updateUI(data.loggedIn, data.username);
+      state.loggedIn = data.loggedIn;
+      state.username = data.username;
+      authManager.updateUI();
     } catch (error) {
       console.error('登录状态检查失败:', error);
     }
   },
 
-  updateUI: (loggedIn, username) => {
+  updateUI: () => {
     const elements = DOM.navbarElements;
-    const display = loggedIn ? ['none', 'inline-block'] : ['inline-block', 'none'];
-
-    [elements.login, elements.register].forEach(el => el.style.display = display[0]);
-    [elements.logout, elements.userCenter].forEach(el => el.style.display = display[1]);
-
-    elements.username.textContent = loggedIn ? username : '';
-    elements.username.style.display = loggedIn ? 'inline-block' : 'none';
+    if (state.loggedIn) {
+      elements.login.style.display = 'none';
+      elements.register.style.display = 'none';
+      elements.logout.style.display = 'inline-block';
+      elements.userCenter.style.display = 'inline-block';
+      elements.username.textContent = state.username;
+      elements.username.style.display = 'inline-block';
+    } else {
+      elements.login.style.display = 'inline-block';
+      elements.register.style.display = 'inline-block';
+      elements.logout.style.display = 'none';
+      elements.userCenter.style.display = 'none';
+      elements.username.style.display = 'none';
+    }
   },
 
-  handleLogout: () => {
-    window.location.href = '/math_train_logout';
-    setTimeout(() => window.location.reload(), 200);
+  handleLogout: async () => {
+    await apiRequest('/math_train_logout', 'POST');
+    state.loggedIn = false;
+    state.username = '';
+    authManager.updateUI();
   }
 };
 
@@ -201,7 +188,14 @@ const setupEventListeners = () => {
 
     try {
       const result = await apiRequest('/math_train_login', 'POST', { username, password });
-      result.success ? window.location.href = '/math_train_user' : alert(result.message);
+      if (result.success) {
+        state.loggedIn = true;
+        state.username = username;
+        authManager.updateUI();
+        document.getElementById('loginModal').style.display = 'none';
+      } else {
+        alert(result.message);
+      }
     } catch {
       alert('登录失败');
     }
@@ -228,26 +222,23 @@ const setupEventListeners = () => {
   });
 
   // 对话框控制
-  const modalControls = {
-    showLogin: () => toggleModals('flex', 'none'),
-    showRegister: () => toggleModals('none', 'flex'),
-    closeAll: (event) => {
-      if (event.target.classList.contains('modal')) {
-        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-      }
-    }
-  };
-
-  const toggleModals = (loginDisplay, registerDisplay) => {
-    DOM.loginModal.style.display = loginDisplay;
-    DOM.registerModal.style.display = registerDisplay;
-  };
-
-  document.querySelectorAll('[data-modal]').forEach(btn => {
-    btn.addEventListener('click', modalControls[`show${btn.dataset.modal}`]);
+  document.getElementById('showLoginModalBtn').addEventListener('click', () => {
+    DOM.loginModal.style.display = 'flex';
+    DOM.registerModal.style.display = 'none';
   });
 
-  window.addEventListener('click', modalControls.closeAll);
+  document.getElementById('showRegisterModalBtn').addEventListener('click', () => {
+    DOM.loginModal.style.display = 'none';
+    DOM.registerModal.style.display = 'flex';
+  });
+
+  // 关闭对话框
+  window.addEventListener('click', (event) => {
+    if (event.target.classList.contains('modal')) {
+      document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+    }
+  });
+
   document.getElementById('logoutBtn').addEventListener('click', authManager.handleLogout);
 };
 
