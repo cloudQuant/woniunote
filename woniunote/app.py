@@ -235,7 +235,7 @@ def math_train_save_result():
 @app.route('/math_train_logout')
 def math_train_logout():
     session.clear()
-    return redirect(url_for('math_train_login'))  # 确保重定向到登录页
+    return redirect(url_for('math_train'))  # 确保重定向到登录页
 
 @app.route('/math_train_check_login')
 def math_train_check_login():
