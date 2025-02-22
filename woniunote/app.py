@@ -232,17 +232,19 @@ def math_train_save_result():
 
 
 # 退出登录
+# 退出路由
 @app.route('/math_train_logout')
 def math_train_logout():
-    session.clear()
-    return redirect(url_for('math_train'))  # 确保重定向到登录页
+    session.clear()  # 确保清除所有session数据
+    return redirect(url_for('math_train'))
 
+# 登录状态检查
 @app.route('/math_train_check_login')
 def math_train_check_login():
-    if 'username' in session:
-        return jsonify({'loggedIn': True, 'username': session['username']})
-    else:
-        return jsonify({'loggedIn': False})
+    return jsonify({
+        'loggedIn': 'user_id' in session,
+        'username': session.get('username', '')
+    })
 
 
 # 用户中心页面
