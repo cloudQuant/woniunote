@@ -319,6 +319,17 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   window.location.href = '/math_train_logout';
 });
 
+// 修改登录成功后的跳转
+loginBtn.addEventListener('click', async () => {
+  // ...保持原有逻辑...
+  if (result.success) {
+    window.location.href = '/math_train_user';  // 修改跳转地址
+  }
+});
+
+// 在训练页面添加用户中心按钮
+
+
 // 页面加载时检查登录状态
 checkLoginStatus();
 

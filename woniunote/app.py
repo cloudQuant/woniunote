@@ -245,6 +245,57 @@ def math_train_check_login():
     else:
         return jsonify({'loggedIn': False})
 
+
+# 用户中心页面
+@app.route("/math_train_user")
+def math_train_user():
+    if 'user_id' not in session:
+        return redirect(url_for('math_train_login'))
+    return render_template("math_train_user.html")
+
+
+# 获取用户训练数据
+@app.route('/math_train_user_data')
+def math_train_user_data():
+    if 'user_id' not in session:
+        return jsonify({'error': '未登录'}), 401
+
+    connection = get_db_connection(DATABASE_INFO)
+    try:
+        with connection.cursor() as cursor:
+            # 获取历史记录
+            cursor.execute("""
+                SELECT math_level, correct_count, total_questions, time_spent, created_at 
+                FROM math_train_results 
+                WHERE user_id = %s 
+                ORDER BY created_at DESC 
+                LIMIT 10
+            """, (session['user_id'],))
+            history = cursor.fetchall()
+
+            # 获取统计数据
+            cursor.execute("""
+                SELECT 
+                    COUNT(*) AS total_sessions,
+                    ROUND(AVG(correct_count/total_questions)*100, 1) AS avg_accuracy,
+                    MIN(time_spent) AS best_time
+                FROM math_train_results 
+                WHERE user_id = %s
+            """, (session['user_id'],))
+            stats = cursor.fetchone()
+
+        return jsonify({
+            'history': history,
+            'total_sessions': stats['total_sessions'],
+            'avg_accuracy': stats['avg_accuracy'] or 0,
+            'best_time': f"{stats['best_time'] // 60:02d}:{stats['best_time'] % 60:02d}" if stats[
+                'best_time'] else "00:00"
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        connection.close()
+
 # todo why need @app.route('/favicon.ico')
 @app.route('/favicon.ico')
 def favicon():
