@@ -199,11 +199,11 @@ def register():
 
 
 # 算术训练页面
-@app.route('/math_train')
-def math_train():
-    if 'username' not in session:
-        return redirect(url_for('math_train_login'))
-    return render_template('math_train.html')
+# @app.route('/math_train')
+# def math_train():
+#     if 'username' not in session:
+#         return redirect(url_for('math_train_login'))
+#     return render_template('math_train.html')
 
 
 # 保存训练结果
