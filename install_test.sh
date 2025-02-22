@@ -10,6 +10,8 @@ cd ..
 
 # 安装 requirements.txt 中的依赖
 #pip install -U -r ./woniunote/requirements.txt
+# git pull new code
+git pull
 
 # 安装 woniunote 包
 pip install -U --no-build-isolation ./woniunote
