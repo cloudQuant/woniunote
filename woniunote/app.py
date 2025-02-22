@@ -37,6 +37,15 @@ app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # True: 跟踪数据库的修改，及时发送信号
 app.config['SQLALCHEMY_POOL_SIZE'] = 100  # 数据库连接池的大小。默认是数据库引擎的默认值（通常是 5）
 # app.config['SQLALCHEMY_POOL_RECYCLE'] = -1
+# 提取用户名和密码
+user_info = SQLALCHEMY_DATABASE_URI.split("://")[1].split("@")[0]
+MYSQL_USER = user_info.split(":")[0]
+MYSQL_PASSWORD = user_info.split(":")[1]
+# 提取主机地址
+MYSQL_HOST = SQLALCHEMY_DATABASE_URI.split("@")[1].split(":")[0]
+app.config['MYSQL_HOST'] = MYSQL_HOST
+app.config['MYSQL_USER'] = MYSQL_USER
+app.config['MYSQL_PASSWORD'] = MYSQL_PASSWORD
 app.config['MYSQL_DB'] = 'math_train'
 # 初始化 MySQL
 mysql = MySQL(app)
