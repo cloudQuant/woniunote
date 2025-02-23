@@ -1,36 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Math Training</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>速算训练营</title>
+  <link rel="stylesheet" href="/css/math_train.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <nav>
-    <ul>
-      <li><button id="showLoginModalBtn">登录</button></li>
-      <li><button id="showRegisterModalBtn">注册</button></li>
-      <li><button id="userCenterBtn" class="logged-in" style="display:none;">用户中心</button></li>
-      <li><button id="logoutBtn" class="logged-in" style="display:none;">退出登录</button></li>
-      <li class="logged-out"><button id="showLoginModalBtn">登录</button></li>
-      <li class="logged-out"><button id="showRegisterModalBtn">注册</button></li>
-      <li><span id="navbarUsername"></span></li>
-    </ul>
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <div class="navbar-left">
+        <span class="navbar-title">速算训练营</span>
+        <button class="navbar-btn" id="newBtn">新题生成</button>
+          <button class="navbar-btn" id="newBtn">开始做题</button>
+        <button class="navbar-btn" id="checkBtn">提交答案</button>
+      </div>
+
+      <div class="navbar-center">
+        <div class="timer">
+          <span id="minutes">00</span>:<span id="seconds">00</span>
+        </div>
+      </div>
+
+      <div class="navbar-right">
+        <span class="navbar-username" id="navbarUsername"></span>
+        <button class="navbar-btn logged-out" id="showLoginModalBtn">登录</button>
+        <button class="navbar-btn logged-out" id="showRegisterModalBtn">注册</button>
+        <button class="navbar-btn logged-in" id="logoutBtn" style="display: none;">退出</button>
+        <button class="navbar-btn logged-in" id="userCenterBtn" style="display: none;" onclick="window.location.href='/math_train_user'">用户中心</button>
+      </div>
+    </div>
   </nav>
 
-  <!-- Modal for login -->
+  <!-- 主内容 -->
+  <div class="container">
+    <div class="question-grid" id="grid"></div>
+  </div>
+
+  <!-- 登录对话框 -->
   <div id="loginModal" class="modal">
     <div class="modal-content">
       <h2>登录</h2>
       <input type="text" id="loginUsername" placeholder="用户名">
       <input type="password" id="loginPassword" placeholder="密码">
       <button id="loginBtn">登录</button>
+      <p class="switch-mode" id="switchToRegister">没有账号？立即注册</p>
     </div>
   </div>
 
-  <!-- Modal for register -->
+  <!-- 注册对话框 -->
   <div id="registerModal" class="modal">
     <div class="modal-content">
       <h2>注册</h2>
@@ -38,24 +57,13 @@
       <input type="password" id="registerPassword" placeholder="密码">
       <input type="email" id="registerEmail" placeholder="邮箱">
       <button id="registerBtn">注册</button>
+      <p class="switch-mode" id="switchToLogin">已有账号？立即登录</p>
     </div>
   </div>
 
-  <!-- Main content -->
-  <div id="mainContent">
-    <div id="grid"></div>
-    <div>
-      <button id="newBtn">生成新题</button>
-      <button id="startBtn">开始做题</button>
-      <button id="checkBtn">提交答案</button>
-    </div>
-    <div>计时: <span id="minutes">00</span>:<span id="seconds">00</span></div>
-  </div>
-
-  <script src="math_train.js"></script>
+  <script src="/js/math_train.js"></script>
 </body>
 </html>
-
 
 
 
