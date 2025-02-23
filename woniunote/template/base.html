@@ -115,76 +115,78 @@
         </div>
     </footer>
 
-    <!-- 登录和注册模态框 -->
-    <div class="modal fade" id="mymodal" data-backdrop="static" tabindex="-1"
-         role="dialog" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content" style="margin: 20px 0; max-height: 80vh; overflow-y: auto;">
-                <div class="tabbable" id="tabs" style="background-color: #337AB7; height: 50px;padding: 5px 20px;">
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
-                    </button>
-                    <ul class="nav nav-tabs" role="tablist">
-                        <li id="login" class="nav-item active">
-                            <a href="#loginpanel" data-toggle="tab" class="nav-link" style="color: midnightblue">登录</a>
-                        </li>
-                        <li id="find" class="nav-item">
-                            <a href="#findpanel" data-toggle="tab" class="nav-link" style="color: midnightblue">找回密码</a>
-                        </li>
-                    </ul>
-                </div>
+    <!-- 修改登录模态框结构 -->
+<div class="modal fade" id="mymodal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="loginModalLabel">用户登录</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <ul class="nav nav-tabs mb-4" id="loginTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="login-tab" data-toggle="tab" href="#loginpanel" role="tab">登录</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="find-tab" data-toggle="tab" href="#findpanel" role="tab">找回密码</a>
+                    </li>
+                </ul>
 
                 <div class="tab-content">
-                    <!-- 登录窗口 -->
-                    <div class="tab-pane container active" id="loginpanel">
-                        <div class="modal-body">
-                            <div class="form-group row" style="margin-top: 20px;">
-                                <label for="loginname" class="col-4">登录邮箱：</label>
-                                <input type="text" id="loginname" class="form-control col-7" placeholder="请输入你的邮箱地址"/>
+                    <!-- 登录面板 -->
+                    <div class="tab-pane fade show active" id="loginpanel" role="tabpanel">
+                        <form>
+                            <div class="form-group">
+                                <label for="loginname">登录邮箱</label>
+                                <input type="email" class="form-control" id="loginname" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="loginpass">登录密码</label>
+                                <input type="password" class="form-control" id="loginpass" required>
                             </div>
                             <div class="form-group row">
-                                <label for="loginpass" class="col-4">登录密码：</label>
-                                <input type="password" id="loginpass" class="form-control col-7" placeholder="请输入你的登录密码"/>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="logincode" placeholder="验证码" required>
+                                </div>
+                                <div class="col-4">
+                                    <img src="/vcode" id="loginvcode" class="img-fluid" style="cursor:pointer;">
+                                </div>
                             </div>
-                            <div class="form-group row">
-                                <label for="logincode" class="col-4">图片验证码：</label>
-                                <input type="text" id="logincode" class="form-control col-5" placeholder="请输入右侧的验证码" onkeyup="doLogin(event)"/>
-                                <img src="/vcode" id="loginvcode" class="col-3" style="cursor:pointer;" onclick="this.src='/vcode?'+Math.random()"/>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-dark" data-dismiss="modal">关闭</button>
-                            <button type="button" class="btn btn-primary" onclick="doLogin(null)">登录</button>
-                        </div>
+                            <button type="submit" class="btn btn-primary btn-block">立即登录</button>
+                        </form>
                     </div>
 
-                    <!-- 找回密码 -->
-                    <div class="tab-pane container" id="findpanel">
-                        <div class="modal-body">
-                            <div class="form-group row" style="margin-top: 20px;">
-                                <label for="username" class="col-4">注册邮箱：</label>
-                                <input type="text" id="username" class="form-control col-7" placeholder="请输入你的邮箱地址"/>
+                    <!-- 找回密码面板 -->
+                    <div class="tab-pane fade" id="findpanel" role="tabpanel">
+                        <form>
+                            <div class="form-group">
+                                <label for="findemail">注册邮箱</label>
+                                <input type="email" class="form-control" id="findemail" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newpass">新密码</label>
+                                <input type="password" class="form-control" id="newpass" required>
                             </div>
                             <div class="form-group row">
-                                <label for="newpass" class="col-4">新的密码：</label>
-                                <input type="password" id="newpass" class="form-control col-7" placeholder="请输入新的密码"/>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="findcode" placeholder="邮箱验证码" required>
+                                </div>
+                                <div class="col-4">
+                                    <button type="button" class="btn btn-outline-primary btn-block">发送验证码</button>
+                                </div>
                             </div>
-                            <div class="form-group row">
-                                <label for="findcode" class="col-4">邮箱验证码：</label>
-                                <input type="text" id="findcode" class="form-control col-4" placeholder="请输入邮箱验证码"/>
-                                <button type="button" class="btn btn-primary col-3">发送邮件</button>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <span>请输入注册邮箱地址并重置密码。</span>
-                            <button type="button" class="btn btn-dark" data-dismiss="modal">关闭</button>
-                            <button type="button" class="btn btn-primary">找回密码</button>
-                        </div>
+                            <button type="submit" class="btn btn-primary btn-block">重置密码</button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
 </body>
 </html>

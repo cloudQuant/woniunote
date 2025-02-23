@@ -254,25 +254,62 @@ label {
     padding: 15px 0px;
 }
 
-/* 针对登录框和找回密码框 */
-.modal-content .form-group {
-    margin-bottom: 15px;
+/* 登录模态框专属样式 */
+#mymodal .modal-content {
+    border-radius: 0.5rem;
+    overflow: hidden;
 }
 
-.modal-body .form-group label {
-    font-weight: bold;
-    margin-right: 10px;
+#mymodal .nav-tabs {
+    border-bottom: 2px solid #dee2e6;
 }
 
-.modal-body .form-group input {
-    border-radius: 5px;
+#mymodal .nav-link {
+    border: none;
+    color: #495057;
+    font-weight: 500;
+    transition: all 0.3s ease;
 }
 
-.modal-body img {
-    border-radius: 5px;
+#mymodal .nav-link.active {
+    color: #007bff;
+    border-bottom: 2px solid #007bff;
+    background: transparent;
 }
 
-/* 控制关闭按钮和其他按钮的间距 */
-.modal-footer .btn {
-    margin: 0 5px;
+#mymodal .form-group label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+#mymodal .form-control {
+    border-radius: 0.25rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out;
+}
+
+#mymodal .form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+#mymodal .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    padding: 0.75rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+#mymodal .btn-primary:hover {
+    background-color: #0069d9;
+    border-color: #0062cc;
+}
+
+#loginvcode {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 2px;
 }
