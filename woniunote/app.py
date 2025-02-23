@@ -40,6 +40,11 @@ app.config['SQLALCHEMY_POOL_SIZE'] = 100  # 数据库连接池的大小。默认
 # app.config['SQLALCHEMY_POOL_RECYCLE'] = -1
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax'
+)
 DATABASE_INFO = parse_db_uri(SQLALCHEMY_DATABASE_URI)
 # 实例化db对象
 # db = SQLAlchemy(app)
