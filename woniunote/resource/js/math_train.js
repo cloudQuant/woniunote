@@ -154,6 +154,7 @@ const AuthManager = {
         state.loggedIn = true;
         state.username = data.username;
         AuthManager.updateUI();
+        document.getElementById('loginModal').style.display = 'none'; // 关闭登录模态框
         window.location.href = data.redirect;
       } else {
         alert(data.message || '登录失败');
@@ -161,6 +162,28 @@ const AuthManager = {
     } catch (error) {
       alert('网络连接错误，请重试');
       console.error('登录请求失败:', error);
+    }
+  },
+
+  handleRegister: async (username, password, email) => {
+    try {
+      const res = await fetch('/math_train_register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, email })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert('注册成功！请登录');
+        document.getElementById('registerModal').style.display = 'none'; // 关闭注册模态框
+        document.getElementById('loginModal').style.display = 'block'; // 打开登录模态框
+      } else {
+        alert(data.message || '注册失败');
+      }
+    } catch (error) {
+      alert('网络连接错误，请重试');
+      console.error('注册请求失败:', error);
     }
   },
 
@@ -208,6 +231,31 @@ const setupEventListeners = () => {
     alert('答案已提交');
   });
 
+  // 登录按钮事件
+  DOM.navbarElements.login.addEventListener('click', () => {
+    document.getElementById('loginModal').style.display = 'block'; // 打开登录对话框
+  });
+
+  // 注册按钮事件
+  DOM.navbarElements.register.addEventListener('click', () => {
+    document.getElementById('registerModal').style.display = 'block'; // 打开注册对话框
+  });
+
+  // 登录提交事件
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+    AuthManager.handleLogin(username, password);
+  });
+
+  // 注册提交事件
+  document.getElementById('registerBtn').addEventListener('click', () => {
+    const username = document.getElementById('registerUsername').value;
+    const password = document.getElementById('registerPassword').value;
+    const email = document.getElementById('registerEmail').value;
+    AuthManager.handleRegister(username, password, email);
+  });
+
   // 用户中心按钮
   document.getElementById('userCenterBtn').addEventListener('click', () => {
     window.location.href = '/math_train_user'; // 进行跳转
@@ -234,6 +282,7 @@ const init = () => {
 };
 
 document.addEventListener('DOMContentLoaded', init);
+
 
 
 
