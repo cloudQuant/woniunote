@@ -50,68 +50,68 @@
     </div>
   </div>
 
-  <!-- JavaScript -->
-  <script>
-    // 全局认证检查
-  const checkAuth = async () => {
-    try {
-      const res = await fetch('/math_train_check_login', {
-        credentials: 'include'
-      });
-      const data = await res.json();
-
-      if (!data.loggedIn) {
-        window.location.href = '/math_train';
-      } else {
-        document.getElementById('navbarUsername').textContent = `欢迎，${data.username}`;
-      }
-    } catch (error) {
-      console.error('认证检查失败:', error);
-      window.location.href = '/math_train';
-    }
-  };
-
-  // 获取训练历史数据
-  async function loadTrainingHistory() {
-    try {
-      await checkAuth(); // 先检查登录状态
-
-      const response = await fetch('/math_train_user_data', {
-        credentials: 'include'
-      });
-
-      if (response.status === 401) {
-        window.location.href = '/math_train';
-        return;
-      }
-
-      const data = await response.json();
-
-      // 更新统计数据...（保持原有代码不变）
-
-    } catch (error) {
-      console.error('加载数据失败:', error);
-    }
-  }
-
-  // 初始化加载
-  window.onload = () => {
-    checkAuth();
-    loadTrainingHistory();
-
-    // 绑定退出按钮
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      try {
-        await fetch('/math_train_logout', {
-          method: 'POST',
-          credentials: 'include'
-        });
-        window.location.href = '/math_train';
-      } catch (error) {
-        console.error('退出失败:', error);
-      }
-    });
-  };
-  </script>
+{#  <!-- JavaScript -->#}
+{#  <script>#}
+{#    // 全局认证检查#}
+{#  const checkAuth = async () => {#}
+{#    try {#}
+{#      const res = await fetch('/math_train_check_login', {#}
+{#        credentials: 'include'#}
+{#      });#}
+{#      const data = await res.json();#}
+{##}
+{#      if (!data.loggedIn) {#}
+{#        window.location.href = '/math_train';#}
+{#      } else {#}
+{#        document.getElementById('navbarUsername').textContent = `欢迎，${data.username}`;#}
+{#      }#}
+{#    } catch (error) {#}
+{#      console.error('认证检查失败:', error);#}
+{#      window.location.href = '/math_train';#}
+{#    }#}
+{#  };#}
+{##}
+{#  // 获取训练历史数据#}
+{#  async function loadTrainingHistory() {#}
+{#    try {#}
+{#      await checkAuth(); // 先检查登录状态#}
+{##}
+{#      const response = await fetch('/math_train_user_data', {#}
+{#        credentials: 'include'#}
+{#      });#}
+{##}
+{#      if (response.status === 401) {#}
+{#        window.location.href = '/math_train';#}
+{#        return;#}
+{#      }#}
+{##}
+{#      const data = await response.json();#}
+{##}
+{#      // 更新统计数据...（保持原有代码不变）#}
+{##}
+{#    } catch (error) {#}
+{#      console.error('加载数据失败:', error);#}
+{#    }#}
+{#  }#}
+{##}
+{#  // 初始化加载#}
+{#  window.onload = () => {#}
+{#    checkAuth();#}
+{#    loadTrainingHistory();#}
+{##}
+{#    // 绑定退出按钮#}
+{#    document.getElementById('logoutBtn').addEventListener('click', async () => {#}
+{#      try {#}
+{#        await fetch('/math_train_logout', {#}
+{#          method: 'POST',#}
+{#          credentials: 'include'#}
+{#        });#}
+{#        window.location.href = '/math_train';#}
+{#      } catch (error) {#}
+{#        console.error('退出失败:', error);#}
+{#      }#}
+{#    });#}
+{#  };#}
+{#  </script>#}
 </body>
 </html>
