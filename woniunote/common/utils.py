@@ -9,10 +9,74 @@ from io import BytesIO
 # 发送邮箱验证码
 from smtplib import SMTP_SSL
 import importlib
+import hashlib
 import sys
 import os
 import requests
+import pymysql
+from pymysql.cursors import DictCursor
 from PIL import Image, ImageFont, ImageDraw
+from urllib.parse import urlparse
+
+
+# 初始化数据库连接
+def get_db_connection(database_info):
+    try:
+        connection = pymysql.connect(
+            host=database_info['host'],
+            user=database_info['user'],
+            password=database_info['password'],
+            database=database_info['database'],
+            cursorclass=DictCursor
+        )
+        return connection
+    except pymysql.err.OperationalError as e:
+        print("连接数据库失败, {}".format(e))
+
+def parse_db_uri(db_uri):
+    """
+    解析 SQLALCHEMY_DATABASE_URI，提取数据库连接信息
+    """
+    # 解析 URI
+    parsed = urlparse(db_uri)
+
+    # 提取用户名和密码
+    username = parsed.username
+    password = parsed.password
+
+    # 提取主机和端口
+    host = parsed.hostname
+    port = parsed.port or 3306  # 如果未指定端口，默认为 3306
+
+    # 提取数据库名称
+    database = parsed.path.lstrip('/')  # 去掉路径开头的斜杠
+
+    return {
+        'host': host,
+        'port': port,
+        'user': username,
+        'password': password,
+        'database': database
+    }
+
+
+def find_md5(args):
+    md = "10a99b8bfa26650a562ecb14f8a14260"
+    starttime = datetime.now()
+    for i in open(args.file):
+        md5 = hashlib.md5()  # 获取一个md5加密算法对象
+        rs = i.strip()  # 去掉行尾的换行符
+        md5.update(rs.encode('utf-8'))  # 指定需要加密的字符串
+        newmd5 = md5.hexdigest()  # 获取加密后的16进制字符串
+        # print newmd5
+        if newmd5 == md:
+            print('明文是：' + rs)  # 打印出明文字符串
+            break
+        else:
+            pass
+
+    endtime = datetime.now()
+    print(endtime - starttime)  # 计算用时，非必须
 
 
 def get_package_path(package_name="lv"):
@@ -77,7 +141,6 @@ class ImageCode:
         # 创建图片对象，并设定背景色为白色
         im = Image.new('RGB', (width, height), 'white')
         # 选择使用何种字体及字体大小
-        # font = ImageFont.truetype(font='arial.ttf', size=40)
         font = ImageFont.load_default(size=40)  # 使用 Pillow 自带的字体
         draw = ImageDraw.Draw(im)  # 新建ImageDraw对象
         # 绘制字符串
@@ -94,8 +157,8 @@ class ImageCode:
         image, code = self.draw_verify_code()
         buf = BytesIO()
         image.save(buf, 'jpeg')
-        bstring = buf.getvalue()
-        return code, bstring
+        b_string = buf.getvalue()
+        return code, b_string
 
 
 # 发送QQ邮箱验证码, 参数为收件箱地址和随机生成的验证码
@@ -206,17 +269,17 @@ def generate_thumb(url_list):
     # 先遍历url_list，查找里面是否存在本地上传图片，找到即处理，代码运行结束
     for url in url_list:
         if url.startswith('/upload/'):
-            filename = url.split('/')[-1]
+            filename_ = url.split('/')[-1]
             # 找到本地图片后对其进行压缩处理，设置缩略图宽度为400像素即可
-            compress_image('./resource/upload/' + filename,
-                           './resource/thumb/' + filename, 400)
-            return filename
+            compress_image('./resource/upload/' + filename_,
+                           './resource/thumb/' + filename_, 400)
+            return filename_
 
     # 如果在内容中没有找到本地图片，则需要先将网络图片下载到本地再处理
     # 直接将第一张图片作为缩略图，并生成基于时间戳的标准文件名
     url = url_list[0]
-    filename = url.split('/')[-1]
-    suffix = filename.split('.')[-1]  # 取得文件的后缀名
+    filename_ = url.split('/')[-1]
+    suffix = filename_.split('.')[-1]  # 取得文件的后缀名
     thumbname = time.strftime('%Y%m%d_%H%M%S.' + suffix)
     download_image(url, './resource/download/' + thumbname)
     compress_image('./resource/download/' + thumbname, './resource/thumb/' + thumbname, 400)
@@ -224,21 +287,115 @@ def generate_thumb(url_list):
     return thumbname  # 返回当前缩略图的文件名
 
 
+def convert_image_to_webp(folder_, filename_):
+    # 打开 JPG 图片
+    img = Image.open(folder_ + filename_)
+    new_filename = filename_.split('.')[0] + '.webp'
+    # 转换并保存为 WebP 格式
+    img.save(folder_ + new_filename, "WEBP")
+
+
+def get_system_font_path():
+    import platform
+    # 根据操作系统选择字体路径
+    if platform.system() == "Windows":
+        font_path = "C:/Windows/Fonts/msyh.ttc"  # 微软雅黑路径
+    elif platform.system() == "Darwin":  # macOS
+        font_path = "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"  # 微软雅黑路径
+    else:  # Linux (Ubuntu)
+        font_path = "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"  # 文泉驿微米黑路径
+    return font_path
+
+
+def generate_random_color():
+    """生成一个随机的鲜艳颜色"""
+    return random.randint(100, 255), random.randint(100, 255), random.randint(100, 255)
+
+def generate_gradient_background(width, height):
+    """生成一个更加鲜艳的背景渐变"""
+    # 随机选择两种颜色作为背景渐变的起始和终止颜色
+    start_color = generate_random_color()
+    end_color = generate_random_color()
+
+    gradient = Image.new('RGB', (width, height), start_color)
+    for y in range(height):
+        blend_factor = y / height
+        r = int(start_color[0] * (1 - blend_factor) + end_color[0] * blend_factor)
+        g = int(start_color[1] * (1 - blend_factor) + end_color[1] * blend_factor)
+        b = int(start_color[2] * (1 - blend_factor) + end_color[2] * blend_factor)
+        for x in range(width):
+            gradient.putpixel((x, y), (r, g, b))
+    return gradient
+
+def create_thumb_png():
+    # 从文件加载 YAML 内容
+    yaml_file_path = '../configs/article_type_config.yaml'
+
+    # 确保文件存在
+    if not os.path.exists(yaml_file_path):
+        raise FileNotFoundError(f"配置文件 {yaml_file_path} 不存在!")
+
+    # 读取并解析 YAML 文件
+    with open(yaml_file_path, 'r', encoding='utf-8') as file:
+        yaml_content = file.read()
+
+    # 解析 YAML 内容
+    article_types = yaml.safe_load(yaml_content)["ARTICLE_TYPES"]
+
+    # 输出查看
+    print(article_types)
+
+    # Directory to save images
+    output_dir = "../resource/thumb/"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Font configuration
+    font_path = get_system_font_path()
+    image_size = (226, 136)  # (width, height)
+
+    # Generate images
+    for key, value in article_types.items():
+        image = generate_gradient_background(*image_size)  # Create a gradient background
+        draw = ImageDraw.Draw(image)
+
+        # Dynamically adjust font size and text wrapping
+        font_size = 60  # Initial font size
+        font = ImageFont.truetype(font_path, font_size)
+
+        # Check text width and adjust font size to fit
+        text_bbox = draw.textbbox((0, 0), value, font=font)
+        while text_bbox[2] - text_bbox[0] > image_size[0] * 0.9 or text_bbox[3] - text_bbox[1] > image_size[1] * 0.9:
+            font_size -= 2
+            font = ImageFont.truetype(font_path, font_size)
+            text_bbox = draw.textbbox((0, 0), value, font=font)
+
+        # Center the text
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+        position = ((image_size[0] - text_width) // 2, (image_size[1] - text_height) // 2)
+
+        # Draw text with shadow effect for better visibility
+        shadow_offset = 2
+        shadow_color = (50, 50, 50)  # Shadow color (dark gray)
+        draw.text((position[0] + shadow_offset, position[1] + shadow_offset), value, fill=shadow_color, font=font)
+
+        # Text color (randomly generated fresh colors)
+        text_color = generate_random_color()
+        draw.text(position, value, fill=text_color, font=font)
+
+        # Optionally, add a border around the image
+        border_thickness = 10
+        draw.rectangle([0, 0, image_size[0] - 1, image_size[1] - 1], outline=(0, 0, 0), width=border_thickness)
+
+        # Save image
+        filename = os.path.join(output_dir, f"{key}.png")
+        image.save(filename)
+
+    print(f"Images saved to {output_dir}")
+
 if __name__ == '__main__':
-    read_config()
-#     content = '''
-#     <p style="text-align:left;text-indent:28px">
-# <span style="font-size:14px;font-family:宋体">文章编辑完成后当然就得发布文章，某种意义上来说就是一个请求而已。但是要优化好整个发布功能，其实要考虑的问题是很多的。</span></p>
-# <p><img srcx="/upload/image.png" title="image.png" alt="image.png"/></p>
-# <p><span style="font-size:14px;font-family:宋体">首先要解决的问题是图片压缩的问题，作者发布文章时，并不会去关注图片有多大，只是简单的上传并确保前端能正常显示。</span></p>
-# <p><img src="http://www.woniuxy.com/page/img/banner/newBank.jpg"/></p>
-# <p><span style="font-size:14px;font-family:宋体">图片压缩分两种压缩方式，一种是压缩图片的尺寸，另外一种是压缩图片的大小。
-# </span><img src="http://ww1.sinaimg.cn/large/68b02e3bgy1g2rzifbr5fj215n0kg1c3.jpg"/>
-# </p>
-#     '''
-#
-#     list = parse_image_url(content)
-#
-#     thumb = generate_thumb(list)
-#
-#     print(thumb)
+    # read_config()
+    # folder = '/Users/yunjinqi/Downloads/woniunote/woniunote/resource/img/'
+    # filename = "noperm.jpg"
+    # convert_image_to_webp(folder, filename)
+    create_thumb_png()

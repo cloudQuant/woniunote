@@ -3,40 +3,40 @@
 
         <div class="col-sm-9 col-12" style="padding: 0 10px;" id="left">
             <!-- 轮播图组件应用，除了修改图片路径外，其它内容可不修改 -->
-            <div id="carouselExampleIndicators" class="col-12 carousel slide"
-                 data-ride="carousel" style="padding: 0px">
-                <ol class="carousel-indicators">
-                    <li data-target="#carouselExampleIndicators" data-slide-to="0"
-                        class="active"></li>
-                    <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
-                    <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
-                </ol>
-                <div class="carousel-inner">
-                    <div class="carousel-item active">
-                        <a href = "https://blog.csdn.net/qq_26948675/category_10220116.html" target="_blank"><img src="/img/my_paper.jpg" class="d-block w-100" alt="Banner广告一"></a>
-                    </div>
-                    <div class="carousel-item">
-                        <a href="https://www.zhihu.com/people/yun-jin-qi" target="_blank"><img src="/img/zhihu.png" class="d-block w-100" alt="Banner广告二"></a>
-                    </div>
-                    
-                </div>
-                <a class="carousel-control-prev" href="#carouselExampleIndicators"
-                    role="button" data-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="sr-only">Previous</span>
-                </a>
-                <a class="carousel-control-next" href="#carouselExampleIndicators"
-                    role="button" data-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="sr-only">Next</span>
-                </a>
-            </div>
+{#            <div id="carouselExampleIndicators" class="col-12 carousel slide"#}
+{#                 data-ride="carousel" style="padding: 0">#}
+{#                <ol class="carousel-indicators">#}
+{#                    <li data-target="#carouselExampleIndicators" data-slide-to="0"#}
+{#                        class="active"></li>#}
+{#                    <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>#}
+{#                    <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>#}
+{#                </ol>#}
+{#                <div class="carousel-inner">#}
+{#                    <div class="carousel-item active">#}
+{#                        <a href = "https://blog.csdn.net/qq_26948675/category_10220116.html" target="_blank"><img src="/img/my_paper.webp" type="image/webp" class="d-block w-100" alt="Banner广告一" >></a>#}
+{#                    </div>#}
+{#                    <div class="carousel-item">#}
+{#                        <a href="https://www.zhihu.com/people/yun-jin-qi" target="_blank"><img src="/img/zhihu.webp" type="image/webp" class="d-block w-100" alt="Banner广告二"></a>#}
+{#                    </div>#}
+{#                    #}
+{#                </div>#}
+{#                <a class="carousel-control-prev" href="#carouselExampleIndicators"#}
+{#                    role="button" data-slide="prev">#}
+{#                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>#}
+{#                    <span class="sr-only">Previous</span>#}
+{#                </a>#}
+{#                <a class="carousel-control-next" href="#carouselExampleIndicators"#}
+{#                    role="button" data-slide="next">#}
+{#                    <span class="carousel-control-next-icon" aria-hidden="true"></span>#}
+{#                    <span class="sr-only">Next</span>#}
+{#                </a>#}
+{#            </div>#}
 
             {% for article, nickname in result %}
             <div class="col-12 row article-list">
                 <div class="col-sm-3 col-3 thumb d-none d-sm-block">
                    <!-- <img src="/thumb/{{article.thumbnail}}"  width="226" height="136"/> -->
-                   <img src="/thumb/{{article.type}}.png"  width="226" height="136">
+                   <img src="/thumb/{{article.type}}.png"  width="226" height="136" alt="thumb_picture">
                 </div>
                 <div class="col-sm-9 col-xs-12 detail">
                     <div class="title"><a href="/article/{{article.articleid}}">{{article.headline}}</a></div>
@@ -51,25 +51,6 @@
                 </div>
             </div>
             {% endfor %}
-
-
-{#            <div class="col-12 paginate">#}
-{#                {% if page == 1 %}#}
-{#            	<a href="/page/1">上一页</a>&nbsp;&nbsp;#}
-{#                {% else %}#}
-{#                <a href="/page/{{page-1}}">上一页</a>&nbsp;&nbsp;#}
-{#                {% endif %}#}
-{##}
-{#                {% for i in range(total) %}#}
-{#                <a href="/page/{{i+1}}">{{i+1}}</a>&nbsp;&nbsp;#}
-{#                {% endfor %}#}
-{##}
-{#                {% if page == total %}#}
-{#            	<a href="/page/{{total}}">下一页</a>#}
-{#                {% else %}#}
-{#                <a href="/page/{{page+1}}">下一页</a>#}
-{#                {% endif %}#}
-{#            </div>#}
         <div class="col-12 paginate">
             <!-- 上一页 -->
             {% if page == 1 %}

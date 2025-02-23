@@ -15,6 +15,7 @@ article = Blueprint("article", __name__)
 
 @article.route('/article/<int:articleid>')
 def read(articleid):
+    print("begin to read article {}".format(articleid))
     try:
         try:
             result = Articles().find_by_id(articleid)
@@ -58,8 +59,9 @@ def read(articleid):
         total = math.ceil(count / 10)
         article_instance = Articles()
         last, most, recommended = article_instance.find_last_most_recommended()
-
-        return render_template('article-user.html', article=article_dict, position=position, payed=payed,
+        html_file = 'article-user.html'
+        # print("article_dict", article_dict["headline"])
+        return render_template(html_file, article=article_dict, position=position, payed=payed,
                                is_favorited=is_favorited, prev_next=prev_next,
                                can_use_minute=can_use_minute(),
                                total=total, last_articles=last, most_articles=most,
@@ -104,7 +106,8 @@ def pre_post():
                 if main_id not in subTypesData:
                     subTypesData[main_id] = {}
                 subTypesData[main_id][key] = value
-        return render_template('post-user.html', article_type=article_type, subTypesData=subTypesData)
+        html_file = 'post-user.html'
+        return render_template(html_file, article_type=article_type, subTypesData=subTypesData)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -113,6 +116,7 @@ def pre_post():
 # 编辑文章的前端页面渲染
 @article.route('/edit/<int:articleid>')
 def go_edit(articleid):
+    # print("go to edit article")
     try:
         result = Articles().find_by_id(articleid)
         # print("go_edit", articleid)
@@ -135,6 +139,7 @@ def go_edit(articleid):
 # 处理文章编辑请求
 @article.route("/edit", methods=["PUT", "POST"])
 def edit_article():
+    # print("begin to edit article")
     try:
         headline = request.form.get('headline')
         content = request.form.get('content')
@@ -144,6 +149,7 @@ def edit_article():
         checked = int(request.form.get('checked'))
         articleid = int(request.form.get('articleid'))
         article_instance = Articles()
+        # print("new_headline", headline)
         try:
             row = article_instance.find_by_id(articleid)
             article_id = article_instance.update_article(articleid=articleid,
@@ -173,12 +179,12 @@ def add_article():
         drafted = int(request.form.get('drafted'))
         checked = int(request.form.get('checked'))
         articleid = int(request.form.get('articleid'))
-        print(f"headline:{headline},article_type:{article_type},articleid:{articleid}")
+        # print(f"headline:{headline},article_type:{article_type},articleid:{articleid}")
         if session.get('userid') is None:
             return 'perm-denied'
         else:
             user = Users().find_by_userid(session.get('userid'))
-            print("user", user, user.role)
+            # print("user", user, user.role)
             if user.role == 'editor':
                 # 权限合格，可以执行发布文章的代码
                 # 首先为文章生成缩略图，优先从内容中找，找不到则随机生成一张

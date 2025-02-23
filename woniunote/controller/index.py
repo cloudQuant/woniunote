@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, abort
 from woniunote.module.articles import Articles
 from woniunote.common.timer import can_use_minute
 import math
-from datetime import datetime
+from datetime import datetime, UTC
 from woniunote.common.redisdb import redis_connect
 import traceback
 index = Blueprint("index", __name__)
@@ -18,7 +18,8 @@ def home():
 
         last, most, recommended = article.find_last_most_recommended()
         # content = render_template('index.html', result=result, page=1, total=total)
-        content = render_template('index.html', result=result, page=1, total=total,
+        html_file = 'index.html'
+        content = render_template(html_file, result=result, page=1, total=total,
                                   can_use_minute=can_use_minute(),
                                   last_articles=last, most_articles=most, recommended_articles=recommended)
         return content
@@ -38,7 +39,8 @@ def get_index():
 
         last, most, recommended = article.find_last_most_recommended()
         # content = render_template('index.html', result=result, page=1, total=total)
-        content = render_template('index.html', result=result, page=1, total=total,
+        html_file = 'index.html'
+        content = render_template(html_file, result=result, page=1, total=total,
                                   can_use_minute=can_use_minute(),
                                   last_articles=last, most_articles=most, recommended_articles=recommended)
         return content
@@ -58,14 +60,15 @@ def get_home():
 
         last, most, recommended = article.find_last_most_recommended()
         # content = render_template('index.html', result=result, page=1, total=total)
-        content = render_template('index.html', result=result, page=1, total=total,
+        html_file = 'index.html'
+        content = render_template(html_file, result=result, page=1, total=total,
                                   can_use_minute=can_use_minute(),
                                   last_articles=last, most_articles=most, recommended_articles=recommended)
-        # content =  render_template('index.html', result=result, page=1, total=total,
-        #                        contents=[last,most,recommended])
+        # content = render_template('index.html', result=result, page=1, total=total,
+        #                        contents=[last, most,recommended])
         # 如果是第一个用户访问，而静态文件不存在，则生成一个
-        # with open('./template/index-static/index-1.html', mode='w', encoding='utf-8') as file:
-        #     file.write(content)
+        # with open('./template/index-static/index-1.html', mode='w', encoding='utf-8') as f:
+        #     f.write(content)
         # print("begin to get_home")
         return content
     except Exception as e:
@@ -83,16 +86,17 @@ def paginate(page):
         total = math.ceil(article.get_total_count() / 10)
 
         last, most, recommended = article.find_last_most_recommended()
-        _current_time = datetime.utcnow()
+        _current_time = datetime.now(UTC)
         # content = render_template('index.html', result=result, page=1, total=total)
-        content = render_template('index.html', result=result, page=page, total=total,
+        html_file = 'index.html'
+        content = render_template(html_file, result=result, page=page, total=total,
                                   can_use_minute=can_use_minute(),
                                   last_articles=last, most_articles=most, recommended_articles=recommended)
-        # content =  render_template('index.html', result=result, page=1, total=total,
-        #                        contents=[last,most,recommended])
+        # content = render_template('index.html', result=result, page=1, total=total,
+        #                        contents=[last, most,recommended])
         # 如果是第一个用户访问，而静态文件不存在，则生成一个
-        # with open('./template/index-static/index-1.html', mode='w', encoding='utf-8') as file:
-        #     file.write(content)
+        # with open('./template/index-static/index-1.html', mode='w', encoding='utf-8') as f:
+        #     f.write(content)
         # print("page",page,"start",start,[i['Article'].headline for i in result])
         return content
     except Exception as e:
@@ -102,16 +106,15 @@ def paginate(page):
 
 @index.route('/type/<int:class_type>/<int:page>')
 def classify(class_type, page):
-    print("class_type", class_type, "classify run")
+    # print("class_type", class_type, "classify run")
     try:
         start = (page - 1) * 10
         article = Articles()
         result = article.find_by_type(class_type, start, 10)
         total = math.ceil(article.get_count_by_type(class_type) / 10)
-        print("result = ", result)
-        print("total = ", total)
         last, most, recommended = article.find_last_most_recommended()
-        return render_template('type.html',
+        html_file = 'type.html'
+        return render_template(html_file,
                                result=result,
                                page=page,
                                total=total,
@@ -121,6 +124,7 @@ def classify(class_type, page):
                                most_articles=most,
                                recommended_articles=recommended)
     except Exception as e:
+        print("出现错误")
         print(e)
         traceback.print_exc()
 
@@ -136,8 +140,8 @@ def search(page, keyword):
         result = article.find_by_headline(keyword, start, 10)
         total = math.ceil(article.get_count_by_headline(keyword) / 10)
         last, most, recommended = article.find_last_most_recommended()
-
-        return render_template('search.html', result=result, page=page, total=total,
+        html_file = 'search.html'
+        return render_template(html_file, result=result, page=page, total=total,
                                can_use_minute=can_use_minute(),
                                last_articles=last, most_articles=most, recommended_articles=recommended,
                                keyword=keyword)
@@ -151,7 +155,8 @@ def recommend():
     try:
         article = Articles()
         last, most, recommended = article.find_last_most_recommended()
-        return render_template('side.html', last_articles=last, most_articles=most,
+        html_file = 'side.html'
+        return render_template(html_file, last_articles=last, most_articles=most,
                                can_use_minute=can_use_minute(),
                                recommended_articles=recommended)
     except Exception as e:
@@ -176,8 +181,8 @@ def home_redis():
         article_list = []
         for row in result:
             article_list.append(eval(row))
-
-        return render_template('index-redis.html', article_list=article_list, page=1, total=total)
+        html_file = 'index-redis.html'
+        return render_template(html_file, article_list=article_list, page=1, total=total)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -196,7 +201,8 @@ def paginate_redis(page):
         for row in result:
             article_list.append(eval(row))
         # 将相关数据传递给模板页面，从模板引擎调用
-        return render_template('index-redis.html', article_list=article_list, page=page, total=total)
+        html_file = 'index-redis.html'
+        return render_template(html_file, article_list=article_list, page=page, total=total)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -216,13 +222,14 @@ def all_static():
             result = article.find_limit_with_users(start, pagesize)
 
             # 将当前页面正常渲染，但不响应给前端，而是将渲染后的内容写入静态文件
-            content = render_template('index.html', result=result, page=page, total=total,
+            html_file = 'index.html'
+            content = render_template(html_file, result=result, page=page, total=total,
                                       can_use_minute=can_use_minute(),
                                       last_articles=last, most_articles=most, recommended_articles=recommended)
 
-            # 将渲染后的内容写入静态文件,其实content本身就是标准的HTML页面
-            # with open(f'./template/index-static/index-{page}.html', mode='w', encoding='utf-8') as file:
-            #     file.write(content)
+            # 将渲染后的内容写入静态文件, 其实content本身就是标准的HTML页面
+            # with open(f'./template/index-static/index-{page}.html', mode='w', encoding='utf-8') as f:
+            #     f.write(content)
 
         return '文章列表页面分页静态化处理完成'  # 最后简单响应给前面一个提示信息
     except Exception as e:

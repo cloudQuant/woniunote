@@ -75,7 +75,8 @@ def category(category_id):
     category_card = Category.query.get_or_404(category_id)
     categories = Category.query.all()
     items = category.items
-    return render_template('todo_index.html', items=items,
+    html_file = "todo_index.html"
+    return render_template(html_file, items=items,
                            categories=categories, category_now=category_card)
 
 

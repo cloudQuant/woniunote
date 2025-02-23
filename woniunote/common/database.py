@@ -19,19 +19,13 @@ app.config['SQLALCHEMY_POOL_SIZE'] = 100  # 数据库连接池的大小。默认
 db = SQLAlchemy(app)
 
 
-# def dbconnect():
-#     dbsession = db.session
-#     DBase = db.Model
-#     metadata = MetaData(bind=db.engine)
-#     return dbsession, metadata, DBase
-
 def dbconnect():
     with app.app_context():
         dbsession = db.session
-        DBase = db.Model
+        dbase = db.Model
         metadata = MetaData()
         metadata.bind = db.engine
-        return dbsession, metadata, DBase
+        return dbsession, metadata, dbase
 
 
 # dict

@@ -15,7 +15,8 @@ def uedit():
         # 则表示试图请求后台的config.json文件，请求成功则说明后台接口能正常工作
         param = request.args.get('action')
         if request.method == 'GET' and param == 'config':
-            return render_template('config.json')
+            config_json = 'config.json'
+            return render_template(config_json)
 
         # 构造上传图片的接口
         elif request.method == 'POST' and request.args.get('action') == 'uploadimage':

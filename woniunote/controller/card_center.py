@@ -191,18 +191,18 @@ def category(card_id):
         # 
         month_cards = {}
         for i in items:
-            itme_done_time = int(str(i.donetime)[:4] + str(i.donetime)[5:7])
-            if itme_done_time not in month_cards:
-                month_cards[itme_done_time] = []
+            item_done_time = int(str(i.donetime)[:4] + str(i.donetime)[5:7])
+            if item_done_time not in month_cards:
+                month_cards[item_done_time] = []
             else:
-                month_cards[itme_done_time].append(i)
+                month_cards[item_done_time].append(i)
 
         month_list = sorted(list(month_cards.keys()))[::-1]
         new_items = month_cards[month_list[0]]
         return get_done_category(month_list[0])
 
     all_undone_cards = [card for card in all_cards if not card.donetime]
-    # all_undone_cards = [[x.updatetime,x] for  x in all_undone_cards]
+    # all_undone_cards = [[x.updatetime, x] for x in all_undone_cards]
     # all_undone_cards = sorted(all_undone_cards,key = lambda x:x[0])
     # all_undone_cards = [x[1] for x in all_undone_cards ]
     all_undone_cards = sorted(all_undone_cards, key=lambda x: getattr(x, "updatetime"))
@@ -255,7 +255,8 @@ def category(card_id):
     if category_name == "已开始清单":
         items = all_begin_cards
     # print("calling category/id",category_name,items,times_cards,types_cards,category.name)
-    return render_template('card_index.html', items=items,
+    html_file = 'card_index.html'
+    return render_template(html_file, items=items,
                            categories=categories,
                            category_now=card_category,
                            types_cards=types_cards,
@@ -321,11 +322,11 @@ def get_done_category(year_month):
     # 
     month_cards = {}
     for i in items:
-        itme_done_time = int(str(i.donetime)[:4] + str(i.donetime)[5:7])
-        if itme_done_time not in month_cards:
-            month_cards[itme_done_time] = []
+        item_done_time = int(str(i.donetime)[:4] + str(i.donetime)[5:7])
+        if item_done_time not in month_cards:
+            month_cards[item_done_time] = []
         else:
-            month_cards[itme_done_time].append(i)
+            month_cards[item_done_time].append(i)
     new_items = month_cards[year_month]
     new_items = new_items[::-1]
     month_list = sorted(list(month_cards.keys()))[::-1]
@@ -344,7 +345,8 @@ def get_done_category(year_month):
     if category_name == "已开始清单":
         items = all_begin_cards
     # print("calling category/id",category_name,items,times_cards,types_cards,category.name)
-    return render_template('card_done_index.html', items=new_items, year_month=year_month,
+    html_file = 'card_done_index.html'
+    return render_template(html_file, items=new_items, year_month=year_month,
                            categories=categories,
                            category_now=card_category,
                            types_cards=types_cards,
@@ -426,7 +428,8 @@ def edit_card(card_id):
         if len(type_1_cards) + len(type_2_cards) > 0:
             items = important_cards
     # print("calling edit card",id, card_0.id, card_0.headline, category_name)
-    return render_template('card_edit.html', card=card_0,
+    html_file = 'card_edit.html'
+    return render_template(html_file, card=card_0,
                            items=items,
                            categories=categories,
                            category_now=card_category,

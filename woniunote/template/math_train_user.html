@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用户中心 - 速算训练营</title>
+  <link rel="stylesheet" href="/css/math_train.css">
+</head>
+<body>
+  <!-- 导航栏 -->
+  <div class="navbar-right">
+    <span class="navbar-username" id="navbarUsername"></span>
+    <button class="navbar-btn" onclick="window.location.href='/math_train'">开始训练</button>
+    <button class="navbar-btn" id="logoutBtn">退出</button>
+  </div>
+
+  <!-- 数据展示区 -->
+  <div class="container">
+    <h2>训练记录</h2>
+    <div class="stats-overview">
+      <div class="stat-box">
+        <h3>总练习次数</h3>
+        <p id="totalSessions">0</p>
+      </div>
+      <div class="stat-box">
+        <h3>平均正确率</h3>
+        <p id="avgAccuracy">0%</p>
+      </div>
+      <div class="stat-box">
+        <h3>最佳用时</h3>
+        <p id="bestTime">00:00</p>
+      </div>
+    </div>
+
+    <div class="history-table">
+      <table>
+        <thead>
+          <tr>
+              <th>日期</th>
+              <th>难度</th>
+              <th>总题数</th>
+              <th>正确数</th>
+              <th>正确率</th>
+              <th>用时</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody">
+          <!-- 动态填充数据 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{#  <!-- JavaScript -->#}
+{#  <script>#}
+{#    // 全局认证检查#}
+{#  const checkAuth = async () => {#}
+{#    try {#}
+{#      const res = await fetch('/math_train_check_login', {#}
+{#        credentials: 'include'#}
+{#      });#}
+{#      const data = await res.json();#}
+{##}
+{#      if (!data.loggedIn) {#}
+{#        window.location.href = '/math_train';#}
+{#      } else {#}
+{#        document.getElementById('navbarUsername').textContent = `欢迎，${data.username}`;#}
+{#      }#}
+{#    } catch (error) {#}
+{#      console.error('认证检查失败:', error);#}
+{#      window.location.href = '/math_train';#}
+{#    }#}
+{#  };#}
+{##}
+{#  // 获取训练历史数据#}
+{#  async function loadTrainingHistory() {#}
+{#    try {#}
+{#      await checkAuth(); // 先检查登录状态#}
+{##}
+{#      const response = await fetch('/math_train_user_data', {#}
+{#        credentials: 'include'#}
+{#      });#}
+{##}
+{#      if (response.status === 401) {#}
+{#        window.location.href = '/math_train';#}
+{#        return;#}
+{#      }#}
+{##}
+{#      const data = await response.json();#}
+{##}
+{#      // 更新统计数据...（保持原有代码不变）#}
+{##}
+{#    } catch (error) {#}
+{#      console.error('加载数据失败:', error);#}
+{#    }#}
+{#  }#}
+{##}
+{#  // 初始化加载#}
+{#  window.onload = () => {#}
+{#    checkAuth();#}
+{#    loadTrainingHistory();#}
+{##}
+{#    // 绑定退出按钮#}
+{#    document.getElementById('logoutBtn').addEventListener('click', async () => {#}
+{#      try {#}
+{#        await fetch('/math_train_logout', {#}
+{#          method: 'POST',#}
+{#          credentials: 'include'#}
+{#        });#}
+{#        window.location.href = '/math_train';#}
+{#      } catch (error) {#}
+{#        console.error('退出失败:', error);#}
+{#      }#}
+{#    });#}
+{#  };#}
+{#  </script>#}
+</body>
+</html>

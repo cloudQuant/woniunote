@@ -12,7 +12,8 @@ ucenter = Blueprint("ucenter", __name__)
 def user_center():
     try:
         result = Favorites().find_my_favorite()
-        return render_template('user-center.html', result=result)
+        html_file = "user-center.html"
+        return render_template(html_file, result=result)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -32,7 +33,8 @@ def user_favorite(favoriteid):
 def user_post():
     try:
         # return render_template('user-post.html',my_article_type=ARTICLE_TYPES)
-        return render_template('user-post.html')
+        html_file = "user-post.html"
+        return render_template(html_file)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -44,7 +46,8 @@ def user_article():
         userid = session.get("userid")
         results = Articles().find_all()
         results = [[i.articleid, i] for i in results if i.userid == userid]
-        return render_template('user-center.html', result=results)
+        html_file = "user-center.html"
+        return render_template(html_file, result=results)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -58,8 +61,8 @@ def user_comment():
         commentid_list = [i.articleid for i in results]
         articles = Articles().find_all()
         articles = [[i.articleid, i] for i in articles if i.articleid in commentid_list]
-        print(userid)
-        return render_template('user-center.html', result=articles)
+        html_file = "user-center.html"
+        return render_template(html_file, result=articles)
     except Exception as e:
         print(e)
         traceback.print_exc()
