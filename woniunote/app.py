@@ -290,8 +290,8 @@ def math_train_user():
 @app.route('/math_train_user_data', methods=['GET'])
 def math_train_user_data():
     """获取用户训练数据"""
-    if 'user_id' not in session:
-        return jsonify({'error': '未登录'}), 401
+    # if 'user_id' not in session:
+    #     return jsonify({'error': '未登录'}), 401
 
     try:
         connection = get_db_connection(DATABASE_INFO)
