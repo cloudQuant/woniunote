@@ -164,15 +164,20 @@ const apiRequest = async (url, method, data) => {
 // ==================== 用户状态管理 ====================
 
 const AuthManager = {
-  checkStatus: () => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      state.loggedIn = true;
-      state.username = JSON.parse(storedUser).username;
-      AuthManager.updateUI();
-    } else {
-      state.loggedIn = false;
-      AuthManager.updateUI();
+  checkStatus: async () => {
+    try {
+      const res = await fetch('/check_login_status');  // 后端验证是否已登录
+      const data = await res.json();
+      if (data.loggedIn) {
+        state.loggedIn = true;
+        state.username = data.username;
+        AuthManager.updateUI();
+      } else {
+        state.loggedIn = false;
+        AuthManager.updateUI();
+      }
+    } catch (error) {
+      console.error('获取登录状态失败:', error);
     }
   },
 
@@ -186,11 +191,9 @@ const AuthManager = {
 
       const data = await res.json();
       if (data.success) {
-        localStorage.setItem('user', JSON.stringify({ username }));
         state.loggedIn = true;
         state.username = data.username;
         AuthManager.updateUI();
-        document.getElementById('loginModal').style.display = 'none'; // 关闭登录模态框
         window.location.href = data.redirect;
       } else {
         alert(data.message || '登录失败');
@@ -228,7 +231,6 @@ const AuthManager = {
       const res = await fetch('/math_train_logout', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        localStorage.removeItem('user');
         state.loggedIn = false;
         state.username = '';
         AuthManager.updateUI();
@@ -262,7 +264,7 @@ const setupEventListeners = () => {
     timerManager.start();
     alert("开始做题！");
   });
-  DOM.checkBtn.addEventListener('click', checkAnswers); // 修改为检查答案
+  DOM.checkBtn.addEventListener('click', checkAnswers);
 
   // 登录按钮事件
   DOM.navbarElements.login.addEventListener('click', () => {
@@ -319,6 +321,7 @@ const init = () => {
 };
 
 document.addEventListener('DOMContentLoaded', init);
+
 
 
 
