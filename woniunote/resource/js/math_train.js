@@ -9,6 +9,7 @@ const DOM = {
   grid: document.getElementById('grid'),
   checkBtn: document.getElementById('checkBtn'),
   newBtn: document.getElementById('newBtn'),
+  startBtn: document.getElementById('startBtn'),
   minutes: document.getElementById('minutes'),
   seconds: document.getElementById('seconds'),
   loginModal: document.getElementById('loginModal'),
@@ -30,7 +31,8 @@ let state = {
   time: INITIAL_TIME,
   correctCount: 0,
   loggedIn: false,   // 默认未登录
-  username: ''       // 存储用户名
+  username: '',       // 存储用户名
+  timerStarted: false // 标记计时是否已经开始
 };
 
 // ==================== 核心功能 ====================
@@ -89,6 +91,8 @@ const generateQuestions = () => {
 
 const timerManager = {
   start: () => {
+    if (state.timerStarted) return; // 防止重复计时
+    state.timerStarted = true;
     state.timer = setInterval(() => {
       state.time++;
       DOM.minutes.textContent = String(Math.floor(state.time / 60)).padStart(2, '0');
@@ -101,6 +105,7 @@ const timerManager = {
     DOM.minutes.textContent = '00';
     DOM.seconds.textContent = '00';
     clearInterval(state.timer);
+    state.timerStarted = false;
   }
 };
 
@@ -124,7 +129,6 @@ const apiRequest = async (url, method, data) => {
 
 const AuthManager = {
   checkStatus: () => {
-    // 从 localStorage 获取登录状态
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       state.loggedIn = true;
@@ -141,18 +145,17 @@ const AuthManager = {
       const res = await fetch('/math_train_login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }) // 发送用户名和密码
+        body: JSON.stringify({ username, password })
       });
 
       const data = await res.json();
-      if (data.success) { // 登录成功
-        // 保存到 localStorage
+      if (data.success) {
         localStorage.setItem('user', JSON.stringify({ username }));
         state.loggedIn = true;
         state.username = data.username;
         AuthManager.updateUI();
-        window.location.href = data.redirect; // 重定向到用户中心
-      } else { // 登录失败
+        window.location.href = data.redirect;
+      } else {
         alert(data.message || '登录失败');
       }
     } catch (error) {
@@ -165,8 +168,7 @@ const AuthManager = {
     try {
       const res = await fetch('/math_train_logout', { method: 'POST' });
       const data = await res.json();
-      if (data.success) { // 退出成功
-        // 清除登录状态
+      if (data.success) {
         localStorage.removeItem('user');
         state.loggedIn = false;
         state.username = '';
@@ -184,67 +186,33 @@ const AuthManager = {
     if (state.loggedIn) {
       document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'inline-block');
       document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'none');
-      document.getElementById('navbarUsername').textContent = state.username;
+      DOM.navbarElements.username.textContent = `欢迎，${state.username}`;
     } else {
       document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'none');
       document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'inline-block');
-      document.getElementById('navbarUsername').textContent = '';
+      DOM.navbarElements.username.textContent = '';
     }
   }
 };
 
-// ==================== 事件监听 ====================
+// ==================== 事件绑定 ====================
 
 const setupEventListeners = () => {
-  // 登录按钮点击
-  document.getElementById('loginBtn').addEventListener('click', async () => {
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
-
-    if (!username || !password) return alert('请输入用户名和密码');
-
-    await AuthManager.handleLogin(username, password);
+  DOM.newBtn.addEventListener('click', generateQuestions);
+  DOM.startBtn.addEventListener('click', timerManager.start);
+  DOM.checkBtn.addEventListener('click', () => {
+    timerManager.reset();
+    alert('答案已提交');
   });
 
-  // 注册按钮点击
-  document.getElementById('registerBtn').addEventListener('click', async () => {
-    const username = document.getElementById('registerUsername').value;
-    const password = document.getElementById('registerPassword').value;
-    const email = document.getElementById('registerEmail').value;
-
-    if (!username || !password || !email) return alert('请输入用户名、密码和邮箱');
-
-    try {
-      const result = await apiRequest('/math_train_register', 'POST', { username, password, email });
-      if (result.success) {
-        alert('注册成功');
-        document.getElementById('registerModal').style.display = 'none';
-        document.getElementById('loginModal').style.display = 'flex';
-      } else {
-        alert(result.message);
-      }
-    } catch {
-      alert('注册失败');
-    }
+  document.getElementById('userCenterBtn').addEventListener('click', () => {
+    alert('跳转到用户中心');
   });
 
-  // 对话框控制
-  document.getElementById('showLoginModalBtn').addEventListener('click', () => {
-    DOM.loginModal.style.display = 'flex';
-    DOM.registerModal.style.display = 'none';
-  });
-
-  document.getElementById('showRegisterModalBtn').addEventListener('click', () => {
-    DOM.loginModal.style.display = 'none';
-    DOM.registerModal.style.display = 'flex';
-  });
-
-  // 退出按钮点击
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await AuthManager.handleLogout();
   });
 
-  // 关闭对话框
   window.addEventListener('click', (event) => {
     if (event.target.classList.contains('modal')) {
       document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
@@ -254,13 +222,13 @@ const setupEventListeners = () => {
 
 // ==================== 初始化 ====================
 const init = () => {
-  // 先检查登录状态
   AuthManager.checkStatus();
-  generateQuestions(); // 生成计算题
+  generateQuestions();
   setupEventListeners();
 };
 
 document.addEventListener('DOMContentLoaded', init);
+
 
 
 
