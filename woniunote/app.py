@@ -178,9 +178,9 @@ def math_train_login():
 
         connection = get_db_connection(DATABASE_INFO)
         with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM math_train_users")
-            user_dict_test = cursor.fetchall()
-            print("math_train_test:", user_dict_test)
+            # cursor.execute("SELECT * FROM math_train_users")
+            # user_dict_test = cursor.fetchall()
+            # print("math_train_test:", user_dict_test)
             cursor.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
             user_dict = cursor.fetchone()
 
@@ -197,8 +197,8 @@ def math_train_login():
 
             if check_password_hash(user_dict['password'], password):
                 session['username'] = username
-                session['user_id'] = user['id']
-                print("登录成功，用户ID:", user['id'])
+                session['user_id'] = user_dict['id']
+                print("登录成功，用户ID:", user_dict['id'])
                 return jsonify({
                     'success': True,
                     'redirect': url_for('math_train_user'),  # 修正跳转地址
