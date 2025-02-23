@@ -42,9 +42,33 @@
             0% { transform: translateX(-20%); }
             100% { transform: translateX(100%); }
         }
+
+        /* 解决模态框内容不完全显示问题 */
+        .modal-dialog {
+            max-width: 600px;
+            margin: 1.75rem auto;
+        }
+
+        .modal-content {
+            height: auto;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-body {
+            padding: 15px;
+        }
+
+        .tab-content {
+            padding: 20px;
+        }
+
+        .tab-pane {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
     </style>
 </head>
-
 
 <body>
     <header class="navbar-default bg-white header">
@@ -205,3 +229,4 @@
 
 </body>
 </html>
+
