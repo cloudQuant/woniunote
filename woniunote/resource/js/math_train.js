@@ -204,11 +204,12 @@ const setupEventListeners = () => {
   document.getElementById('registerBtn').addEventListener('click', async () => {
     const username = document.getElementById('registerUsername').value;
     const password = document.getElementById('registerPassword').value;
+    const email = document.getElementById('registerEmail').value;
 
-    if (!username || !password) return alert('请输入用户名和密码');
+    if (!username || !password ||!email) return alert('请输入用户名和密码');
 
     try {
-      const result = await apiRequest('/math_train_register', 'POST', { username, password });
+      const result = await apiRequest('/math_train_register', 'POST', { username, password, email});
       if (result.success) {
         alert('注册成功');
         document.getElementById('registerModal').style.display = 'none';

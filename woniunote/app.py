@@ -227,7 +227,7 @@ def math_train_register():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-
+    email = data.get('email')
     hashed_password = generate_password_hash(password)
     connection = get_db_connection(DATABASE_INFO)
     # 测试连接是否有效
@@ -243,8 +243,7 @@ def math_train_register():
         cursor.execute("SELECT * FROM math_train_users")  # 查询所有数据
         users = cursor.fetchall()  # 获取所有记录
         print("数据库中的所有用户数据:")
-        for user in users:
-            print(user)  # 打印每一行数据
+        print(users)
 
     try:
         print("开始注册")
@@ -252,7 +251,7 @@ def math_train_register():
         print("username:", username)
         print("password:", password)
         with connection.cursor() as cursor:
-            cursor.execute("INSERT INTO math_train_users (username, password) VALUES (%s, %s)", (username, hashed_password))
+            cursor.execute("INSERT INTO math_train_users (username, password, email) VALUES (%s, %s)", (username, hashed_password, email))
             connection.commit()
             return jsonify({'success': True, 'message': '注册成功，请登录'})
     except pymysql.IntegrityError:  # 捕获唯一性约束错误
