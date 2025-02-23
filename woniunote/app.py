@@ -301,7 +301,9 @@ def math_train_save_result():
 # 退出路由
 @app.route('/math_train_logout')
 def math_train_logout():
-    session.clear()  # 确保清除所有session数据
+    # session.clear()  # 确保清除所有session数据
+    session.pop('username', None)
+    session.pop('user_id', None)
     return redirect(url_for('math_train'))
 
 # 登录状态检查
