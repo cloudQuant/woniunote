@@ -124,11 +124,9 @@ const AuthManager = {
       const data = await res.json();
 
       if (data.loggedIn) {
-        state.loggedIn = true;
-        state.username = data.username;
         document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'inline-block');
         document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'none');
-        document.getElementById('navbarUsername').textContent = state.username;
+        document.getElementById('navbarUsername').textContent = data.username;
       } else {
         document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'inline-block');
@@ -148,15 +146,12 @@ const AuthManager = {
 
       const data = await res.json();
       if (data.success) {
-        state.loggedIn = true;
-        state.username = data.username;
-        AuthManager.updateUI();
         window.location.href = data.redirect;
       } else {
         alert(data.message || '登录失败');
       }
-    } catch {
-      alert('登录失败');
+    } catch (error) {
+      alert('网络连接错误');
     }
   },
 
@@ -165,28 +160,10 @@ const AuthManager = {
       const res = await fetch('/math_train_logout', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        state.loggedIn = false;
-        state.username = '';
-        AuthManager.updateUI();
         window.location.href = data.redirect;
       }
     } catch (error) {
       console.error('退出失败:', error);
-    }
-  },
-
-  updateUI: () => {
-    if (state.loggedIn) {
-      DOM.navbarElements.login.style.display = 'none';
-      DOM.navbarElements.register.style.display = 'none';
-      DOM.navbarElements.logout.style.display = 'inline-block';
-      DOM.navbarElements.userCenter.style.display = 'inline-block';
-      DOM.navbarElements.username.textContent = state.username;
-    } else {
-      DOM.navbarElements.login.style.display = 'inline-block';
-      DOM.navbarElements.register.style.display = 'inline-block';
-      DOM.navbarElements.logout.style.display = 'none';
-      DOM.navbarElements.userCenter.style.display = 'none';
     }
   }
 };
@@ -194,22 +171,18 @@ const AuthManager = {
 // ==================== 事件监听 ====================
 const setupEventListeners = () => {
   // 控制按钮
-  DOM.checkBtn.addEventListener('click', async () => {
+  DOM.checkBtn.addEventListener('click', () => {
     const { count, total } = validateAnswers();
     timerManager.reset();
 
-    const result = await apiRequest('/math_train_save_result', 'POST', {
+    apiRequest('/math_train_save_result', 'POST', {
       math_level: 'basic',
       correct_count: count,
       total_questions: total,
       time_spent: state.time
-    });
-
-    if (result.success) {
+    }).then(() => {
       alert(`正确率：${count}/${total}\n用时：${DOM.minutes.textContent}分${DOM.seconds.textContent}秒`);
-    } else {
-      alert(result.message || '保存结果失败');
-    }
+    });
   });
 
   DOM.newBtn.addEventListener('click', () => {
@@ -225,7 +198,19 @@ const setupEventListeners = () => {
 
     if (!username || !password) return alert('请输入用户名和密码');
 
-    await AuthManager.handleLogin(username, password);
+    try {
+      const result = await apiRequest('/math_train_login', 'POST', { username, password });
+      if (result.success) {
+        state.loggedIn = true;
+        state.username = username;
+        authManager.updateUI();
+        document.getElementById('loginModal').style.display = 'none';
+      } else {
+        alert(result.message);
+      }
+    } catch {
+      alert('登录失败');
+    }
   });
 
   document.getElementById('registerBtn').addEventListener('click', async () => {
@@ -233,10 +218,10 @@ const setupEventListeners = () => {
     const password = document.getElementById('registerPassword').value;
     const email = document.getElementById('registerEmail').value;
 
-    if (!username || !password || !email) return alert('请输入用户名和密码');
+    if (!username || !password ||!email) return alert('请输入用户名和密码');
 
     try {
-      const result = await apiRequest('/math_train_register', 'POST', { username, password, email });
+      const result = await apiRequest('/math_train_register', 'POST', { username, password, email});
       if (result.success) {
         alert('注册成功');
         document.getElementById('registerModal').style.display = 'none';
@@ -274,10 +259,11 @@ const setupEventListeners = () => {
 const init = () => {
   generateQuestions();
   timerManager.start();
-  AuthManager.checkStatus(); // 检查登录状态
-  setupEventListeners(); // 设置所有事件监听
+  AuthManager.checkStatus();
+  setupEventListeners();
 };
 
 document.addEventListener('DOMContentLoaded', init);
+
 
 
