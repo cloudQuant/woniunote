@@ -124,9 +124,11 @@ const AuthManager = {
       const data = await res.json();
 
       if (data.loggedIn) {
+        state.loggedIn = true;
+        state.username = data.username;
         document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'inline-block');
         document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'none');
-        document.getElementById('navbarUsername').textContent = data.username;
+        document.getElementById('navbarUsername').textContent = state.username;
       } else {
         document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'inline-block');
@@ -147,9 +149,9 @@ const AuthManager = {
       const data = await res.json();
       if (data.success) {
         state.loggedIn = true;
-        state.username = username;
+        state.username = data.username;
         AuthManager.updateUI();
-        document.getElementById('loginModal').style.display = 'none';
+        window.location.href = data.redirect;
       } else {
         alert(data.message || '登录失败');
       }
@@ -163,6 +165,9 @@ const AuthManager = {
       const res = await fetch('/math_train_logout', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
+        state.loggedIn = false;
+        state.username = '';
+        AuthManager.updateUI();
         window.location.href = data.redirect;
       }
     } catch (error) {
@@ -189,18 +194,22 @@ const AuthManager = {
 // ==================== 事件监听 ====================
 const setupEventListeners = () => {
   // 控制按钮
-  DOM.checkBtn.addEventListener('click', () => {
+  DOM.checkBtn.addEventListener('click', async () => {
     const { count, total } = validateAnswers();
     timerManager.reset();
 
-    apiRequest('/math_train_save_result', 'POST', {
+    const result = await apiRequest('/math_train_save_result', 'POST', {
       math_level: 'basic',
       correct_count: count,
       total_questions: total,
       time_spent: state.time
-    }).then(() => {
-      alert(`正确率：${count}/${total}\n用时：${DOM.minutes.textContent}分${DOM.seconds.textContent}秒`);
     });
+
+    if (result.success) {
+      alert(`正确率：${count}/${total}\n用时：${DOM.minutes.textContent}分${DOM.seconds.textContent}秒`);
+    } else {
+      alert(result.message || '保存结果失败');
+    }
   });
 
   DOM.newBtn.addEventListener('click', () => {
@@ -216,19 +225,7 @@ const setupEventListeners = () => {
 
     if (!username || !password) return alert('请输入用户名和密码');
 
-    try {
-      const result = await apiRequest('/math_train_login', 'POST', { username, password });
-      if (result.success) {
-        state.loggedIn = true;
-        state.username = username;
-        AuthManager.updateUI();
-        document.getElementById('loginModal').style.display = 'none';
-      } else {
-        alert(result.message);
-      }
-    } catch {
-      alert('登录失败');
-    }
+    await AuthManager.handleLogin(username, password);
   });
 
   document.getElementById('registerBtn').addEventListener('click', async () => {
@@ -258,65 +255,5 @@ const setupEventListeners = () => {
     DOM.registerModal.style.display = 'none';
   });
 
-  document.getElementById('showRegisterModalBtn').addEventListener('click', () => {
-    DOM.loginModal.style.display = 'none';
-    DOM.registerModal.style.display = 'flex';
-  });
-
-  // 关闭对话框
-  window.addEventListener('click', (event) => {
-    if (event.target.classList.contains('modal')) {
-      document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-    }
-  });
-
-  document.getElementById('logoutBtn').addEventListener('click', AuthManager.handleLogout);
-};
-
-const validateAnswers = () => {
-  let correctCount = 0;
-  const total = state.inputsArray.length;
-
-  state.inputsArray.forEach((input) => {
-    const answer = parseInt(input.value, 10);
-    const question = input.closest('.question-item');
-    const num1 = parseInt(question.querySelector('.number:first-child').textContent, 10);
-    const operator = question.querySelector('.operator:nth-child(2)').textContent;
-    const num2 = parseInt(question.querySelector('.number:nth-child(3)').textContent, 10);
-
-    let correctAnswer;
-    switch (operator) {
-      case '+':
-        correctAnswer = num1 + num2;
-        break;
-      case '-':
-        correctAnswer = num1 - num2;
-        break;
-      case '×':
-        correctAnswer = num1 * num2;
-        break;
-      case '÷':
-        correctAnswer = num1 / num2;
-        break;
-      default:
-        break;
-    }
-
-    if (answer === correctAnswer) {
-      correctCount++;
-    }
-  });
-
-  return { count: correctCount, total };
-};
-
-// ==================== 初始化 ====================
-const init = () => {
-  generateQuestions();
-  timerManager.start();
-  AuthManager.checkStatus();
-  setupEventListeners();
-};
-
-document.addEventListener('DOMContentLoaded', init);
+  document.getElementById('showRegisterModalBtn').addEventListener('
 
