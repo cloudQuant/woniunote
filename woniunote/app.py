@@ -42,7 +42,7 @@ app.config['SQLALCHEMY_POOL_SIZE'] = 100  # 数据库连接池的大小。默认
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
-Session(app)
+# Session(app)
 # app.config.update(
 #     SESSION_COOKIE_SECURE=True,
 #     SESSION_COOKIE_HTTPONLY=True,
