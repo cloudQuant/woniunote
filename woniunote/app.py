@@ -256,34 +256,6 @@ def math_train_register():
         traceback.print_exc()
         return jsonify({'success': False, 'message': '注册失败'}), 500
 
-@app.route('/math_train_save_result', methods=['POST'])
-def math_train_save_result():
-    """保存训练结果"""
-    if 'user_id' not in session:
-        return jsonify({'success': False, 'message': '未登录'}), 401
-
-    try:
-        data = request.get_json()
-        math_level = data.get('math_level')
-        correct_count = data.get('correct_count')
-        total_questions = data.get('total_questions')
-        time_spent = data.get('time_spent')
-
-        with get_db_connection() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "INSERT INTO math_train_results (user_id, math_level, correct_count, total_questions, time_spent, created_at) "
-                    "VALUES (%s, %s, %s, %s, %s, NOW())",
-                    (session['user_id'], math_level, correct_count, total_questions, time_spent)
-                )
-                connection.commit()
-                return jsonify({'success': True})
-
-    except Exception as e:
-        print(f"保存结果错误: {str(e)}")
-        traceback.print_exc()
-        return jsonify({'success': False, 'message': '保存失败'}), 500
-
 @app.route('/math_train_logout', methods=['POST'])
 def math_train_logout():
     session.clear()
