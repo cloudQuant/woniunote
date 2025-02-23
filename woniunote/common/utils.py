@@ -21,13 +21,17 @@ from urllib.parse import urlparse
 
 # 初始化数据库连接
 def get_db_connection(database_info):
-    return pymysql.connect(
-        host=database_info['host'],
-        user=database_info['user'],
-        password=database_info['password'],
-        database=database_info['database'],
-        cursorclass=DictCursor
-    )
+    try:
+        connection = pymysql.connect(
+            host=database_info['host'],
+            user=database_info['user'],
+            password=database_info['password'],
+            database=database_info['database'],
+            cursorclass=DictCursor
+        )
+        return connection
+    except pymysql.err.OperationalError as e:
+        print("连接数据库失败, {}".format(e))
 
 def parse_db_uri(db_uri):
     """

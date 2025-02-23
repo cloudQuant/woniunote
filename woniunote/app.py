@@ -230,6 +230,13 @@ def math_train_register():
 
     hashed_password = generate_password_hash(password)
     connection = get_db_connection(DATABASE_INFO)
+    # 测试连接是否有效
+    try:
+        connection.ping(reconnect=True)  # 检查连接是否可用，若不可用则尝试重新连接
+        print("数据库连接成功")
+    except pymysql.MySQLError as e:
+        print(f"数据库连接失败: {e}")
+        return jsonify({'success': False, 'message': '数据库连接失败'})
     try:
         print("开始注册")
         print("username:", username)
@@ -262,6 +269,7 @@ def math_train_save_result():
 
     # 使用 pymysql 连接数据库
     connection = get_db_connection(DATABASE_INFO)
+
     try:
         with connection.cursor() as cursor:
             cursor.execute("""
