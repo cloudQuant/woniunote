@@ -38,6 +38,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # True: 跟踪数据库的修改，及时发送信号
 app.config['SQLALCHEMY_POOL_SIZE'] = 100  # 数据库连接池的大小。默认是数据库引擎的默认值（通常是 5）
 # app.config['SQLALCHEMY_POOL_RECYCLE'] = -1
+app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 # app.config.update(
@@ -282,6 +283,7 @@ def math_train_check_login():
 @app.route("/math_train_user", methods=["GET"])
 def math_train_user():
     print("进入用户中心界面")
+    print("session", session)
     # """用户中心页面"""
     if 'user_id' not in session:
         return redirect(url_for('math_train'))
