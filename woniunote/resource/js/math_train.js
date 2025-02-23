@@ -120,19 +120,22 @@ const apiRequest = async (url, method, data) => {
 const AuthManager = {
   checkStatus: async () => {
     try {
-      const res = await fetch('/math_train_check_login');
+      const res = await fetch('/math_train_check_login'); // 请求登录状态
       const data = await res.json();
 
-      if (data.loggedIn) {
+      if (data.loggedIn) { // 如果登录
+        // 显示已登录的元素
         document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'inline-block');
         document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'none');
         document.getElementById('navbarUsername').textContent = data.username;
-      } else {
+      } else { // 如果没有登录
+        // 显示未登录的元素
         document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'inline-block');
       }
     } catch (error) {
       console.error('登录状态检查失败:', error);
+      alert('检查登录状态失败，请重试');
     }
   },
 
@@ -141,32 +144,39 @@ const AuthManager = {
       const res = await fetch('/math_train_login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password }) // 发送用户名和密码
       });
 
       const data = await res.json();
-      if (data.success) {
+      if (data.success) { // 登录成功
+        alert('登录成功');
+        // 重定向到用户中心
         window.location.href = data.redirect;
-      } else {
+      } else { // 登录失败
         alert(data.message || '登录失败');
       }
     } catch (error) {
-      alert('网络连接错误');
+      alert('网络连接错误，请重试');
+      console.error('登录请求失败:', error);
     }
   },
 
   handleLogout: async () => {
     try {
-      const res = await fetch('/math_train_logout', { method: 'POST' });
+      const res = await fetch('/math_train_logout', { method: 'POST' }); // 请求退出
       const data = await res.json();
-      if (data.success) {
+      if (data.success) { // 退出成功
+        alert('退出成功');
+        // 重定向到主页
         window.location.href = data.redirect;
       }
     } catch (error) {
-      console.error('退出失败:', error);
+      alert('退出失败，请重试');
+      console.error('退出请求失败:', error);
     }
   }
 };
+
 
 // ==================== 事件监听 ====================
 const setupEventListeners = () => {

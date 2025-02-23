@@ -171,7 +171,9 @@ def math_train_login():
         with connection.cursor() as cur:
             cur.execute("SELECT id, username, password FROM math_train_users WHERE username = %s", (username,))
             user_dict = cur.fetchone()
-
+            print("user_dict", user_dict)
+            print("user_name", username)
+            print("password", password)
             if not user or not check_password_hash(user_dict['password'], password):
                 return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
 
