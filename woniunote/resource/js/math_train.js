@@ -146,12 +146,15 @@ const AuthManager = {
 
       const data = await res.json();
       if (data.success) {
-        window.location.href = data.redirect;
+        state.loggedIn = true;
+        state.username = username;
+        AuthManager.updateUI();
+        document.getElementById('loginModal').style.display = 'none';
       } else {
         alert(data.message || '登录失败');
       }
-    } catch (error) {
-      alert('网络连接错误');
+    } catch {
+      alert('登录失败');
     }
   },
 
@@ -165,18 +168,23 @@ const AuthManager = {
     } catch (error) {
       console.error('退出失败:', error);
     }
+  },
+
+  updateUI: () => {
+    if (state.loggedIn) {
+      DOM.navbarElements.login.style.display = 'none';
+      DOM.navbarElements.register.style.display = 'none';
+      DOM.navbarElements.logout.style.display = 'inline-block';
+      DOM.navbarElements.userCenter.style.display = 'inline-block';
+      DOM.navbarElements.username.textContent = state.username;
+    } else {
+      DOM.navbarElements.login.style.display = 'inline-block';
+      DOM.navbarElements.register.style.display = 'inline-block';
+      DOM.navbarElements.logout.style.display = 'none';
+      DOM.navbarElements.userCenter.style.display = 'none';
+    }
   }
 };
-
-// 修改“用户中心”按钮的点击事件
-document.getElementById('userCenterBtn').addEventListener('click', () => {
-  if (state.loggedIn) {
-    // 确保只有已登录的用户才能访问用户中心
-    window.location.href = '/math_train_user'; // 跳转到用户中心
-  } else {
-    alert('请先登录');
-  }
-});
 
 // ==================== 事件监听 ====================
 const setupEventListeners = () => {
@@ -213,7 +221,7 @@ const setupEventListeners = () => {
       if (result.success) {
         state.loggedIn = true;
         state.username = username;
-        authManager.updateUI();
+        AuthManager.updateUI();
         document.getElementById('loginModal').style.display = 'none';
       } else {
         alert(result.message);
@@ -228,10 +236,10 @@ const setupEventListeners = () => {
     const password = document.getElementById('registerPassword').value;
     const email = document.getElementById('registerEmail').value;
 
-    if (!username || !password ||!email) return alert('请输入用户名和密码');
+    if (!username || !password || !email) return alert('请输入用户名和密码');
 
     try {
-      const result = await apiRequest('/math_train_register', 'POST', { username, password, email});
+      const result = await apiRequest('/math_train_register', 'POST', { username, password, email });
       if (result.success) {
         alert('注册成功');
         document.getElementById('registerModal').style.display = 'none';
@@ -262,43 +270,52 @@ const setupEventListeners = () => {
     }
   });
 
-  document.getElementById('logoutBtn').addEventListener('click', authManager.handleLogout);
+  document.getElementById('logoutBtn').addEventListener('click', AuthManager.handleLogout);
 };
 
-const saveResult = async (data) => {
-  try {
-    const res = await fetch('/math_train_save_result', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
+const validateAnswers = () => {
+  let correctCount = 0;
+  const total = state.inputsArray.length;
 
-    const result = await res.json();
-    if (!result.success) {
-      console.error('保存失败:', result.message);
+  state.inputsArray.forEach((input) => {
+    const answer = parseInt(input.value, 10);
+    const question = input.closest('.question-item');
+    const num1 = parseInt(question.querySelector('.number:first-child').textContent, 10);
+    const operator = question.querySelector('.operator:nth-child(2)').textContent;
+    const num2 = parseInt(question.querySelector('.number:nth-child(3)').textContent, 10);
+
+    let correctAnswer;
+    switch (operator) {
+      case '+':
+        correctAnswer = num1 + num2;
+        break;
+      case '-':
+        correctAnswer = num1 - num2;
+        break;
+      case '×':
+        correctAnswer = num1 * num2;
+        break;
+      case '÷':
+        correctAnswer = num1 / num2;
+        break;
+      default:
+        break;
     }
-  } catch (error) {
-    console.error('保存请求失败:', error);
-  }
+
+    if (answer === correctAnswer) {
+      correctCount++;
+    }
+  });
+
+  return { count: correctCount, total };
 };
 
 // ==================== 初始化 ====================
 const init = () => {
   generateQuestions();
   timerManager.start();
-  authManager.checkStatus();
-  setupEventListeners();
-   // 绑定事件
-  document.getElementById('loginBtn').addEventListener('click', () => {
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
-    AuthManager.handleLogin(username, password);
-  });
-
-  document.getElementById('logoutBtn').addEventListener('click', AuthManager.handleLogout);
-
-  // 检查登录状态
   AuthManager.checkStatus();
+  setupEventListeners();
 };
 
 document.addEventListener('DOMContentLoaded', init);
