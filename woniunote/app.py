@@ -1,6 +1,7 @@
 import os
 from flask import Flask, redirect, render_template, session, request, url_for, jsonify
 from flask_sslify import SSLify
+from flask_session import Session
 from werkzeug.security import generate_password_hash, check_password_hash
 from woniunote.common.database import db, ARTICLE_TYPES
 from woniunote.common.utils import read_config, get_package_path, get_db_connection, parse_db_uri
@@ -41,6 +42,7 @@ app.config['SQLALCHEMY_POOL_SIZE'] = 100  # 数据库连接池的大小。默认
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
+Session(app)
 # app.config.update(
 #     SESSION_COOKIE_SECURE=True,
 #     SESSION_COOKIE_HTTPONLY=True,
