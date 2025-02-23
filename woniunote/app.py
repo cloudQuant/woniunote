@@ -285,7 +285,22 @@ def math_train_user():
     # """用户中心页面"""
     # if 'user_id' not in session:
     #     return redirect(url_for('math_train'))
-    return render_template("math_train_user.html")
+    try:
+        connection = get_db_connection(DATABASE_INFO)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT math_level, correct_count, total_questions, time_spent, created_at "
+                "FROM math_train_results WHERE user_id = %s ORDER BY created_at DESC LIMIT 10",
+                (session['user_id'],)
+            )
+            history_result = cursor.fetchall()
+    except Exception as e:
+        print(f"获取用户数据错误: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': '服务器内部错误'}), 500
+    target_html = "math_train_user.html"
+    print(history_result)
+    return render_template(target_html, history_result=history_result)
 
 @app.route('/math_train_user_data', methods=['GET'])
 def math_train_user_data():
