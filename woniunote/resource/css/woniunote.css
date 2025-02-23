@@ -15,7 +15,7 @@ body {
     border-radius: 0px
 }
 /* 为所有DIV元素设置圆角边框 */
-div {
+div:not(.modal):not(.modal-content):not(.modal-dialog) {
     border-radius: 5px;
 }
 /* 为所有label标签设置加粗显示 */
@@ -312,4 +312,13 @@ label {
     border: 1px solid #dee2e6;
     border-radius: 0.25rem;
     padding: 2px;
+}
+
+@media (max-width: 576px) {
+    #mymodal .modal-dialog {
+        margin: 0.5rem;
+    }
+    #mymodal .form-control {
+        padding: 0.5rem;
+    }
 }
