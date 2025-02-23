@@ -123,27 +123,16 @@ const apiRequest = async (url, method, data) => {
 // ==================== 用户状态管理 ====================
 
 const AuthManager = {
-  checkStatus: async () => {
-    try {
-      const res = await fetch('/math_train_check_login'); // 请求登录状态
-      const data = await res.json();
-
-      if (data.loggedIn) { // 如果登录
-        state.loggedIn = true;
-        state.username = data.username;
-        // 显示已登录的元素
-        document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'inline-block');
-        document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'none');
-        document.getElementById('navbarUsername').textContent = state.username;
-        // 登录后可以继续显示计算题
-      } else { // 如果没有登录
-        state.loggedIn = false;
-        document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'inline-block');
-      }
-    } catch (error) {
-      console.error('登录状态检查失败:', error);
-      alert('检查登录状态失败，请重试');
+  checkStatus: () => {
+    // 从 localStorage 获取登录状态
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      state.loggedIn = true;
+      state.username = JSON.parse(storedUser).username;
+      AuthManager.updateUI();
+    } else {
+      state.loggedIn = false;
+      AuthManager.updateUI();
     }
   },
 
@@ -157,6 +146,8 @@ const AuthManager = {
 
       const data = await res.json();
       if (data.success) { // 登录成功
+        // 保存到 localStorage
+        localStorage.setItem('user', JSON.stringify({ username }));
         state.loggedIn = true;
         state.username = data.username;
         AuthManager.updateUI();
@@ -175,6 +166,8 @@ const AuthManager = {
       const res = await fetch('/math_train_logout', { method: 'POST' });
       const data = await res.json();
       if (data.success) { // 退出成功
+        // 清除登录状态
+        localStorage.removeItem('user');
         state.loggedIn = false;
         state.username = '';
         AuthManager.updateUI();
@@ -222,7 +215,7 @@ const setupEventListeners = () => {
     if (!username || !password || !email) return alert('请输入用户名、密码和邮箱');
 
     try {
-      const result = await apiRequest('/math_train_register', 'POST', { username, password, email});
+      const result = await apiRequest('/math_train_register', 'POST', { username, password, email });
       if (result.success) {
         alert('注册成功');
         document.getElementById('registerModal').style.display = 'none';
@@ -268,6 +261,7 @@ const init = () => {
 };
 
 document.addEventListener('DOMContentLoaded', init);
+
 
 
 
