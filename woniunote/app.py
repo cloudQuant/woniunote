@@ -178,21 +178,24 @@ def math_train_login():
 
         connection = get_db_connection(DATABASE_INFO)
         with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM math_train_users")
+            user_dict_test = cursor.fetchall()
+            print("math_train_test:", user_dict_test)
             cursor.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
-            user = cursor.fetchone()
+            user_dict = cursor.fetchone()
 
             # 调试数据库查询结果
-            print("[调试] 数据库查询结果:", user)
+            print("[调试] 数据库查询结果:", user_dict)
 
-            if not user:
+            if not user_dict:
                 print("用户不存在:", username)
                 return jsonify({'success': False, 'message': '用户不存在'}), 401
 
             # 调试密码哈希对比
-            print("[调试] 数据库存储的哈希:", user['password'])
-            print("[调试] 密码验证结果:", check_password_hash(user['password'], password))
+            print("[调试] 数据库存储的哈希:", user_dict['password'])
+            print("[调试] 密码验证结果:", check_password_hash(user_dict['password'], password))
 
-            if check_password_hash(user['password'], password):
+            if check_password_hash(user_dict['password'], password):
                 session['username'] = username
                 session['user_id'] = user['id']
                 print("登录成功，用户ID:", user['id'])
