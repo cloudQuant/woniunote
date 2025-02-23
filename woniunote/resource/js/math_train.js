@@ -66,6 +66,7 @@ const createQuestionElement = ({ num1, num2, operator }) => {
   return question;
 };
 
+// 生成计算题，无需检查登录状态
 const generateQuestions = () => {
   DOM.grid.innerHTML = '';
   const fragment = document.createDocumentFragment();
@@ -134,8 +135,7 @@ const AuthManager = {
         document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'inline-block');
         document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'none');
         document.getElementById('navbarUsername').textContent = state.username;
-        // 登录成功后加载计算题
-        generateQuestions();
+        // 登录后可以继续显示计算题
       } else { // 如果没有登录
         state.loggedIn = false;
         document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'none');
@@ -263,10 +263,12 @@ const setupEventListeners = () => {
 const init = () => {
   // 先检查登录状态
   AuthManager.checkStatus();
+  generateQuestions(); // 生成计算题
   setupEventListeners();
 };
 
 document.addEventListener('DOMContentLoaded', init);
+
 
 
 
