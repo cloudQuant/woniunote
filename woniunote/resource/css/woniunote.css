@@ -1,1 +1,104 @@
-.footer .center,.paginate{text-align:center}.admin-side ul,.side ul{list-style:none}.admin-side li,.article-nav div{line-height:40px}body{margin:0;background-color:#eee;font-size:16px;font-family:微软雅黑,幼圆,宋体,Verdana}@media (min-width:1200px){.container{max-width:1300px}}.header{border-top:3px solid #000;border-radius:0}div{border-radius:5px}label{font-weight:700;cursor:pointer}a:link,a:visited{text-decoration:none;color:#337ab7}a:active,a:hover{text-decoration:none;color:#e56244}.menu{width:100%;margin-bottom:10px;border-top:2px solid #ff4500;background-color:#563d7c}.admin-main,.article-list,.paginate{background-color:#f5f5f5;border:1px solid #ccc}.menu .menu-bar a:link{color:#f5f5f5}.admin-main,.article-list{margin:10px 0;padding:15px 0}.article-list .thumb{margin:0;padding:2px 10px 0 0}.article-list .detail{padding:0 10px}.article-list .detail .title{font-size:22px;color:#e56244;margin-bottom:10px}.article-list .detail .info{font-size:14px;color:#666;margin-bottom:10px}.article-list .detail .intro{font-size:16px;word-break:break-all;word-wrap:break-word;line-height:25px}.paginate{margin:5px 0;padding:20px 0}.search-bar{margin:0;border:1px solid #ccc;padding:10px 0;background-color:#563d7c}.footer,.side{margin-top:20px;padding:0}.side{border:1px solid #ccc;background-color:#f5f5f5}.footer,.side .tip{background-color:#333;border-radius:0;color:#fff}.side .tip{height:42px;line-height:42px;padding-left:10px;font-size:18px;border-bottom:2px solid #ff4500}.footer .center,.footer .left,.footer .right{font-size:16px;margin:20px 0}.side ul{padding-left:0}.side ul li{line-height:35px;padding-left:10px}.footer{margin-bottom:0}.footer .right{text-align:right}.article-detail{border:1px solid #ccc;padding:30px 15px;margin:0}.article-detail .title{font-size:24px;color:#e56244}.article-detail .favorite{text-align:right;font-weight:700}.article-detail .info{margin-top:20px;border-bottom:1px solid #ccc;line-height:60px}.article-detail .content{margin-top:30px}.article-detail .content img{max-width:100%}.article-detail .readall{margin:20px 0;text-align:center}.article-detail .readall button{height:45px;background-color:#337ab7;border:0;border-radius:5px;color:#fff;font-weight:700}.article-nav{border:1px solid #ccc;margin-top:20px}.admin-side,.article-comment{margin:10px 0;border:1px solid #ccc;background-color:#f5f5f5}.article-nav div{height:40px}.article-comment{padding:20px 0 10px;line-height:35px}.article-comment .list{margin:0 0 10px;border-top:1px solid #ccc;padding-top:10px}.article-comment .list .icon{margin:0;padding-top:10px;text-align:right}.article-comment .list .icon img{margin-right:30px}.article-comment .list .comment{padding:0}.article-comment .list .comment .commenter{font-size:14px;color:#666}.article-comment .list .comment .content{font-size:16px;padding-left:0}.article-comment .list .comment .reply{text-align:right}.article-comment .list .comment .reply label{font-weight:400;color:#337ab7;cursor:pointer}.admin-side{padding:20px 0}
+body {
+    margin: 0px; /* 让浏览器窗口与元素之间无间隙 */
+    background-color: #eeeeee; /* 浏览器整体浅灰色背景 */
+    font-size: 16px; /* 默认字体大小 */
+    font-family: 'Microsoft YaHei', sans-serif; /* 中文字体 */
+}
+
+.header {
+    background-color: white;
+}
+
+.header h4 {
+    font-size: 18px;
+    color: #2b6db4;
+}
+
+.scrolling-text {
+    white-space: nowrap;
+    overflow: hidden;
+    animation: scrolling 20s linear infinite;
+}
+
+@keyframes scrolling {
+    0% { transform: translateX(-20%); }
+    100% { transform: translateX(100%); }
+}
+
+.menu {
+    background-color: #17a2b8;
+}
+
+.navbar-nav {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.nav-item {
+    font-size: 16px;
+    margin-right: 20px;
+}
+
+.nav-item a {
+    color: #fff;
+    text-decoration: none;
+}
+
+.nav-item a:hover {
+    color: #ffcc00;
+}
+
+.footer {
+    background-color: #f1f1f1;
+    padding: 20px 0;
+}
+
+.footer p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.footer .col-md-4 {
+    padding: 0 15px;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 10px;
+}
+
+.modal-content {
+    margin: 20px 0;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-dialog {
+    max-width: 700px;
+    margin: 1.75rem auto;
+}
+
+.tabbable {
+    background-color: #337AB7;
+    height: 50px;
+    padding: 5px 20px;
+}
+
+.tab-content {
+    padding: 20px;
+}
+
+.tab-pane {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+button.close {
+    color: #fff;
+    font-size: 1.5rem;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
