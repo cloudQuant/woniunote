@@ -283,8 +283,8 @@ def math_train_check_login():
 def math_train_user():
     print("进入用户中心界面")
     # """用户中心页面"""
-    # if 'user_id' not in session:
-    #     return redirect(url_for('math_train'))
+    if 'user_id' not in session:
+        return redirect(url_for('math_train'))
     try:
         connection = get_db_connection(DATABASE_INFO)
         with connection.cursor() as cursor:
