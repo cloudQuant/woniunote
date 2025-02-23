@@ -255,5 +255,29 @@ const setupEventListeners = () => {
     DOM.registerModal.style.display = 'none';
   });
 
-  document.getElementById('showRegisterModalBtn').addEventListener('
+  document.getElementById('showRegisterModalBtn').addEventListener('click', () => {
+    DOM.loginModal.style.display = 'none';
+    DOM.registerModal.style.display = 'flex';
+  });
+
+  // 关闭对话框
+  window.addEventListener('click', (event) => {
+    if (event.target.classList.contains('modal')) {
+      document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', AuthManager.handleLogout);
+};
+
+// ==================== 初始化 ====================
+const init = () => {
+  generateQuestions();
+  timerManager.start();
+  AuthManager.checkStatus(); // 检查登录状态
+  setupEventListeners(); // 设置所有事件监听
+};
+
+document.addEventListener('DOMContentLoaded', init);
+
 
