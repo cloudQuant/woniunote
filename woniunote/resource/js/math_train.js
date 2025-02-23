@@ -128,15 +128,18 @@ const AuthManager = {
       const data = await res.json();
 
       if (data.loggedIn) { // 如果登录
-        document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'inline-block');
-        document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'none');
-        document.getElementById('navbarUsername').textContent = data.username;
         state.loggedIn = true;
         state.username = data.username;
+        // 显示已登录的元素
+        document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'inline-block');
+        document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'none');
+        document.getElementById('navbarUsername').textContent = state.username;
+        // 登录成功后加载计算题
+        generateQuestions();
       } else { // 如果没有登录
+        state.loggedIn = false;
         document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'inline-block');
-        state.loggedIn = false;
       }
     } catch (error) {
       console.error('登录状态检查失败:', error);
@@ -154,7 +157,6 @@ const AuthManager = {
 
       const data = await res.json();
       if (data.success) { // 登录成功
-        alert('登录成功');
         state.loggedIn = true;
         state.username = data.username;
         AuthManager.updateUI();
@@ -173,10 +175,10 @@ const AuthManager = {
       const res = await fetch('/math_train_logout', { method: 'POST' });
       const data = await res.json();
       if (data.success) { // 退出成功
-        alert('退出成功');
         state.loggedIn = false;
         state.username = '';
         AuthManager.updateUI();
+        alert('退出成功');
         window.location.href = data.redirect;
       }
     } catch (error) {
@@ -265,6 +267,7 @@ const init = () => {
 };
 
 document.addEventListener('DOMContentLoaded', init);
+
 
 
 
