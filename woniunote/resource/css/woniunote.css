@@ -1,375 +1,84 @@
-body {
-    margin: 0px; /* 让浏览器窗口与元素之间无间隙 */
-    background-color: #eeeeee; /* 浏览器整体浅灰色背景 */
-    font-size: 16px; /* 字体大小 */
-    font-family: 微软雅黑, 幼圆, 宋体, Verdana; /* 字体名称 */
+/* woniunote.css */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --success-color: #27ae60;
+    --danger-color: #e74c3c;
 }
 
-/* 为container容器设置宽度 */
-@media (min-width: 1200px) {
-    .container {
-        max-width: 1300px;
-    }
+body {
+    background-color: #f8f9fa;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .header {
-    border-top: solid 3px black;
-    border-radius: 0px
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
 }
 
-/* 为所有DIV元素设置圆角边框 */
-div:not(.modal):not(.modal-content):not(.modal-dialog) {
-    border-radius: 5px;
+.navbar-dark {
+    background-color: var(--primary-color) !important;
 }
 
-/* 为所有label标签设置加粗显示 */
-label {
-    font-weight: bold;
-}
-
-/* 为全站所有超链接设置基本样式 */
-a:link, a:visited {
-    text-decoration: none;
-    color: #337ab7;
-}
-
-a:hover, a:active {
-    text-decoration: none;
-    color: #e56244;
-}
-
-label {
-    cursor: pointer;
-}
-
-/* 为分类导航栏设置样式 */
-.menu {
-    width: 100%;
-    margin-bottom: 10px;
-    border-top: solid 2px orangered;
-    background-color: #563d7c;
-}
-
-.menu-bar {
-    /*background-color: #337ab7;*/
-}
-
-.menu .menu-bar a:link {
-    color: whitesmoke;
-}
-
-/* 首页文章列表栏样式 */
-.article-list {
-    border: solid 1px #cccccc;
-    margin: 10px 0px;
-    background-color: whitesmoke;
-    padding: 15px 0px;
-}
-
-.article-list .thumb {
-    margin: 0px;
-    padding: 2px 10px 0 0;
-}
-
-.article-list .detail {
-    padding: 0px 10px;
-}
-
-.article-list .detail .title {
-    font-size: 22px;
-    color: #e56244;
-    margin-bottom: 10px;
-}
-
-.article-list .detail .info {
-    font-size: 14px;
-    color: #666666;
-    margin-bottom: 10px;
-}
-
-.article-list .detail .intro {
-    font-size: 16px;
-    word-break: break-all;
-    word-wrap: break-word;
-    line-height: 25px;
-}
-
-/* 分页栏样式 */
-.paginate {
-    border: solid 1px #cccccc;
-    margin: 5px 0px;
-    background-color: whitesmoke;
-    padding: 20px 0px;
-    text-align: center;
-}
-
-/* 文章搜索栏样式 */
-.search-bar {
-    margin: 0px;
-    border: solid 1px #cccccc;
-    padding: 10px 0px;
-    background-color: #563d7c;
-}
-
-/* 页面中部右侧边样样式 */
-.side {
-    margin-top: 20px;
-    border: solid 1px #cccccc;
-    padding: 0px 0px;
-    background-color: whitesmoke;
-}
-
-.side .tip {
-    background-color: #333333;
-    height: 42px;
-    color: white;
-    line-height: 42px;
-    padding-left: 10px;
-    border-radius: 0px;
-    font-size: 18px;
-    border-bottom: solid 2px orangered;
-}
-
-.side ul {
-    list-style: none;
-    padding-left: 0px;
-}
-
-.side ul li {
-    line-height: 35px;
-    padding-left: 10px;
-}
-
-/* 底部栏样式 */
-.footer {
-    background-color: #333333;
-    margin-top: 20px;
-    margin-bottom: 0px;
-    padding: 0px;
-    border-radius: 0px;
-    color: white;
-}
-
-.footer .left {
-    font-size: 16px;
-    margin: 20px 0px;
-}
-
-.footer .center {
-    font-size: 16px;
-    margin: 20px 0px;
-    text-align: center;
-}
-
-.footer .right {
-    font-size: 16px;
-    margin: 20px 0px;
-    text-align: right;
-}
-
-/* 文章详情页面 */
-.article-detail {
-    border: solid 1px #cccccc;
-    padding: 30px 15px;
-    margin: 0px;
-}
-
-.article-detail .title {
-    font-size: 24px;
-    color: #e56244;
-}
-
-.article-detail .favorite {
-    text-align: right;
-    font-weight: bold;
-}
-
-.article-detail .info {
-    margin-top: 20px;
-    border-bottom: solid 1px #cccccc;
-    line-height: 60px;
-}
-
-.article-detail .content {
-    margin-top: 30px;
-}
-
-.article-detail .content img {
-    max-width: 100%;
-}
-
-.article-detail .readall {
-    margin: 20px 0px;
-    text-align: center;
-}
-
-.article-detail .readall button {
-    height: 45px;
-    background-color: #337AB7;
-    border: 0;
-    border-radius: 5px;
-    color: white;
-    font-weight: bold;
-}
-
-.article-nav {
-    border: solid 1px #cccccc;
-    margin-top: 20px;
-}
-
-.article-nav div {
-    height: 40px;
-    line-height: 40px;
-}
-
-/* 文章评论 */
-.article-comment {
-    border: solid 1px #cccccc;
-    margin: 10px 0px;
-    background-color: whitesmoke;
-    padding: 20px 0px 10px 0px;
-    line-height: 35px;
-}
-
-.article-comment .list {
-    margin: 0px 0px 10px 0px;
-    border-top: solid 1px #cccccc;
-    padding-top: 10px;
-}
-
-.article-comment .list .icon {
-    margin: 0px;
-    padding-top: 10px;
-    text-align: right;
-}
-
-.article-comment .list .icon img {
-    margin-right: 30px;
-}
-
-.article-comment .list .comment {
-    padding: 0px 0px;
-}
-
-.article-comment .list .comment .commenter {
-    font-size: 14px;
-    color: #666666;
-}
-
-.article-comment .list .comment .content {
-    font-size: 16px;
-    padding-left: 0px;
-}
-
-.article-comment .list .comment .reply {
-    text-align: right;
-}
-
-.article-comment .list .comment .reply label{
-    font-weight: normal;
-    color: #337AB7;
-    cursor: pointer;
-}
-
-/* 后台管理的左则样式 */
-.admin-side {
-    margin: 10px 0px;
-    border: solid 1px #cccccc;
-    padding: 20px 0px;
-    background-color: whitesmoke;
-}
-
-.admin-side ul{
-    list-style: none;
-}
-
-.admin-side li {
-    line-height: 40px;
-}
-
-.admin-main {
-    border: solid 1px #cccccc;
-    margin: 10px 0px;
-    background-color: whitesmoke;
-    padding: 15px 0px;
-}
-
-/* 登录模态框专属样式 (新增/修改部分) */
-#mymodal .modal-dialog {
-    max-width: 600px;
-}
-
-#mymodal .modal-content {
-    border-radius: 0.8rem;
-    overflow: hidden;
-}
-
-#mymodal .nav-tabs {
-    border-bottom: 2px solid #dee2e6;
-}
-
-#mymodal .nav-link {
-    font-size: 1.1rem;
-    padding: 1rem 1.5rem;
-    color: #495057;
-    transition: all 0.3s ease;
-}
-
-#mymodal .nav-link.active {
-    color: #007bff;
-    border-bottom: 3px solid #007bff;
-    background: transparent;
-}
-
-#mymodal .form-group {
-    margin-bottom: 1.5rem;
-}
-
-#mymodal label {
-    font-size: 0.95rem;
-    color: #495057;
-    margin-bottom: 0.5rem;
-    display: block;
-}
-
-#mymodal .form-control {
-    height: calc(2.5em + 0.75rem + 2px);
-    padding: 0.5rem 1rem;
-    border-radius: 0.4rem;
-    border: 1px solid #ced4da;
-    transition: border-color 0.15s ease-in-out;
-}
-
-#mymodal .form-control:focus {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-#loginvcode {
-    border: 1px solid #dee2e6;
-    border-radius: 0.4rem;
-    padding: 3px;
-    background: #f8f9fa;
-}
-
-/* 响应式调整 */
-@media (max-width: 576px) {
-    #mymodal .modal-dialog {
-        margin: 1rem;
+#authModal {
+    .modal-content {
+        border-radius: 1rem;
+        overflow: hidden;
     }
-    
-    #mymodal .col-md-8,
-    #mymodal .col-md-4 {
-        width: 100% !important;
-        flex: 0 0 100%;
-        max-width: 100%;
+
+    .nav-tabs {
+        border-bottom: 2px solid rgba(0,0,0,0.1);
+        
+        .nav-link {
+            transition: all 0.3s ease;
+            
+            &.active {
+                color: var(--primary-color);
+                border-bottom: 3px solid var(--secondary-color);
+            }
+        }
     }
-    
-    #mymodal .col-md-4 {
-        margin-top: 0.5rem;
+
+    .form-control {
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        transition: border-color 0.3s ease;
+        
+        &:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+        }
     }
-    
-    #mymodal .form-control {
-        padding: 0.5rem;
+
+    .captcha-img {
+        height: 38px;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+        
+        &:hover {
+            opacity: 0.8;
+        }
     }
+}
+
+@media (max-width: 768px) {
+    #authModal {
+        .modal-dialog {
+            margin: 1rem;
+        }
+        
+        .form-control {
+            font-size: 16px;
+        }
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-content {
+    animation: fadeIn 0.3s ease-out;
 }
