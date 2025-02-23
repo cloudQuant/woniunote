@@ -9,7 +9,7 @@ const DOM = {
   grid: document.getElementById('grid'),
   checkBtn: document.getElementById('checkBtn'),
   newBtn: document.getElementById('newBtn'),
-  startBtn: document.getElementById('startBtn'),
+  startBtn: document.getElementById('beginBtn'),  // 修改为正确的 ID
   minutes: document.getElementById('minutes'),
   seconds: document.getElementById('seconds'),
   loginModal: document.getElementById('loginModal'),
@@ -32,8 +32,7 @@ let state = {
   correctCount: 0,
   loggedIn: false,   // 默认未登录
   username: '',       // 存储用户名
-  timerStarted: false, // 标记计时是否已经开始
-  answers: []         // 用于存储每一题的正确答案
+  timerStarted: false // 标记计时是否已经开始
 };
 
 // ==================== 核心功能 ====================
@@ -50,13 +49,13 @@ const generateQuestion = () => {
 
   if (operator === '÷') {
     while (num2 === 0) num2 = Math.floor(Math.random() * 20) + 1;
-    return { num1: num1 * num2, num2, operator };
+    return { num1: num1 * num2, num2, operator };  // 保证除法运算结果是整数
   }
 
   return { num1, num2, operator };
 };
 
-const createQuestionElement = ({ num1, num2, operator }, index) => {
+const createQuestionElement = ({ num1, num2, operator }) => {
   const question = document.createElement('div');
   question.className = 'question-item';
   question.innerHTML = ` 
@@ -79,15 +78,49 @@ const generateQuestions = () => {
     rowDiv.className = 'question-row';
 
     for (let j = 0; j < QUESTIONS_PER_ROW; j++) {
-      const question = generateQuestion();
-      rowDiv.appendChild(createQuestionElement(question, i * QUESTIONS_PER_ROW + j));
-      state.answers.push({ ...question, correctAnswer: eval(`${question.num1} ${question.operator} ${question.num2}`) });
+      rowDiv.appendChild(createQuestionElement(generateQuestion()));
     }
     fragment.appendChild(rowDiv);
   }
 
   DOM.grid.appendChild(fragment);
   initInputsArray();
+};
+
+const checkAnswers = () => {
+  let correctAnswers = 0;
+  state.inputsArray.forEach(input => {
+    const questionElement = input.closest('.question-item');
+    const num1 = parseInt(questionElement.querySelector('.number').textContent);
+    const num2 = parseInt(questionElement.querySelectorAll('.number')[1].textContent);
+    const operator = questionElement.querySelector('.operator').textContent;
+
+    let correctAnswer;
+    switch (operator) {
+      case '+':
+        correctAnswer = num1 + num2;
+        break;
+      case '-':
+        correctAnswer = num1 - num2;
+        break;
+      case '×':
+        correctAnswer = num1 * num2;
+        break;
+      case '÷':
+        correctAnswer = num1 / num2;
+        break;
+    }
+
+    if (parseInt(input.value) === correctAnswer) {
+      input.style.backgroundColor = 'lightgreen'; // 正确答案
+      correctAnswers++;
+    } else {
+      input.style.backgroundColor = 'lightcoral'; // 错误答案
+    }
+  });
+
+  state.correctCount = correctAnswers;
+  alert(`答对了 ${correctAnswers} 道题目，共 ${state.inputsArray.length} 道题目`);
 };
 
 // ==================== 计时器管理 ====================
@@ -221,32 +254,6 @@ const AuthManager = {
   }
 };
 
-// ==================== 提交答案 ====================
-
-const submitAnswers = () => {
-  let correctAnswers = 0;
-  let wrongAnswers = 0;
-
-  // 检查答案
-  state.inputsArray.forEach((input, index) => {
-    const userAnswer = parseFloat(input.value);
-    const correctAnswer = state.answers[index].correctAnswer;
-
-    if (userAnswer === correctAnswer) {
-      correctAnswers++;
-      input.style.backgroundColor = 'lightgreen'; // 做对的题目
-    } else {
-      wrongAnswers++;
-      input.style.backgroundColor = 'lightcoral'; // 做错的题目
-    }
-  });
-
-  // 显示正确率
-  const successRate = ((correctAnswers / state.answers.length) * 100).toFixed(2);
-  alert(`做对了 ${correctAnswers} 道题，做错了 ${wrongAnswers} 道题，成功率 ${successRate}%`);
-  timerManager.reset(); // 重置计时器
-};
-
 // ==================== 事件绑定 ====================
 
 const setupEventListeners = () => {
@@ -255,7 +262,7 @@ const setupEventListeners = () => {
     timerManager.start();
     alert("开始做题！");
   });
-  DOM.checkBtn.addEventListener('click', submitAnswers); // 提交答案时检查
+  DOM.checkBtn.addEventListener('click', checkAnswers); // 修改为检查答案
 
   // 登录按钮事件
   DOM.navbarElements.login.addEventListener('click', () => {
@@ -285,10 +292,9 @@ const setupEventListeners = () => {
   // 用户中心按钮
   document.getElementById('userCenterBtn').addEventListener('click', () => {
     if (state.loggedIn) {
-      window.location.href = '/math_train_user'; // 只有登录后才跳转
+      window.location.href = '/math_train_user'; // 正常跳转
     } else {
       alert('请先登录');
-      document.getElementById('loginModal').style.display = 'block'; // 未登录时提示并弹出登录框
     }
   });
 
