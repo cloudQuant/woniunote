@@ -152,219 +152,165 @@ def do_upload():
     return 'Done'
 
 
-@app.route("/math_train", methods=["POST", "GET"])
+@app.route("/math_train", methods=["GET"])
 def math_train():
-    # file_path = os.path.join(package_path, 'template', 'math_train.html')
-    file_path = "math_train.html"
-    return render_template(file_path)
-
+    """训练页面"""
+    return render_template("math_train.html")
 
 @app.route('/math_train_login', methods=['POST'])
 def math_train_login():
+    """用户登录"""
     try:
-        # 添加请求内容类型验证
         if not request.is_json:
-            print("错误请求格式，收到内容类型:", request.content_type)
             return jsonify({'success': False, 'message': '请求必须为JSON格式'}), 400
 
         data = request.get_json()
         username = data.get('username')
         password = data.get('password')
 
-        # 调试打印（生产环境应移除）
-        print("[调试] 登录尝试 - 用户名:", username)
-        print("[调试] 登录尝试 - 密码:", password)
-
         if not username or not password:
-            print("缺少用户名或密码字段")
             return jsonify({'success': False, 'message': '用户名和密码不能为空'}), 400
 
-        connection = get_db_connection(DATABASE_INFO)
-        with connection.cursor() as cursor:
-            # cursor.execute("SELECT * FROM math_train_users")
-            # user_dict_test = cursor.fetchall()
-            # print("math_train_test:", user_dict_test)
-            cursor.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
-            user_dict = cursor.fetchone()
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
+                user = cursor.fetchone()
 
-            # 调试数据库查询结果
-            print("[调试] 数据库查询结果:", user_dict)
+                if not user:
+                    return jsonify({'success': False, 'message': '用户不存在'}), 401
 
-            if not user_dict:
-                print("用户不存在:", username)
-                return jsonify({'success': False, 'message': '用户不存在'}), 401
+                if check_password_hash(user['password'], password):
+                    session['username'] = username
+                    session['user_id'] = user['id']
+                    session.permanent = True  # 设置会话持久化
+                    return jsonify({
+                        'success': True,
+                        'redirect': url_for('math_train_user'),
+                        'username': username
+                    })
+                else:
+                    return jsonify({'success': False, 'message': '密码错误'}), 401
 
-            # 调试密码哈希对比
-            print("[调试] 数据库存储的哈希:", user_dict['password'])
-            print("[调试] 密码验证结果:", check_password_hash(user_dict['password'], password))
-
-            if check_password_hash(user_dict['password'], password):
-                session['username'] = username
-                session['user_id'] = user_dict['id']
-                print("登录成功，用户ID:", user_dict['id'])
-                return jsonify({
-                    'success': True,
-                    'redirect': url_for('math_train_user'),  # 修正跳转地址
-                    'username': username
-                })
-            else:
-                print("密码验证失败")
-                return jsonify({'success': False, 'message': '密码错误'}), 401
-
-    except pymysql.Error as e:
-        print("数据库错误:", str(e))
-        return jsonify({'success': False, 'message': '数据库操作失败'}), 500
-    except KeyError as e:
-        print("字段缺失错误:", str(e))
-        return jsonify({'success': False, 'message': '数据字段不完整'}), 400
     except Exception as e:
-        print("服务器未知错误:", str(e))
-        traceback.print_exc()  # 打印完整堆栈信息
+        print(f"登录错误: {str(e)}")
+        traceback.print_exc()
         return jsonify({'success': False, 'message': '服务器内部错误'}), 500
-    finally:
-        if 'connection' in locals():
-            connection.close()
 
 @app.route('/math_train_register', methods=['POST'])
 def math_train_register():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    email = data.get('email')
-    hashed_password = generate_password_hash(password)
-    connection = get_db_connection(DATABASE_INFO)
-    # 测试连接是否有效
+    """用户注册"""
     try:
-        connection.ping(reconnect=True)  # 检查连接是否可用，若不可用则尝试重新连接
-        print("数据库连接成功")
-    except pymysql.MySQLError as e:
-        print(f"数据库连接失败: {e}")
-        return jsonify({'success': False, 'message': '数据库连接失败'})
-    print("开始查询所有用户数据")
-    # 执行查询所有用户数据
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM math_train_users")  # 查询所有数据
-        users = cursor.fetchall()  # 获取所有记录
-        print("数据库中的所有用户数据:")
-        print(users)
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        email = data.get('email')
 
-    try:
-        print("开始注册")
-        print("DATABASE_INFO", DATABASE_INFO)
-        print("username:", username)
-        print("password:", password)
-        with connection.cursor() as cursor:
-            cursor.execute("INSERT INTO math_train_users (username, password, email) VALUES (%s, %s, %s)", (username, hashed_password, email))
-            connection.commit()
-            return jsonify({'success': True, 'message': '注册成功，请登录'})
-    except pymysql.IntegrityError:  # 捕获唯一性约束错误
-        connection.rollback()
-        return jsonify({'success': False, 'message': '用户名已存在'})
+        if not username or not password or not email:
+            return jsonify({'success': False, 'message': '用户名、密码和邮箱不能为空'}), 400
+
+        hashed_password = generate_password_hash(password)
+
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO math_train_users (username, password, email) VALUES (%s, %s, %s)",
+                    (username, hashed_password, email)
+                )
+                connection.commit()
+                return jsonify({'success': True, 'message': '注册成功，请登录'})
+
+    except pymysql.IntegrityError:
+        return jsonify({'success': False, 'message': '用户名或邮箱已存在'}), 400
     except Exception as e:
-        connection.rollback()
-        return jsonify({'success': False, 'message': '注册失败'})
-    finally:
-        connection.close()
+        print(f"注册错误: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': '注册失败'}), 500
 
-
-# 保存训练结果
 @app.route('/math_train_save_result', methods=['POST'])
 def math_train_save_result():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    data = request.json
-    math_level = data['math_level']
-    correct_count = data['correct_count']
-    total_questions = data['total_questions']
-    time_spent = data['time_spent']
-
-    # 使用 pymysql 连接数据库
-    connection = get_db_connection(DATABASE_INFO)
+    """保存训练结果"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '未登录'}), 401
 
     try:
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                INSERT INTO math_train_results (user_id, math_level, correct_count, total_questions, time_spent, created_at)
-                VALUES (%s, %s, %s, %s, %s, NOW())
-            """, (session['user_id'], math_level, correct_count, total_questions, time_spent))
-            connection.commit()
-        return {'status': 'success'}
-    except pymysql.Error as e:
-        connection.rollback()
-        return {'status': 'error', 'message': str(e)}
-    finally:
-        connection.close()
+        data = request.get_json()
+        math_level = data.get('math_level')
+        correct_count = data.get('correct_count')
+        total_questions = data.get('total_questions')
+        time_spent = data.get('time_spent')
 
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO math_train_results (user_id, math_level, correct_count, total_questions, time_spent, created_at) "
+                    "VALUES (%s, %s, %s, %s, %s, NOW())",
+                    (session['user_id'], math_level, correct_count, total_questions, time_spent)
+                )
+                connection.commit()
+                return jsonify({'success': True})
 
-# 退出登录
-# 退出路由
-@app.route('/math_train_logout')
+    except Exception as e:
+        print(f"保存结果错误: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': '保存失败'}), 500
+
+@app.route('/math_train_logout', methods=['POST'])
 def math_train_logout():
-    # session.clear()  # 确保清除所有session数据
-    session.pop('username', None)
-    session.pop('user_id', None)
-    return redirect(url_for('math_train'))
+    """用户退出"""
+    session.clear()
+    return jsonify({'success': True, 'redirect': url_for('math_train')})
 
-# 登录状态检查
-@app.route('/math_train_check_login')
+@app.route('/math_train_check_login', methods=['GET'])
 def math_train_check_login():
+    """检查登录状态"""
     return jsonify({
         'loggedIn': 'user_id' in session,
         'username': session.get('username', '')
     })
 
-
-# 用户中心页面
-@app.route("/math_train_user")
+@app.route("/math_train_user", methods=["GET"])
 def math_train_user():
+    """用户中心页面"""
     if 'user_id' not in session:
         return redirect(url_for('math_train'))
-    target_html = "math_train_user.html"
-    return render_template(target_html)
+    return render_template("math_train_user.html")
 
-
-# 获取用户训练数据
-@app.route('/math_train_user_data')
+@app.route('/math_train_user_data', methods=['GET'])
 def math_train_user_data():
+    """获取用户训练数据"""
     if 'user_id' not in session:
         return jsonify({'error': '未登录'}), 401
 
-    connection = get_db_connection(DATABASE_INFO)
     try:
-        with connection.cursor() as cursor:
-            # 获取历史记录
-            cursor.execute("""
-                SELECT math_level, correct_count, total_questions, time_spent, created_at 
-                FROM math_train_results 
-                WHERE user_id = %s 
-                ORDER BY created_at DESC 
-                LIMIT 10
-            """, (session['user_id'],))
-            history = cursor.fetchall()
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT math_level, correct_count, total_questions, time_spent, created_at "
+                    "FROM math_train_results WHERE user_id = %s ORDER BY created_at DESC LIMIT 10",
+                    (session['user_id'],)
+                )
+                history = cursor.fetchall()
 
-            # 获取统计数据
-            cursor.execute("""
-                SELECT 
-                    COUNT(*) AS total_sessions,
-                    ROUND(AVG(correct_count/total_questions)*100, 1) AS avg_accuracy,
-                    MIN(time_spent) AS best_time
-                FROM math_train_results 
-                WHERE user_id = %s
-            """, (session['user_id'],))
-            stats = cursor.fetchone()
+                cursor.execute(
+                    "SELECT COUNT(*) AS total_sessions, "
+                    "ROUND(AVG(correct_count/total_questions)*100, 1) AS avg_accuracy, "
+                    "MIN(time_spent) AS best_time "
+                    "FROM math_train_results WHERE user_id = %s",
+                    (session['user_id'],)
+                )
+                stats = cursor.fetchone()
 
-        return jsonify({
-            'history': history,
-            'total_sessions': stats['total_sessions'],
-            'avg_accuracy': stats['avg_accuracy'] or 0,
-            'best_time': f"{stats['best_time'] // 60:02d}:{stats['best_time'] % 60:02d}" if stats[
-                'best_time'] else "00:00"
-        })
+                return jsonify({
+                    'history': history,
+                    'total_sessions': stats['total_sessions'],
+                    'avg_accuracy': stats['avg_accuracy'] or 0,
+                    'best_time': f"{stats['best_time'] // 60:02d}:{stats['best_time'] % 60:02d}" if stats['best_time'] else "00:00"
+                })
+
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        connection.close()
+        print(f"获取用户数据错误: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': '服务器内部错误'}), 500
 
 # todo why need @app.route('/favicon.ico')
 @app.route('/favicon.ico')
