@@ -182,7 +182,7 @@ def math_train_login():
 
             return jsonify({
                 'success': True,
-                'username': user['username'],
+                'username': user_dict['username'],
                 'redirect': url_for('math_train_user')
             })
 
