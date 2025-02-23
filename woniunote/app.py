@@ -237,8 +237,18 @@ def math_train_register():
     except pymysql.MySQLError as e:
         print(f"数据库连接失败: {e}")
         return jsonify({'success': False, 'message': '数据库连接失败'})
+    print("开始查询所有用户数据")
+    # 执行查询所有用户数据
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM math_train_users")  # 查询所有数据
+        users = cursor.fetchall()  # 获取所有记录
+        print("数据库中的所有用户数据:")
+        for user in users:
+            print(user)  # 打印每一行数据
+
     try:
         print("开始注册")
+        print("DATABASE_INFO", DATABASE_INFO)
         print("username:", username)
         print("password:", password)
         with connection.cursor() as cursor:
