@@ -117,6 +117,7 @@ const apiRequest = async (url, method, data) => {
 };
 
 // ==================== 用户状态管理 ====================
+// ==================== 用户状态管理 ====================
 const authManager = {
   checkStatus: async () => {
     try {
@@ -155,6 +156,16 @@ const authManager = {
     authManager.updateUI();
   }
 };
+
+// 修改“用户中心”按钮的点击事件
+document.getElementById('userCenterBtn').addEventListener('click', () => {
+  if (state.loggedIn) {
+    // 确保只有已登录的用户才能访问用户中心
+    window.location.href = '/math_train_user'; // 跳转到用户中心
+  } else {
+    alert('请先登录');
+  }
+});
 
 // ==================== 事件监听 ====================
 const setupEventListeners = () => {
