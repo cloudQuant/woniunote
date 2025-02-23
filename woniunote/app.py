@@ -251,7 +251,7 @@ def math_train_register():
         print("username:", username)
         print("password:", password)
         with connection.cursor() as cursor:
-            cursor.execute("INSERT INTO math_train_users (username, password, email) VALUES (%s, %s)", (username, hashed_password, email))
+            cursor.execute("INSERT INTO math_train_users (username, password, email) VALUES (%s, %s, %s)", (username, hashed_password, email))
             connection.commit()
             return jsonify({'success': True, 'message': '注册成功，请登录'})
     except pymysql.IntegrityError:  # 捕获唯一性约束错误
