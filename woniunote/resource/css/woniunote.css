@@ -253,3 +253,26 @@ label {
     background-color: whitesmoke;
     padding: 15px 0px;
 }
+
+/* 针对登录框和找回密码框 */
+.modal-content .form-group {
+    margin-bottom: 15px;
+}
+
+.modal-body .form-group label {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.modal-body .form-group input {
+    border-radius: 5px;
+}
+
+.modal-body img {
+    border-radius: 5px;
+}
+
+/* 控制关闭按钮和其他按钮的间距 */
+.modal-footer .btn {
+    margin: 0 5px;
+}

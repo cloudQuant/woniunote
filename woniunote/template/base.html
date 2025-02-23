@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FN5WWKHR8J"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-FN5WWKHR8J');
-    </script>
     <meta charset="UTF-8">
     <meta name="baidu-site-verification" content="code-BGK1aGjUrd">
     <meta name="keywords" content="云金杞,云子量化,量化交易,backtrader,CTA,期货,股票,期权,外汇,债券,投资,理财,保险">
@@ -23,10 +15,6 @@
     <script src="/js/vue.js"></script>
     <script src="/js/bootbox.min.js"></script>
     <script src="/js/woniunote.js"></script>
-    <!-- highlight.js CSS 文件 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css"/>
-    <!-- highlight.js JS 文件 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
 </head>
 
 <body>
@@ -41,9 +29,6 @@
                 <div class="col scrolling-text d-none d-sm-block">
                     <h4 style="color: blue; font-size: 18px;">量化的不仅是股票、期货、期权、债券等投资交易工具，更是量化自我，量化是人生漫长的修行</h4>
                 </div>
-                <div class="col-8 text-right d-sm-none mt-3">
-                    <h3 style="color: midnightblue">专注量化</h3>
-                </div>
             </div>
         </div>
     </header>
@@ -51,73 +36,16 @@
     <div class="menu navbar navbar-expand-lg navbar-dark bg-info">
         <div class="container">
             <a class="navbar-brand" href="#">快捷导航</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                <div class="navbar-nav">
-                    {% for main_key, main_value in article_type.items() if main_key < 100 %}
-                        <div class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle"
-                               href="#" id="dropdown{{ main_key }}"
-                               role="button" data-toggle="dropdown"
-                               aria-haspopup="true" aria-expanded="false">
-                                {{ main_value }}
-                            </a>
-                            <div class="dropdown-menu"
-                                 aria-labelledby="dropdown{{ main_key }}">
-                                {% for sub_key, sub_value in article_type.items()
-                                    if sub_key >= main_key * 100 and sub_key < (main_key + 1) * 100 %}
-                                    <a class="dropdown-item" href="/type/{{ sub_key }}/{{ 1 }}">{{ sub_value }}</a>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-                <div class="navbar-nav ml-auto" id="loginmenu">
-                    {% if session.get('islogin') != 'true' %}
-                        <a class="nav-item nav-link" href="#" onclick="showLogin()">登录</a>
-                    {% endif %}
-                </div>
+            <div class="navbar-nav ml-auto" id="loginmenu">
+                {% if session.get('islogin') != 'true' %}
+                    <a class="nav-item nav-link" href="#" onclick="showLogin()">登录</a>
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <main class="container mt-4">
-        <div class="row">
-            {% block content %}
-            {% endblock %}
-        </div>
-    </main>
-
-    <footer class="container-fluid footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <p>版权所有 &copy; 云金杞</p>
-                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京 ICP 备 2021040304号</a>
-                    <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11010702002337" target="_blank" rel="noopener noreferrer">
-                        <img src="/img/备案图标.webp" alt="备案图标"> 京公网安备 11010702002337 号
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <p>友情链接</p>
-                    <p>
-                        <a href="https://blog.csdn.net/qq_26948675/category_11503023.html" target="_blank">CSDN博客</a>
-                        <a href="https://www.zhihu.com/people/yun-jin-qi" target="_blank">个人知乎</a>
-                    </p>
-                </div>
-                <div class="col-md-4">
-                    <p>联系博主</p>
-                    <p>北京★孵化园&nbsp;&nbsp;&nbsp;微信：tianjixuetu</p>
-                </div>
-            </div>
-        </div>
-    </footer>
-
     <!-- 登录和注册模态框 -->
-    <div class="modal fade" id="mymodal" data-backdrop="static" tabindex="-1"
-         role="dialog" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal fade" id="mymodal" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content" style="margin: 20px 0; max-height: 80vh; overflow-y: auto;">
                 <div class="tabbable" id="tabs" style="background-color: #337AB7; height: 50px;padding: 5px 20px;">
@@ -185,8 +113,8 @@
             </div>
         </div>
     </div>
-
 </body>
 </html>
+
 
 
