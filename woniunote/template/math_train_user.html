@@ -59,6 +59,11 @@
         const data = await response.json();
 
         // 更新统计数据
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+
         document.getElementById('totalSessions').textContent = data.total_sessions;
         document.getElementById('avgAccuracy').textContent = data.avg_accuracy + '%';
         document.getElementById('bestTime').textContent = data.best_time;
