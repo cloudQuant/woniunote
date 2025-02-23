@@ -157,44 +157,74 @@ def math_train():
     """训练页面"""
     return render_template("math_train.html")
 
+
 @app.route('/math_train_login', methods=['POST'])
 def math_train_login():
-    """用户登录"""
     try:
-        if not request.is_json:
-            return jsonify({'success': False, 'message': '请求必须为JSON格式'}), 400
-
         data = request.get_json()
-        username = data.get('username')
-        password = data.get('password')
+        username = data.get('username', '').strip()
+        password = data.get('password', '').strip()
 
         if not username or not password:
             return jsonify({'success': False, 'message': '用户名和密码不能为空'}), 400
+        connection = get_db_connection(DATABASE_INFO)
+        with connection.cursor() as cur:
+            cur.execute("SELECT id, username, password FROM math_train_users WHERE username = %s", (username,))
+            user_dict = cur.fetchone()
 
-        with get_db_connection() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM math_train_users WHERE username = %s", (username,))
-                user = cursor.fetchone()
+            if not user or not check_password_hash(user_dict['password'], password):
+                return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
 
-                if not user:
-                    return jsonify({'success': False, 'message': '用户不存在'}), 401
+            # 设置持久会话
+            session.permanent = True
+            session['user_id'] = user_dict['id']
+            session['username'] = user_dict['username']
 
-                if check_password_hash(user['password'], password):
-                    session['username'] = username
-                    session['user_id'] = user['id']
-                    session.permanent = True  # 设置会话持久化
-                    return jsonify({
-                        'success': True,
-                        'redirect': url_for('math_train_user'),
-                        'username': username
-                    })
-                else:
-                    return jsonify({'success': False, 'message': '密码错误'}), 401
+            return jsonify({
+                'success': True,
+                'username': user['username'],
+                'redirect': url_for('math_train_user')
+            })
 
     except Exception as e:
-        print(f"登录错误: {str(e)}")
-        traceback.print_exc()
-        return jsonify({'success': False, 'message': '服务器内部错误'}), 500
+        traceback.print_exception(e)
+        return jsonify({'success': False, 'message': '服务器错误'}), 500
+
+
+# 保存训练结果路由
+@app.route('/math_train_save_result', methods=['POST'])
+def math_train_save_result():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '未登录'}), 401
+
+    try:
+        data = request.get_json()
+        required_fields = ['math_level', 'correct_count', 'total_questions', 'time_spent']
+        if not all(field in data for field in required_fields):
+            return jsonify({'success': False, 'message': '数据不完整'}), 400
+
+        connection = get_db_connection(DATABASE_INFO)
+        with connection.cursor() as cur:
+            cur.execute("""
+                INSERT INTO math_train_results 
+                (user_id, math_level, correct_count, total_questions, time_spent)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (
+                session['user_id'],
+                data['math_level'],
+                data['correct_count'],
+                data['total_questions'],
+                data['time_spent']
+            ))
+            connection.commit()
+            return jsonify({'success': True})
+
+    except pymysql.Error as e:
+        connection.rollback()
+        return jsonify({'success': False, 'message': f'数据库错误: {e}'}), 500
+    except Exception as e:
+        traceback.print_exception(e)
+        return jsonify({'success': False, 'message': '服务器错误'}), 500
 
 @app.route('/math_train_register', methods=['POST'])
 def math_train_register():
@@ -256,13 +286,15 @@ def math_train_save_result():
 
 @app.route('/math_train_logout', methods=['POST'])
 def math_train_logout():
-    """用户退出"""
     session.clear()
-    return jsonify({'success': True, 'redirect': url_for('math_train')})
+    return jsonify({
+        'success': True,
+        'redirect': url_for('math_train')
+    })
 
-@app.route('/math_train_check_login', methods=['GET'])
+# 登录状态检查
+@app.route('/math_train_check_login')
 def math_train_check_login():
-    """检查登录状态"""
     return jsonify({
         'loggedIn': 'user_id' in session,
         'username': session.get('username', '')
@@ -282,30 +314,30 @@ def math_train_user_data():
         return jsonify({'error': '未登录'}), 401
 
     try:
-        with get_db_connection() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "SELECT math_level, correct_count, total_questions, time_spent, created_at "
-                    "FROM math_train_results WHERE user_id = %s ORDER BY created_at DESC LIMIT 10",
-                    (session['user_id'],)
-                )
-                history = cursor.fetchall()
+        connection = get_db_connection(DATABASE_INFO)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT math_level, correct_count, total_questions, time_spent, created_at "
+                "FROM math_train_results WHERE user_id = %s ORDER BY created_at DESC LIMIT 10",
+                (session['user_id'],)
+            )
+            history = cursor.fetchall()
 
-                cursor.execute(
-                    "SELECT COUNT(*) AS total_sessions, "
-                    "ROUND(AVG(correct_count/total_questions)*100, 1) AS avg_accuracy, "
-                    "MIN(time_spent) AS best_time "
-                    "FROM math_train_results WHERE user_id = %s",
-                    (session['user_id'],)
-                )
-                stats = cursor.fetchone()
+            cursor.execute(
+                "SELECT COUNT(*) AS total_sessions, "
+                "ROUND(AVG(correct_count/total_questions)*100, 1) AS avg_accuracy, "
+                "MIN(time_spent) AS best_time "
+                "FROM math_train_results WHERE user_id = %s",
+                (session['user_id'],)
+            )
+            stats = cursor.fetchone()
 
-                return jsonify({
-                    'history': history,
-                    'total_sessions': stats['total_sessions'],
-                    'avg_accuracy': stats['avg_accuracy'] or 0,
-                    'best_time': f"{stats['best_time'] // 60:02d}:{stats['best_time'] % 60:02d}" if stats['best_time'] else "00:00"
-                })
+            return jsonify({
+                'history': history,
+                'total_sessions': stats['total_sessions'],
+                'avg_accuracy': stats['avg_accuracy'] or 0,
+                'best_time': f"{stats['best_time'] // 60:02d}:{stats['best_time'] % 60:02d}" if stats['best_time'] else "00:00"
+            })
 
     except Exception as e:
         print(f"获取用户数据错误: {str(e)}")

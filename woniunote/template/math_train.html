@@ -7,30 +7,22 @@
   <link rel="stylesheet" href="/css/math_train.css">
 </head>
 <body>
-  <!-- 导航栏 -->
-  <nav class="navbar">
-    <div class="navbar-container">
-      <div class="navbar-left">
-        <span class="navbar-title">速算训练营</span>
-        <button class="navbar-btn" id="newBtn">新题生成</button>
-        <button class="navbar-btn" id="checkBtn">提交答案</button>
-      </div>
+  <!-- 导航栏部分 -->
+<div class="navbar-right">
+  <span class="navbar-username" id="navbarUsername"></span>
 
-      <div class="navbar-center">
-        <div class="timer">
-          <span id="minutes">00</span>:<span id="seconds">00</span>
-        </div>
-      </div>
+  <!-- 登录状态显示 -->
+  <div class="logged-out">
+    <button class="navbar-btn" id="showLoginModalBtn">登录</button>
+    <button class="navbar-btn" id="showRegisterModalBtn">注册</button>
+  </div>
 
-      <div class="navbar-right">
-        <span class="navbar-username" id="navbarUsername"></span>
-        <button class="navbar-btn" id="showLoginModalBtn">登录</button>
-        <button class="navbar-btn" id="showRegisterModalBtn">注册</button>
-        <button class="navbar-btn" id="logoutBtn" style="display: none;">退出</button>
-        <button class="navbar-btn" id="userCenterBtn" onclick="window.location.href='/math_train_user'" style="display: none;">用户中心</button>
-      </div>
-    </div>
-  </nav>
+  <!-- 登出状态显示 -->
+  <div class="logged-in">
+    <button class="navbar-btn" id="userCenterBtn" onclick="location.href='/math_train_user'">用户中心</button>
+    <button class="navbar-btn" id="logoutBtn">退出</button>
+  </div>
+</div>
 
   <!-- 主内容 -->
   <div class="container">
