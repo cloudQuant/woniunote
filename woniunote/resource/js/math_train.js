@@ -9,7 +9,7 @@ const DOM = {
   grid: document.getElementById('grid'),
   checkBtn: document.getElementById('checkBtn'),
   newBtn: document.getElementById('newBtn'),
-  startBtn: document.getElementById('startBtn'),
+  startBtn: document.getElementById('beginBtn'),  // 修改为正确的 ID
   minutes: document.getElementById('minutes'),
   seconds: document.getElementById('seconds'),
   loginModal: document.getElementById('loginModal'),
@@ -199,20 +199,26 @@ const AuthManager = {
 
 const setupEventListeners = () => {
   DOM.newBtn.addEventListener('click', generateQuestions);
-  DOM.startBtn.addEventListener('click', timerManager.start);
+  DOM.startBtn.addEventListener('click', () => {
+    timerManager.start();
+    alert("开始做题！");
+  });
   DOM.checkBtn.addEventListener('click', () => {
     timerManager.reset();
     alert('答案已提交');
   });
 
+  // 用户中心按钮
   document.getElementById('userCenterBtn').addEventListener('click', () => {
-    alert('跳转到用户中心');
+    window.location.href = '/math_train_user'; // 进行跳转
   });
 
+  // 退出按钮
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await AuthManager.handleLogout();
   });
 
+  // 关闭弹出框
   window.addEventListener('click', (event) => {
     if (event.target.classList.contains('modal')) {
       document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
@@ -228,6 +234,7 @@ const init = () => {
 };
 
 document.addEventListener('DOMContentLoaded', init);
+
 
 
 
