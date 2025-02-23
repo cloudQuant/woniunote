@@ -276,6 +276,7 @@ def math_train_check_login():
 
 @app.route("/math_train_user", methods=["GET"])
 def math_train_user():
+    print("进入用户中心界面")
     """用户中心页面"""
     if 'user_id' not in session:
         return redirect(url_for('math_train'))
