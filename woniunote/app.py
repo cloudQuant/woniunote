@@ -17,6 +17,7 @@ from woniunote.controller.user import user
 from woniunote.module.users import Users
 from woniunote.module.articles import Articles
 from woniunote.common.timer import can_use_minute
+from datetime import timedelta
 import pymysql
 from pymysql.cursors import DictCursor
 pymysql.install_as_MySQLdb()
@@ -37,6 +38,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # True: 跟踪数据库的修改，及时发送信号
 app.config['SQLALCHEMY_POOL_SIZE'] = 100  # 数据库连接池的大小。默认是数据库引擎的默认值（通常是 5）
 # app.config['SQLALCHEMY_POOL_RECYCLE'] = -1
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 DATABASE_INFO = parse_db_uri(SQLALCHEMY_DATABASE_URI)
 # 实例化db对象
 # db = SQLAlchemy(app)
