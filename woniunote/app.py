@@ -231,6 +231,9 @@ def math_train_register():
     hashed_password = generate_password_hash(password)
     connection = get_db_connection(DATABASE_INFO)
     try:
+        print("开始注册")
+        print("username:", username)
+        print("password:", password)
         with connection.cursor() as cursor:
             cursor.execute("INSERT INTO math_train_users (username, password) VALUES (%s, %s)", (username, hashed_password))
             connection.commit()
