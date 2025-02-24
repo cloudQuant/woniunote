@@ -14,7 +14,7 @@
     <button class="navbar-btn" id="logoutBtn">退出</button>
   </div>
   <div class="user-center-container">
-    <!-- 添加汇总统计 -->
+  <!-- 添加汇总统计 -->
         <div class="stats-summary">
           <div class="stat-item">
             <h3>总练习次数</h3>
@@ -90,7 +90,14 @@
     data.history.forEach(record => {
       const row = `
         <tr>
-          <td>${new Date(record.created_at).toLocaleDateString()}</td>
+          <td>${new Date(record.created_at).toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            })}</td>
           <td>Lv.${record.math_level}</td>
           <td>${record.total_questions}</td>
           <td>${record.correct_count}</td>

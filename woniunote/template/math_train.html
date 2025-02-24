@@ -7,73 +7,71 @@
   <link rel="stylesheet" href="/css/math_train.css">
 </head>
 <body>
-  <!-- 导航栏 -->
-  <nav class="navbar">
-    <div class="navbar-container">
-      <div class="navbar-left">
-        <span class="navbar-title">速算训练营</span>
-        <button class="navbar-btn" id="newBtn">新题生成</button>
-          <button class="navbar-btn" id="beginBtn">开始做题</button>
-        <button class="navbar-btn" id="checkBtn">提交答案</button>
+  <div class="app-container">
+    <main class="main-content">
+      <!-- 导航栏 -->
+      <nav class="navbar">
+        <div class="navbar-container">
+          <div class="navbar-left">
+            <span class="navbar-title">速算训练营</span>
+            <button class="navbar-btn" id="newBtn">生成新题</button>
+            <button class="navbar-btn" id="checkBtn">提交答案</button>
+          </div>
+
+          <div class="navbar-center">
+            <div class="timer">
+                <span id="minutes">00</span>:<span id="seconds">00</span>
+                <span id="totalSeconds" style="font-size: 0.8em">(0秒)</span>
+            </div>
+          </div>
+
+          <div class="navbar-right">
+            <span class="navbar-tip">快捷键：Shift+Alt提交答案</span>
+            <span class="navbar-username" id="navbarUsername"></span>
+            <button class="navbar-btn logged-out" id="showLoginModalBtn">登录</button>
+            <button class="navbar-btn logged-out" id="showRegisterModalBtn">注册</button>
+            <button class="navbar-btn logged-in" id="logoutBtn" style="display: none;">退出</button>
+            <button class="navbar-btn logged-in" id="userCenterBtn" style="display: none;" onclick="window.location.href='/math_train_user'">用户中心</button>
+          </div>
+        </div>
+      </nav>
+
+      <!-- 主内容 -->
+      <div class="container">
+        <div class="question-grid" id="grid"></div>
       </div>
 
-      <div class="navbar-center">
-        <div class="timer">
-            <span id="minutes">00</span>:<span id="seconds">00</span>
-            <span id="totalSeconds" style="font-size: 0.8em">(0秒)</span>
+      <!-- 登录对话框 -->
+      <div id="loginModal" class="modal">
+        <div class="modal-content">
+          <h2>登录</h2>
+          <input type="text" id="loginUsername" placeholder="用户名">
+          <input type="password" id="loginPassword" placeholder="密码">
+          <button id="loginBtn">登录</button>
+          <p class="switch-mode" id="switchToRegister">没有账号？立即注册</p>
         </div>
       </div>
 
-      <div class="navbar-right">
-        <span class="navbar-username" id="navbarUsername"></span>
-        <button class="navbar-btn logged-out" id="showLoginModalBtn">登录</button>
-        <button class="navbar-btn logged-out" id="showRegisterModalBtn">注册</button>
-        <button class="navbar-btn logged-in" id="logoutBtn" style="display: none;">退出</button>
-        <button class="navbar-btn logged-in" id="userCenterBtn" style="display: none;" onclick="window.location.href='/math_train_user'">用户中心</button>
+      <!-- 注册对话框 -->
+      <div id="registerModal" class="modal">
+        <div class="modal-content">
+          <h2>注册</h2>
+          <input type="text" id="registerUsername" placeholder="用户名">
+          <input type="password" id="registerPassword" placeholder="密码">
+          <input type="email" id="registerEmail" placeholder="邮箱">
+          <button id="registerBtn">注册</button>
+          <p class="switch-mode" id="switchToLogin">已有账号？立即登录</p>
+        </div>
       </div>
-    </div>
-  </nav>
 
-  <!-- 主内容 -->
-  <div class="container">
-    <div class="question-grid" id="grid"></div>
+      <script src="/js/math_train.js"></script>
+    </main>
   </div>
 
-  <!-- 登录对话框 -->
-  <div id="loginModal" class="modal">
-    <div class="modal-content">
-      <h2>登录</h2>
-      <input type="text" id="loginUsername" placeholder="用户名">
-      <input type="password" id="loginPassword" placeholder="密码">
-      <button id="loginBtn">登录</button>
-      <p class="switch-mode" id="switchToRegister">没有账号？立即注册</p>
+  <footer class="footer">
+    <div class="shortcut-tip">
+      快捷键：←↑→↓ 导航题目 | Shift+Alt 提交答案
     </div>
-  </div>
-
-  <!-- 注册对话框 -->
-  <div id="registerModal" class="modal">
-    <div class="modal-content">
-      <h2>注册</h2>
-      <input type="text" id="registerUsername" placeholder="用户名">
-      <input type="password" id="registerPassword" placeholder="密码">
-      <input type="email" id="registerEmail" placeholder="邮箱">
-      <button id="registerBtn">注册</button>
-      <p class="switch-mode" id="switchToLogin">已有账号？立即登录</p>
-    </div>
-  </div>
-
-  <script src="/js/math_train.js"></script>
+  </footer>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-

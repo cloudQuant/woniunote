@@ -7,8 +7,8 @@ const INITIAL_TIME = 0;
 // ==================== DOM元素引用 ====================
 const DOM = {
   grid: document.getElementById('grid'),
-  checkBtn: document.getElementById('checkBtn'),
   newBtn: document.getElementById('newBtn'),
+  checkBtn: document.getElementById('checkBtn'),
   startBtn: document.getElementById('beginBtn'),  // 修改为正确的 ID
   minutes: document.getElementById('minutes'),
   seconds: document.getElementById('seconds'),
@@ -32,14 +32,21 @@ let state = {
   correctCount: 0,
   loggedIn: false,   // 默认未登录
   username: '',       // 存储用户名
-  timerStarted: false // 标记计时是否已经开始
+  timerStarted: false, // 标记计时是否已经开始
+  currentFocusIndex: 0
 };
 
 // ==================== 核心功能 ====================
 
 const initInputsArray = () => {
   state.inputsArray = Array.from(document.querySelectorAll('.answer-input'));
-  state.inputsArray.forEach((input, index) => input.dataset.index = index);
+  state.inputsArray.forEach((input, index) => {
+    input.dataset.index = index;
+    input.addEventListener('focus', () => {
+      state.currentFocusIndex = index;
+      updateFocusStyle();
+    });
+  });
 };
 
 const generateQuestion = () => {
@@ -76,7 +83,7 @@ const generateQuestions = () => {
   for (let i = 0; i < TOTAL_ROWS; i++) {
     const rowDiv = document.createElement('div');
     rowDiv.className = 'question-row';
-
+    
     for (let j = 0; j < QUESTIONS_PER_ROW; j++) {
       rowDiv.appendChild(createQuestionElement(generateQuestion()));
     }
@@ -85,9 +92,22 @@ const generateQuestions = () => {
 
   DOM.grid.appendChild(fragment);
   initInputsArray();
+  
+  // 自动开始计时
+  timerManager.start();
+
+  state.currentFocusIndex = 0;
+  setTimeout(() => {
+    updateFocusStyle();
+    state.inputsArray[0]?.focus();
+  }, 0);
 };
 
 const checkAnswers = () => {
+  // 播放提交音效
+  const audio = new Audio('/sfx/submit.mp3');
+  audio.play();
+  
   let correctAnswers = 0;
   state.inputsArray.forEach(input => {
     const questionElement = input.closest('.question-item');
@@ -132,6 +152,9 @@ const checkAnswers = () => {
     })
   });
   alert(`答对了 ${correctAnswers} 道题目，共 ${state.inputsArray.length} 道题目`);
+  
+  // 添加自动生成新题
+  setTimeout(generateQuestions, 1500);
 };
 
 // ==================== 计时器管理 ====================
@@ -268,15 +291,70 @@ const AuthManager = {
   }
 };
 
+// ==================== 键盘导航 ====================
+
+const handleKeyNavigation = (e) => {
+  if (e.shiftKey && e.altKey) {
+    e.preventDefault();
+    checkAnswers();
+    return;
+  }
+  const inputs = state.inputsArray;
+  if (!inputs.length) return;
+
+  const total = inputs.length;
+  let newIndex = state.currentFocusIndex;
+
+  switch(e.key) {
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      newIndex = Math.max(0, state.currentFocusIndex - 1);
+      break;
+    case 'ArrowRight':
+    case 'ArrowDown':
+      newIndex = Math.min(total - 1, state.currentFocusIndex + 1);
+      break;
+    case 'Enter':
+      e.preventDefault();
+      if (state.currentFocusIndex < total - 1) {
+        newIndex = state.currentFocusIndex + 1;
+      }
+      break;
+    default:
+      return;
+  }
+
+  if (newIndex !== state.currentFocusIndex) {
+    state.currentFocusIndex = newIndex;
+    inputs[state.currentFocusIndex].focus();
+    updateFocusStyle();
+  }
+};
+
+const updateFocusStyle = () => {
+  state.inputsArray.forEach((input, index) => {
+    const item = input.closest('.question-item');
+    item?.classList.toggle('focused', index === state.currentFocusIndex);
+  });
+};
+
+// ==================== 快捷键视觉反馈 ====================
+
+const addVisualFeedback = () => {
+  DOM.checkBtn.style.transform = 'scale(0.95)';
+  setTimeout(() => {
+    DOM.checkBtn.style.transform = 'scale(1)';
+  }, 100);
+};
+
 // ==================== 事件绑定 ====================
 
 const setupEventListeners = () => {
   DOM.newBtn.addEventListener('click', generateQuestions);
-  DOM.startBtn.addEventListener('click', () => {
-    timerManager.start();
-    alert("开始做题！");
-  });
-  DOM.checkBtn.addEventListener('click', checkAnswers); // 修改为检查答案
+  DOM.checkBtn.addEventListener('click', () => {
+    checkAnswers();
+    addVisualFeedback();
+  }); // 修改为检查答案
 
   // 登录按钮事件
   DOM.navbarElements.login.addEventListener('click', () => {
@@ -323,6 +401,8 @@ const setupEventListeners = () => {
       document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
     }
   });
+  
+  document.addEventListener('keydown', handleKeyNavigation);
 };
 
 // ==================== 初始化 ====================

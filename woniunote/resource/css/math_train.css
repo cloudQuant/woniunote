@@ -44,7 +44,7 @@ body {
 .navbar-right {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
 }
 
 .navbar-title {
@@ -61,18 +61,21 @@ body {
 }
 
 .navbar-btn {
-  background-color: var(--btn-bg);
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  background: #3498db;
   color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
 .navbar-btn:hover {
-  background-color: var(--btn-hover);
+  background: #2980b9;
+}
+
+.navbar-tip {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-right: 1rem;
 }
 
 /* 主内容 */
@@ -141,11 +144,18 @@ body {
   border-radius: 12px;
   box-shadow: var(--shadow);
   transition: var(--transition);
+  transition: border-color 0.3s ease;
+  border: 2px solid transparent;
 }
 
 .question-item:hover {
   transform: translateY(-5px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.question-item.focused {
+  border-color: #3498db;
+  box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
 }
 
 .number {
@@ -269,6 +279,12 @@ body {
   margin-top: 1rem;
 }
 
+.submitting {
+  transform: scale(0.95);
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
 /* ==================== 响应式布局 ==================== */
 @media (max-width: 992px) {
   .question-grid {
@@ -373,4 +389,12 @@ body {
 
 .history-table tr:last-child td {
   border-bottom: none;
+}
+
+/* 删除侧边栏样式 */
+.sidebar, .nav-btn { display: none !important; }
+
+.main-content {
+  margin-left: 0;
+  padding: 2rem;
 }
