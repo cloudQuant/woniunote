@@ -14,105 +14,121 @@
     <button class="navbar-btn" id="logoutBtn">退出</button>
   </div>
 
-  <!-- 数据展示区 -->
-  <div class="container">
-    <h2>训练记录</h2>
-    <div class="stats-overview">
-      <div class="stat-box">
-        <h3>总练习次数</h3>
-        <p id="totalSessions">0</p>
-      </div>
-      <div class="stat-box">
-        <h3>平均正确率</h3>
-        <p id="avgAccuracy">0%</p>
-      </div>
-      <div class="stat-box">
-        <h3>最佳用时</h3>
-        <p id="bestTime">00:00</p>
-      </div>
-    </div>
+  <!-- 添加汇总统计 -->
+        <div class="stats-summary">
+          <div class="stat-item">
+            <h3>总练习次数</h3>
+            <p id="totalSessions">0</p>
+          </div>
+          <div class="stat-item">
+            <h3>平均正确率</h3>
+            <p id="avgAccuracy">0%</p>
+          </div>
+          <div class="stat-item">
+            <h3>总耗时</h3>
+            <p id="totalTime">0秒</p>
+          </div>
+        </div>
 
-    <div class="history-table">
-      <table>
-        <thead>
-          <tr>
+        <!-- 更新表格结构 -->
+        <table>
+          <thead>
+            <tr>
               <th>日期</th>
               <th>难度</th>
               <th>总题数</th>
               <th>正确数</th>
               <th>正确率</th>
-              <th>用时</th>
-          </tr>
-        </thead>
-        <tbody id="historyBody">
-          <!-- 动态填充数据 -->
-        </tbody>
-      </table>
+              <th>耗时(秒)</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <!-- 动态填充 -->
+          </tbody>
+        </table>
     </div>
   </div>
 
-{#  <!-- JavaScript -->#}
-{#  <script>#}
-{#    // 全局认证检查#}
-{#  const checkAuth = async () => {#}
-{#    try {#}
-{#      const res = await fetch('/math_train_check_login', {#}
-{#        credentials: 'include'#}
-{#      });#}
-{#      const data = await res.json();#}
-{##}
-{#      if (!data.loggedIn) {#}
-{#        window.location.href = '/math_train';#}
-{#      } else {#}
-{#        document.getElementById('navbarUsername').textContent = `欢迎，${data.username}`;#}
-{#      }#}
-{#    } catch (error) {#}
-{#      console.error('认证检查失败:', error);#}
-{#      window.location.href = '/math_train';#}
-{#    }#}
-{#  };#}
-{##}
-{#  // 获取训练历史数据#}
-{#  async function loadTrainingHistory() {#}
-{#    try {#}
-{#      await checkAuth(); // 先检查登录状态#}
-{##}
-{#      const response = await fetch('/math_train_user_data', {#}
-{#        credentials: 'include'#}
-{#      });#}
-{##}
-{#      if (response.status === 401) {#}
-{#        window.location.href = '/math_train';#}
-{#        return;#}
-{#      }#}
-{##}
-{#      const data = await response.json();#}
-{##}
-{#      // 更新统计数据...（保持原有代码不变）#}
-{##}
-{#    } catch (error) {#}
-{#      console.error('加载数据失败:', error);#}
-{#    }#}
-{#  }#}
-{##}
-{#  // 初始化加载#}
-{#  window.onload = () => {#}
-{#    checkAuth();#}
-{#    loadTrainingHistory();#}
-{##}
-{#    // 绑定退出按钮#}
-{#    document.getElementById('logoutBtn').addEventListener('click', async () => {#}
-{#      try {#}
-{#        await fetch('/math_train_logout', {#}
-{#          method: 'POST',#}
-{#          credentials: 'include'#}
-{#        });#}
-{#        window.location.href = '/math_train';#}
-{#      } catch (error) {#}
-{#        console.error('退出失败:', error);#}
-{#      }#}
-{#    });#}
-{#  };#}
-{#  </script>#}
+  <!-- JavaScript -->
+  <script>
+    // 全局认证检查
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('/math_train_check_login', {
+        credentials: 'include'
+      });
+      const data = await res.json();
+
+      if (!data.loggedIn) {
+        window.location.href = '/math_train';
+      } else {
+        document.getElementById('navbarUsername').textContent = `欢迎，${data.username}`;
+      }
+    } catch (error) {
+      console.error('认证检查失败:', error);
+      window.location.href = '/math_train';
+    }
+  };
+
+  // 获取训练历史数据
+  async function loadTrainingHistory() {
+    try {
+      await checkAuth(); // 先检查登录状态
+
+      const response = await fetch('/math_train_user_data', {
+        credentials: 'include'
+      });
+
+      if (response.status === 401) {
+        window.location.href = '/math_train';
+        return;
+      }
+
+      const data = await response.json();
+
+      // 在获取数据后
+    data.history.forEach(record => {
+      const row = `
+        <tr>
+          <td>${new Date(record.created_at).toLocaleDateString()}</td>
+          <td>Lv.${record.math_level}</td>
+          <td>${record.total_questions}</td>
+          <td>${record.correct_count}</td>
+          <td>${(record.correct_count / record.total_questions * 100).toFixed(1)}%</td>
+          <td>${record.time_spent}</td>
+        </tr>
+          `;
+          document.getElementById('historyBody').innerHTML += row;
+        });
+
+        // 更新汇总数据
+        document.getElementById('totalSessions').textContent = data.total_sessions;
+        document.getElementById('avgAccuracy').textContent = `${data.avg_accuracy}%`;
+        document.getElementById('totalTime').textContent = `${data.total_time}秒`;
+
+        } catch (error) {
+          console.error('加载数据失败:', error);
+        }
+      }
+
+  // 初始化加载
+  window.onload = () => {
+    checkAuth();
+    loadTrainingHistory();
+
+    // 绑定退出按钮
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        await fetch('/math_train_logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        window.location.href = '/math_train';
+      } catch (error) {
+        console.error('退出失败:', error);
+      }
+    });
+  };
+  </script>
 </body>
 </html>

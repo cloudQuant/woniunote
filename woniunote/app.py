@@ -182,7 +182,7 @@ def math_train_login():
             print("user_dict", user_dict)
             print("user_name", username)
             print("password", password)
-            if not user or not check_password_hash(user_dict['password'], password):
+            if not user_dict or not check_password_hash(user_dict.get('password'), password):
                 return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
 
             # 设置持久会话
@@ -204,11 +204,13 @@ def math_train_login():
 # 保存训练结果路由
 @app.route('/math_train_save_result', methods=['POST'])
 def math_train_save_result():
+    print("开始保存结果")
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': '未登录'}), 401
 
     try:
         data = request.get_json()
+        print("result_data", data)
         required_fields = ['math_level', 'correct_count', 'total_questions', 'time_spent']
         if not all(field in data for field in required_fields):
             return jsonify({'success': False, 'message': '数据不完整'}), 400
@@ -227,6 +229,7 @@ def math_train_save_result():
                 data['time_spent']
             ))
             connection.commit()
+            print("保存数据成功")
             return jsonify({'success': True})
 
     except pymysql.Error as e:
@@ -250,7 +253,7 @@ def math_train_register():
 
         hashed_password = generate_password_hash(password)
 
-        with get_db_connection() as connection:
+        with get_db_connection(DATABASE_INFO) as connection:
             with connection.cursor() as cursor:
                 cursor.execute(
                     "INSERT INTO math_train_users (username, password, email) VALUES (%s, %s, %s)",
@@ -311,7 +314,6 @@ def math_train_user_data():
     """获取用户训练数据"""
     # if 'user_id' not in session:
     #     return jsonify({'error': '未登录'}), 401
-
     try:
         connection = get_db_connection(DATABASE_INFO)
         with connection.cursor() as cursor:
