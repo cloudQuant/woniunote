@@ -207,6 +207,90 @@ body {
   background: #fff9f9;
 }
 
+/* 注册模态框增强样式 */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 2rem 3rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 400px;
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.modal.show .modal-content {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.modal-content h2 {
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.modal-input-group {
+  margin-bottom: 1.2rem;
+}
+
+.modal-input-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.modal-input-group input:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+#registerBtn {
+  width: 100%;
+  padding: 14px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#registerBtn:hover {
+  background: #2980b9;
+}
+
+.switch-mode {
+  text-align: center;
+  margin-top: 1rem;
+  color: #7f8c8d;
+  cursor: pointer;
+}
+
+.switch-mode:hover {
+  color: #3498db;
+  text-decoration: underline;
+}
+
 /* ==================== 对话框样式 ==================== */
 .modal {
   display: none;

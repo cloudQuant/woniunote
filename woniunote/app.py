@@ -168,6 +168,7 @@ def math_train():
 
 @app.route('/math_train_login', methods=['POST'])
 def math_train_login():
+    print("begin to login")
     try:
         data = request.get_json()
         username = data.get('username', '').strip()
@@ -242,6 +243,7 @@ def math_train_save_result():
 @app.route('/math_train_register', methods=['POST'])
 def math_train_register():
     """用户注册"""
+    print("开始进行注册")
     try:
         data = request.get_json()
         username = data.get('username')

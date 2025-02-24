@@ -9,7 +9,7 @@ const DOM = {
   grid: document.getElementById('grid'),
   newBtn: document.getElementById('newBtn'),
   checkBtn: document.getElementById('checkBtn'),
-  startBtn: document.getElementById('beginBtn'),  // 修改为正确的 ID
+  startBtn: document.getElementById('beginBtn'),
   minutes: document.getElementById('minutes'),
   seconds: document.getElementById('seconds'),
   loginModal: document.getElementById('loginModal'),
@@ -37,18 +37,26 @@ let state = {
 };
 
 // ==================== 核心功能 ====================
-
 const initInputsArray = () => {
   state.inputsArray = Array.from(document.querySelectorAll('.answer-input'));
   state.inputsArray.forEach((input, index) => {
     input.dataset.index = index;
     input.addEventListener('focus', () => {
       state.currentFocusIndex = index;
-      updateFocusStyle();
+      updateFocusStyle();  // 确保updateFocusStyle已定义
     });
   });
 };
 
+// 添加updateFocusStyle函数
+const updateFocusStyle = () => {
+  const currentInput = state.inputsArray[state.currentFocusIndex];
+  if (currentInput) {
+    currentInput.style.borderColor = 'blue';  // 示例，改变焦点元素的边框颜色
+  }
+};
+
+// 生成问题
 const generateQuestion = () => {
   let num1 = Math.floor(Math.random() * 20) + 1;
   let num2 = Math.floor(Math.random() * 20) + 1;
@@ -75,7 +83,6 @@ const createQuestionElement = ({ num1, num2, operator }) => {
   return question;
 };
 
-// 生成计算题，无需检查登录状态
 const generateQuestions = () => {
   DOM.grid.innerHTML = '';
   const fragment = document.createDocumentFragment();
@@ -83,7 +90,7 @@ const generateQuestions = () => {
   for (let i = 0; i < TOTAL_ROWS; i++) {
     const rowDiv = document.createElement('div');
     rowDiv.className = 'question-row';
-    
+
     for (let j = 0; j < QUESTIONS_PER_ROW; j++) {
       rowDiv.appendChild(createQuestionElement(generateQuestion()));
     }
@@ -92,10 +99,8 @@ const generateQuestions = () => {
 
   DOM.grid.appendChild(fragment);
   initInputsArray();
-  
-  // 自动开始计时
-  timerManager.start();
 
+  timerManager.start();
   state.currentFocusIndex = 0;
   setTimeout(() => {
     updateFocusStyle();
@@ -104,10 +109,9 @@ const generateQuestions = () => {
 };
 
 const checkAnswers = () => {
-  // 播放提交音效
   const audio = new Audio('/sfx/submit.mp3');
   audio.play();
-  
+
   let correctAnswers = 0;
   state.inputsArray.forEach(input => {
     const questionElement = input.closest('.question-item');
@@ -140,7 +144,6 @@ const checkAnswers = () => {
   });
 
   state.correctCount = correctAnswers;
-  // 保存结果到后端
   fetch('/math_train_save_result', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -152,21 +155,16 @@ const checkAnswers = () => {
     })
   });
   alert(`答对了 ${correctAnswers} 道题目，共 ${state.inputsArray.length} 道题目`);
-  
-  // 添加自动生成新题
+
   setTimeout(generateQuestions, 1500);
 };
 
-// ==================== 计时器管理 ====================
-
 const timerManager = {
   start: () => {
-    if (state.timerStarted) return; // 防止重复计时
+    if (state.timerStarted) return;
     state.timerStarted = true;
     state.timer = setInterval(() => {
       state.time++;
-      //DOM.minutes.textContent = String(Math.floor(state.time / 60)).padStart(2, '0');
-      //DOM.seconds.textContent = String(state.time % 60).padStart(2, '0');
       DOM.minutes.textContent = String(Math.floor(state.time / 60)).padStart(2, '0');
       DOM.seconds.textContent = String(state.time % 60).padStart(2, '0');
       document.getElementById('totalSeconds').textContent = `(${state.time}秒)`;
@@ -182,234 +180,171 @@ const timerManager = {
   }
 };
 
-// ==================== 网络请求 ====================
-
-const apiRequest = async (url, method, data) => {
-  try {
-    const response = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    return await response.json();
-  } catch (error) {
-    console.error(`${method}请求失败:`, error);
-    throw error;
-  }
-};
-
 // ==================== 用户状态管理 ====================
 
-const AuthManager = {
-  checkStatus: () => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      state.loggedIn = true;
-      state.username = JSON.parse(storedUser).username;
-      AuthManager.updateUI();
-    } else {
-      state.loggedIn = false;
-      AuthManager.updateUI();
-    }
-  },
-
-  handleLogin: async (username, password) => {
-    try {
-      const res = await fetch('/math_train_login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        localStorage.setItem('user', JSON.stringify({ username }));
-        state.loggedIn = true;
-        state.username = data.username;
-        AuthManager.updateUI();
-        document.getElementById('loginModal').style.display = 'none'; // 关闭登录模态框
-        window.location.href = data.redirect;
-      } else {
-        alert(data.message || '登录失败');
-      }
-    } catch (error) {
-      alert('网络连接错误，请重试');
-      console.error('登录请求失败:', error);
-    }
-  },
-
-  handleRegister: async (username, password, email) => {
-    try {
-      const res = await fetch('/math_train_register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, email })
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        alert('注册成功！请登录');
-        document.getElementById('registerModal').style.display = 'none'; // 关闭注册模态框
-        document.getElementById('loginModal').style.display = 'block'; // 打开登录模态框
-      } else {
-        alert(data.message || '注册失败');
-      }
-    } catch (error) {
-      alert('网络连接错误，请重试');
-      console.error('注册请求失败:', error);
-    }
-  },
-
-  handleLogout: async () => {
-    try {
-      const res = await fetch('/math_train_logout', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        localStorage.removeItem('user');
-        state.loggedIn = false;
-        state.username = '';
-        AuthManager.updateUI();
-        alert('退出成功');
-        window.location.href = data.redirect;
-      }
-    } catch (error) {
-      alert('退出失败，请重试');
-      console.error('退出请求失败:', error);
-    }
-  },
-
-  updateUI: () => {
-    if (state.loggedIn) {
-      document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'inline-block');
-      document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'none');
-      DOM.navbarElements.username.textContent = `欢迎，${state.username}`;
-    } else {
-      document.querySelectorAll('.logged-in').forEach(el => el.style.display = 'none');
-      document.querySelectorAll('.logged-out').forEach(el => el.style.display = 'inline-block');
-      DOM.navbarElements.username.textContent = '';
-    }
-  }
-};
-
-// ==================== 键盘导航 ====================
-
-const handleKeyNavigation = (e) => {
-  if (e.shiftKey && e.altKey) {
-    e.preventDefault();
-    checkAnswers();
+async function handleMathLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('mathTrainUsername').value.trim();
+  const password = document.getElementById('mathTrainPassword').value;
+  if (!username) {
+    alert('用户名不能为空');
     return;
   }
-  const inputs = state.inputsArray;
-  if (!inputs.length) return;
-
-  const total = inputs.length;
-  let newIndex = state.currentFocusIndex;
-
-  switch(e.key) {
-    case 'ArrowLeft':
-    case 'ArrowUp':
-      newIndex = Math.max(0, state.currentFocusIndex - 1);
-      break;
-    case 'ArrowRight':
-    case 'ArrowDown':
-      newIndex = Math.min(total - 1, state.currentFocusIndex + 1);
-      break;
-    case 'Enter':
-      e.preventDefault();
-      if (state.currentFocusIndex < total - 1) {
-        newIndex = state.currentFocusIndex + 1;
-      }
-      break;
-    default:
-      return;
+  if (!password) {
+    alert('密码不能为空');
+    return;
   }
 
-  if (newIndex !== state.currentFocusIndex) {
-    state.currentFocusIndex = newIndex;
-    inputs[state.currentFocusIndex].focus();
-    updateFocusStyle();
+  const loginButton = document.getElementById('loginBtn');
+  try {
+    const response = await fetch('/math_train_login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP错误! 状态码: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      localStorage.setItem('mathTrainUser', JSON.stringify({
+        username: result.username,
+        lastLogin: new Date().toISOString()
+      }));
+
+      document.getElementById('navbarUsername').textContent = result.username;
+      document.getElementById('logoutBtn').style.display = 'inline-block';
+      document.getElementById('userCenterBtn').style.display = 'inline-block';
+      document.getElementById('showLoginModalBtn').style.display = 'none';
+
+      const modal = document.getElementById('loginModal');
+      if (modal) modal.style.display = 'none';
+
+      state.loggedIn = true;  // 登录状态更新
+      state.username = result.username;
+    } else {
+      alert(`登录失败: ${result.message || '未知错误'}`);
+    }
+  } catch (error) {
+    alert(`请求失败: ${error.message}`);
+  } finally {
+    // loginButton.disabled = false;
+    // loginButton.textContent = '登录';
+    console.log('登录按钮已恢复');
   }
-};
+}
 
-const updateFocusStyle = () => {
-  state.inputsArray.forEach((input, index) => {
-    const item = input.closest('.question-item');
-    item?.classList.toggle('focused', index === state.currentFocusIndex);
-  });
-};
+async function handleLogout() {
+  try {
+    const res = await fetch('/math_train_logout', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.removeItem('mathTrainUser');
+      document.getElementById('navbarUsername').textContent = '';
+      document.getElementById('logoutBtn').style.display = 'none';
+      document.getElementById('userCenterBtn').style.display = 'none';
+      document.getElementById('showLoginModalBtn').style.display = 'inline-block';
+      state.loggedIn = false;
+      state.username = '';
+    }
+  } catch (error) {
+    console.error('退出失败:', error);
+  }
+}
 
-// ==================== 快捷键视觉反馈 ====================
+// ==================== 模态框动画控制 ====================
 
-const addVisualFeedback = () => {
-  DOM.checkBtn.style.transform = 'scale(0.95)';
+function showModal(modalId) {
+  const modal = document.getElementById(modalId);
+  modal.classList.add('show');
+  modal.style.display = 'flex';
+}
+
+function hideModal(modalId) {
+  const modal = document.getElementById(modalId);
+  modal.classList.remove('show');
   setTimeout(() => {
-    DOM.checkBtn.style.transform = 'scale(1)';
-  }, 100);
-};
+    modal.style.display = 'none';
+  }, 300);
+}
 
 // ==================== 事件绑定 ====================
 
 const setupEventListeners = () => {
-  DOM.newBtn.addEventListener('click', generateQuestions);
-  DOM.checkBtn.addEventListener('click', () => {
-    checkAnswers();
-    addVisualFeedback();
-  }); // 修改为检查答案
+  if (DOM.newBtn) {
+    DOM.newBtn.addEventListener('click', generateQuestions);
+  }
 
-  // 登录按钮事件
-  DOM.navbarElements.login.addEventListener('click', () => {
-    document.getElementById('loginModal').style.display = 'block'; // 打开登录对话框
-  });
+  if (DOM.checkBtn) {
+    DOM.checkBtn.addEventListener('click', checkAnswers);
+  }
 
-  // 注册按钮事件
-  DOM.navbarElements.register.addEventListener('click', () => {
-    document.getElementById('registerModal').style.display = 'block'; // 打开注册对话框
-  });
+  if (DOM.navbarElements.login) {
+    DOM.navbarElements.login.addEventListener('click', () => {
+      showModal('loginModal');
+    });
+  }
 
-  // 登录提交事件
-  document.getElementById('loginBtn').addEventListener('click', () => {
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
-    AuthManager.handleLogin(username, password);
-  });
+  const mathLoginForm = document.getElementById('mathTrainLoginForm');
+  if (mathLoginForm) {
+    mathLoginForm.addEventListener('submit', handleMathLogin);
+  }
 
-  // 注册提交事件
-  document.getElementById('registerBtn').addEventListener('click', () => {
-    const username = document.getElementById('registerUsername').value;
-    const password = document.getElementById('registerPassword').value;
-    const email = document.getElementById('registerEmail').value;
-    AuthManager.handleRegister(username, password, email);
-  });
+  if (DOM.navbarElements.register) {
+    DOM.navbarElements.register.addEventListener('click', () => {
+      showModal('registerModal');
+    });
+  }
 
-  // 用户中心按钮
-  document.getElementById('userCenterBtn').addEventListener('click', () => {
-    if (state.loggedIn) {
-      window.location.href = '/math_train_user'; // 正常跳转
-    } else {
-      alert('请先登录');
-    }
-  });
+  if (document.getElementById('userCenterBtn')) {
+    document.getElementById('userCenterBtn').addEventListener('click', () => {
+      if (state.loggedIn) {
+        window.location.href = '/math_train_user';
+      } else {
+        alert('请先登录');
+      }
+    });
+  }
 
-  // 退出按钮
-  document.getElementById('logoutBtn').addEventListener('click', async () => {
-    await AuthManager.handleLogout();
-  });
+  if (document.getElementById('logoutBtn')) {
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await handleLogout();
+    });
+  }
 
-  // 关闭弹出框
   window.addEventListener('click', (event) => {
     if (event.target.classList.contains('modal')) {
-      document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+      document.querySelectorAll('.modal').forEach(m => hideModal(m.id));
     }
   });
-  
-  document.addEventListener('keydown', handleKeyNavigation);
 };
 
-// ==================== 初始化 ====================
+// ==================== 页面初始化 ====================
 const init = () => {
-  AuthManager.checkStatus();
+  const user = localStorage.getItem('mathTrainUser');
+  if (user) {
+    const parsedUser = JSON.parse(user);
+    state.loggedIn = true;
+    state.username = parsedUser.username;
+    document.getElementById('navbarUsername').textContent = state.username;
+    document.getElementById('logoutBtn').style.display = 'inline-block';
+    document.getElementById('userCenterBtn').style.display = 'inline-block';
+    document.getElementById('showLoginModalBtn').style.display = 'none';
+  }
+
   generateQuestions();
   setupEventListeners();
 };
 
 document.addEventListener('DOMContentLoaded', init);
+
+
+
+
+
+
+
+
