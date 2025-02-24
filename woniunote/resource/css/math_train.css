@@ -313,3 +313,64 @@ body {
     font-size: 1.5rem;
   }
 }
+
+/* 用户中心统计卡片 */
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.stat-item {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-3px);
+}
+
+.stat-item h3 {
+  color: #2c3e50;
+  margin: 0 0 0.8rem;
+  font-size: 1.1rem;
+}
+
+.stat-item p {
+  font-size: 1.8rem;
+  color: #e74c3c;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* 表格优化 */
+.history-table {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.history-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table th {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  font-weight: 500;
+}
+
+.history-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.history-table tr:last-child td {
+  border-bottom: none;
+}

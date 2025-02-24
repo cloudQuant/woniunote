@@ -327,7 +327,7 @@ def math_train_user_data():
             cursor.execute(
                 "SELECT COUNT(*) AS total_sessions, "
                 "ROUND(AVG(correct_count/total_questions)*100, 1) AS avg_accuracy, "
-                "MIN(time_spent) AS best_time "
+                "SUM(time_spent) AS total_time "  # 改为SUM
                 "FROM math_train_results WHERE user_id = %s",
                 (session['user_id'],)
             )
@@ -337,7 +337,7 @@ def math_train_user_data():
                 'history': history,
                 'total_sessions': stats['total_sessions'],
                 'avg_accuracy': stats['avg_accuracy'] or 0,
-                'best_time': f"{stats['best_time'] // 60:02d}:{stats['best_time'] % 60:02d}" if stats['best_time'] else "00:00"
+                'total_time': stats['total_time'] or 0,
             })
 
     except Exception as e:
