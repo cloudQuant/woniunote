@@ -273,6 +273,7 @@ def math_train_register():
 
 @app.route('/math_train_logout', methods=['POST'])
 def math_train_logout():
+    print("begin math_train_logout")
     session.clear()
     return jsonify({
         'success': True,

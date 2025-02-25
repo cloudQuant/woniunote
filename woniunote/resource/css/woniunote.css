@@ -278,6 +278,10 @@ body {
     box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
 }
 
+.correct { background-color: #c8e6c9; transition: background 0.3s; }
+.incorrect { background-color: #ffcdd2; transition: background 0.3s; }
+.answer-input { transition: all 0.3s ease; }
+
 /* 表单系统 */
 input, textarea {
     background: rgba(255,255,255,0.95) !important;
