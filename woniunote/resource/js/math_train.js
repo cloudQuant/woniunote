@@ -30,9 +30,9 @@ let state = {
   timer: null,
   time: INITIAL_TIME,
   correctCount: 0,
-  loggedIn: false,   // 默认未登录
-  username: '',       // 存储用户名
-  timerStarted: false, // 标记计时是否已经开始
+  loggedIn: false,
+  username: '',
+  timerStarted: false,
   currentFocusIndex: 0
 };
 
@@ -50,9 +50,11 @@ const initInputsArray = () => {
 };
 
 const updateFocusStyle = () => {
+  state.inputsArray.forEach(input => input.style.borderColor = '');
   const currentInput = state.inputsArray[state.currentFocusIndex];
   if (currentInput) {
-    currentInput.style.borderColor = 'blue';  // 示例，改变焦点元素的边框颜色
+    currentInput.style.borderColor = 'blue';
+    currentInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 };
 
@@ -63,7 +65,7 @@ const generateQuestion = () => {
 
   if (operator === '÷') {
     while (num2 === 0) num2 = Math.floor(Math.random() * 20) + 1;
-    return { num1: num1 * num2, num2, operator };  // 保证除法运算结果是整数
+    return { num1: num1 * num2, num2, operator };
   }
 
   return { num1, num2, operator };
@@ -136,10 +138,10 @@ const checkAnswers = () => {
     }
 
     if (parseInt(input.value) === correctAnswer) {
-      input.style.backgroundColor = 'lightgreen'; // 正确答案
+      input.style.backgroundColor = 'lightgreen';
       correctAnswers++;
     } else {
-      input.style.backgroundColor = 'lightcoral'; // 错误答案
+      input.style.backgroundColor = 'lightcoral';
     }
   });
 
@@ -157,6 +159,39 @@ const checkAnswers = () => {
   alert(`答对了 ${correctAnswers} 道题目，共 ${state.inputsArray.length} 道题目`);
 
   setTimeout(generateQuestions, 1500);
+};
+
+const handleKeyDown = (e) => {
+  if (!e.target.classList.contains('answer-input')) return;
+
+  const key = e.key;
+  let newIndex = state.currentFocusIndex;
+  const totalQuestions = state.inputsArray.length;
+
+  switch (key) {
+    case 'ArrowLeft':
+      newIndex = Math.max(newIndex - 1, 0);
+      break;
+    case 'ArrowRight':
+    case 'Enter':
+      newIndex = Math.min(newIndex + 1, totalQuestions - 1);
+      break;
+    case 'ArrowUp':
+      newIndex = Math.max(newIndex - QUESTIONS_PER_ROW, 0);
+      break;
+    case 'ArrowDown':
+      newIndex = Math.min(newIndex + QUESTIONS_PER_ROW, totalQuestions - 1);
+      break;
+    default:
+      return;
+  }
+
+  if (newIndex !== state.currentFocusIndex) {
+    e.preventDefault();
+    state.currentFocusIndex = newIndex;
+    state.inputsArray[newIndex].focus();
+    updateFocusStyle();
+  }
 };
 
 const timerManager = {
@@ -223,7 +258,7 @@ async function handleMathLogin(e) {
       const modal = document.getElementById('loginModal');
       if (modal) modal.style.display = 'none';
 
-      state.loggedIn = true;  // 登录状态更新
+      state.loggedIn = true;
       state.username = result.username;
     } else {
       alert(`登录失败: ${result.message || '未知错误'}`);
@@ -265,6 +300,7 @@ const setupEventListeners = () => {
       showModal('loginModal');
     });
   }
+
   const mathLoginForm = document.getElementById('mathTrainLoginForm');
   if (mathLoginForm) {
     mathLoginForm.addEventListener('submit', handleMathLogin);
@@ -276,6 +312,8 @@ const setupEventListeners = () => {
       window.location.reload();
     });
   }
+
+  document.addEventListener('keydown', handleKeyDown);
 };
 
 // ==================== 页面加载 ====================
