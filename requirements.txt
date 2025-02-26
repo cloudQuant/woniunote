@@ -4,6 +4,8 @@ flask_login
 flask_mysqldb
 flask_sslify
 flask_session
+Flask-Caching>=2.0.2
+Flask-WTF>=1.1.1
 Jinja2
 MarkupSafe
 Werkzeug
@@ -28,6 +30,10 @@ greenlet
 dnspython
 eventlet
 cython
-pytest
-Flask-Caching>=2.0.2
-Flask-WTF>=1.1.1
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-flask>=1.2.0
+coverage>=7.0.0
+requests>=2.32.0
+beautifulsoup4>=4.11.0
+

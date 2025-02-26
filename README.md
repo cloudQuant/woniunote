@@ -34,7 +34,8 @@ nohup python app.py > woniunote_run.log 2>&1 &
 ```
 
 
-
+### 测试项目
+`pytest tests/ --cov=woniunote -v`
 
 
 

@@ -1,6 +1,6 @@
-# import os
-from flask import Flask,redirect,request,render_template,session,url_for,jsonify
+from flask import Flask, redirect, request, render_template, session, url_for, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 from woniunote.configs.config import config
 from woniunote.common.utils import read_config, get_package_path, get_db_connection, parse_db_uri
@@ -17,11 +17,7 @@ from woniunote.controller.ucenter import ucenter
 from woniunote.controller.ueditor import ueditor
 from woniunote.controller.user import user
 from woniunote.module.users import Users
-# from woniunote.module.articles import Articles
-# from woniunote.common.timer import can_use_minute
-# from datetime import timedelta
 import pymysql
-# from pymysql.cursors import DictCursor
 pymysql.install_as_MySQLdb()
 import traceback
 
@@ -31,6 +27,11 @@ def create_app(config_name='development'):
     
     # 加载配置
     app.config.from_object(config[config_name])
+    
+    # 设置安全的SECRET_KEY
+    if not app.config.get('SECRET_KEY'):
+        app.config['SECRET_KEY'] = os.urandom(24)
+    
     SQLALCHEMY_DATABASE_URI = None
     # 读取自定义配置
     custom_config = read_config()
@@ -39,6 +40,12 @@ def create_app(config_name='development'):
         app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
         if 'redis' in custom_config:
             app.config['CACHE_REDIS_URL'] = custom_config['redis']['REDIS_URL']
+            
+        # 如果自定义配置中有session配置，则使用自定义配置
+        if 'session' in custom_config:
+            for key, value in custom_config['session'].items():
+                app.config[key] = value
+                
     DATABASE_INFO = parse_db_uri(SQLALCHEMY_DATABASE_URI)
     # 初始化扩展
     cache = Cache(app)
@@ -70,31 +77,37 @@ def create_app(config_name='development'):
         file_path = "error-500.html"
         return render_template(file_path)
 
-    # 定义全局拦截器，实现自动登录
     @app.before_request
     def before():
-        if request.url.startswith('http://'):
+        # 只在生产环境强制HTTPS
+        if app.config['ENV'] == 'production' and request.url.startswith('http://'):
             url = request.url.replace('http://', 'https://', 1)
             return redirect(url, code=301)
 
         url = request.path
-
         pass_list = ['/user', '/login', '/logout']
+        
         if url in pass_list or url.endswith('.js') or url.endswith('.jpg'):
-            pass
-
-        elif session.get('islogin') is None:
+            return
+            
+        # 检查session是否存在
+        if session.get('islogin') is None:
             username = request.cookies.get('username')
             password = request.cookies.get('password')
+            
             if username is not None and password is not None:
                 user_ = Users()
                 result = user_.find_by_username(username)
+                
                 if len(result) == 1 and result[0].password == password:
+                    # 设置session
                     session['islogin'] = 'true'
                     session['userid'] = result[0].userid
                     session['username'] = username
                     session['nickname'] = result[0].nickname
                     session['role'] = result[0].role
+                    # 确保session被保存
+                    session.modified = True
 
     # 通过自定义过滤器来重构truncate原生过滤器
     def mytruncate(s, length, end='...'):
