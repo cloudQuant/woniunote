@@ -3,7 +3,7 @@
 {% block content %}
 <style>
 /* 注册模态框增强样式 */
-.modal {
+.register-modal {  
   display: none; /* 默认隐藏 */
   position: fixed;
   z-index: 1000; /* 确保模态框位于最前面 */
@@ -18,12 +18,12 @@
   transition: opacity 0.3s ease-in-out; /* 弹出时的淡入动画 */
 }
 
-.modal.show {
+.register-modal.show {  
   display: flex; /* 显示模态框 */
   opacity: 1; /* 显示时设置为完全不透明 */
 }
 
-.modal-content {
+.register-modal-content {  
   background: #fff;
   padding: 2rem 3rem;
   border-radius: 12px;
@@ -35,12 +35,12 @@
   transition: all 0.3s ease;
 }
 
-.modal.show .modal-content {
+.register-modal.show .register-modal-content {  
   transform: translateY(0); /* 弹出时平移到可见区域 */
   opacity: 1; /* 弹出时完全显示 */
 }
 
-.modal-content h2 {
+.register-modal-content h2 {
   color: #2c3e50;
   margin-bottom: 1.5rem;
   font-size: 1.8rem;
@@ -112,8 +112,8 @@
 </style>
 
 <!-- 注册对话框 -->
-<div id="registerModal" class="modal">
-  <div class="modal-content">
+<div id="registerModal" class="register-modal">
+  <div class="register-modal-content">
     <h2>数学训练账号注册</h2>
     <div class="modal-input-group">
       <input type="text" id="registerUsername" placeholder="请输入用户名">
@@ -204,31 +204,22 @@
     // 显示注册模态框
     const showRegisterModalBtn = document.getElementById('showRegisterModalBtn');
     const registerModal = document.getElementById('registerModal');
-
+    
     if (showRegisterModalBtn) {
       showRegisterModalBtn.addEventListener('click', () => {
-        registerModal.style.display = 'flex'; // 显示模态框
-        setTimeout(() => {
-          registerModal.classList.add('show'); // 弹出模态框的动画效果
-        }, 10);
+        registerModal.classList.add('show');
       });
     }
 
-    // 关闭模态框 (点击背景区域关闭)
+    // 点击模态框外部关闭
     registerModal.addEventListener('click', (e) => {
       if (e.target === registerModal) {
-        registerModal.classList.remove('show'); // 隐藏模态框
-        setTimeout(() => {
-          registerModal.style.display = 'none'; // 确保隐藏模态框
-        }, 300);
+        registerModal.classList.remove('show');
       }
     });
 
     // 注册按钮事件
-    const registerBtn = document.getElementById('registerBtn');
-    if (registerBtn) {
-      registerBtn.addEventListener('click', handleRegister);
-    }
+    document.getElementById('registerBtn')?.addEventListener('click', handleRegister);
   });
 
   async function handleRegister() {
@@ -269,248 +260,3 @@
   }
 </script>
 {% endblock %}
-
-
-
-
-{#{% extends 'base.html' %}#}
-{##}
-{#{% block content %}#}
-{#<style>#}
-{#/* 注册模态框增强样式 */#}
-{#.modal {#}
-{#  display: none;#}
-{#  position: fixed;#}
-{#  z-index: 1000;#}
-{#  left: 0;#}
-{#  top: 0;#}
-{#  width: 100%;#}
-{#  height: 100%;#}
-{#  background: rgba(0,0,0,0.5);#}
-{#  justify-content: center;#}
-{#  align-items: center;#}
-{#}#}
-{##}
-{#.modal-content {#}
-{#  background: #fff;#}
-{#  padding: 2rem 3rem;#}
-{#  border-radius: 12px;#}
-{#  box-shadow: 0 8px 32px rgba(0,0,0,0.1);#}
-{#  width: 100%;#}
-{#  max-width: 400px;#}
-{#  transform: translateY(-20px);#}
-{#  opacity: 0;#}
-{#  transition: all 0.3s ease;#}
-{#}#}
-{##}
-{#.modal.show .modal-content {#}
-{#  transform: translateY(0);#}
-{#  opacity: 1;#}
-{#}#}
-{##}
-{#.modal-content h2 {#}
-{#  color: #2c3e50;#}
-{#  margin-bottom: 1.5rem;#}
-{#  font-size: 1.8rem;#}
-{#  text-align: center;#}
-{#}#}
-{##}
-{#.modal-input-group {#}
-{#  margin-bottom: 1.2rem;#}
-{#}#}
-{##}
-{#.modal-input-group input {#}
-{#  width: 100%;#}
-{#  padding: 12px 16px;#}
-{#  border: 2px solid #e0e0e0;#}
-{#  border-radius: 8px;#}
-{#  font-size: 1rem;#}
-{#  transition: border-color 0.3s;#}
-{#}#}
-{##}
-{#.modal-input-group input:focus {#}
-{#  border-color: #3498db;#}
-{#  outline: none;#}
-{#}#}
-{##}
-{##registerBtn {#}
-{#  width: 100%;#}
-{#  padding: 14px;#}
-{#  background: #3498db;#}
-{#  color: white;#}
-{#  border: none;#}
-{#  border-radius: 8px;#}
-{#  font-size: 1.1rem;#}
-{#  cursor: pointer;#}
-{#  transition: background 0.3s;#}
-{#}#}
-{##}
-{##registerBtn:hover {#}
-{#  background: #2980b9;#}
-{#}#}
-{##}
-{#.switch-mode {#}
-{#  text-align: center;#}
-{#  margin-top: 1rem;#}
-{#  color: #7f8c8d;#}
-{#  cursor: pointer;#}
-{#}#}
-{##}
-{#.switch-mode:hover {#}
-{#  color: #3498db;#}
-{#  text-decoration: underline;#}
-{#}#}
-{##}
-{#.col-id {#}
-{#  width: 10%;#}
-{#  text-align: center;#}
-{#}#}
-{#.col-title {#}
-{#  width: 60%;#}
-{#}#}
-{#.col-view,#}
-{#.col-comment,#}
-{#.col-action {#}
-{#  width: 8%;#}
-{#  text-align: center;#}
-{#}#}
-{#.col-action {#}
-{#  width: 14%;#}
-{#}#}
-{#</style>#}
-{#<!-- 注册对话框 -->#}
-{#<div id="registerModal" class="modal">#}
-{#<div class="modal-content">#}
-{#    <h2>数学训练账号注册</h2>#}
-{#    <div class="modal-input-group">#}
-{#    <input type="text" id="registerUsername" placeholder="请输入用户名">#}
-{#    </div>#}
-{#    <div class="modal-input-group">#}
-{#    <input type="password" id="registerPassword" placeholder="请输入密码（8位以上）">#}
-{#    </div>#}
-{#    <div class="modal-input-group">#}
-{#    <input type="email" id="registerEmail" placeholder="请输入常用邮箱">#}
-{#    </div>#}
-{#    <button id="registerBtn">立即注册</button>#}
-{#</div>#}
-{#</div>#}
-{#<!-- 中部区域布局 -->#}
-{#<div class="container" style="margin-top: 10px;">#}
-{##}
-{#    <div class="row">#}
-{#        <div class="col-sm-2 col-12" style="padding: 0 10px; ">#}
-{#            <div class="col-12 admin-side" style="height: 320px">#}
-{#                <!-- 为左侧菜单栏添加正确地超链接 -->#}
-{#                <ul>#}
-{#                    <li><a href="/ucenter"><span class="oi oi-heart" aria-hidden="true"></span>&nbsp;&nbsp;我的收藏</a></li>#}
-{#                    {% if session.get('role') == 'user' %}#}
-{#                    <li><a href="/user/post"><span class="oi oi-zoom-in" aria-hidden="true"></span>&nbsp;&nbsp;我要投稿</a></li>#}
-{#                    <!-- 普通用户投稿，作者角色直接发布文章 -->#}
-{#                    {% elif session.get('role') == 'editor' %}#}
-{#                    <li><a href="/prepost"><span class="oi oi-zoom-in" aria-hidden="true"></span>&nbsp;&nbsp;发布文章</a></li>#}
-{#                    <li><a href="/user/draft"><span class="oi oi-book" aria-hidden="true"></span>&nbsp;&nbsp;我的草稿</a></li>#}
-{#                    {% endif %}#}
-{#                    <li><a href="/user/article"><span class="oi oi-shield" aria-hidden="true"></span>&nbsp;&nbsp;我的文章</a></li>#}
-{#                    <li><a href="/user/comment"><span class="oi oi-task" aria-hidden="true"></span>&nbsp;&nbsp;我的评论</a></li>#}
-{#                    <li><a href="/user/info"><span class="oi oi-person" aria-hidden="true"></span>&nbsp;&nbsp;个人资料</a></li>#}
-{#                    <li><a href="/user/credit"><span class="oi oi-account-login" aria-hidden="true"></span>&nbsp;&nbsp;我的积分</a></li>#}
-{#                    <li><button class="navbar-btn logged-out" id="showRegisterModalBtn">训练注册</button></li>#}
-{#                </ul>#}
-{#            </div>#}
-{#        </div>#}
-{#        <div class="col-sm-10 col-12" style="padding: 0 10px">#}
-{#            <div class="col-12 admin-main">#}
-{#                <div class="col-12" style="padding: 10px;">#}
-{#                    <table class="table col-12">#}
-{#                        <thead style="font-weight: bold">#}
-{#                        <tr>#}
-{#                            <td class="col-id">编号</td>#}
-{#                            <td class="col-title">标题</td>#}
-{#                            <td class="col-view">浏览</td>#}
-{#                            <td class="col-comment">评论</td>#}
-{#                            <td class="col-action">操作</td>#}
-{#                        </tr>#}
-{#                        </thead>#}
-{#                        <tbody>#}
-{#                        {% for favorite, article in result %}#}
-{#                        <tr>#}
-{#                            <td style="text-align: center;">{{article.articleid}}</td>#}
-{#                            <td><a href="/article/{{article.articleid}}" target="_blank">{{article.headline}}</a></td>#}
-{#                            <td style="text-align: center;">{{article.readcount}}</td>#}
-{#                            <td style="text-align: center;">{{article.replycount}}</td>#}
-{#                            <td style="text-align: center;">#}
-{#                                <a href="#" onclick="switchFavorite(this, {{favorite.favoriteid}})">#}
-{#                                    {%if favorite.canceled == 0 %} 取消收藏#}
-{#                                    {% else %} <span style="color: red; ">继续收藏</span> {% endif %}#}
-{#                                </a>#}
-{#                            </td>#}
-{#                        </tr>#}
-{#                        </tbody>#}
-{#                        {% endfor %}#}
-{#                    </table>#}
-{#                </div>#}
-{#            </div>#}
-{#        </div>#}
-{#    </div>#}
-{#</div>#}
-{##}
-{#<script type="text/javascript">#}
-{#    function switchFavorite(obj, favoriteid) {#}
-{#        $.get('/user/favorite/' + favoriteid, function (data) {#}
-{#            if (data === '1') {#}
-{#                $(obj).html('<span style="color: red; ">继续收藏</span>');#}
-{#            }#}
-{#            else {#}
-{#                $(obj).text('取消收藏');#}
-{#            }#}
-{#        });#}
-{#    }#}
-{#    // 注册模态框控制#}
-{#document.addEventListener('DOMContentLoaded', () => {#}
-{#  // 显示注册模态框#}
-{#  document.getElementById('showRegisterModalBtn')?.addEventListener('click', () => {#}
-{#    document.getElementById('registerModal').style.display = 'flex';#}
-{#  });#}
-{##}
-{#  // 注册按钮事件#}
-{#  document.getElementById('registerBtn')?.addEventListener('click', handleRegister);#}
-{#});#}
-{##}
-{#async function handleRegister() {#}
-{#  const getValue = id => document.getElementById(id).value.trim();#}
-{#  const username = getValue('registerUsername');#}
-{#  const password = getValue('registerPassword');#}
-{#  const email = getValue('registerEmail');#}
-{##}
-{#  // 前端验证#}
-{#  if ([username, password, email].some(v => !v)) {#}
-{#    return alert('请填写所有必填项');#}
-{#  }#}
-{#  if (password.length < 8) {#}
-{#    return alert('密码需至少8位');#}
-{#  }#}
-{#  if (!/^\w+@\w+\.\w+$/.test(email)) {#}
-{#    return alert('邮箱格式不正确');#}
-{#  }#}
-{##}
-{#  try {#}
-{#    const response = await fetch('/math_train_register', {#}
-{#      method: 'POST',#}
-{#      headers: { 'Content-Type': 'application/json' },#}
-{#      body: JSON.stringify({ username, password, email })#}
-{#    });#}
-{#    const result = await response.json();#}
-{#    #}
-{#    if (result.success) {#}
-{#      alert('注册成功！');#}
-{#      location.reload(); // 刷新页面更新状态#}
-{#    } else {#}
-{#      alert(`注册失败：${result.message}`);#}
-{#    }#}
-{#  } catch (error) {#}
-{#    console.error('注册请求失败:', error);#}
-{#    alert('网络错误，请稍后重试');#}
-{#  }#}
-{#}#}
-{#</script>#}
-{#{% endblock %}#}
