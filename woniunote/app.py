@@ -80,7 +80,7 @@ def create_app(config_name='development'):
     @app.before_request
     def before():
         # 只在生产环境强制HTTPS
-        if app.config['ENV'] == 'production' and request.url.startswith('http://'):
+        if request.url.startswith('http://'):
             url = request.url.replace('http://', 'https://', 1)
             return redirect(url, code=301)
 

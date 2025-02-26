@@ -6,7 +6,7 @@ def test_user_center_access(auth_client):
     """Test user center access control."""
     client = auth_client['client']
 
-    # Try accessing without login
+    # Try accessing without a login
     response = client.get('/ucenter')
     assert response.status_code == 302  # Should redirect to login
 
