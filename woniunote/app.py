@@ -1,3 +1,8 @@
+from flask import Flask, render_template, request, redirect, session, make_response, jsonify, url_for
+from werkzeug.security import generate_password_hash, check_password_hash
+import uuid, os, time, pymysql, json, hashlib, traceback
+from datetime import datetime, timedelta
+
 from flask import Flask, redirect, request, render_template, session, url_for, jsonify
 from werkzeug.security import generate_password_hash
 import os
@@ -176,29 +181,37 @@ def create_app(config_name='development'):
 
             if not username or not password:
                 return jsonify({'success': False, 'message': '用户名和密码不能为空'}), 400
+            
             connection = get_db_connection(DATABASE_INFO)
             with connection.cursor() as cur:
                 cur.execute("SELECT id, username, password FROM math_train_users WHERE username = %s", (username,))
-                user_dict = cur.fetchone()
-                print("user_dict", user_dict)
-                print("user_name", username)
-                print("password", password)
-                if not user_dict or not check_password_hash(user_dict.get('password'), password):
+                user = cur.fetchone()
+                print("user found:", user)
+                
+                if user is None:
+                    return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
+                
+                # 确保密码字段存在
+                if not user.get('password'):
+                    return jsonify({'success': False, 'message': '账户数据错误'}), 500
+                
+                # 验证密码
+                if check_password_hash(user['password'], password):
+                    # 设置持久会话
+                    session.permanent = True
+                    session['user_id'] = user['id']
+                    session['username'] = user['username']
+
+                    return jsonify({
+                        'success': True,
+                        'username': user['username'],
+                        'redirect': url_for('math_train_user')
+                    })
+                else:
                     return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
 
-                # 设置持久会话
-                session.permanent = True
-                session['user_id'] = user_dict['id']
-                session['username'] = user_dict['username']
-
-                return jsonify({
-                    'success': True,
-                    'username': user_dict['username'],
-                    'redirect': url_for('math_train_user')
-                })
-
         except Exception as e:
-            traceback.print_exception(e)
+            traceback.print_exc()
             return jsonify({'success': False, 'message': '服务器错误'}), 500
 
     # 保存训练结果路由
@@ -236,7 +249,7 @@ def create_app(config_name='development'):
             connection.rollback()
             return jsonify({'success': False, 'message': f'数据库错误: {e}'}), 500
         except Exception as e:
-            traceback.print_exception(e)
+            traceback.print_exc()
             return jsonify({'success': False, 'message': '服务器错误'}), 500
 
     @app.route('/math_train_register', methods=['POST'])
@@ -346,6 +359,47 @@ def create_app(config_name='development'):
             print(f"获取用户数据错误: {str(e)}")
             traceback.print_exc()
             return jsonify({'error': '服务器内部错误'}), 500
+
+    @app.route('/math_train_reset_password', methods=['POST'])
+    def math_train_reset_password():
+        """重置用户密码"""
+        try:
+            data = request.get_json()
+            username = data.get('username')
+            old_password = data.get('old_password')
+            new_password = data.get('new_password')
+
+            if not all([username, old_password, new_password]):
+                return jsonify({'success': False, 'message': '所有字段都必须填写'}), 400
+
+            connection = get_db_connection(DATABASE_INFO)
+            with connection.cursor() as cursor:
+                # 先检查用户是否存在
+                cursor.execute("SELECT id, password FROM math_train_users WHERE username = %s", (username,))
+                user = cursor.fetchone()
+
+                if not user:
+                    return jsonify({'success': False, 'message': '用户不存在'}), 404
+
+                # 验证旧密码
+                if not check_password_hash(user['password'], old_password):
+                    return jsonify({'success': False, 'message': '原密码错误'}), 401
+
+                # 生成新密码的哈希值
+                hashed_password = generate_password_hash(new_password)
+
+                # 更新密码
+                cursor.execute(
+                    "UPDATE math_train_users SET password = %s WHERE id = %s",
+                    (hashed_password, user['id'])
+                )
+                connection.commit()
+
+                return jsonify({'success': True, 'message': '密码已成功更新'})
+
+        except Exception as e:
+            traceback.print_exc()
+            return jsonify({'success': False, 'message': '服务器错误'}), 500
 
     # todo why need @app.route('/favicon.ico')
     @app.route('/favicon.ico')

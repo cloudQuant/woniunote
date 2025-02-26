@@ -221,6 +221,8 @@ async function handleMathLogin(e) {
   e.preventDefault();
   const username = document.getElementById('mathTrainUsername').value.trim();
   const password = document.getElementById('mathTrainPassword').value;
+  
+  // 表单验证
   if (!username) {
     alert('用户名不能为空');
     return;
@@ -231,6 +233,11 @@ async function handleMathLogin(e) {
   }
 
   const loginButton = document.getElementById('loginBtn');
+  if (loginButton) {
+    loginButton.disabled = true;
+    loginButton.textContent = '登录中...';
+  }
+
   try {
     const response = await fetch('/math_train_login', {
       method: 'POST',
@@ -238,33 +245,44 @@ async function handleMathLogin(e) {
       body: JSON.stringify({ username, password })
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP错误! 状态码: ${response.status}`);
-    }
-
     const result = await response.json();
 
     if (result.success) {
+      // 保存用户信息到本地存储
       localStorage.setItem('mathTrainUser', JSON.stringify({
         username: result.username,
         lastLogin: new Date().toISOString()
       }));
 
+      // 更新UI显示
       document.getElementById('navbarUsername').textContent = result.username;
       document.getElementById('logoutBtn').style.display = 'inline-block';
       document.getElementById('userCenterBtn').style.display = 'inline-block';
       document.getElementById('showLoginModalBtn').style.display = 'none';
 
-      const modal = document.getElementById('loginModal');
-      if (modal) modal.style.display = 'none';
+      // 隐藏登录模态框
+      hideModal('loginModal');
 
+      // 更新状态
       state.loggedIn = true;
       state.username = result.username;
+
+      // 如果有重定向URL，进行跳转
+      if (result.redirect) {
+        window.location.href = result.redirect;
+      }
     } else {
-      alert(`登录失败: ${result.message || '未知错误'}`);
+      alert(result.message || '登录失败，请检查用户名和密码');
     }
   } catch (error) {
-    alert(`请求失败: ${error.message}`);
+    console.error('登录请求失败:', error);
+    alert('登录失败，请稍后重试');
+  } finally {
+    // 恢复登录按钮状态
+    if (loginButton) {
+      loginButton.disabled = false;
+      loginButton.textContent = '登录';
+    }
   }
 }
 
@@ -331,13 +349,3 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   generateQuestions();
 });
-
-
-
-
-
-
-
-
-
-

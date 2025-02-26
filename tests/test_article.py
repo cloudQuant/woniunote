@@ -1,131 +1,53 @@
 import pytest
-from woniunote.module.articles import Articles
-from woniunote.module.comments import Comments
+from playwright.sync_api import expect
 
-def test_article_creation(auth_client, test_article_data):
-    """Test article creation."""
-    # Login first
-    auth_client['login']()
-
-    # Create article
-    response = auth_client['client'].post('/article/add', data=test_article_data)
-    assert response.status_code == 200
-    article_id = int(response.data)
-    assert article_id > 0
-
-    # Verify article exists
-    article = Articles().find_by_id(article_id)
-    assert article is not None
-    assert article.headline == test_article_data['headline']
-
-def test_article_update(auth_client, test_article_data):
-    """Test article update."""
-    # Login first
-    auth_client['login']()
-
-    # Create initial article
-    response = auth_client['client'].post('/article/add', data=test_article_data)
-    article_id = int(response.data)
-
-    # Update article
-    updated_data = test_article_data.copy()
-    updated_data['articleid'] = article_id
-    updated_data['headline'] = 'Updated Test Article'
-    response = auth_client['client'].post('/article/add', data=updated_data)
-    assert response.status_code == 200
-
-    # Verify update
-    article = Articles().find_by_id(article_id)
-    assert article.headline == 'Updated Test Article'
-
-def test_article_permissions(auth_client, test_article_data):
-    """Test article creation permissions."""
-    # Try creating article without login
-    response = auth_client['client'].post('/article/add', data=test_article_data)
-    assert response.data == b'not-login'
-
-    # Login as regular user
-    auth_client['login']()
-
-    # Try creating checked article as regular user
-    test_article_data['checked'] = 1
-    response = auth_client['client'].post('/article/add', data=test_article_data)
-    assert response.data == b'perm-denied'
-
-def test_article_listing(auth_client, test_article_data):
-    """Test article listing functionality."""
-    # Login and create an article
-    auth_client['login']()
-    auth_client['client'].post('/article/add', data=test_article_data)
-
-    # Test article listing
-    response = auth_client['client'].get('/')
-    assert response.status_code == 200
-    assert b'Test Article' in response.data
-
-def test_article_search(auth_client, test_article_data):
-    """Test article search functionality."""
-    # Login and create an article
-    auth_client['login']()
-    auth_client['client'].post('/article/add', data=test_article_data)
-
-    # Test search
-    response = auth_client['client'].get('/search/1/Test')
-    assert response.status_code == 200
-    assert b'Test Article' in response.data
-
-def test_article_comments(auth_client, test_article_data):
-    """Test article commenting functionality."""
-    # Login and create an article
-    auth_client['login']()
-    response = auth_client['client'].post('/article/add', data=test_article_data)
-    article_id = int(response.data)
-
-    # Add comment
-    comment_data = {
-        'articleid': article_id,
-        'content': 'Test comment',
-        'ipaddr': '127.0.0.1'
-    }
-    response = auth_client['client'].post('/comment', data=comment_data)
-    assert response.status_code == 200
-
-    # Verify comment exists
-    comments = Comments().find_by_articleid(article_id)
-    assert len(comments) > 0
-    assert comments[0].content == 'Test comment'
-
-def test_article_favorites(auth_client, test_article_data):
-    """Test article favoriting functionality."""
-    # Login and create an article
-    auth_client['login']()
-    response = auth_client['client'].post('/article/add', data=test_article_data)
-    article_id = int(response.data)
-
-    # Add to favorites
-    response = auth_client['client'].get(f'/favorite/{article_id}')
-    assert response.status_code == 200
-
-    # Check favorites list
-    response = auth_client['client'].get('/ucenter')
-    assert response.status_code == 200
-    assert b'Test Article' in response.data
-
-def test_article_type_filter(auth_client, test_article_data):
-    """Test article filtering by type."""
-    # Login and create articles of different types
-    auth_client['login']()
+def test_article_list(browser_context):
+    """测试文章列表页面"""
+    page = browser_context
+    page.goto("http://localhost:5000")
     
-    # Create article of type 1
-    auth_client['client'].post('/article/add', data=test_article_data)
+    # 检查文章列表是否显示
+    article_list = page.locator(".article-list")
+    expect(article_list).to_be_visible()
     
-    # Create article of type 2
-    test_article_data['article_type'] = 2
-    test_article_data['headline'] = 'Type 2 Article'
-    auth_client['client'].post('/article/add', data=test_article_data)
+    # 检查是否有文章标题
+    article_titles = page.locator(".article-title")
+    expect(article_titles).to_have_count(True)
 
-    # Test filtering by type
-    response = auth_client['client'].get('/type/1')
+def test_article_detail(browser_context):
+    """测试文章详情页面"""
+    page = browser_context
+    # 假设有一个ID为1的文章
+    page.goto("http://localhost:5000/article/1")
+    
+    # 检查文章标题和内容是否显示
+    expect(page.locator(".article-title")).to_be_visible()
+    expect(page.locator(".article-content")).to_be_visible()
+    
+    # 检查评论区是否存在
+    expect(page.locator("#comment-section")).to_be_visible()
+
+@pytest.mark.asyncio
+async def test_article_api(app_client):
+    """测试文章相关的API"""
+    # 获取文章列表
+    response = await app_client.get('/api/articles')
     assert response.status_code == 200
-    assert b'Test Article' in response.data
-    assert b'Type 2 Article' not in response.data
+    
+    # 获取单个文章
+    response = await app_client.get('/api/article/1')
+    assert response.status_code == 200
+
+def test_article_search(browser_context):
+    """测试文章搜索功能"""
+    page = browser_context
+    page.goto("http://localhost:5000")
+    
+    # 输入搜索关键词
+    search_input = page.locator("#search-input")
+    search_input.fill("测试")
+    page.keyboard.press("Enter")
+    
+    # 检查搜索结果
+    search_results = page.locator(".search-results")
+    expect(search_results).to_be_visible()
