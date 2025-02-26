@@ -1,6 +1,10 @@
 from flask import Flask, redirect, request, render_template, session, url_for, jsonify
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 import os
+import pymysql
+pymysql.install_as_MySQLdb()
+import traceback
+import hashlib
 
 from woniunote.configs.config import config
 from woniunote.common.utils import read_config, get_package_path, get_db_connection, parse_db_uri
@@ -17,9 +21,6 @@ from woniunote.controller.ucenter import ucenter
 from woniunote.controller.ueditor import ueditor
 from woniunote.controller.user import user
 from woniunote.module.users import Users
-import pymysql
-pymysql.install_as_MySQLdb()
-import traceback
 
 def create_app(config_name='development'):
     app = Flask(__name__, template_folder='template',
@@ -85,12 +86,19 @@ def create_app(config_name='development'):
             return redirect(url, code=301)
 
         url = request.path
-        pass_list = ['/user', '/login', '/logout']
+        pass_list = ['/user', '/login', '/logout', '/vcode']
         
         if url in pass_list or url.endswith('.js') or url.endswith('.jpg'):
             return
             
         # 检查session是否存在
+        # 先检查基于 session_id 的会话
+        session_id = request.cookies.get('session_id')
+        if session_id and session.get(f'islogin_{session_id}') == 'true':
+            # 用户已登录，不需要进一步处理
+            return
+            
+        # 再检查普通的会话
         if session.get('islogin') is None:
             username = request.cookies.get('username')
             password = request.cookies.get('password')
@@ -99,7 +107,7 @@ def create_app(config_name='development'):
                 user_ = Users()
                 result = user_.find_by_username(username)
                 
-                if len(result) == 1 and result[0].password == password:
+                if len(result) == 1 and hashlib.md5(password.encode()).hexdigest() == result[0].password:
                     # 设置session
                     session['islogin'] = 'true'
                     session['userid'] = result[0].userid
@@ -108,7 +116,10 @@ def create_app(config_name='development'):
                     session['role'] = result[0].role
                     # 确保session被保存
                     session.modified = True
-
+                    
+            else:
+                return
+            
     # 通过自定义过滤器来重构truncate原生过滤器
     def mytruncate(s, length, end='...'):
         count = 0

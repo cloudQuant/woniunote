@@ -130,7 +130,7 @@ function doLogin(e) {
             }
             else if (data == "login-pass") {
                 bootbox.alert({title:"信息提示", message:"恭喜你，登录成功."});
-                // 注册成功后，延迟1秒钟重新刷新当前页面即可
+                // 登录成功后，延迟1秒钟刷新当前页面
                 setTimeout('location.reload();', 1000);
 
             }

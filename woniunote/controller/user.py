@@ -84,39 +84,50 @@ def register():
 @user.route('/login', methods=['POST'])
 def login():
     try:
+        print("begin to login")
         user_instance = Users()
         username = request.form.get('username').strip()
         password = request.form.get('password').strip()
         vcode_ = request.form.get('vcode').lower().strip()
-
+        print("username", username)
+        print("password", password)
+        print("vcode", vcode_)
         # 校验图形验证码是否正确
-        if vcode_ != session.get('vcode') and vcode != '0000':
+        print("try to run session.get('vcode')")
+        session_vcode = session.get('vcode')
+        print("session vcode", session_vcode)
+        if session_vcode is None:
+            # 如果 session 中没有验证码，只允许使用后门验证码
+            if vcode_ != '0000':
+                return 'vcode-error'
+        elif vcode_ != session_vcode and vcode_ != '0000':
             return 'vcode-error'
         else:
             # 实现登录功能
             password = hashlib.md5(password.encode()).hexdigest()
             result = user_instance.find_by_username(username)
-            
-            if len(result) == 1 and result[0].password == password:
-                # 生成唯一的session标识符
-                session_id = str(uuid.uuid4())
-                
-                # 使用session_id作为key存储用户信息
-                session[f'islogin_{session_id}'] = 'true'
-                session[f'userid_{session_id}'] = result[0].userid
-                session[f'username_{session_id}'] = username
-                session[f'nickname_{session_id}'] = result[0].nickname
-                session[f'role_{session_id}'] = result[0].role
-                
-                # 存储当前用户的session_id
-                if 'active_sessions' not in session:
-                    session['active_sessions'] = []
-                if session_id not in session['active_sessions']:
-                    session['active_sessions'].append(session_id)
-                
-                response = make_response('login-pass')
-                response.set_cookie('session_id', session_id)
-                return response
+            print("password", password)
+            print("result[0].password", result[0].password)
+            for r in result:
+                if r.password == password and r.username == username:
+                    # 生成唯一的session标识符
+                    session_id = str(uuid.uuid4())
+                    # 使用session_id作为key存储用户信息
+                    session[f'islogin_{session_id}'] = 'true'
+                    session[f'userid_{session_id}'] = result[0].userid
+                    session[f'username_{session_id}'] = username
+                    session[f'nickname_{session_id}'] = result[0].nickname
+                    session[f'role_{session_id}'] = result[0].role
+
+                    # 存储当前用户的session_id
+                    if 'active_sessions' not in session:
+                        session['active_sessions'] = []
+                    if session_id not in session['active_sessions']:
+                        session['active_sessions'].append(session_id)
+
+                    response = make_response('login-pass')
+                    response.set_cookie('session_id', session_id)
+                    return response
             else:
                 return 'login-fail'
     except Exception as e:
