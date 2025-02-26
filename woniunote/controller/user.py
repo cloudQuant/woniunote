@@ -1,6 +1,7 @@
 import hashlib
 import re
 import traceback
+import uuid
 from flask import Blueprint, make_response, session, request, url_for, jsonify
 from woniunote.common.redisdb import redis_connect
 from woniunote.common.utils import ImageCode, gen_email_code, send_email
@@ -79,6 +80,7 @@ def register():
         print(e)
         traceback.print_exc()
 
+
 @user.route('/login', methods=['POST'])
 def login():
     try:
@@ -86,29 +88,34 @@ def login():
         username = request.form.get('username').strip()
         password = request.form.get('password').strip()
         vcode_ = request.form.get('vcode').lower().strip()
-        # print(username,password,vcode)
+
         # 校验图形验证码是否正确
         if vcode_ != session.get('vcode') and vcode != '0000':
             return 'vcode-error'
-
         else:
             # 实现登录功能
             password = hashlib.md5(password.encode()).hexdigest()
             result = user_instance.find_by_username(username)
-            # print(result,result[0])
+            
             if len(result) == 1 and result[0].password == password:
-                session['islogin'] = 'true'
-                session['userid'] = result[0].userid
-                session['username'] = username
-                session['nickname'] = result[0].nickname
-                session['role'] = result[0].role
-                # 更新积分详情表
-                Credits().insert_detail(credit_type='正常登录', target='0', credit=1)
-                user_instance.update_credit(1)
-                # 将Cookie写入浏览器
+                # 生成唯一的session标识符
+                session_id = str(uuid.uuid4())
+                
+                # 使用session_id作为key存储用户信息
+                session[f'islogin_{session_id}'] = 'true'
+                session[f'userid_{session_id}'] = result[0].userid
+                session[f'username_{session_id}'] = username
+                session[f'nickname_{session_id}'] = result[0].nickname
+                session[f'role_{session_id}'] = result[0].role
+                
+                # 存储当前用户的session_id
+                if 'active_sessions' not in session:
+                    session['active_sessions'] = []
+                if session_id not in session['active_sessions']:
+                    session['active_sessions'].append(session_id)
+                
                 response = make_response('login-pass')
-                response.set_cookie('username', username, max_age=30 * 24 * 3600)
-                response.set_cookie('password', password, max_age=30 * 24 * 3600)
+                response.set_cookie('session_id', session_id)
                 return response
             else:
                 return 'login-fail'
@@ -120,11 +127,24 @@ def login():
 @user.route('/logout')
 def logout():
     try:
-        # 清空Session，页面跳转
-        session.clear()
+        # 获取要注销的session_id
+        session_id = request.cookies.get('session_id')
+        
+        if session_id:
+            # 清除特定session_id相关的数据
+            if session_id in session.get('active_sessions', []):
+                session['active_sessions'].remove(session_id)
+            
+            # 清除该session相关的所有数据
+            session.pop(f'islogin_{session_id}', None)
+            session.pop(f'userid_{session_id}', None)
+            session.pop(f'username_{session_id}', None)
+            session.pop(f'nickname_{session_id}', None)
+            session.pop(f'role_{session_id}', None)
 
         response = make_response('注销并进行重定向', 302)
         response.headers['Location'] = url_for('index.home')
+        response.delete_cookie('session_id')
         response.delete_cookie('username')
         response.set_cookie('password', '', max_age=0)
 

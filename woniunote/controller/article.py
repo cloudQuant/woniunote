@@ -1,10 +1,10 @@
-from flask import Blueprint, abort, render_template, request, session
-
+from flask import Blueprint, render_template, request, session
 from woniunote.module.articles import Articles
+from woniunote.module.users import Users
+from woniunote.common.session_util import get_current_user_id, is_logged_in
 from woniunote.module.comments import Comments
 from woniunote.module.credits import Credits
 from woniunote.module.favorites import Favorites
-from woniunote.module.users import Users
 from woniunote.common.timer import can_use_minute
 from woniunote.common.database import ARTICLE_TYPES
 import math
@@ -169,9 +169,22 @@ def edit_article():
         traceback.print_exc()
 
 
-@article.route('/article', methods=['POST'])
+@article.route('/article/add', methods=['POST'])
 def add_article():
     try:
+        # 检查用户是否登录
+        if not is_logged_in():
+            return 'not-login'
+        
+        # 获取当前用户信息
+        userid = get_current_user_id()
+        if userid is None:
+            return 'not-login'
+            
+        user = Users().find_by_userid(userid)
+        if user is None:
+            return 'user-not-found'
+
         headline = request.form.get('headline')
         content = request.form.get('content')
         article_type = int(request.form.get('type'))
@@ -180,64 +193,59 @@ def add_article():
         checked = int(request.form.get('checked'))
         articleid = int(request.form.get('articleid'))
         # print(f"headline:{headline},article_type:{article_type},articleid:{articleid}")
-        if session.get('userid') is None:
+        if user.role == 'editor':
+            # 权限合格，可以执行发布文章的代码
+            # 首先为文章生成缩略图，优先从内容中找，找不到则随机生成一张
+            # url_list = parse_image_url(content)
+            # if len(url_list) > 0:   # 表示文章中存在图片
+            #     thumbname = generate_thumb(url_list)
+            # else:
+            #     # 如果文章中没有图片，则根据文章类别指定一张缩略图
+            #     thumbname = '%d.png' % type
+            thumbname = '%d.png' % article_type
+            article_instance = Articles()
+            # 再判断articleid是否为0，如果为0则表示是新数据
+            if articleid == 0:
+                try:
+                    article_id = article_instance.insert_article(article_type=article_type,
+                                                                 headline=headline,
+                                                                 content=content,
+                                                                 credit=credit,
+                                                                 thumbnail=thumbname,
+                                                                 drafted=drafted,
+                                                                 checked=checked)
+
+                    # 新增文章成功后，将已经静态化的文章列表页面全部删除，便于生成新的静态文件
+                    # list = os.listdir('./template/index-static/')
+                    # for file in list:
+                    #     os.remove('./template/index-static/' + file)
+                    #
+                    # print("id",str(id))
+                    return str(article_id)
+                except Exception as e:
+                    print('post-fail', e)
+                    return 'post-fail'
+            else:
+                # 如果是已经添加过的文章，则做修改操作
+                try:
+                    article_id = article_instance.update_article(articleid=articleid,
+                                                                 article_type=article_type,
+                                                                 headline=headline,
+                                                                 content=content,
+                                                                 credit=credit,
+                                                                 thumbnail=thumbname,
+                                                                 drafted=drafted,
+                                                                 checked=checked)
+                    return str(article_id)
+                except Exception as e:
+                    print('post-fail', e)
+                    return 'post-fail'
+
+        # 如果角色不是作者，则只能投稿，不能正式发布
+        elif checked == 1:
             return 'perm-denied'
         else:
-            user = Users().find_by_userid(session.get('userid'))
-            # print("user", user, user.role)
-            if user.role == 'editor':
-                # 权限合格，可以执行发布文章的代码
-                # 首先为文章生成缩略图，优先从内容中找，找不到则随机生成一张
-                # url_list = parse_image_url(content)
-                # if len(url_list) > 0:   # 表示文章中存在图片
-                #     thumbname = generate_thumb(url_list)
-                # else:
-                #     # 如果文章中没有图片，则根据文章类别指定一张缩略图
-                #     thumbname = '%d.png' % type
-                thumbname = '%d.png' % article_type
-                article_instance = Articles()
-                # 再判断articleid是否为0，如果为0则表示是新数据
-                if articleid == 0:
-                    try:
-                        article_id = article_instance.insert_article(article_type=article_type,
-                                                                     headline=headline,
-                                                                     content=content,
-                                                                     credit=credit,
-                                                                     thumbnail=thumbname,
-                                                                     drafted=drafted,
-                                                                     checked=checked)
-
-                        # 新增文章成功后，将已经静态化的文章列表页面全部删除，便于生成新的静态文件
-                        # list = os.listdir('./template/index-static/')
-                        # for file in list:
-                        #     os.remove('./template/index-static/' + file)
-                        #
-                        # print("id",str(id))
-                        return str(article_id)
-                    except Exception as e:
-                        print('post-fail', e)
-                        return 'post-fail'
-                else:
-                    # 如果是已经添加过的文章，则做修改操作
-                    try:
-                        article_id = article_instance.update_article(articleid=articleid,
-                                                                     article_type=article_type,
-                                                                     headline=headline,
-                                                                     content=content,
-                                                                     credit=credit,
-                                                                     thumbnail=thumbname,
-                                                                     drafted=drafted,
-                                                                     checked=checked)
-                        return str(article_id)
-                    except Exception as e:
-                        print('post-fail', e)
-                        return 'post-fail'
-
-            # 如果角色不是作者，则只能投稿，不能正式发布
-            elif checked == 1:
-                return 'perm-denied'
-            else:
-                return 'perm-denied'
+            return 'perm-denied'
     except Exception as e:
         print(e)
         traceback.print_exc()
