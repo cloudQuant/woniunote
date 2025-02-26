@@ -116,10 +116,8 @@ def create_app(config_name='development'):
                     session['role'] = result[0].role
                     # 确保session被保存
                     session.modified = True
-                    
-            else:
                 return
-            
+                
     # 通过自定义过滤器来重构truncate原生过滤器
     def mytruncate(s, length, end='...'):
         count = 0

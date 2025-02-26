@@ -130,9 +130,11 @@ function doLogin(e) {
             }
             else if (data == "login-pass") {
                 bootbox.alert({title:"信息提示", message:"恭喜你，登录成功."});
-                // 登录成功后，延迟1秒钟刷新当前页面
-                setTimeout('location.reload();', 1000);
-
+                // 登录成功后，延迟2秒钟刷新当前页面，确保session设置完成
+                setTimeout(function() {
+                    console.log("Reloading page after successful login");
+                    window.location.reload();
+                }, 2000);
             }
             else if (data == "login-fail") {
                 bootbox.alert({title:"错误提示", message:"登录失败，请联系管理员."});
@@ -141,25 +143,54 @@ function doLogin(e) {
     }
 }
 
+function showLogout() {
+    bootbox.confirm({
+        title: "确认提示",
+        message: "确认要退出登录吗？",
+        buttons: {
+            confirm: {
+                label: '确认',
+                className: 'btn-success'
+            },
+            cancel: {
+                label: '取消',
+                className: 'btn-danger'
+            }
+        },
+        callback: function (result) {
+            if (result) {
+                $.get('/logout', function(data) {
+                    if (data == '注销并进行重定向') {
+                        location.reload();
+                    }
+                });
+            }
+        }
+    });
+}
 
 // $(document).ready()是指页面加载即运行该代码
 $(document).ready(function () {
     $.get('/loginfo', function (data) {
-        content = '';
-        if (data == null) {
-            //content += '<a class="nav-item nav-link" href="#" onclick="showLogin()">登录</a>';
-            //content += '<a class="nav-item nav-link" href="#" onclick="showReg()">注册</a>';
-        }
-        else {
-            content += '<a class="nav-item nav-link" href="/ucenter">欢迎你：' + data["nickname"] + '</a>&nbsp;&nbsp;&nbsp;';
-            if (data['role'] == 'admin') {
-                content += '<a class="nav-item nav-link" href="/admin">系统管理</a>&nbsp;&nbsp;&nbsp;';
-            }
-            else {
+        console.log("Received data from /loginfo:", data);
+        var content = '';
+        if (data && data != null) {
+            try {
+                console.log("User info:", data);
+                content += '<a class="nav-item nav-link" href="/ucenter">欢迎你：' + data.nickname + '</a>&nbsp;&nbsp;&nbsp;';
+                if (data.role == 'admin') {
+                    content += '<a class="nav-item nav-link" href="/admin">系统管理</a>&nbsp;&nbsp;&nbsp;';
+                }
                 content += '<a class="nav-item nav-link" href="/ucenter">用户中心</a>&nbsp;&nbsp;&nbsp;';
+                content += '<a class="nav-item nav-link" href="#" onclick="showLogout()">退出</a>';
+            } catch (e) {
+                console.error('Failed to process user info:', e);
             }
-            content += '<a class="nav-item nav-link" href="/logout">注销</a>';
+        } else {
+            console.log("No user info received, showing login button");
+            content += '<a class="nav-item nav-link" href="#" onclick="showLogin()">登录</a>';
         }
-        $("#loginmenu").append(content);
+        console.log("Setting menu content:", content);
+        $("#loginmenu").html(content);
     });
 });

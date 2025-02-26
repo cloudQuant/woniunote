@@ -91,7 +91,14 @@
                     {% endfor %}
                 </div>
                 <div class="navbar-nav ml-auto" id="loginmenu">
-                    {% if session.get('islogin') != 'true' %}
+                    {% if session.get('islogin') == 'true' %}
+                        <a class="nav-item nav-link" href="/ucenter">欢迎你：{{ session.get('nickname') }}</a>
+                        <a class="nav-item nav-link" href="/ucenter">用户中心</a>
+                        {% if session.get('role') == 'admin' %}
+                            <a class="nav-item nav-link" href="/admin">系统管理</a>
+                        {% endif %}
+                        <a class="nav-item nav-link" href="#" onclick="showLogout()">退出</a>
+                    {% else %}
                         <a class="nav-item nav-link" href="#" onclick="showLogin()">登录</a>
                     {% endif %}
                 </div>
