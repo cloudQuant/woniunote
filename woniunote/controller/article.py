@@ -18,18 +18,31 @@ def read(articleid, current_page=1):
     print(f" Entering read function for article {articleid}, page {current_page}")
     try:
         print(f" Attempting to find article {articleid}")
-        result = Articles().find_by_id(articleid)
-        if not result:
+        article = Articles().find_by_id(articleid)
+        if not article:
             print(f" Article {articleid} not found")
             abort(404)
-        print(f" Found article {articleid}: {result.headline[:30]}...")
-        article_dict = {}
-        for k, v in result.__dict__.items():
-            if not k.startswith('_sa_instance_state'):
-                article_dict[k] = v
+        print(f" Found article {articleid}: {article.headline[:30]}...")
+        
+        # 构建文章字典
+        article_dict = {
+            'articleid': article.articleid,
+            'userid': article.userid,  # 确保包含userid
+            'headline': article.headline,
+            'content': article.content,
+            'type': article.type,
+            'credit': article.credit,
+            'thumbnail': article.thumbnail,
+            'readcount': article.readcount,
+            'commentcount': getattr(article, 'commentcount', 0),
+            'drafted': article.drafted,
+            'checked': article.checked,
+            'createtime': article.createtime,
+            'updatetime': article.updatetime
+        }
         
         # 获取作者昵称
-        user = Users().find_by_userid(result.userid)
+        user = Users().find_by_userid(article.userid)
         article_dict['nickname'] = user.nickname if user else "Unknown"
 
         # 如果已经消耗积分，则不再截取文章内容
@@ -38,7 +51,6 @@ def read(articleid, current_page=1):
         position = 0
         if not payed:
             content = article_dict['content']
-            # temp = content[0:int(len(content)/2)]
             temp = content[0:]
             position = temp.rindex('</p>') + 4
             article_dict['content'] = temp[0:position]
@@ -61,9 +73,13 @@ def read(articleid, current_page=1):
         # 获取热门文章列表
         article_instance = Articles()
         last, most, recommended = article_instance.find_last_most_recommended()
-        # 新增：获取总文章数
+        # 获取总文章数
         total_articles = Articles.get_total_count()
         print(f" 系统总文章数: {total_articles}")
+
+        # 获取当前用户ID
+        current_userid = get_current_user_id()
+        print(f" Current user ID: {current_userid}, Article user ID: {article.userid}")
 
         return render_template('article-user.html',
                             total = total_articles,
@@ -77,7 +93,8 @@ def read(articleid, current_page=1):
                             can_use_minute=can_use_minute(),
                             last_articles=last,
                             most_articles=most,
-                            recommended_articles=recommended)
+                            recommended_articles=recommended,
+                            current_userid=current_userid)
     except Exception as e:
         print("Error in read:", e)
         traceback.print_exc()
@@ -93,12 +110,9 @@ def read_all():
         result = article_instance.find_by_id(articleid)
         content = result[0].content[position:]
 
-        # 如果已经消耗积分，则不再扣除
         payed = Credits().check_payed_article(articleid)
         if not payed:
-            # 添加积分明细
             Credits().insert_detail(credit_type='阅读文章', target=articleid, credit=-1 * result[0].credit)
-            # 减少用户表的剩余积分
             Users().update_credit(credit=-1 * result[0].credit)
 
         return content
@@ -125,14 +139,10 @@ def pre_post():
         traceback.print_exc()
 
 
-# 编辑文章的前端页面渲染
 @article.route('/article/edit/<int:articleid>')
 def go_edit(articleid):
-    # print("go to edit article")
     try:
         result = Articles().find_by_id(articleid)
-        # print("go_edit", articleid)
-        # print("result = ", result)
         target_html = "article-edit.html"
         article_type = ARTICLE_TYPES
         subTypesData = {}
@@ -148,10 +158,8 @@ def go_edit(articleid):
         traceback.print_exc()
 
 
-# 处理文章编辑请求
 @article.route("/article/edit", methods=["PUT", "POST"])
 def edit_article():
-    # print("begin to edit article")
     try:
         headline = request.form.get('headline')
         content = request.form.get('content')
@@ -161,7 +169,6 @@ def edit_article():
         checked = int(request.form.get('checked'))
         articleid = int(request.form.get('articleid'))
         article_instance = Articles()
-        # print("new_headline", headline)
         try:
             row = article_instance.find_by_id(articleid)
             article_id = article_instance.update_article(articleid=articleid,
@@ -184,11 +191,9 @@ def edit_article():
 @article.route('/article/add', methods=['POST'])
 def add_article():
     try:
-        # 检查用户是否登录
         if not is_logged_in():
             return 'not-login'
         
-        # 获取当前用户信息
         userid = get_current_user_id()
         if userid is None:
             return 'not-login'
@@ -204,63 +209,56 @@ def add_article():
         drafted = int(request.form.get('drafted'))
         checked = int(request.form.get('checked'))
         articleid = int(request.form.get('articleid'))
-        # print(f"headline:{headline},article_type:{article_type},articleid:{articleid}")
-        if user.role == 'editor':
-            # 权限合格，可以执行发布文章的代码
-            # 首先为文章生成缩略图，优先从内容中找，找不到则随机生成一张
-            # url_list = parse_image_url(content)
-            # if len(url_list) > 0:   # 表示文章中存在图片
-            #     thumbname = generate_thumb(url_list)
-            # else:
-            #     # 如果文章中没有图片，则根据文章类别指定一张缩略图
-            #     thumbname = '%d.png' % type
-            thumbname = '%d.png' % article_type
-            article_instance = Articles()
-            # 再判断articleid是否为0，如果为0则表示是新数据
-            if articleid == 0:
-                try:
-                    article_id = article_instance.insert_article(article_type=article_type,
-                                                                 headline=headline,
-                                                                 content=content,
-                                                                 credit=credit,
-                                                                 thumbnail=thumbname,
-                                                                 drafted=drafted,
-                                                                 checked=checked)
 
-                    # 新增文章成功后，将已经静态化的文章列表页面全部删除，便于生成新的静态文件
-                    # list = os.listdir('./template/index-static/')
-                    # for file in list:
-                    #     os.remove('./template/index-static/' + file)
-                    #
-                    # print("id",str(id))
-                    return str(article_id)
-                except Exception as e:
-                    print('post-fail', e)
-                    return 'post-fail'
-            else:
-                # 如果是已经添加过的文章，则做修改操作
-                try:
-                    article_id = article_instance.update_article(articleid=articleid,
-                                                                 article_type=article_type,
-                                                                 headline=headline,
-                                                                 content=content,
-                                                                 credit=credit,
-                                                                 thumbnail=thumbname,
-                                                                 drafted=drafted,
-                                                                 checked=checked)
-                    return str(article_id)
-                except Exception as e:
-                    print('post-fail', e)
-                    return 'post-fail'
+        thumbname = '%d.png' % article_type
+        article_instance = Articles()
 
-        # 如果角色不是作者，则只能投稿，不能正式发布
-        elif checked == 1:
-            return 'perm-denied'
+        if articleid == 0:
+            try:
+                if user.role != 'editor':
+                    checked = 0
+                
+                article_id = article_instance.insert_article(
+                    article_type=article_type,
+                    headline=headline,
+                    content=content,
+                    credit=credit,
+                    thumbnail=thumbname,
+                    drafted=drafted,
+                    checked=checked,
+                    userid=userid  
+                )
+                return str(article_id)
+            except Exception as e:
+                print('post-fail', e)
+                return 'post-fail'
         else:
-            return 'perm-denied'
+            try:
+                article = article_instance.find_by_id(articleid)
+                if article and (article.userid == userid or user.role == 'editor'):
+                    if user.role != 'editor':
+                        checked = article.checked
+                    
+                    article_id = article_instance.update_article(
+                        articleid=articleid,
+                        article_type=article_type,
+                        headline=headline,
+                        content=content,
+                        credit=credit,
+                        thumbnail=thumbname,
+                        drafted=drafted,
+                        checked=checked
+                    )
+                    return str(article_id)
+                else:
+                    return 'perm-denied'
+            except Exception as e:
+                print('post-fail', e)
+                return 'post-fail'
     except Exception as e:
         print(e)
         traceback.print_exc()
+        return 'error'
 
 
 if __name__ == "__main__":

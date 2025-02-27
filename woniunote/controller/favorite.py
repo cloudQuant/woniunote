@@ -9,26 +9,28 @@ favorite = Blueprint('favorite', __name__)
 def add_favorite():
     try:
         articleid = request.form.get('articleid')
-        if session.get('islogin') is None:
+        if not session.get('main_islogin'):
             return 'not-login'
-        else:
-            try:
-                Favorites().insert_favorite(articleid)
-                return 'favorite-pass'
-            except Exception as e:
-                print("add favorite", e)
-                return 'favorite-fail'
+        
+        if Favorites().insert_favorite(articleid):
+            return 'favorite-pass'
+        return 'favorite-fail'
     except Exception as e:
-        print(e)
+        print("Error in add_favorite:", e)
         traceback.print_exc()
+        return 'favorite-fail'
 
 
 @favorite.route('/favorite/<int:articleid>', methods=['DELETE'])
 def cancel_favorite(articleid):
     try:
-        Favorites().cancel_favorite(articleid)
-        return 'cancel-pass'
+        if not session.get('main_islogin'):
+            return 'not-login'
+        
+        if Favorites().cancel_favorite(articleid):
+            return 'cancel-pass'
+        return 'cancel-fail'
     except Exception as e:
-        print(e)
+        print("Error in cancel_favorite:", e)
         traceback.print_exc()
         return 'cancel-fail'

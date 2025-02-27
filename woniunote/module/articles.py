@@ -47,6 +47,15 @@ class Articles(DBase):
             print(e)
             traceback.print_exc()
 
+    # 获取总文章数
+    @staticmethod
+    def get_total_count():
+        try:
+            return dbsession.query(Article).count()
+        except Exception as e:
+            print(f"获取总文章数失败: {str(e)}")
+            return 0
+
     # 根据id查询文章，数据格式：(Article, 'nickname')
     @staticmethod
     def find_by_id(articleid):

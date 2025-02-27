@@ -76,22 +76,41 @@
         background-color: #fff;
         border-color: #dee2e6;
     }
+    .info {
+        font-size: 14px;
+        color: #666;
+        line-height: 1.8;
+    }
+    .info .btn {
+        margin-top: 10px;
+        display: block;
+        width: fit-content;
+    }
+    .favorite-link {
+        display: inline-block;
+        margin-left: 10px;
+        vertical-align: middle;
+        transition: all 0.3s ease;
+    }
+    .favorite-link:hover {
+        transform: scale(1.05);
+    }
+    .favorite-link .oi {
+        margin-right: 3px;
+        font-size: 14px;
+    }
 </style>
 
 <div class="col-sm-9 col-12" id="left" style="padding: 0;">
     <div class="col-12 row article-detail">
         <div class="col-9 title">
             {{article.headline}}
-        </div>
-        <div class="col-3 favorite">
-            {% if is_favorited == True %}
-            <label class="favorite-btn" onclick="cancelFavorite('{{article.articleid}}')">
-                <span class="oi oi-heart" aria-hidden="true"></span> 取消收藏
-            </label>
-            {% else %}
-            <label class="favorite-btn" onclick="addFavorite('{{article.articleid}}')">
-                <span class="oi oi-heart" aria-hidden="true"></span> 收藏本文
-            </label>
+            {% if current_userid %}
+                {% if current_userid == article.userid %}
+                <div class="float-right">
+                    <a href="/article/edit/{{article.articleid}}" class="btn btn-primary btn-sm">编辑</a>
+                </div>
+                {% endif %}
             {% endif %}
         </div>
         <div class="col-12 info">
@@ -101,8 +120,20 @@
             阅读：{{article.readcount}} 次&nbsp;&nbsp;&nbsp;
             消耗积分：{{article.credit}} 分
             &nbsp;&nbsp;&nbsp;
-            {% if session.get('islogin') == 'true' %}
-            <a href="../edit/{{article.articleid}}">编辑文章</a>
+            {% if current_userid %}
+                {% if is_favorited %}
+                    <a href="javascript:void(0)" onclick="cancelFavorite({{article.articleid}})" class="favorite-link">
+                        <span class="oi oi-heart" aria-hidden="true"></span>取消收藏
+                    </a>
+                {% else %}
+                    <a href="javascript:void(0)" onclick="addFavorite({{article.articleid}})" class="favorite-link">
+                        <span class="oi oi-heart" aria-hidden="true"></span>收藏文章
+                    </a>
+                {% endif %}
+            {% endif %}
+            {% if current_userid == article.userid %}
+                &nbsp;&nbsp;&nbsp;
+                <a href="../edit/{{article.articleid}}">编辑文章</a>
             {% endif %}
         </div>
         <div class="col-12 content" id="content" style="padding: 20px; line-height: 1.8; font-size: 16px;">
@@ -234,7 +265,7 @@
     // 其他函数（如 addFavorite、cancelFavorite 等）
     function addFavorite(articleid) {
     // 缓存选择器
-    let $favoriteBtn = $(".favorite-btn");
+    let $favoriteBtn = $(".favorite-link");
 
     $.post('/favorite', 'articleid=' + articleid, function (data) {
         if (data === 'not-login') {
@@ -253,7 +284,7 @@
 
     function cancelFavorite(articleid) {
         // 缓存选择器
-        let $favoriteBtn = $(".favorite-btn");
+        let $favoriteBtn = $(".favorite-link");
 
         $.ajax({
             url: '/favorite/' + articleid,

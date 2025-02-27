@@ -70,18 +70,28 @@ class Favorites(DBase):
     @staticmethod
     def cancel_favorite(articleid):
         try:
-            row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=session.get('userid')).first()
-            row.canceled = 1
-            dbsession.commit()
+            userid = session.get('main_userid')
+            if not userid:
+                return False
+            row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=userid).first()
+            if row:
+                row.canceled = 1
+                dbsession.commit()
+                return True
+            return False
         except Exception as e:
-            print(e)
+            print("Error in cancel_favorite:", e)
             traceback.print_exc()
+            return False
 
     # 判断是否已经被收藏
     @staticmethod
     def check_favorite(articleid):
         try:
-            row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=session.get('userid')).first()
+            userid = session.get('main_userid')
+            if not userid:
+                return False
+            row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=userid).first()
             if row is None:
                 return False
             elif row.canceled == 1:
@@ -89,20 +99,24 @@ class Favorites(DBase):
             else:
                 return True
         except Exception as e:
-            print(e)
+            print("Error in check_favorite:", e)
             traceback.print_exc()
+            return False
 
     # 为用户中心查询我的收藏添加数据操作方法
     @staticmethod
     def find_my_favorite():
         try:
-            result = dbsession.query(Favorite, Article).join(Article, Favorite.articleid ==
-                                                             Article.articleid).filter(
-                Favorite.userid == session.get('userid')).all()
+            userid = session.get('main_userid')
+            if not userid:
+                return []
+            result = dbsession.query(Favorite, Article).join(Article, Favorite.articleid == Article.articleid).filter(
+                Favorite.userid == userid).all()
             return result
         except Exception as e:
-            print(e)
+            print("Error in find_my_favorite:", e)
             traceback.print_exc()
+            return []
 
     # 切换收藏和取消收藏的状态
     @staticmethod
