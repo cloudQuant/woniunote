@@ -272,7 +272,7 @@ def create_app(config_name='production'):
 
         try:
             data = request.get_json()
-            print("result_data", data)
+            # print("result_data", data)
             required_fields = ['math_level', 'correct_count', 'total_questions', 'time_spent']
             if not all(field in data for field in required_fields):
                 return jsonify({'success': False, 'message': '数据不完整'}), 400
@@ -291,7 +291,7 @@ def create_app(config_name='production'):
                     data['time_spent']
                 ))
                 connection.commit()
-                print("保存数据成功")
+                # print("保存数据成功")
                 return jsonify({'success': True})
 
         except pymysql.Error as e:
@@ -345,8 +345,8 @@ def create_app(config_name='production'):
     @app.route('/math_train_check_login')
     def math_train_check_login():
         # 打印session信息用于调试
-        print("Check login session:", dict(session))
-        print("Check login cookies:", request.cookies)
+        # print("Check login session:", dict(session))
+        # print("Check login cookies:", request.cookies)
         
         # 验证session完整性
         # session_id = request.cookies.get('math_train_session')
@@ -367,13 +367,13 @@ def create_app(config_name='production'):
     def math_train_user():
         try:
             # 打印完整的请求信息
-            print("Request headers:", dict(request.headers))
-            print("Request cookies:", dict(request.cookies))
-            print("Current session:", dict(session))
+            # print("Request headers:", dict(request.headers))
+            # print("Request cookies:", dict(request.cookies))
+            # print("Current session:", dict(session))
             
             # 检查session是否存在
             if not session or 'user_id' not in session:
-                print("No valid session found")
+                # print("No valid session found")
                 return redirect(url_for('math_train'))
             
             # 获取用户信息
@@ -383,7 +383,7 @@ def create_app(config_name='production'):
                 user = cursor.fetchone()
                 
                 if not user:
-                    print("User not found in database")
+                    # print("User not found in database")
                     session.clear()
                     return redirect(url_for('math_train'))
                 
