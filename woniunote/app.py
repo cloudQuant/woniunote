@@ -27,7 +27,7 @@ from woniunote.controller.ueditor import ueditor
 from woniunote.controller.user import user
 from woniunote.module.users import Users
 
-def create_app(config_name='development'):
+def create_app(config_name='production'):
     app = Flask(__name__, template_folder='template',
                 static_url_path='/', static_folder='resource')
     
@@ -41,14 +41,29 @@ def create_app(config_name='development'):
     # 配置Session
     is_production = config_name == 'production'
     app.config.update(
-        SESSION_COOKIE_SECURE=is_production,  # 只在生产环境使用HTTPS
+        # 基本配置
+        SECRET_KEY=os.environ.get('SECRET_KEY', os.urandom(24)),
+        SESSION_COOKIE_NAME='math_train_session',
+        
+        # Cookie配置
+        SESSION_COOKIE_SECURE=False,  # 即使在生产环境也暂时设为False，除非确认使用了HTTPS
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE='Lax',
-        PERMANENT_SESSION_LIFETIME=timedelta(days=7),  # session有效期7天
-        SESSION_COOKIE_NAME='math_train_session',  # 自定义session cookie名称
-        SESSION_COOKIE_PATH='/',  # 确保cookie在所有路径下可用
-        SESSION_COOKIE_DOMAIN=None  # 让浏览器自动设置domain
+        SESSION_COOKIE_PATH='/',
+        SESSION_COOKIE_DOMAIN=None,  # 让浏览器自动处理
+        
+        # Session配置
+        PERMANENT_SESSION_LIFETIME=timedelta(days=7),
+        SESSION_TYPE='filesystem',  # 使用文件系统存储session
+        SESSION_FILE_DIR=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sessions'),  # session文件存储路径
+        SESSION_FILE_THRESHOLD=500,  # 最大session文件数
+        SESSION_FILE_MODE=384,  # 0o600 文件权限
     )
+    
+    # 确保session目录存在
+    session_dir = app.config['SESSION_FILE_DIR']
+    if not os.path.exists(session_dir):
+        os.makedirs(session_dir, mode=0o700)  # 创建目录，设置严格的权限
     
     SQLALCHEMY_DATABASE_URI = None
     # 读取自定义配置
@@ -208,35 +223,48 @@ def create_app(config_name='development'):
                 
                 # 验证密码
                 if check_password_hash(user['password'], password):
-                    # 设置持久会话
-                    session.permanent = True
-                    # 生成唯一的session ID
-                    session_id = str(uuid.uuid4())
-                    # 设置session数据
-                    session['session_id'] = session_id
-                    session['user_id'] = user['id']
-                    session['username'] = user['username']
-                    session['login_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    
-                    # 创建响应
-                    response = jsonify({
-                        'success': True,
-                        'username': user['username'],
-                        'redirect': url_for('math_train_user')
-                    })
-                    
-                    # 设置cookie
-                    response.set_cookie(
-                        'math_train_session',
-                        session_id,
-                        max_age=7 * 24 * 60 * 60,  # 7天有效期
-                        httponly=True,
-                        samesite='Lax',
-                        secure=app.config['SESSION_COOKIE_SECURE'],  # 根据配置决定是否需要HTTPS
-                        domain=app.config['SESSION_COOKIE_DOMAIN']  # 使用配置中的domain设置
-                    )
-                    
-                    return response
+                    try:
+                        # 生成会话数据
+                        session_data = {
+                            'user_id': user['id'],
+                            'username': user['username'],
+                            'login_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            'session_id': str(uuid.uuid4())
+                        }
+                        
+                        # 设置session
+                        session.permanent = True
+                        for key, value in session_data.items():
+                            session[key] = value
+                        
+                        # 强制保存session
+                        session.modified = True
+                        
+                        # 创建响应
+                        response = jsonify({
+                            'success': True,
+                            'username': user['username'],
+                            'redirect': url_for('math_train_user')
+                        })
+                        
+                        # 设置cookie
+                        response.set_cookie(
+                            'math_train_session',
+                            session_data['session_id'],
+                            max_age=7 * 24 * 60 * 60,  # 7天有效期
+                            httponly=True,
+                            samesite='Lax',
+                            secure=app.config['SESSION_COOKIE_SECURE'],
+                            domain=app.config['SESSION_COOKIE_DOMAIN']
+                        )
+                        
+                        print("Login successful, session data:", dict(session))
+                        return response
+                        
+                    except Exception as e:
+                        print("Session error:", e)
+                        traceback.print_exc()
+                        return jsonify({'success': False, 'message': 'Session错误'}), 500
                 else:
                     return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
 
@@ -470,6 +498,7 @@ def create_app(config_name='development'):
 app = create_app()
 
 if __name__ == '__main__':
+    # app = create_app(config_name='development')
     path = get_package_path("woniunote")
     app.run(host="127.0.0.1",
             debug=True,
