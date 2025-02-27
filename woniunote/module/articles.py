@@ -59,11 +59,11 @@ class Articles(DBase):
 
     # 根据多个文章ID查询文章
     @staticmethod
-    def find_by_ids(articleids):
+    def find_by_ids(articleid_list):
         try:
-            if not articleids:
+            if not articleid_list:
                 return []
-            result = dbsession.query(Article).filter(Article.articleid.in_(articleids)).all()
+            result = dbsession.query(Article).filter(Article.articleid.in_(articleid_list)).all()
             return result
         except Exception as e:
             print(e)

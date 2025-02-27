@@ -1,6 +1,6 @@
 <script src="/js/vue.js"></script>
 
-<div class="col-sm-3 col-12" style="padding: 0px 10px;">
+<div class="col-sm-3 col-12" style="padding: 0 10px;">
     <div class="col-12 search-bar form-group row">
         <div class="col-8">
             <input type="text" class="form-control" id="keyword" placeholder="请输入关键字" onkeyup="doSearch(event)" />
@@ -17,9 +17,6 @@
             <!-- <li> <a href="/article/{{row.article}}">{{loop.index}}.{{row.headline|truncate(12)}}</a></li> -->
             <li> <a href="/article/{{row.articleid}}">{{loop.index}}.{{row.headline|truncate(24)}}</a></li>
             {% endfor %}
-            <!-- <li v-for="(article, index) in last_articles">
-                <a v-bind:href="'/article/' + article[0]">${index+1}. ${article[1].substr(0,15)}...</a>
-            </li> -->
         </ul>
     </div>
 
@@ -69,7 +66,7 @@
         }
 
         let keyword = $.trim($("#keyword").val());
-        if (keyword.length == 0 || keyword.length > 10 || keyword.indexOf('%')>=0 ) {
+        if (keyword.length === 0 || keyword.length > 10 || keyword.indexOf('%')>=0 ) {
             bootbox.alert({'title':'错误提示', 'message':"你输入的关键字不合法"});
             $("#keyword").focus();
             return false;

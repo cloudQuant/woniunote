@@ -13,43 +13,42 @@ import traceback
 article = Blueprint("article", __name__)
 
 @article.route('/article/<int:articleid>')
-@article.route('/article/<int:articleid>/<int:current_page>')
-def read(articleid, current_page=1):
-    print(f" Entering read function for article {articleid}, page {current_page}")
+def read(articleid):
+    print(f" Entering read function for article {articleid}")
     try:
         print(f" Attempting to find article {articleid}")
-        article = Articles().find_by_id(articleid)
-        if not article:
+        article_instance = Articles().find_by_id(articleid)
+        if not article_instance:
             print(f" Article {articleid} not found")
             abort(404)
-        print(f" Found article {articleid}: {article.headline[:30]}...")
+        print(f" Found article {articleid}: {article_instance.headline[:30]}...")
         
         # 构建文章字典
         article_dict = {
-            'articleid': article.articleid,
-            'userid': article.userid,  # 确保包含userid
-            'headline': article.headline,
-            'content': article.content,
-            'type': article.type,
-            'credit': article.credit,
-            'thumbnail': article.thumbnail,
-            'readcount': article.readcount,
+            'articleid': article_instance.articleid,
+            'userid': article_instance.userid,  # 确保包含userid
+            'headline': article_instance.headline,
+            'content': article_instance.content,
+            'type': article_instance.type,
+            'credit': article_instance.credit,
+            'thumbnail': article_instance.thumbnail,
+            'readcount': article_instance.readcount,
             'commentcount': getattr(article, 'commentcount', 0),
-            'drafted': article.drafted,
-            'checked': article.checked,
-            'createtime': article.createtime,
-            'updatetime': article.updatetime
+            'drafted': article_instance.drafted,
+            'checked': article_instance.checked,
+            'createtime': article_instance.createtime,
+            'updatetime': article_instance.updatetime
         }
         
         # 获取作者昵称
-        user = Users().find_by_userid(article.userid)
+        user = Users.find_by_userid(article_instance.userid)
         article_dict['nickname'] = user.nickname if user else "Unknown"
 
         # 如果已经消耗积分，则不再截取文章内容
         payed = Credits().check_payed_article(articleid)
 
         position = 0
-        if article.credit > 0 and not payed:
+        if article_instance.credit > 0 and not payed:
             position = len(article_dict['content']) // 3
             article_dict['content'] = article_dict['content'][:position]
 
@@ -59,29 +58,27 @@ def read(articleid, current_page=1):
         # 检查是否已收藏
         is_favorited = Favorites().check_favorite(articleid)
 
-        Articles().update_read_count(articleid)  # 阅读次数+1
+        Articles.update_read_count(articleid)  # 阅读次数+1
 
         # 获取当前文章的 上一篇和下一篇
-        prev_next = Articles().find_prev_next_by_id(articleid)
+        prev_next = Articles.find_prev_next_by_id(articleid)
 
         # 获取当前文章的评论
-        comments = Comments().find_by_articleid(articleid)
+        comments = Comments.find_by_articleid(articleid)
         comment_users = {}
         for comment in comments:
             if comment.userid not in comment_users:
-                user = Users().find_by_userid(comment.userid)
+                user = Users.find_by_userid(comment.userid)
                 comment_users[comment.userid] = user.nickname if user else "Unknown"
 
         # 获取热门文章列表
-        article_instance = Articles()
-        last, most, recommended = article_instance.find_last_most_recommended()
+        last, most, recommended = Articles.find_last_most_recommended()
         # 获取总文章数
         total_articles = Articles.get_total_count()
         print(f" 系统总文章数: {total_articles}")
 
         return render_template('article-user.html',
                             total = total_articles,
-                            current_page = current_page,
                             article=article_dict,
                             position=position,
                             is_favorited=is_favorited,

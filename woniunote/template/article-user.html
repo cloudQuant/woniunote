@@ -182,46 +182,13 @@
                 <input type="text" id="nickname" class="form-control" value="可以知乎私信我，时间精力有限，咨询可能来不及回复，见谅"  readonly>
             </div>
         </div>
-
-        <!-- 分页导航 -->
-        {% if total > 1 %}
-        <div class="col-12 paginate" style="margin: 20px 0; text-align: center;">
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
-                        <a class="page-link" href="javascript:void(0)" onclick="gotoPage({{article.articleid}}, 'prev')">&laquo;</a>
-                    </li>
-
-                    {% set start_page = [1, current_page - 2] | max %}
-                    {% set end_page = [total, current_page + 2] | min %}
-
-                    {% if start_page > 1 %}
-                        <li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="gotoPage({{article.articleid}}, 1)">1</a></li>
-                        {% if start_page > 2 %}
-                            <li class="page-item disabled"><span class="page-link">...</span></li>
-                        {% endif %}
-                    {% endif %}
-
-                    {% for num in range(start_page, end_page + 1) %}
-                        <li class="page-item {% if num == current_page %}active{% endif %}">
-                            <a class="page-link" href="javascript:void(0)" onclick="gotoPage({{article.articleid}}, {{num}})">{{num}}</a>
-                        </li>
-                    {% endfor %}
-
-                    {% if end_page < total %}
-                        {% if end_page < total - 1 %}
-                            <li class="page-item disabled"><span class="page-link">...</span></li>
-                        {% endif %}
-                        <li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="gotoPage({{article.articleid}}, {{total}})">{{total}}</a></li>
-                    {% endif %}
-
-                    <li class="page-item {% if current_page == total %}disabled{% endif %}">
-                        <a class="page-link" href="javascript:void(0)" onclick="gotoPage({{article.articleid}}, 'next')">&raquo;</a>
-                    </li>
-                </ul>
-            </nav>
+        <!-- 文章总数显示 -->
+        {% if total > 0 %}
+        <div class="col-12" style="margin: 20px 0; text-align: center;">
+            <p class="text-muted">系统当前共有 {{total}} 篇文章</p>
         </div>
         {% endif %}
+
     </div>
 </div>
 
@@ -303,24 +270,6 @@
                 }
             }
         });
-    }
-
-    function gotoPage(articleid, page) {
-        let targetPage;
-        if (page === 'prev') {
-            targetPage = {{ current_page }} - 1;
-        } else if (page === 'next') {
-            targetPage = {{ current_page }} + 1;
-        } else {
-            targetPage = page;
-        }
-        
-        // 确保页码在有效范围内
-        if (targetPage < 1) targetPage = 1;
-        if (targetPage > {{ total }}) targetPage = {{ total }};
-        
-        // 使用新的URL格式
-        window.location.href = `/article/${articleid}/${targetPage}`;
     }
 
     // Vue for comments
