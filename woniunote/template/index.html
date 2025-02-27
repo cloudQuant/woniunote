@@ -40,7 +40,7 @@
                 </div>
                 <div class="col-sm-9 col-xs-12 detail">
                     <div class="title">
-                        <a href="{{ url_for('article.read', articleid=article.articleid) }}">{{article.headline}}</a>
+                        <h3><a href="{{ url_for('article.read', articleid=article.articleid) }}">{{article.headline}}</a></h3>
                     </div>
                     <div class="info">作者：{{nickname}}&nbsp;&nbsp;&nbsp;
                         类别：{{article_type[article.type//100]}}&nbsp;&nbsp;&nbsp;
@@ -99,6 +99,33 @@
 
 
         </div>
+
+        <style>
+            .article-list {
+                padding: 15px;
+                margin-bottom: 15px;
+                background: #fff;
+                border-radius: 5px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .article-list h3 {
+                margin: 0;
+                font-size: 16px;  
+                line-height: 1.8;
+            }
+            .article-list h3 a {
+                color: #333;
+                text-decoration: none;
+            }
+            .article-list h3 a:hover {
+                color: #007bff;
+            }
+            .article-list .info {
+                margin-top: 10px;
+                color: #666;
+                font-size: 14px;
+            }
+        </style>
 
         {# 按需引入side.html,首页需要 #}
         {% include 'side.html' %}
