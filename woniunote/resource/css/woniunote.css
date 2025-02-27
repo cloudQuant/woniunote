@@ -196,7 +196,7 @@ body {
 
 /* 文章标题 */
 .article-list .detail .title {
-    font-size: 1.75rem;
+    font-size: 1.25rem;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;

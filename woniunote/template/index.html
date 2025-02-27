@@ -40,7 +40,7 @@
                 </div>
                 <div class="col-sm-9 col-xs-12 detail">
                     <div class="title">
-                        <h3><a href="{{ url_for('article.read', articleid=article.articleid) }}">{{article.headline}}</a></h3>
+                        <a href="{{ url_for('article.read', articleid=article.articleid) }}" >{{article.headline}}</a>
                     </div>
                     <div class="info">作者：{{nickname}}&nbsp;&nbsp;&nbsp;
                         类别：{{article_type[article.type//100]}}&nbsp;&nbsp;&nbsp;

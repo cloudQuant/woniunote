@@ -407,16 +407,25 @@ def create_beautiful_thumb_png():
     if not os.path.exists(yaml_file_path):
         raise FileNotFoundError(f"配置文件 {yaml_file_path} 不存在!")
 
+    # 读取并解析 YAML 文件
     with open(yaml_file_path, 'r', encoding='utf-8') as file:
-        article_types = yaml.safe_load(file.read())["ARTICLE_TYPES"]
+        yaml_content = file.read()
 
+    # 解析 YAML 内容
+    article_types = yaml.safe_load(yaml_content)["ARTICLE_TYPES"]
+
+    # 输出查看
+    print(article_types)
+
+    # Directory to save images
     output_dir = "../resource/thumb/"
     os.makedirs(output_dir, exist_ok=True)
 
-    # 基础配置
-    image_size = (300, 180)  # 更大的尺寸以容纳更多细节
+    # Font configuration
     font_path = get_system_font_path()
-    
+    image_size = (300, 180)  # (width, height)
+
+    # Generate images
     for key, value in article_types.items():
         # 创建带渐变的底图
         image = Image.new('RGBA', image_size)
@@ -576,6 +585,165 @@ def add_frame_and_decorations(draw, size):
     for x, y in [(0, 0), (0, size[1]), (size[0], 0), (size[0], size[1])]:
         draw.ellipse([x-corner_size, y-corner_size, x+corner_size, y+corner_size],
                     fill=(255, 255, 255, 50))
+
+def create_beautiful_thumb_png():
+    """
+    创建专业的文章类型缩略图，特点：
+    1. 简洁现代的设计风格
+    2. 适合白色背景的配色方案
+    3. 专业的排版和布局
+    4. 清晰的视觉层次
+    """
+    yaml_file_path = '../configs/article_type_config.yaml'
+
+    if not os.path.exists(yaml_file_path):
+        raise FileNotFoundError(f"配置文件 {yaml_file_path} 不存在!")
+
+    with open(yaml_file_path, 'r', encoding='utf-8') as file:
+        article_types = yaml.safe_load(file.read())["ARTICLE_TYPES"]
+
+    output_dir = "../resource/thumb/"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 基础配置
+    image_size = (280, 160)  # 适中的尺寸
+    font_path = get_system_font_path()
+    
+    # 预定义的专业配色方案
+    color_schemes = [
+        {
+            'bg': (41, 128, 185),     # 专业蓝
+            'accent': (52, 152, 219),  # 亮蓝
+            'text': (255, 255, 255)    # 白色文字
+        },
+        {
+            'bg': (39, 174, 96),      # 专业绿
+            'accent': (46, 204, 113),  # 亮绿
+            'text': (255, 255, 255)    # 白色文字
+        },
+        {
+            'bg': (142, 68, 173),     # 优雅紫
+            'accent': (155, 89, 182),  # 亮紫
+            'text': (255, 255, 255)    # 白色文字
+        },
+        {
+            'bg': (44, 62, 80),       # 深蓝灰
+            'accent': (52, 73, 94),    # 亮蓝灰
+            'text': (255, 255, 255)    # 白色文字
+        }
+    ]
+    
+    for key, value in article_types.items():
+        # 为每个类型选择一个固定的配色方案
+        color_scheme = color_schemes[hash(key) % len(color_schemes)]
+        
+        # 创建底图
+        image = Image.new('RGB', image_size, color_scheme['bg'])
+        draw = ImageDraw.Draw(image)
+
+        # 添加专业风格的装饰
+        add_professional_decoration(draw, image_size, color_scheme)
+
+        # 计算最佳字体大小和位置
+        font_size, position = calculate_text_position(draw, value, font_path, image_size)
+        font = ImageFont.truetype(font_path, font_size)
+
+        # 绘制专业风格文本
+        draw_professional_text(draw, value, position, font, color_scheme)
+
+        # 添加边框
+        add_professional_frame(draw, image_size, color_scheme)
+
+        # 保存图片
+        filename = os.path.join(output_dir, f"{key}.png")
+        image.save(filename)
+
+    print(f"专业版缩略图已保存至 {output_dir}")
+
+def calculate_text_position(draw, text, font_path, image_size):
+    """计算文本的最佳字体大小和位置，确保完全居中"""
+    font_size = 60  # 起始字体大小
+    max_width = image_size[0] * 0.75  # 留出25%边距
+    max_height = image_size[1] * 0.6  # 留出40%边距
+    
+    # 计算最佳字体大小
+    while font_size > 24:  # 最小字体大小限制
+        font = ImageFont.truetype(font_path, font_size)
+        # 使用getbbox获取更精确的文本边界
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        
+        if text_width <= max_width and text_height <= max_height:
+            break
+        font_size -= 2
+
+    # 重新获取最终的文本尺寸
+    font = ImageFont.truetype(font_path, font_size)
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+    
+    # 计算精确的居中位置
+    x = (image_size[0] - text_width) // 2 - bbox[0]  # 减去bbox[0]来补偿文本的边界偏移
+    y = (image_size[1] - text_height) // 2 - bbox[1]  # 减去bbox[1]来补偿文本的边界偏移
+    
+    return font_size, (x, y)
+
+def add_professional_decoration(draw, size, color_scheme):
+    """添加专业风格的装饰"""
+    # 添加右上角的装饰条
+    accent_color = color_scheme['accent']
+    stripe_width = 40
+    points = [
+        (size[0] - stripe_width, 0),
+        (size[0], 0),
+        (size[0], stripe_width)
+    ]
+    draw.polygon(points, fill=accent_color)
+
+    # 添加左下角的装饰点
+    dot_size = 6
+    dot_margin = 15
+    dot_spacing = 12
+    for i in range(3):
+        x = dot_margin + (i * dot_spacing)
+        y = size[1] - dot_margin
+        draw.ellipse([x-dot_size//2, y-dot_size//2, x+dot_size//2, y+dot_size//2],
+                    fill=accent_color)
+
+def calculate_professional_font_size(draw, text, font_path, image_size):
+    """计算专业排版的字体大小"""
+    font_size = 60  # 起始字体大小
+    max_width = image_size[0] * 0.75  # 留出25%边距
+    max_height = image_size[1] * 0.6  # 留出40%边距
+    
+    while font_size > 24:  # 最小字体大小限制
+        font = ImageFont.truetype(font_path, font_size)
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        if text_bbox[2] - text_bbox[0] <= max_width and text_bbox[3] - text_bbox[1] <= max_height:
+            break
+        font_size -= 2
+    
+    return font_size
+
+def draw_professional_text(draw, text, position, font, color_scheme):
+    """绘制专业风格的文本"""
+    # 绘制主文本
+    text_color = color_scheme['text']
+    draw.text(position, text, font=font, fill=text_color)
+
+def add_professional_frame(draw, size, color_scheme):
+    """添加专业风格的边框"""
+    # 添加底部强调线
+    accent_color = color_scheme['accent']
+    line_thickness = 3
+    line_width = size[0] * 0.3  # 线长为图片宽度的30%
+    start_x = (size[0] - line_width) // 2
+    y = size[1] - 20  # 距离底部20像素
+    
+    draw.line([(start_x, y), (start_x + line_width, y)],
+             fill=accent_color, width=line_thickness)
 
 if __name__ == '__main__':
     # read_config()
