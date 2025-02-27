@@ -1,19 +1,12 @@
-from flask import Flask, render_template, request, redirect, session, make_response, jsonify, url_for
-from werkzeug.security import generate_password_hash, check_password_hash
 import uuid, os, time, pymysql, json, hashlib, traceback
 from datetime import datetime, timedelta
-
 from flask import Flask, redirect, request, render_template, session, url_for, jsonify
-from werkzeug.security import generate_password_hash
-import os
-import pymysql
-pymysql.install_as_MySQLdb()
-import traceback
-import hashlib
+from flask_caching import Cache
+from flask_session import Session
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from woniunote.configs.config import config
 from woniunote.common.utils import read_config, get_package_path, get_db_connection, parse_db_uri
-from flask_caching import Cache
 from woniunote.common.database import db, ARTICLE_TYPES
 from woniunote.controller.admin import admin
 from woniunote.controller.article import article
@@ -22,10 +15,11 @@ from woniunote.controller.comment import comment
 from woniunote.controller.favorite import favorite
 from woniunote.controller.index import index
 from woniunote.controller.todo_center import tcenter
-from woniunote.controller.ucenter import ucenter
 from woniunote.controller.ueditor import ueditor
 from woniunote.controller.user import user
 from woniunote.module.users import Users
+pymysql.install_as_MySQLdb()
+
 
 def create_app(config_name='production'):
     app = Flask(__name__, template_folder='template',
@@ -40,30 +34,35 @@ def create_app(config_name='production'):
     
     # 配置Session
     is_production = config_name == 'production'
-    app.config.update(
-        # 基本配置
-        SECRET_KEY=os.environ.get('SECRET_KEY', os.urandom(24)),
-        SESSION_COOKIE_NAME='math_train_session',
-        
-        # Cookie配置
-        SESSION_COOKIE_SECURE=False,  # 即使在生产环境也暂时设为False，除非确认使用了HTTPS
-        SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SAMESITE='Lax',
-        SESSION_COOKIE_PATH='/',
-        SESSION_COOKIE_DOMAIN=None,  # 让浏览器自动处理
-        
-        # Session配置
-        PERMANENT_SESSION_LIFETIME=timedelta(days=7),
-        SESSION_TYPE='filesystem',  # 使用文件系统存储session
-        SESSION_FILE_DIR=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sessions'),  # session文件存储路径
-        SESSION_FILE_THRESHOLD=500,  # 最大session文件数
-        SESSION_FILE_MODE=384,  # 0o600 文件权限
-    )
+    session_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sessions')
     
     # 确保session目录存在
-    session_dir = app.config['SESSION_FILE_DIR']
     if not os.path.exists(session_dir):
-        os.makedirs(session_dir, mode=0o700)  # 创建目录，设置严格的权限
+        os.makedirs(session_dir, mode=0o700)
+    
+    app.config.update(
+        # Session配置
+        SESSION_TYPE='filesystem',  # 使用文件系统存储session
+        SESSION_FILE_DIR=session_dir,  # session文件存储路径
+        SESSION_FILE_THRESHOLD=500,  # 最大session文件数
+        SESSION_FILE_MODE=0o600,  # 文件权限
+        SESSION_PERMANENT=True,  # 启用永久session
+        PERMANENT_SESSION_LIFETIME=timedelta(days=7),  # session有效期
+        
+        # Cookie配置
+        SESSION_COOKIE_NAME='math_train_session',
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SECURE=False,  # 暂时设为False，除非确认使用了HTTPS
+        SESSION_COOKIE_SAMESITE='Lax',
+        SESSION_COOKIE_PATH='/',
+        SESSION_COOKIE_DOMAIN=None,
+        
+        # 其他配置
+        SECRET_KEY=os.environ.get('SECRET_KEY', os.urandom(24))
+    )
+    
+    # 初始化Flask-Session
+    Session(app)
     
     SQLALCHEMY_DATABASE_URI = None
     # 读取自定义配置
@@ -91,7 +90,6 @@ def create_app(config_name='production'):
     app.register_blueprint(favorite)
     app.register_blueprint(index)
     app.register_blueprint(tcenter)
-    app.register_blueprint(ucenter)
     app.register_blueprint(ueditor)
     app.register_blueprint(user)
     
@@ -232,13 +230,18 @@ def create_app(config_name='production'):
                             'session_id': str(uuid.uuid4())
                         }
                         
-                        # 设置session
+                        # 清除旧session
+                        session.clear()
+                        
+                        # 设置新session
                         session.permanent = True
                         for key, value in session_data.items():
                             session[key] = value
                         
                         # 强制保存session
                         session.modified = True
+                        
+                        print("Login successful, session data:", dict(session))
                         
                         # 创建响应
                         response = jsonify({
@@ -247,18 +250,6 @@ def create_app(config_name='production'):
                             'redirect': url_for('math_train_user')
                         })
                         
-                        # 设置cookie
-                        response.set_cookie(
-                            'math_train_session',
-                            session_data['session_id'],
-                            max_age=7 * 24 * 60 * 60,  # 7天有效期
-                            httponly=True,
-                            samesite='Lax',
-                            secure=app.config['SESSION_COOKIE_SECURE'],
-                            domain=app.config['SESSION_COOKIE_DOMAIN']
-                        )
-                        
-                        print("Login successful, session data:", dict(session))
                         return response
                         
                     except Exception as e:
@@ -374,39 +365,34 @@ def create_app(config_name='production'):
 
     @app.route("/math_train_user", methods=["GET"])
     def math_train_user():
-        # 检查session是否存在
-        print("now session:", dict(session))
-        if 'user_id' not in dict(session):
-            print("No user_id in session")
-            return redirect(url_for('math_train'))
-            
-        # 打印session信息用于调试
-        print("Current session:", dict(session))
-        print("Cookies:", request.cookies)
-        
-        # # 验证session_id
-        # session_id = request.cookies.get('math_train_session')
-        # if not session_id or session_id != session.get('session_id'):
-        #     print("Invalid session_id")
-        #     session.clear()
-        #     return redirect(url_for('math_train'))
-            
         try:
+            # 打印完整的请求信息
+            print("Request headers:", dict(request.headers))
+            print("Request cookies:", dict(request.cookies))
+            print("Current session:", dict(session))
+            
+            # 检查session是否存在
+            if not session or 'user_id' not in session:
+                print("No valid session found")
+                return redirect(url_for('math_train'))
+            
+            # 获取用户信息
             connection = get_db_connection(DATABASE_INFO)
             with connection.cursor() as cursor:
-                cursor.execute(
-                    "SELECT math_level, correct_count, total_questions, time_spent, created_at "
-                    "FROM math_train_results WHERE user_id = %s ORDER BY created_at DESC LIMIT 10",
-                    (session['user_id'],)
-                )
-                history_result = cursor.fetchall()
+                cursor.execute("SELECT id, username FROM math_train_users WHERE id = %s", (session['user_id'],))
+                user = cursor.fetchone()
+                
+                if not user:
+                    print("User not found in database")
+                    session.clear()
+                    return redirect(url_for('math_train'))
+                
+                return render_template('math_train_user.html')
+                
         except Exception as e:
-            print(f"获取用户数据错误: {str(e)}")
+            print("Error in math_train_user:", e)
             traceback.print_exc()
-            return jsonify({'error': '服务器内部错误'}), 500
-        target_html = "math_train_user.html"
-        print(history_result)
-        return render_template(target_html, history_result=history_result)
+            return redirect(url_for('math_train'))
 
     @app.route('/math_train_user_data', methods=['GET'])
     def math_train_user_data():
