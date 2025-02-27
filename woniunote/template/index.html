@@ -56,7 +56,7 @@
             {% if page == 1 %}
                 <a href="/page/1" class="disabled">上一页</a>&nbsp;&nbsp;
             {% else %}
-                <a href="/page/{{ page - 1 }}">上一页</a>&nbsp;&nbsp;
+                <a href="/page/{{ page - 1 }}" class="page-link">上一页</a>&nbsp;&nbsp;
             {% endif %}
 
             <!-- 页码范围 -->
@@ -64,7 +64,7 @@
             {% set end_page = [total, page + 5] | min %}  {# 计算结束页码，确保不大于总页数 #}
 
             {% if start_page > 1 %}
-                <a href="/page/1">1</a>&nbsp;&nbsp;
+                <a href="/page/1" class="page-link">1</a>&nbsp;&nbsp;
                 {% if start_page > 2 %}
                     <span>...</span>&nbsp;&nbsp;  {# 显示省略号 #}
                 {% endif %}
@@ -73,9 +73,9 @@
             {% for i in range(start_page, end_page + 1) %}
                 {% if i == page %}
                     <!-- 当前页码，设置红色样式 -->
-                    <a href="/page/{{ i }}" class="current-page" style="color: red;">{{ i }}</a>&nbsp;&nbsp;
+                    <a href="/page/{{ i }}" class="current-page page-link" style="color: red;">{{ i }}</a>&nbsp;&nbsp;
                 {% else %}
-                    <a href="/page/{{ i }}">{{ i }}</a>&nbsp;&nbsp;
+                    <a href="/page/{{ i }}" class="page-link">{{ i }}</a>&nbsp;&nbsp;
                 {% endif %}
             {% endfor %}
 
@@ -83,14 +83,14 @@
                 {% if end_page < total - 1 %}
                     <span>...</span>&nbsp;&nbsp;  {# 显示省略号 #}
                 {% endif %}
-                <a href="/page/{{ total }}">{{ total }}</a>&nbsp;&nbsp;
+                <a href="/page/{{ total }}" class="page-link">{{ total }}</a>&nbsp;&nbsp;
             {% endif %}
 
             <!-- 下一页 -->
             {% if page == total %}
-                <a href="/page/{{ total }}" class="disabled">下一页</a>
+                <a href="/page/{{ total }}" class="disabled page-link">下一页</a>
             {% else %}
-                <a href="/page/{{ page + 1 }}">下一页</a>
+                <a href="/page/{{ page + 1 }}" class="page-link">下一页</a>
             {% endif %}
         </div>
 

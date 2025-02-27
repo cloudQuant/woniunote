@@ -12,20 +12,17 @@ import traceback
 
 article = Blueprint("article", __name__)
 
-
 @article.route('/article/<int:articleid>')
-def read(articleid):
-    print("begin to read article {}".format(articleid))
+@article.route('/article/<int:articleid>/<int:current_page>')
+def read(articleid, current_page=1):
+    print(f" Entering read function for article {articleid}, page {current_page}")
     try:
-        try:
-            result = Articles().find_by_id(articleid)
-            # print(articleid,result)
-            if result is None:
-                abort(404)
-        except Exception as e:
-            print("read", articleid, e)
-            abort(500)
-
+        print(f" Attempting to find article {articleid}")
+        result = Articles().find_by_id(articleid)
+        if not result:
+            print(f" Article {articleid} not found")
+            abort(404)
+        print(f" Found article {articleid}: {result.headline[:30]}...")
         article_dict = {}
         for k, v in result.__dict__.items():
             if not k.startswith('_sa_instance_state'):
@@ -64,8 +61,13 @@ def read(articleid):
         # 获取热门文章列表
         article_instance = Articles()
         last, most, recommended = article_instance.find_last_most_recommended()
+        # 新增：获取总文章数
+        total_articles = Articles.get_total_count()
+        print(f" 系统总文章数: {total_articles}")
 
         return render_template('article-user.html',
+                            total = total_articles,
+                            current_page = current_page,
                             article=article_dict,
                             position=position,
                             is_favorited=is_favorited,

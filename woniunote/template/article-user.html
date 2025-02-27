@@ -4,6 +4,80 @@
 <!-- 引入 highlight.js -->
 <!--<script src="/js/vue.js"></script>>-->
 
+<style>
+    .article-detail {
+        background: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .article-detail .title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .article-detail .info {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    .article-detail .content {
+        color: #333;
+        line-height: 1.8;
+        font-size: 16px;
+    }
+    .article-detail .content p {
+        margin-bottom: 1.2em;
+    }
+    .article-detail .content img {
+        max-width: 100%;
+        height: auto;
+        margin: 10px 0;
+    }
+    .article-detail .content pre {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        overflow-x: auto;
+    }
+    .article-nav {
+        margin: 20px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+    .article-nav a {
+        color: #007bff;
+        text-decoration: none;
+    }
+    .article-nav a:hover {
+        text-decoration: underline;
+    }
+    .pagination {
+        margin-top: 20px;
+    }
+    .pagination .page-link {
+        color: #007bff;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: #fff;
+    }
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        pointer-events: none;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
+</style>
+
 <div class="col-sm-9 col-12" id="left" style="padding: 0;">
     <div class="col-12 row article-detail">
         <div class="col-9 title">
@@ -31,14 +105,14 @@
             <a href="../edit/{{article.articleid}}">编辑文章</a>
             {% endif %}
         </div>
-        <div class="col-12 content" id="content">
+        <div class="col-12 content" id="content" style="padding: 20px; line-height: 1.8; font-size: 16px;">
             {{article.content | safe}}  <!-- 渲染文章内容 -->
 
         </div>
 
         <!-- 只有需要消耗积分的文章且用户并未消耗过时才显示阅读全文按钮 -->
         {% if article.credit > 0 and payed == False %}
-        <div class="col-12 readall">
+        <div class="col-12 readall" style="margin-top: 20px; text-align: center;">
             {% if session.get('islogin') == 'true' %}
             <button class="col-sm-10 col-12" onclick="readAll()">
                 <span class="oi oi-data-transfer-download" aria-hidden="true"></span> 阅读全文（消耗积分：{{article['credit']}} 分）
@@ -80,12 +154,41 @@
 
         <!-- 分页导航 -->
         {% if total > 1 %}
-        <div class="col-12 paginate">
-            <label onclick="gotoPage({{article['articleid']}}, 'prev')">上一页</label>&nbsp;&nbsp;
-            {% for i in range(total) %}
-            <label onclick="gotoPage({{ article['articleid'] }}, {{ i + 1 }})">{{ i + 1 }}</label>&nbsp;&nbsp;
-            {% endfor %}
-            <label onclick="gotoPage({{article['articleid']}}, 'next')">下一页</label>
+        <div class="col-12 paginate" style="margin: 20px 0; text-align: center;">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="javascript:void(0)" onclick="gotoPage({{article.articleid}}, 'prev')">&laquo;</a>
+                    </li>
+
+                    {% set start_page = [1, current_page - 2] | max %}
+                    {% set end_page = [total, current_page + 2] | min %}
+
+                    {% if start_page > 1 %}
+                        <li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="gotoPage({{article.articleid}}, 1)">1</a></li>
+                        {% if start_page > 2 %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endif %}
+
+                    {% for num in range(start_page, end_page + 1) %}
+                        <li class="page-item {% if num == current_page %}active{% endif %}">
+                            <a class="page-link" href="javascript:void(0)" onclick="gotoPage({{article.articleid}}, {{num}})">{{num}}</a>
+                        </li>
+                    {% endfor %}
+
+                    {% if end_page < total %}
+                        {% if end_page < total - 1 %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                        <li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="gotoPage({{article.articleid}}, {{total}})">{{total}}</a></li>
+                    {% endif %}
+
+                    <li class="page-item {% if current_page == total %}disabled{% endif %}">
+                        <a class="page-link" href="javascript:void(0)" onclick="gotoPage({{article.articleid}}, 'next')">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
         {% endif %}
     </div>
@@ -171,6 +274,24 @@
         });
     }
 
+    function gotoPage(articleid, page) {
+        let targetPage;
+        if (page === 'prev') {
+            targetPage = {{ current_page }} - 1;
+        } else if (page === 'next') {
+            targetPage = {{ current_page }} + 1;
+        } else {
+            targetPage = page;
+        }
+        
+        // 确保页码在有效范围内
+        if (targetPage < 1) targetPage = 1;
+        if (targetPage > {{ total }}) targetPage = {{ total }};
+        
+        // 使用新的URL格式
+        window.location.href = `/article/${articleid}/${targetPage}`;
+    }
+
     // Vue for comments
     let v = new Vue({
         el: '#commentDiv',
@@ -192,4 +313,3 @@
 {% include 'side.html' %}
 
 {% endblock %}
-

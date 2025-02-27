@@ -84,8 +84,8 @@ def create_app(config_name='production'):
     db.init_app(app)
     
     # 注册蓝图
-    app.register_blueprint(admin)
     app.register_blueprint(article)
+    app.register_blueprint(admin)
     app.register_blueprint(card_center)
     app.register_blueprint(comment)
     app.register_blueprint(favorite)
@@ -196,6 +196,11 @@ def create_app(config_name='production'):
         """训练页面"""
         target_file = "math_train.html"
         return render_template(target_file)
+
+    @app.after_request
+    def log_route(response):
+        print(f"📡 实际处理路由: {request.endpoint}")
+        return response
 
     @app.route('/math_train_login', methods=['POST'])
     def math_train_login():
