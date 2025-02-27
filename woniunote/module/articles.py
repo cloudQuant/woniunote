@@ -178,6 +178,7 @@ class Articles(DBase):
             result = dbsession.query(Article.articleid, Article.headline). \
                 filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1) \
                 .order_by(Article.articleid.desc()).limit(9).all()
+            print("find last 9", result)
             return result
         except Exception as e:
             print(e)
@@ -190,6 +191,7 @@ class Articles(DBase):
             result = dbsession.query(Article.articleid, Article.headline). \
                 filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1) \
                 .order_by(Article.readcount.desc()).limit(9).all()
+            print("find most 9", result)
             return result
         except Exception as e:
             print(e)
