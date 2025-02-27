@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, abort
+from flask import Blueprint, render_template, request, session, abort, url_for
 from woniunote.module.articles import Articles
 from woniunote.module.users import Users
 from woniunote.common.session_util import get_current_user_id, is_logged_in
@@ -27,10 +27,13 @@ def read(articleid):
             abort(500)
 
         article_dict = {}
-        for k, v in result[0].__dict__.items():
+        for k, v in result.__dict__.items():
             if not k.startswith('_sa_instance_state'):
                 article_dict[k] = v
-        article_dict['nickname'] = result[1]
+        
+        # 获取作者昵称
+        user = Users().find_by_userid(result.userid)
+        article_dict['nickname'] = user.nickname if user else "Unknown"
 
         # 如果已经消耗积分，则不再截取文章内容
         payed = Credits().check_payed_article(articleid)
@@ -50,29 +53,36 @@ def read(articleid):
         # 获取当前文章的 上一篇和下一篇
         prev_next = Articles().find_prev_next_by_id(articleid)
 
-        # 显示当前文章对应的评论
-        # comment_user = Comment().find_limit_with_user(articleid, 0, 50)
+        # 获取当前文章的评论
+        comments = Comments().find_by_articleid(articleid)
+        comment_users = {}
+        for comment in comments:
+            if comment.userid not in comment_users:
+                user = Users().find_by_userid(comment.userid)
+                comment_users[comment.userid] = user.nickname if user else "Unknown"
 
-        # comment_list = Comment().get_comment_user_list(articleid, 0, 10)
-        #
-        count = Comments().get_count_by_article(articleid)
-        total = math.ceil(count / 10)
+        # 获取热门文章列表
         article_instance = Articles()
         last, most, recommended = article_instance.find_last_most_recommended()
-        html_file = 'article-user.html'
-        # print("article_dict", article_dict["headline"])
-        return render_template(html_file, article=article_dict, position=position, payed=payed,
-                               is_favorited=is_favorited, prev_next=prev_next,
-                               can_use_minute=can_use_minute(),
-                               total=total, last_articles=last, most_articles=most,
-                               recommended_articles=recommended
-                               )
+
+        return render_template('article-user.html',
+                            article=article_dict,
+                            position=position,
+                            is_favorited=is_favorited,
+                            prev_next=prev_next,
+                            comments=comments,
+                            comment_users=comment_users,
+                            can_use_minute=can_use_minute(),
+                            last_articles=last,
+                            most_articles=most,
+                            recommended_articles=recommended)
     except Exception as e:
-        print(e)
+        print("Error in read:", e)
         traceback.print_exc()
+        abort(500)
 
 
-@article.route('/readall', methods=['POST'])
+@article.route('/article/readall', methods=['POST'])
 def read_all():
     try:
         position = int(request.form.get('position'))
@@ -95,7 +105,7 @@ def read_all():
         traceback.print_exc()
 
 
-@article.route('/prepost')
+@article.route('/article/prepost')
 def pre_post():
     try:
         article_type = ARTICLE_TYPES
@@ -114,7 +124,7 @@ def pre_post():
 
 
 # 编辑文章的前端页面渲染
-@article.route('/edit/<int:articleid>')
+@article.route('/article/edit/<int:articleid>')
 def go_edit(articleid):
     # print("go to edit article")
     try:
@@ -137,7 +147,7 @@ def go_edit(articleid):
 
 
 # 处理文章编辑请求
-@article.route("/edit", methods=["PUT", "POST"])
+@article.route("/article/edit", methods=["PUT", "POST"])
 def edit_article():
     # print("begin to edit article")
     try:
