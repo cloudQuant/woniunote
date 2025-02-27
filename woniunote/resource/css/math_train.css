@@ -211,87 +211,100 @@ body {
 .modal {
   display: none;
   position: fixed;
-  z-index: 1000;
-  left: 0;
   top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5);
-  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
   align-items: center;
+  justify-content: center;
 }
 
 .modal-content {
-  background: #fff;
-  padding: 2rem 3rem;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-  width: 100%;
-  max-width: 400px;
-  transform: translateY(-20px);
-  opacity: 0;
-  transition: all 0.3s ease;
-}
-
-.modal.show .modal-content {
-  transform: translateY(0);
-  opacity: 1;
-}
-
-.modal-content h2 {
-  color: #2c3e50;
-  margin-bottom: 1.5rem;
-  font-size: 1.8rem;
-  text-align: center;
-}
-
-.modal-input-group {
-  margin-bottom: 1.2rem;
-}
-
-.modal-input-group input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e0e0e0;
+  background-color: #fff;
+  padding: 20px;
   border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.3s;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+  margin: 15% auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.modal-input-group input:focus {
-  border-color: #3498db;
-  outline: none;
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
 }
 
-#registerBtn {
+.modal-header h3 {
+  margin: 0;
+  color: var(--primary-color);
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close:hover,
+.close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.modal .form-group {
+  margin-bottom: 15px;
+}
+
+.modal .form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.modal .form-control {
   width: 100%;
-  padding: 14px;
-  background: #3498db;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.modal .form-control:focus {
+  border-color: var(--btn-bg);
+  outline: none;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+.modal .btn-primary {
+  width: 100%;
+  padding: 10px;
+  background-color: var(--btn-bg);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 1.1rem;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background 0.3s;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
 }
 
-#registerBtn:hover {
-  background: #2980b9;
+.modal .btn-primary:hover {
+  background-color: var(--btn-hover);
 }
 
-.switch-mode {
-  text-align: center;
-  margin-top: 1rem;
-  color: #7f8c8d;
-  cursor: pointer;
-}
-
-.switch-mode:hover {
-  color: #3498db;
-  text-decoration: underline;
-}
-
-/* ==================== 对话框样式 ==================== */
+/* 模态框样式 */
 .modal {
   display: none;
   position: fixed;

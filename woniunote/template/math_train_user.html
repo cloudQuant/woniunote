@@ -11,6 +11,7 @@
   <div class="navbar-right">
     <span class="navbar-username" id="navbarUsername"></span>
     <button class="navbar-btn" onclick="window.location.href='/math_train'">开始训练</button>
+    <button class="navbar-btn" id="resetPasswordBtn">重置密码</button>
     <button class="navbar-btn" id="logoutBtn">退出</button>
   </div>
   <div class="user-center-container">
@@ -49,31 +50,29 @@
     </div>
   </div>
 
-  <div class="container">
-    <div class="row">
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header">
-            <h3>重置密码</h3>
+  <!-- 密码重置对话框 -->
+  <div id="resetPasswordModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>重置密码</h3>
+        <span class="close" onclick="hideModal('resetPasswordModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="resetPasswordForm">
+          <div class="form-group">
+            <label for="username">用户名</label>
+            <input type="text" class="form-control" id="username" required>
           </div>
-          <div class="card-body">
-            <form id="resetPasswordForm">
-              <div class="form-group">
-                <label for="username">用户名</label>
-                <input type="text" class="form-control" id="username" required>
-              </div>
-              <div class="form-group">
-                <label for="oldPassword">原密码</label>
-                <input type="password" class="form-control" id="oldPassword" required>
-              </div>
-              <div class="form-group">
-                <label for="newPassword">新密码</label>
-                <input type="password" class="form-control" id="newPassword" required>
-              </div>
-              <button type="submit" class="btn btn-primary">重置密码</button>
-            </form>
+          <div class="form-group">
+            <label for="oldPassword">原密码</label>
+            <input type="password" class="form-control" id="oldPassword" required>
           </div>
-        </div>
+          <div class="form-group">
+            <label for="newPassword">新密码</label>
+            <input type="password" class="form-control" id="newPassword" required>
+          </div>
+          <button type="submit" class="btn btn-primary">确认修改</button>
+        </form>
       </div>
     </div>
   </div>
@@ -81,58 +80,58 @@
   <!-- JavaScript -->
   <script>
     // 全局认证检查
-  const checkAuth = async () => {
-    try {
-      const res = await fetch('/math_train_check_login', {
-        credentials: 'include'
-      });
-      const data = await res.json();
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/math_train_check_login', {
+          credentials: 'include'
+        });
+        const data = await res.json();
 
-      if (!data.loggedIn) {
+        if (!data.loggedIn) {
+          window.location.href = '/math_train';
+        } else {
+          document.getElementById('navbarUsername').textContent = `欢迎，${data.username}`;
+        }
+      } catch (error) {
+        console.error('认证检查失败:', error);
         window.location.href = '/math_train';
-      } else {
-        document.getElementById('navbarUsername').textContent = `欢迎，${data.username}`;
       }
-    } catch (error) {
-      console.error('认证检查失败:', error);
-      window.location.href = '/math_train';
-    }
-  };
+    };
 
-  // 获取训练历史数据
-  async function loadTrainingHistory() {
-    try {
-      await checkAuth(); // 先检查登录状态
+    // 获取训练历史数据
+    async function loadTrainingHistory() {
+      try {
+        await checkAuth(); // 先检查登录状态
 
-      const response = await fetch('/math_train_user_data', {
-        credentials: 'include'
-      });
+        const response = await fetch('/math_train_user_data', {
+          credentials: 'include'
+        });
 
-      if (response.status === 401) {
-        window.location.href = '/math_train';
-        return;
-      }
+        if (response.status === 401) {
+          window.location.href = '/math_train';
+          return;
+        }
 
-      const data = await response.json();
+        const data = await response.json();
 
-      // 在获取数据后
-    data.history.forEach(record => {
-      const row = `
-        <tr>
-          <td>${new Date(record.created_at).toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            })}</td>
-          <td>Lv.${record.math_level}</td>
-          <td>${record.total_questions}</td>
-          <td>${record.correct_count}</td>
-          <td>${(record.correct_count / record.total_questions * 100).toFixed(1)}%</td>
-          <td>${record.time_spent}</td>
-        </tr>
+        // 在获取数据后
+        data.history.forEach(record => {
+          const row = `
+            <tr>
+              <td>${new Date(record.created_at).toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                })}</td>
+              <td>Lv.${record.math_level}</td>
+              <td>${record.total_questions}</td>
+              <td>${record.correct_count}</td>
+              <td>${(record.correct_count / record.total_questions * 100).toFixed(1)}%</td>
+              <td>${record.time_spent}</td>
+            </tr>
           `;
           document.getElementById('historyBody').innerHTML += row;
         });
@@ -141,62 +140,139 @@
         document.getElementById('totalSessions').textContent = data.total_sessions;
         document.getElementById('avgAccuracy').textContent = `${data.avg_accuracy}%`;
         document.getElementById('totalTime').textContent = `${data.total_time}秒`;
-
-        } catch (error) {
-          console.error('加载数据失败:', error);
-        }
+      } catch (error) {
+        console.error('加载数据失败:', error);
       }
+    }
 
-  // 初始化加载
-  window.onload = () => {
-    checkAuth();
-    loadTrainingHistory();
-
-    // 绑定退出按钮
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
+    // 退出登录
+    const logout = async () => {
       try {
-        await fetch('/math_train_logout', {
-          method: 'POST',
+        const response = await fetch('/logout', {
+          method: 'GET',
           credentials: 'include'
         });
-        window.location.href = '/math_train';
+        
+        if (response.ok) {
+          // 清除本地存储和会话
+          sessionStorage.clear();
+          localStorage.clear();
+          
+          // 重定向到登录页
+          window.location.href = '/math_train';
+        } else {
+          console.error('退出失败');
+        }
       } catch (error) {
-        console.error('退出失败:', error);
+        console.error('退出请求失败:', error);
       }
-    });
-  };
+    };
 
-  document.getElementById('resetPasswordForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const username = document.getElementById('username').value.trim();
-    const oldPassword = document.getElementById('oldPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    
-    try {
-      const response = await fetch('/math_train_reset_password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: username,
-          old_password: oldPassword,
-          new_password: newPassword
-        })
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        alert('密码重置成功！请使用新密码重新登录。');
-        window.location.href = '/math_train';
-      } else {
-        alert(result.message || '密码重置失败，请重试。');
+    // 显示模态框
+    function showModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.style.display = 'flex';
+        // 自动聚焦用户名输入框
+        const usernameInput = modal.querySelector('#username');
+        if (usernameInput) {
+          usernameInput.focus();
+        }
       }
-    } catch (error) {
-      console.error('重置密码请求失败:', error);
-      alert('服务器错误，请稍后重试。');
     }
-  });
+
+    // 隐藏模态框
+    function hideModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.style.display = 'none';
+        // 清空表单
+        const form = modal.querySelector('form');
+        if (form) {
+          form.reset();
+        }
+      }
+    }
+
+    // 初始化事件监听
+    function initializeEventListeners() {
+      // 绑定退出按钮
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+      }
+
+      // 绑定重置密码按钮
+      const resetBtn = document.getElementById('resetPasswordBtn');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          showModal('resetPasswordModal');
+        });
+      }
+
+      // 绑定关闭按钮
+      const closeButtons = document.getElementsByClassName('close');
+      Array.from(closeButtons).forEach(button => {
+        button.addEventListener('click', () => {
+          const modalId = button.closest('.modal').id;
+          hideModal(modalId);
+        });
+      });
+
+      // 点击模态框外部关闭
+      const modals = document.getElementsByClassName('modal');
+      Array.from(modals).forEach(modal => {
+        modal.addEventListener('click', (event) => {
+          if (event.target === modal) {
+            hideModal(modal.id);
+          }
+        });
+      });
+
+      // 绑定重置密码表单
+      const resetForm = document.getElementById('resetPasswordForm');
+      if (resetForm) {
+        resetForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const username = document.getElementById('username').value.trim();
+          const oldPassword = document.getElementById('oldPassword').value;
+          const newPassword = document.getElementById('newPassword').value;
+          
+          try {
+            const response = await fetch('/math_train_reset_password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                username: username,
+                old_password: oldPassword,
+                new_password: newPassword
+              })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              alert('密码重置成功！请使用新密码重新登录。');
+              hideModal('resetPasswordModal');
+              logout(); // 重置密码成功后登出
+            } else {
+              alert(result.message || '密码重置失败，请重试。');
+            }
+          } catch (error) {
+            console.error('重置密码请求失败:', error);
+            alert('服务器错误，请稍后重试。');
+          }
+        });
+      }
+    }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAuth();
+      loadTrainingHistory();
+      initializeEventListeners();
+    });
   </script>
 </body>
 </html>
