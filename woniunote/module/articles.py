@@ -47,15 +47,6 @@ class Articles(DBase):
             print(e)
             traceback.print_exc()
 
-    # 获取总文章数
-    @staticmethod
-    def get_total_count():
-        try:
-            return dbsession.query(Article).count()
-        except Exception as e:
-            print(f"获取总文章数失败: {str(e)}")
-            return 0
-
     # 根据id查询文章，数据格式：(Article, 'nickname')
     @staticmethod
     def find_by_id(articleid):
@@ -106,14 +97,18 @@ class Articles(DBase):
     def find_limit_with_users(start, count):
         try:
             result = dbsession.query(Article, Users.nickname).join(Users, Users.userid == Article.userid) \
-                .filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1) \
-                .order_by(Article.articleid.desc()) \
-                .offset(start).limit(count).all()
+                .all()
+            begin = start
+            end = start + count
+            if begin == -10:
+                result = result[begin:]
+            else:
+                result = result[begin:end]
+            result = result[::-1]
             return result
         except Exception as e:
             print(e)
             traceback.print_exc()
-            return []
 
     # 统计一下当前文章的总数量
     @staticmethod
@@ -213,15 +208,36 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 一次性返回三个推荐数据
-    def find_last_most_recommended(self):
+    @staticmethod
+    def find_last_most_recommended():
         try:
-            last = self.find_last_9()
-            most = self.find_most_9()
-            recommended = self.find_recommended_9()
+            # 最新文章
+            last = dbsession.query(Article).filter(
+                Article.hidden == 0,
+                Article.drafted == 0,
+                Article.checked == 1
+            ).order_by(Article.articleid.desc()).limit(9).all()
+
+            # 最多阅读
+            most = dbsession.query(Article).filter(
+                Article.hidden == 0,
+                Article.drafted == 0,
+                Article.checked == 1
+            ).order_by(Article.readcount.desc()).limit(9).all()
+
+            # 推荐文章
+            recommended = dbsession.query(Article).filter(
+                Article.hidden == 0,
+                Article.drafted == 0,
+                Article.checked == 1,
+                Article.recommended == 1
+            ).order_by(Article.articleid.desc()).limit(9).all()
+
             return last, most, recommended
         except Exception as e:
             print(e)
             traceback.print_exc()
+            return [], [], []
 
     # 每阅读一次文章，阅读次数+1
     @staticmethod

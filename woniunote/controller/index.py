@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, abort
+from flask import Blueprint, render_template, abort, request
 from woniunote.module.articles import Articles
 from woniunote.common.timer import can_use_minute
 import math
@@ -14,16 +14,15 @@ index = Blueprint("index", __name__)
 def home():
     try:
         # 下述代码跟之前版本保持不变，正常查询数据库
-        article = Articles()
-        result = article.find_limit_with_users(-10, 10)
-        total = math.ceil(article.get_total_count() / 10)
+        result = Articles.find_limit_with_users(-10, 10)
+        total = math.ceil(Articles.get_total_count() / 10)
 
-        last, most, recommended = article.find_last_most_recommended()
-        # content = render_template('index.html', result=result, page=1, total=total)
+        last, most, recommended = Articles.find_last_most_recommended()
+        
         html_file = 'index.html'
         content = render_template(html_file, result=result, page=1, total=total,
-                                  can_use_minute=can_use_minute(),
-                                  last_articles=last, most_articles=most, recommended_articles=recommended)
+                                can_use_minute=can_use_minute(),
+                                last_articles=last, most_articles=most, recommended_articles=recommended)
         return content
     except Exception as e:
         print(e)
