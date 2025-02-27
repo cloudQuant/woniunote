@@ -38,6 +38,18 @@ def create_app(config_name='development'):
     if not app.config.get('SECRET_KEY'):
         app.config['SECRET_KEY'] = os.urandom(24)
     
+    # 配置Session
+    is_production = config_name == 'production'
+    app.config.update(
+        SESSION_COOKIE_SECURE=is_production,  # 只在生产环境使用HTTPS
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE='Lax',
+        PERMANENT_SESSION_LIFETIME=timedelta(days=7),  # session有效期7天
+        SESSION_COOKIE_NAME='math_train_session',  # 自定义session cookie名称
+        SESSION_COOKIE_PATH='/',  # 确保cookie在所有路径下可用
+        SESSION_COOKIE_DOMAIN=None  # 让浏览器自动设置domain
+    )
+    
     SQLALCHEMY_DATABASE_URI = None
     # 读取自定义配置
     custom_config = read_config()
@@ -49,9 +61,8 @@ def create_app(config_name='development'):
             
         # 如果自定义配置中有session配置，则使用自定义配置
         if 'session' in custom_config:
-            for key, value in custom_config['session'].items():
-                app.config[key] = value
-                
+            app.config.update(custom_config['session'])
+            
     DATABASE_INFO = parse_db_uri(SQLALCHEMY_DATABASE_URI)
     # 初始化扩展
     cache = Cache(app)
@@ -199,14 +210,33 @@ def create_app(config_name='development'):
                 if check_password_hash(user['password'], password):
                     # 设置持久会话
                     session.permanent = True
+                    # 生成唯一的session ID
+                    session_id = str(uuid.uuid4())
+                    # 设置session数据
+                    session['session_id'] = session_id
                     session['user_id'] = user['id']
                     session['username'] = user['username']
-
-                    return jsonify({
+                    session['login_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    
+                    # 创建响应
+                    response = jsonify({
                         'success': True,
                         'username': user['username'],
                         'redirect': url_for('math_train_user')
                     })
+                    
+                    # 设置cookie
+                    response.set_cookie(
+                        'math_train_session',
+                        session_id,
+                        max_age=7 * 24 * 60 * 60,  # 7天有效期
+                        httponly=True,
+                        samesite='Lax',
+                        secure=app.config['SESSION_COOKIE_SECURE'],  # 根据配置决定是否需要HTTPS
+                        domain=app.config['SESSION_COOKIE_DOMAIN']  # 使用配置中的domain设置
+                    )
+                    
+                    return response
                 else:
                     return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
 
@@ -295,6 +325,20 @@ def create_app(config_name='development'):
     # 登录状态检查
     @app.route('/math_train_check_login')
     def math_train_check_login():
+        # 打印session信息用于调试
+        print("Check login session:", dict(session))
+        print("Check login cookies:", request.cookies)
+        
+        # 验证session完整性
+        # session_id = request.cookies.get('math_train_session')
+        # if not session_id or session_id != session.get('session_id'):
+        #     print("Invalid session in check_login")
+        #     session.clear()
+        #     return jsonify({
+        #         'loggedIn': False,
+        #         'username': ''
+        #     })
+        #
         return jsonify({
             'loggedIn': 'user_id' in session,
             'username': session.get('username', '')
@@ -302,11 +346,23 @@ def create_app(config_name='development'):
 
     @app.route("/math_train_user", methods=["GET"])
     def math_train_user():
-        print("进入用户中心界面")
-        print("session", session)
-        # """用户中心页面"""
-        if 'user_id' not in session:
+        # 检查session是否存在
+        print("now session:", dict(session))
+        if 'user_id' not in dict(session):
+            print("No user_id in session")
             return redirect(url_for('math_train'))
+            
+        # 打印session信息用于调试
+        print("Current session:", dict(session))
+        print("Cookies:", request.cookies)
+        
+        # # 验证session_id
+        # session_id = request.cookies.get('math_train_session')
+        # if not session_id or session_id != session.get('session_id'):
+        #     print("Invalid session_id")
+        #     session.clear()
+        #     return redirect(url_for('math_train'))
+            
         try:
             connection = get_db_connection(DATABASE_INFO)
             with connection.cursor() as cursor:

@@ -35,7 +35,16 @@ nohup python app.py > woniunote_run.log 2>&1 &
 
 
 ### 测试项目
-`pytest tests/ --cov=woniunote -v`
+```bash
+# 首先安装测试依赖：
+pip install -r requirements-test.txt
+# 安装 Playwright 浏览器：
+playwright install
+# 运行功能测试：
+pytest
+# 运行性能测试：
+locust -f tests/test_performance.py --host=http://localhost:5000
+```
 
 
 
