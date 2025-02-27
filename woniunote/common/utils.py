@@ -17,7 +17,7 @@ import pymysql
 from pymysql.cursors import DictCursor
 from PIL import Image, ImageFont, ImageDraw
 from urllib.parse import urlparse
-
+import math
 
 # 初始化数据库连接
 def get_db_connection(database_info):
@@ -393,9 +393,193 @@ def create_thumb_png():
 
     print(f"Images saved to {output_dir}")
 
+def create_beautiful_thumb_png():
+    """
+    创建更美观的文章类型缩略图，改进包括：
+    1. 更现代的设计风格
+    2. 更丰富的视觉效果
+    3. 更好的字体渲染
+    4. 更智能的布局调整
+    """
+    # 从文件加载 YAML 内容
+    yaml_file_path = '../configs/article_type_config.yaml'
+
+    if not os.path.exists(yaml_file_path):
+        raise FileNotFoundError(f"配置文件 {yaml_file_path} 不存在!")
+
+    with open(yaml_file_path, 'r', encoding='utf-8') as file:
+        article_types = yaml.safe_load(file.read())["ARTICLE_TYPES"]
+
+    output_dir = "../resource/thumb/"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 基础配置
+    image_size = (300, 180)  # 更大的尺寸以容纳更多细节
+    font_path = get_system_font_path()
+    
+    for key, value in article_types.items():
+        # 创建带渐变的底图
+        image = Image.new('RGBA', image_size)
+        draw = ImageDraw.Draw(image)
+
+        # 生成优雅的渐变背景
+        gradient = generate_elegant_gradient(image_size)
+        image.paste(gradient, (0, 0))
+
+        # 添加图案装饰
+        add_pattern_overlay(draw, image_size)
+
+        # 计算最佳字体大小
+        font_size = calculate_optimal_font_size(draw, value, font_path, image_size)
+        font = ImageFont.truetype(font_path, font_size)
+
+        # 获取文本边界
+        text_bbox = draw.textbbox((0, 0), value, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+
+        # 居中定位
+        position = ((image_size[0] - text_width) // 2, (image_size[1] - text_height) // 2)
+
+        # 添加文本装饰
+        add_text_decorations(draw, value, position, font, image_size)
+
+        # 绘制主文本
+        draw_beautiful_text(draw, value, position, font)
+
+        # 添加边框和装饰
+        add_frame_and_decorations(draw, image_size)
+
+        # 保存图片
+        filename = os.path.join(output_dir, f"{key}.png")
+        image.save(filename)
+
+    print(f"美化版缩略图已保存至 {output_dir}")
+
+def generate_elegant_gradient(size):
+    """生成优雅的渐变背景"""
+    gradient = Image.new('RGBA', size)
+    draw = ImageDraw.Draw(gradient)
+    
+    # 生成柔和的渐变色
+    color1 = generate_pastel_color()
+    color2 = generate_complementary_color(color1)
+    
+    for y in range(size[1]):
+        r = int(color1[0] + (color2[0] - color1[0]) * y / size[1])
+        g = int(color1[1] + (color2[1] - color1[1]) * y / size[1])
+        b = int(color1[2] + (color2[2] - color1[2]) * y / size[1])
+        draw.line([(0, y), (size[0], y)], fill=(r, g, b, 255))
+    
+    return gradient
+
+def generate_pastel_color():
+    """生成柔和的粉彩色"""
+    base = random.randint(0, 360)  # HSV色相
+    saturation = random.randint(25, 40)  # 较低的饱和度
+    value = random.randint(90, 100)  # 较高的明度
+    
+    # 将HSV转换为RGB
+    h = base / 360
+    s = saturation / 100
+    v = value / 100
+    
+    if s == 0:
+        return (v, v, v)
+    
+    i = int(h * 6)
+    f = (h * 6) - i
+    p = v * (1 - s)
+    q = v * (1 - s * f)
+    t = v * (1 - s * (1 - f))
+    
+    i = i % 6
+    if i == 0:
+        rgb = (v, t, p)
+    elif i == 1:
+        rgb = (q, v, p)
+    elif i == 2:
+        rgb = (p, v, t)
+    elif i == 3:
+        rgb = (p, q, v)
+    elif i == 4:
+        rgb = (t, p, v)
+    else:
+        rgb = (v, p, q)
+    
+    return tuple(int(x * 255) for x in rgb)
+
+def generate_complementary_color(color):
+    """生成互补色"""
+    return (255 - color[0], 255 - color[1], 255 - color[2])
+
+def add_pattern_overlay(draw, size):
+    """添加图案装饰"""
+    # 添加细小的点状装饰
+    for _ in range(50):
+        x = random.randint(0, size[0])
+        y = random.randint(0, size[1])
+        radius = random.randint(1, 3)
+        color = (255, 255, 255, random.randint(30, 60))  # 半透明白色
+        draw.ellipse([x-radius, y-radius, x+radius, y+radius], fill=color)
+
+def calculate_optimal_font_size(draw, text, font_path, image_size):
+    """计算最佳字体大小"""
+    font_size = 80  # 起始字体大小
+    max_width = image_size[0] * 0.85  # 留出15%边距
+    max_height = image_size[1] * 0.85
+    
+    while font_size > 20:  # 最小字体大小限制
+        font = ImageFont.truetype(font_path, font_size)
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        if text_bbox[2] - text_bbox[0] <= max_width and text_bbox[3] - text_bbox[1] <= max_height:
+            break
+        font_size -= 2
+    
+    return font_size
+
+def add_text_decorations(draw, text, position, font, image_size):
+    """添加文本装饰效果"""
+    # 添加文字光晕效果
+    glow_color = (255, 255, 255, 30)
+    for offset in range(3, 8, 2):
+        for angle in range(0, 360, 45):
+            x = position[0] + offset * math.cos(math.radians(angle))
+            y = position[1] + offset * math.sin(math.radians(angle))
+            draw.text((x, y), text, font=font, fill=glow_color)
+
+def draw_beautiful_text(draw, text, position, font):
+    """绘制美化的文本"""
+    # 绘制文字阴影
+    shadow_color = (0, 0, 0, 100)
+    offset = 2
+    draw.text((position[0] + offset, position[1] + offset), text, font=font, fill=shadow_color)
+    
+    # 绘制主文本
+    main_color = (255, 255, 255, 255)  # 纯白色
+    draw.text(position, text, font=font, fill=main_color)
+
+def add_frame_and_decorations(draw, size):
+    """添加边框和装饰"""
+    # 添加圆角边框
+    border_color = (255, 255, 255, 100)
+    border_width = 3
+    radius = 15
+    
+    # 绘制圆角矩形
+    draw.rounded_rectangle([border_width, border_width, 
+                          size[0]-border_width, size[1]-border_width],
+                         radius=radius, outline=border_color, width=border_width)
+    
+    # 在四角添加装饰
+    corner_size = 10
+    for x, y in [(0, 0), (0, size[1]), (size[0], 0), (size[0], size[1])]:
+        draw.ellipse([x-corner_size, y-corner_size, x+corner_size, y+corner_size],
+                    fill=(255, 255, 255, 50))
+
 if __name__ == '__main__':
     # read_config()
     # folder = '/Users/yunjinqi/Downloads/woniunote/woniunote/resource/img/'
     # filename = "noperm.jpg"
     # convert_image_to_webp(folder, filename)
-    create_thumb_png()
+    create_beautiful_thumb_png()

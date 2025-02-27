@@ -20,6 +20,8 @@ ARTICLE_TYPES:
   303: 期权
   304: 外汇
   305: crypto
+  306: 黄金
+  307: 基金
   4: 理财
   401: 基金
   402: 保险
@@ -41,6 +43,7 @@ ARTICLE_TYPES:
   603: keras
   604: scikit-learn
   605: 机器学习与交易
+  606: 深度学习与交易
   7: 编程
   701: python
   702: c++
@@ -58,6 +61,7 @@ ARTICLE_TYPES:
   806: 科技
   807: 读书笔记
   808: 其他笔记
+  809: 个人知识库
   9: 教程
   901: woniunote入门教程
   902: backtrader基础教程
