@@ -60,25 +60,17 @@ def get_home():
 @index.route('/page/<int:page>')
 def paginate(page):
     try:
-        start = -1 * page * 10  # 1==>0, 2==>10
+        start = (page - 1) * 10  # Calculate the correct start index
         article = Articles()
         result = article.find_limit_with_users(start, 10)
-        # result = article.find_all()
         total = math.ceil(article.get_total_count() / 10)
 
         last, most, recommended = article.find_last_most_recommended()
         _current_time = datetime.now(UTC)
-        # content = render_template('index.html', result=result, page=1, total=total)
         html_file = 'index.html'
         content = render_template(html_file, result=result, page=page, total=total,
                                   can_use_minute=can_use_minute(),
                                   last_articles=last, most_articles=most, recommended_articles=recommended)
-        # content = render_template('index.html', result=result, page=1, total=total,
-        #                        contents=[last, most,recommended])
-        # 如果是第一个用户访问，而静态文件不存在，则生成一个
-        # with open('./template/index-static/index-1.html', mode='w', encoding='utf-8') as f:
-        #     f.write(content)
-        # print("page",page,"start",start,[i['Article'].headline for i in result])
         return content
     except Exception as e:
         print(e)

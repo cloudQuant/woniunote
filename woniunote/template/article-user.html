@@ -120,7 +120,10 @@
             阅读：{{article.readcount}} 次&nbsp;&nbsp;&nbsp;
             消耗积分：{{article.credit}} 分
             &nbsp;&nbsp;&nbsp;
-            {% if current_userid %}
+            {% if session.get('main_islogin') == 'true' and session.get('main_userid') == article.userid %}
+                <a href="{{ url_for('article.go_edit', articleid=article.articleid) }}" >编辑</a>
+            {% endif %}
+            {% if session.get('main_islogin') == 'true' %}
                 {% if is_favorited %}
                     <a href="javascript:void(0)" onclick="cancelFavorite({{article.articleid}})" class="favorite-link">
                         <span class="oi oi-heart" aria-hidden="true"></span>取消收藏
@@ -131,10 +134,7 @@
                     </a>
                 {% endif %}
             {% endif %}
-            {% if current_userid == article.userid %}
-                &nbsp;&nbsp;&nbsp;
-                <a href="../edit/{{article.articleid}}">编辑文章</a>
-            {% endif %}
+
         </div>
         <div class="col-12 content" id="content" style="padding: 20px; line-height: 1.8; font-size: 16px;">
             {{article.content | safe}}  <!-- 渲染文章内容 -->

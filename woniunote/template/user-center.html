@@ -138,7 +138,7 @@
           {% if session.get('main_role') == 'user' %}
           <li><a href="/user/post"><span class="oi oi-zoom-in" aria-hidden="true"></span>&nbsp;&nbsp;我要投稿</a></li>
           {% elif session.get('main_role') == 'editor' %}
-          <li><a href="/prepost"><span class="oi oi-zoom-in" aria-hidden="true"></span>&nbsp;&nbsp;发布文章</a></li>
+          <li><a href="article/prepost"><span class="oi oi-zoom-in" aria-hidden="true"></span>&nbsp;&nbsp;发布文章</a></li>
           <li><a href="/user/draft"><span class="oi oi-book" aria-hidden="true"></span>&nbsp;&nbsp;我的草稿</a></li>
           {% endif %}
           <li><a href="/user/article"><span class="oi oi-shield" aria-hidden="true"></span>&nbsp;&nbsp;我的文章</a></li>

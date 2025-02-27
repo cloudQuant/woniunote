@@ -197,10 +197,10 @@ def create_app(config_name='production'):
         target_file = "math_train.html"
         return render_template(target_file)
 
-    @app.after_request
-    def log_route(response):
-        print(f"📡 实际处理路由: {request.endpoint}")
-        return response
+    # @app.after_request
+    # def log_route(response):
+    #     print(f"📡 实际处理路由: {request.endpoint}")
+    #     return response
 
     @app.route('/math_train_login', methods=['POST'])
     def math_train_login():

@@ -49,15 +49,17 @@ def read(articleid, current_page=1):
         payed = Credits().check_payed_article(articleid)
 
         position = 0
-        if not payed:
-            content = article_dict['content']
-            temp = content[0:]
-            position = temp.rindex('</p>') + 4
-            article_dict['content'] = temp[0:position]
+        if article.credit > 0 and not payed:
+            position = len(article_dict['content']) // 3
+            article_dict['content'] = article_dict['content'][:position]
+
+        # 获取当前用户ID
+        current_userid = get_current_user_id()
+        
+        # 检查是否已收藏
+        is_favorited = Favorites().check_favorite(articleid)
 
         Articles().update_read_count(articleid)  # 阅读次数+1
-
-        is_favorited = Favorites().check_favorite(articleid)
 
         # 获取当前文章的 上一篇和下一篇
         prev_next = Articles().find_prev_next_by_id(articleid)
@@ -76,10 +78,6 @@ def read(articleid, current_page=1):
         # 获取总文章数
         total_articles = Articles.get_total_count()
         print(f" 系统总文章数: {total_articles}")
-
-        # 获取当前用户ID
-        current_userid = get_current_user_id()
-        print(f" Current user ID: {current_userid}, Article user ID: {article.userid}")
 
         return render_template('article-user.html',
                             total = total_articles,
@@ -123,6 +121,7 @@ def read_all():
 
 @article.route('/article/prepost')
 def pre_post():
+    print("begin to run prepost")
     try:
         article_type = ARTICLE_TYPES
         subTypesData = {}
@@ -141,8 +140,10 @@ def pre_post():
 
 @article.route('/article/edit/<int:articleid>')
 def go_edit(articleid):
+    print("begin to edit articleid:", articleid)
     try:
         result = Articles().find_by_id(articleid)
+        print("result:", result)
         target_html = "article-edit.html"
         article_type = ARTICLE_TYPES
         subTypesData = {}
@@ -161,6 +162,11 @@ def go_edit(articleid):
 @article.route("/article/edit", methods=["PUT", "POST"])
 def edit_article():
     try:
+        # 检查用户是否登录
+        if not session.get('main_islogin') == 'true':
+            return 'perm-denied'
+            
+        # 获取表单数据
         headline = request.form.get('headline')
         content = request.form.get('content')
         article_type = int(request.form.get('type'))
@@ -168,17 +174,29 @@ def edit_article():
         drafted = int(request.form.get('drafted'))
         checked = int(request.form.get('checked'))
         articleid = int(request.form.get('articleid'))
-        article_instance = Articles()
+        
+        # 检查文章是否存在
+        article = Articles.find_by_id(articleid)
+        if not article:
+            return 'post-fail'
+            
+        # 检查是否是文章作者
+        current_userid = session.get('main_userid')
+        if str(article.userid) != str(current_userid):
+            return 'perm-denied'
+            
         try:
-            row = article_instance.find_by_id(articleid)
-            article_id = article_instance.update_article(articleid=articleid,
-                                                         article_type=article_type,
-                                                         headline=headline,
-                                                         content=content,
-                                                         credit=credit,
-                                                         thumbnail=row[0].thumbnail,
-                                                         drafted=row[0].drafted,
-                                                         checked=row[0].checked)
+            # 更新文章
+            article_id = Articles.update_article(
+                articleid=articleid,
+                article_type=article_type,
+                headline=headline,
+                content=content,
+                credit=credit,
+                thumbnail=article.thumbnail,
+                drafted=drafted,
+                checked=checked
+            )
             return str(article_id)
         except Exception as e:
             print("edit", articleid, e)
@@ -186,6 +204,7 @@ def edit_article():
     except Exception as e:
         print(e)
         traceback.print_exc()
+        return "edit-fail"
 
 
 @article.route('/article/add', methods=['POST'])

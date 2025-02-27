@@ -4,6 +4,7 @@ from woniunote.module.comments import Comments
 from woniunote.module.favorites import Favorites
 from woniunote.module.users import Users
 from woniunote.module.credits import Credits
+from woniunote.common.database import ARTICLE_TYPES
 import traceback
 import time
 
@@ -23,11 +24,11 @@ def user_center():
             print("No user ID found in session")
             return redirect(url_for('index.home'))
             
-        print(f"Loading favorites for user {userid}")
+        # print(f"Loading favorites for user {userid}")
         favorites = Favorites().find_by_userid(userid)
         if favorites:
             # 获取收藏文章的详细信息
-            print("Favorites loaded:", favorites)
+            # print("Favorites loaded:", favorites)
             articles = Articles.find_by_ids([f.articleid for f in favorites])
             result = []
             for fav in favorites:
@@ -38,7 +39,7 @@ def user_center():
         else:
             result = []
         
-        print(f"Found {len(result)} favorites with articles")
+        # print(f"Found {len(result)} favorites with articles")
         return render_template("user-center.html", result=result)
     except Exception as e:
         print("Error in user_center:", e)
@@ -177,18 +178,19 @@ def user_draft():
 
 @ucenter.route('/user/post')
 def user_post():
+    print("begin user-center user_post")
     try:
         if session.get('main_islogin') != 'true':
             print("User not logged in, redirecting to index")
-            return redirect(url_for('index.home'))
+            return redirect(url_for('index'))
             
         userid = session.get("main_userid")
         if not userid:
             print("No user ID found in session")
             return redirect(url_for('index.home'))
             
-        return render_template("user-post.html")
+        return render_template("user-post.html", article_type=ARTICLE_TYPES, result=[{'type': None}])
     except Exception as e:
         print("Error in user_post:", e)
         traceback.print_exc()
-        return redirect(url_for('index.home'))
+        return redirect(url_for('index'))

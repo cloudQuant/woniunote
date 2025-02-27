@@ -149,16 +149,16 @@ def logout():
 def loginfo():
     try:
         if session.get('main_islogin') == 'true':
-            print("User is logged in")
+            # print("User is logged in")
             user_info = {
                 'userid': session.get('main_userid'),
                 'username': session.get('main_username'),
                 'nickname': session.get('main_nickname'),
                 'role': session.get('main_role')
             }
-            print("User info:", user_info)
+            # print("User info:", user_info)
             return jsonify(user_info)
-        print("User is not logged in")
+        # print("User is not logged in")
         return jsonify(None)
     except Exception as e:
         print("Loginfo error:", e)

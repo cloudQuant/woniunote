@@ -106,18 +106,14 @@ class Articles(DBase):
     def find_limit_with_users(start, count):
         try:
             result = dbsession.query(Article, Users.nickname).join(Users, Users.userid == Article.userid) \
-                .all()
-            begin = start
-            end = start + count
-            if begin == -10:
-                result = result[begin:]
-            else:
-                result = result[begin:end]
-            result = result[::-1]
+                .filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1) \
+                .order_by(Article.articleid.desc()) \
+                .offset(start).limit(count).all()
             return result
         except Exception as e:
             print(e)
             traceback.print_exc()
+            return []
 
     # 统计一下当前文章的总数量
     @staticmethod
@@ -324,20 +320,24 @@ class Articles(DBase):
     def update_article(articleid, article_type, headline, content, thumbnail, credit, drafted=0, checked=1):
         try:
             now = time.strftime('%Y-%m-%d %H:%M:%S')
-            row = dbsession.query(Article).filter_by(articleid=articleid).first()
-            row.type = article_type
-            row.headline = headline
-            row.content = content
-            row.thumbnail = thumbnail
-            row.credit = credit
-            row.drafted = drafted
-            row.checked = checked
-            row.updatetime = now  # 修改文章的更新时间
-            dbsession.commit()
-            return articleid  # 继续将文章ID返回调用处
+            article = dbsession.query(Article).filter_by(articleid=articleid).first()
+            if article:
+                article.type = article_type
+                article.headline = headline
+                article.content = content
+                article.thumbnail = thumbnail
+                article.credit = credit
+                article.drafted = drafted
+                article.checked = checked
+                article.updatetime = now  # 修改文章的更新时间
+                dbsession.commit()
+                return articleid  # 继续将文章ID返回调用处
+            return None
         except Exception as e:
-            print(e)
+            print("Error in update_article:", e)
             traceback.print_exc()
+            dbsession.rollback()
+            raise e
 
     # =========== 以下方法主要用于后台管理类操作 ================== #
 

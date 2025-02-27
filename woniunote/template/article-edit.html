@@ -43,11 +43,11 @@
 <div class="container" style="margin-top: 20px; background-color: white; padding: 20px;">
     <div class="row form-group">
         <label for="headline" class="col-1">文章标题</label>
-        <input type="text" class="col-11" id="headline" value="{{ result[0].headline }}" />
+        <input type="text" class="col-11" id="headline" value="{{ result.headline }}" />
     </div>
     <div class="row">
         <script id="content" type="text/plain">
-            {{ result[0].content | safe }}
+            {{ result.content | safe }}
         </script>
     </div>
 
@@ -59,7 +59,7 @@
             {% for key, value in article_type.items() %}
                 {% if key < 100 %}
                 <option value="{{ key }}"
-                        {% if result[0].type // 100 == key %} selected {% endif %}>
+                        {% if result.type // 100 == key %} selected {% endif %}>
                     {{ value }}
                 </option>
                 {% endif %}
@@ -68,11 +68,11 @@
 
         <!-- 子类型 -->
         <select class="form-control col-2" id="sub-type">
-            {% if result[0].type %}
+            {% if result.type %}
                 {% for key, value in article_type.items() %}
-                    {% if key >= 100 and key // 100 == result[0].type // 100 %}
+                    {% if key >= 100 and key // 100 == result.type // 100 %}
                     <option value="{{ key }}"
-                            {% if result[0].type == key %} selected {% endif %}>
+                            {% if result.type == key %} selected {% endif %}>
                         {{ value }}
                     </option>
                     {% endif %}
@@ -113,25 +113,51 @@ function doEdit() {
         return false;
     }
 
-    let param = "headline=" + encodeURIComponent(headline);
-    param += "&content=" + encodeURIComponent(UE.getEditor("content").getContent());
-    param += "&type=" + $("#sub-type").val();  // 使用子类型的值
-    param += "&credit=" + $("#credit").val();
-    param += "&drafted=0&checked=0";
-    param += "&articleid={{ result[0].articleid }}";
+    const formData = new FormData();
+    formData.append("headline", headline);
+    formData.append("content", UE.getEditor("content").getContent());
+    formData.append("type", $("#sub-type").val());
+    formData.append("credit", $("#credit").val());
+    formData.append("drafted", "0");
+    formData.append("checked", "0");
+    formData.append("articleid", "{{ result.articleid }}");
 
-    $.post('/edit', param, function (data) {
-        if (data === 'perm-denied') {
-            bootbox.alert({ title: "错误提示", message: "权限不足，无法发布文章." });
-        } else if (data === 'post-fail') {
-            bootbox.alert({ title: "错误提示", message: "文章发布失败，请联系管理员." });
-        } else if (data.match(/^\d+$/)) {
-            bootbox.alert({ title: "信息提示", message: "恭喜你，文章发布成功." });
-            setTimeout(function () {
-                location.href = '/article/{{ result[0].articleid }}';
-            }, 1000);
-        } else {
-            bootbox.alert({ title: "错误提示", message: "文章发布失败，可能没有权限." });
+    $.ajax({
+        url: '/article/edit',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(data) {
+            console.log("Server response:", data);
+            if (data === 'perm-denied') {
+                bootbox.alert({ title: "错误提示", message: "权限不足，无法修改文章." });
+            } else if (data === 'post-fail') {
+                bootbox.alert({ title: "错误提示", message: "文章修改失败，请联系管理员." });
+            } else if (data === 'edit-fail') {
+                bootbox.alert({ title: "错误提示", message: "文章修改失败，请稍后重试." });
+            } else if (data.match(/^\d+$/)) {
+                bootbox.alert({ 
+                    title: "信息提示", 
+                    message: "恭喜你，文章修改成功.",
+                    callback: function() {
+                        location.href = '/article/' + data;
+                    }
+                });
+            } else {
+                bootbox.alert({ title: "错误提示", message: "未知错误，请联系管理员." });
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("Error details:", {
+                status: status,
+                error: error,
+                response: xhr.responseText
+            });
+            bootbox.alert({ 
+                title: "错误提示", 
+                message: "提交失败，请检查网络连接或联系管理员. 错误: " + error 
+            });
         }
     });
 }
