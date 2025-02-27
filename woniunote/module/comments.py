@@ -43,14 +43,39 @@ class Comments(DBase):
     @staticmethod
     def insert_comment(articleid, content, ipaddr):
         try:
+            userid = session.get('main_userid')
+            if not userid:
+                print("No user ID found in session")
+                return None
+                
             now = time.strftime('%Y-%m-%d %H:%M:%S')
-            comment = Comment(userid=session.get('userid'), articleid=articleid,
-                              content=content, ipaddr=ipaddr, createtime=now, updatetime=now)
+            comment = Comment(userid=userid, articleid=articleid,
+                            content=content, ipaddr=ipaddr,
+                            createtime=now, updatetime=now)
             dbsession.add(comment)
             dbsession.commit()
+            return comment
         except Exception as e:
-            print(e)
+            print("Error in insert_comment:", e)
             traceback.print_exc()
+            return None
+
+    # 根据用户编号查询所有评论
+    @staticmethod
+    def find_by_userid(userid):
+        try:
+            # 查询用户的所有评论，并关联文章信息
+            results = dbsession.query(Comment, Article)\
+                .join(Article, Comment.articleid == Article.articleid)\
+                .filter(Comment.userid == userid)\
+                .filter(Comment.hidden == 0)\
+                .order_by(Comment.commentid.desc())\
+                .all()
+            return results
+        except Exception as e:
+            print("Error in find_by_userid:", e)
+            traceback.print_exc()
+            return None
 
     # 根据文章编号查询所有评论
     @staticmethod

@@ -36,18 +36,35 @@ class Favorites(DBase):
     @staticmethod
     def insert_favorite(articleid):
         try:
-            row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=session.get('userid')).first()
+            userid = session.get('main_userid')
+            if not userid:
+                print("No user ID found in session")
+                return False
+                
+            row = dbsession.query(Favorite).filter_by(articleid=articleid, userid=userid).first()
             if row is not None:
                 row.canceled = 0
             else:
                 now = time.strftime('%Y-%m-%d %H:%M:%S')
-                favorite = Favorite(articleid=articleid, userid=session.get('userid'), canceled=0, createtime=now,
+                favorite = Favorite(articleid=articleid, userid=userid, canceled=0, createtime=now,
                                     updatetime=now)
                 dbsession.add(favorite)
             dbsession.commit()
+            return True
         except Exception as e:
-            print(e)
+            print("Error in insert_favorite:", e)
             traceback.print_exc()
+            return False
+
+    @staticmethod
+    def find_by_userid(userid):
+        try:
+            result = dbsession.query(Favorite).filter_by(userid=userid, canceled=0).all()
+            return result
+        except Exception as e:
+            print("Error in find_by_userid:", e)
+            traceback.print_exc()
+            return None
 
     # 取消收藏
     @staticmethod

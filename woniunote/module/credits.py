@@ -50,14 +50,23 @@ class Credits(DBase):
     @staticmethod
     def check_payed_article(articleid):
         try:
-            result = dbsession.query(Credit).filter_by(userid=session.get('userid'), target=articleid).all()
-            if len(result) > 0:
-                return True
-            else:
-                return False
+            result = dbsession.query(Credit).filter_by(userid=session.get('userid'), target=articleid).first()
+            return True if result else False
         except Exception as e:
             print(e)
             traceback.print_exc()
+            return False
+
+    # 获取用户积分明细
+    @staticmethod
+    def find_by_userid(userid):
+        try:
+            result = dbsession.query(Credit).filter_by(userid=userid).order_by(Credit.creditid.desc()).all()
+            return result
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
+            return None
 
 
 if __name__ == '__main__':

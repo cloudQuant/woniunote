@@ -5,36 +5,17 @@ import math
 from datetime import datetime, UTC
 from woniunote.common.redisdb import redis_connect
 import traceback
+
 index = Blueprint("index", __name__)
 
 
 @index.route('/')
+@index.route('/index')
 def home():
     try:
         # 下述代码跟之前版本保持不变，正常查询数据库
         article = Articles()
         result = article.find_limit_with_users(-10, 10)
-        total = math.ceil(article.get_total_count() / 10)
-
-        last, most, recommended = article.find_last_most_recommended()
-        # content = render_template('index.html', result=result, page=1, total=total)
-        html_file = 'index.html'
-        content = render_template(html_file, result=result, page=1, total=total,
-                                  can_use_minute=can_use_minute(),
-                                  last_articles=last, most_articles=most, recommended_articles=recommended)
-        return content
-    except Exception as e:
-        print(e)
-        traceback.print_exc()
-
-
-@index.route('/index')
-def get_index():
-    try:
-        # 下述代码跟之前版本保持不变，正常查询数据库
-        article = Articles()
-        result = article.find_limit_with_users(-10, 10)
-        # result = article.find_all()
         total = math.ceil(article.get_total_count() / 10)
 
         last, most, recommended = article.find_last_most_recommended()

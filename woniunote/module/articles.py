@@ -51,12 +51,46 @@ class Articles(DBase):
     @staticmethod
     def find_by_id(articleid):
         try:
-            result = [i for i in Articles().find_all() if i.articleid == articleid]
-            result.append("yunjinqi")
+            result = dbsession.query(Article).filter_by(articleid=articleid).first()
             return result
         except Exception as e:
             print(e)
             traceback.print_exc()
+
+    # 根据多个文章ID查询文章
+    @staticmethod
+    def find_by_ids(articleids):
+        try:
+            if not articleids:
+                return []
+            result = dbsession.query(Article).filter(Article.articleid.in_(articleids)).all()
+            return result
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
+            return []
+
+    # 根据用户ID查询文章
+    @staticmethod
+    def find_by_userid(userid):
+        try:
+            result = dbsession.query(Article).filter_by(userid=userid, drafted=0).order_by(Article.articleid.desc()).all()
+            return result
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
+            return []
+
+    # 根据用户ID查询草稿
+    @staticmethod
+    def find_drafts_by_userid(userid):
+        try:
+            result = dbsession.query(Article).filter_by(userid=userid, drafted=1).order_by(Article.articleid.desc()).all()
+            return result
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
+            return []
 
     # 指定分页的limit和offset的参数值，同时与用户表做连接查询
     @staticmethod

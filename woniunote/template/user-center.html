@@ -135,9 +135,9 @@
       <div class="col-12 admin-side" style="height: 320px">
         <ul>
           <li><a href="/ucenter"><span class="oi oi-heart" aria-hidden="true"></span>&nbsp;&nbsp;我的收藏</a></li>
-          {% if session.get('role') == 'user' %}
+          {% if session.get('main_role') == 'user' %}
           <li><a href="/user/post"><span class="oi oi-zoom-in" aria-hidden="true"></span>&nbsp;&nbsp;我要投稿</a></li>
-          {% elif session.get('role') == 'editor' %}
+          {% elif session.get('main_role') == 'editor' %}
           <li><a href="/prepost"><span class="oi oi-zoom-in" aria-hidden="true"></span>&nbsp;&nbsp;发布文章</a></li>
           <li><a href="/user/draft"><span class="oi oi-book" aria-hidden="true"></span>&nbsp;&nbsp;我的草稿</a></li>
           {% endif %}
@@ -145,7 +145,9 @@
           <li><a href="/user/comment"><span class="oi oi-task" aria-hidden="true"></span>&nbsp;&nbsp;我的评论</a></li>
           <li><a href="/user/info"><span class="oi oi-person" aria-hidden="true"></span>&nbsp;&nbsp;个人资料</a></li>
           <li><a href="/user/credit"><span class="oi oi-account-login" aria-hidden="true"></span>&nbsp;&nbsp;我的积分</a></li>
+          {% if not session.get('math_train_islogin') %}
           <li><button class="navbar-btn logged-out" id="showRegisterModalBtn">训练注册</button></li>
+          {% endif %}
         </ul>
       </div>
     </div>
@@ -163,21 +165,27 @@
               </tr>
             </thead>
             <tbody>
-              {% for favorite, article in result %}
-              <tr>
-                <td style="text-align: center;">{{article.articleid}}</td>
-                <td><a href="/article/{{article.articleid}}" target="_blank">{{article.headline}}</a></td>
-                <td style="text-align: center;">{{article.readcount}}</td>
-                <td style="text-align: center;">{{article.replycount}}</td>
-                <td style="text-align: center;">
-                  <a href="#" onclick="switchFavorite(this, {{favorite.favoriteid}})">
-                    {%if favorite.canceled == 0 %} 取消收藏
-                    {% else %} <span style="color: red; ">继续收藏</span> {% endif %}
-                  </a>
-                </td>
-              </tr>
+              {% if result %}
+                {% for favorite, article in result %}
+                <tr>
+                  <td style="text-align: center;">{{article.articleid}}</td>
+                  <td><a href="/article/{{article.articleid}}" target="_blank">{{article.headline}}</a></td>
+                  <td style="text-align: center;">{{article.readcount}}</td>
+                  <td style="text-align: center;">{{article.replycount}}</td>
+                  <td style="text-align: center;">
+                    <a href="javascript:void(0)" onclick="switchFavorite(this, {{favorite.favoriteid}})">
+                      {%if favorite.canceled == 0 %} 取消收藏
+                      {% else %} <span style="color: red; ">继续收藏</span> {% endif %}
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="5" style="text-align: center;">暂无收藏记录</td>
+                </tr>
+              {% endif %}
               </tbody>
-              {% endfor %}
             </table>
           </div>
         </div>
@@ -189,12 +197,23 @@
 <script type="text/javascript">
   // 切换收藏状态
   function switchFavorite(obj, favoriteid) {
-    $.get('/user/favorite/' + favoriteid, function (data) {
-      if (data === '1') {
-        $(obj).html('<span style="color: red; ">继续收藏</span>');
-      }
-      else {
-        $(obj).text('取消收藏');
+    $.ajax({
+      url: '/user/favorite/' + favoriteid,
+      type: 'GET',
+      success: function(data) {
+        console.log("Switch favorite response:", data);
+        if (data === '1') {
+          $(obj).html('<span style="color: red; ">继续收藏</span>');
+        } else {
+          $(obj).text('取消收藏');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error("Switch favorite error:", error);
+        bootbox.alert({
+          title: "错误提示",
+          message: "操作失败，请重试"
+        });
       }
     });
   }

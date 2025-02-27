@@ -100,62 +100,70 @@ def login():
         result = user_.find_by_username(username)
         print("Database query result:", result)
 
-        # 如果用户存在且密码正确，则创建session
-        for r in result:
-            # 对输入的密码进行MD5加密
-            password_md5 = hashlib.md5(password.encode()).hexdigest()
-            print("Input password MD5:", password_md5)
-            print("Stored password:", r.password)
-
-            if r.password == password_md5 and r.username == username:
-                print("Password verified successfully")
-                # 创建session
+        if len(result) > 0:
+            password = hashlib.md5(password.encode()).hexdigest()
+            if result[0].password == password:
+                print("Login successful")
                 session_id = str(uuid.uuid4())
-                session['session_id'] = session_id
-                session['islogin'] = 'true'
-                session['userid'] = result[0].userid
-                session['username'] = username
-                session['nickname'] = result[0].nickname
-                session['role'] = result[0].role
-                # 确保session被保存
-                session.modified = True
-                print("Session data set:", dict(session))
-
-                # 创建响应对象
-                response = make_response('login-pass')
-                response.set_cookie('session_id', session_id)
-                return response
-            else:
-                print("Login failed - invalid password")
-                return 'login-fail'
-        else:
-            print("Login failed - user not found")
-            return 'login-fail'
+                session['main_session_id'] = session_id
+                session['main_islogin'] = 'true'
+                session['main_userid'] = result[0].userid
+                session['main_username'] = username
+                session['main_nickname'] = result[0].nickname
+                session['main_role'] = result[0].role
+                return 'login-pass'
+        print("Login failed")
+        return 'login-fail'
     except Exception as e:
-        print("Error in login:", str(e))
+        print("Login error:", e)
         traceback.print_exc()
         return 'login-fail'
 
 
-@user.route('/logout')
+@user.route('/logout', methods=['GET', 'POST'])
 def logout():
     try:
-        # 获取当前用户的session_id
-        session_id = request.cookies.get('session_id')
+        print("Logout request received")
+        print("Session before logout:", dict(session))
         
-        if session_id:
-            # 清除所有相关的session数据
-            session.clear()
-            
-            # 创建响应对象
-            response = make_response('注销并进行重定向')
-            response.delete_cookie('session_id')
-            return response
-            
-        return '注销并进行重定向'
+        # 清除主系统的session
+        session.pop('main_session_id', None)
+        session.pop('main_islogin', None)
+        session.pop('main_userid', None)
+        session.pop('main_username', None)
+        session.pop('main_nickname', None)
+        session.pop('main_role', None)
+        
+        # 确保session被修改
+        session.modified = True
+        
+        print("Session after logout:", dict(session))
+        return jsonify({'success': True})
     except Exception as e:
-        print(e)
+        print("Logout error:", e)
         traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@user.route('/loginfo')
+def loginfo():
+    try:
+        if session.get('main_islogin') == 'true':
+            print("User is logged in")
+            user_info = {
+                'userid': session.get('main_userid'),
+                'username': session.get('main_username'),
+                'nickname': session.get('main_nickname'),
+                'role': session.get('main_role')
+            }
+            print("User info:", user_info)
+            return jsonify(user_info)
+        print("User is not logged in")
+        return jsonify(None)
+    except Exception as e:
+        print("Loginfo error:", e)
+        traceback.print_exc()
+        return jsonify(None)
 
 
 # 用户注册时生成邮箱验证码并保存到缓存中
@@ -197,49 +205,6 @@ def redis_reg():
         traceback.print_exc()
 
 
-# @user.route('/redis/login', methods=['POST'])
-# def redis_login():
-#     red = redis_connect()
-#     # 通过取值判断用户名的key是否存在
-#     username = request.form.get('username').strip()
-#     password = request.form.get('password').strip()
-#     password = hashlib.md5(password.encode()).hexdigest()
-#
-#     result = red.get('users')
-#
-#     # 'updatetime': datetime.datetime(2020, 2, 12, 11, 45, 57),
-#     # 'updatetime':'2020-02-12 11:45:57'
-#     list = eval(result)
-#
-#     for row in list:
-#         if row['username'] == username:
-#             if row['password'] == password:
-#                 return '用户密码正确，登录成功'
-#
-#     return '登录失败'
-
-
-# @user.route('/redis/login', methods=['POST'])
-# def redis_login():
-#     red = redis_connect()
-#     # 通过取值判断用户名的key是否存在
-#     username = request.form.get('username').strip()
-#     password = request.form.get('password').strip()
-#     password = hashlib.md5(password.encode()).hexdigest()
-#
-#     try:
-#         result = red.get(username)
-#         # user = eval(result)
-#         # if password == user['password']:
-#         result = red.get(username)
-#         if password == result:
-#             return '登录成功'
-#         else:
-#             return '密码错误'
-#     except:
-#         return '用户名不存在'
-
-
 @user.route('/redis/login', methods=['POST'])
 def redis_login():
     try:
@@ -262,31 +227,3 @@ def redis_login():
     except Exception as e:
         print(e)
         traceback.print_exc()
-
-
-@user.route('/loginfo')
-def loginfo():
-    try:
-        # 获取当前用户的session_id
-        session_id = request.cookies.get('session_id')
-        print("Current session_id:", session_id)
-        print("All session data:", dict(session))
-        
-        # 如果用户已登录，返回用户信息
-        if session.get('islogin') == 'true':
-            user_info = {
-                'userid': session.get('userid'),
-                'username': session.get('username'),
-                'nickname': session.get('nickname'),
-                'role': session.get('role')
-            }
-            print("Returning user info:", user_info)
-            return jsonify(user_info)
-        
-        # 如果用户未登录，返回 null
-        print("User not logged in")
-        return jsonify(None)
-    except Exception as e:
-        print("Error in loginfo:", str(e))
-        traceback.print_exc()
-        return jsonify(None)

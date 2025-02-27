@@ -103,6 +103,49 @@ function doReg(e) {
     }
 }
 
+function doMainLogout() {
+    bootbox.confirm({
+        title: "确认提示",
+        message: "确认要退出登录吗？",
+        buttons: {
+            confirm: {
+                label: '确认',
+                className: 'btn-success'
+            },
+            cancel: {
+                label: '取消',
+                className: 'btn-danger'
+            }
+        },
+        callback: function (result) {
+            if (result) {
+                $.ajax({
+                    url: '/logout',
+                    type: 'POST',
+                    success: function(response) {
+                        console.log("Logout response:", response);
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            bootbox.alert({
+                                title: "错误提示",
+                                message: response.message || "退出失败，请重试"
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Logout error:", error);
+                        bootbox.alert({
+                            title: "错误提示",
+                            message: "退出失败，请重试"
+                        });
+                    }
+                });
+            }
+        }
+    });
+}
+
 function doLogin(e) {
     if (e != null && e.keyCode != 13) {
         return false;
@@ -121,8 +164,10 @@ function doLogin(e) {
         var param = "username=" + loginname;
         param += "&password=" + loginpass;
         param += "&vcode=" + logincode;
+        
         // 利用jQuery框架发送POST请求，并获取到后台登录接口的响应内容
         $.post('/login', param, function (data) {
+            console.log("Login response:", data);
             if (data == "vcode-error") {
                 bootbox.alert({title:"错误提示", message:"验证码无效."});
                 $("#logincode").val('');  // 清除验证码框的值
@@ -133,64 +178,52 @@ function doLogin(e) {
                 // 登录成功后，延迟2秒钟刷新当前页面，确保session设置完成
                 setTimeout(function() {
                     console.log("Reloading page after successful login");
-                    window.location.reload();
+                    location.reload();
                 }, 2000);
             }
             else if (data == "login-fail") {
-                bootbox.alert({title:"错误提示", message:"登录失败，请联系管理员."});
+                bootbox.alert({title:"错误提示", message:"用户名或密码错误."});
             }
+        }).fail(function(error) {
+            console.error("Login error:", error);
+            bootbox.alert({title:"错误提示", message:"登录失败，请重试."});
         });
     }
 }
 
-function showLogout() {
-    bootbox.confirm({
-        title: "确认提示",
-        message: "确认要退出登录吗？",
-        buttons: {
-            confirm: {
-                label: '确认',
-                className: 'btn-success'
-            },
-            cancel: {
-                label: '取消',
-                className: 'btn-danger'
-            }
-        },
-        callback: function (result) {
-            if (result) {
-                $.get('/logout', function(data) {
-                    if (data == '注销并进行重定向') {
-                        location.reload();
-                    }
-                });
-            }
-        }
-    });
-}
-
 // $(document).ready()是指页面加载即运行该代码
 $(document).ready(function () {
+    // 检查当前页面URL
+    if (window.location.pathname.includes('math_train')) {
+        // 如果是math_train页面，不执行主系统的登录检查
+        return;
+    }
+    
     $.get('/loginfo', function (data) {
         console.log("Received data from /loginfo:", data);
         var content = '';
         if (data && data != null) {
             try {
                 console.log("User info:", data);
-                content += '<a class="nav-item nav-link" href="/ucenter">欢迎你：' + data.nickname + '</a>&nbsp;&nbsp;&nbsp;';
+                content += '<a class="nav-item nav-link" href="/ucenter">欢迎你：' + data.nickname + '</a>';
+                content += '<a class="nav-item nav-link" href="/ucenter">用户中心</a>';
                 if (data.role == 'admin') {
-                    content += '<a class="nav-item nav-link" href="/admin">系统管理</a>&nbsp;&nbsp;&nbsp;';
+                    content += '<a class="nav-item nav-link" href="/admin">系统管理</a>';
                 }
-                content += '<a class="nav-item nav-link" href="/ucenter">用户中心</a>&nbsp;&nbsp;&nbsp;';
-                content += '<a class="nav-item nav-link" href="#" onclick="showLogout()">退出</a>';
+                content += '<a class="nav-item nav-link" href="javascript:void(0)" onclick="doMainLogout()">退出</a>';
             } catch (e) {
                 console.error('Failed to process user info:', e);
+                content = '<a class="nav-item nav-link" href="javascript:void(0)" onclick="showLogin()">登录</a>';
             }
         } else {
             console.log("No user info received, showing login button");
-            content += '<a class="nav-item nav-link" href="#" onclick="showLogin()">登录</a>';
+            content = '<a class="nav-item nav-link" href="javascript:void(0)" onclick="showLogin()">登录</a>';
         }
         console.log("Setting menu content:", content);
+        $("#loginmenu").html(content);
+    }).fail(function(error) {
+        console.error("Failed to get login info:", error);
+        var content = '<a class="nav-item nav-link" href="javascript:void(0)" onclick="showLogin()">登录</a>';
         $("#loginmenu").html(content);
     });
 });

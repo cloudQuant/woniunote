@@ -16,6 +16,7 @@ from woniunote.controller.favorite import favorite
 from woniunote.controller.index import index
 from woniunote.controller.todo_center import tcenter
 from woniunote.controller.ueditor import ueditor
+from woniunote.controller.ucenter import ucenter
 from woniunote.controller.user import user
 from woniunote.module.users import Users
 pymysql.install_as_MySQLdb()
@@ -50,9 +51,9 @@ def create_app(config_name='production'):
         PERMANENT_SESSION_LIFETIME=timedelta(days=7),  # session有效期
         
         # Cookie配置
-        SESSION_COOKIE_NAME='math_train_session',
+        SESSION_COOKIE_NAME='woniunote_session',  # 主系统使用这个cookie名
         SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SECURE=False,  # 暂时设为False，除非确认使用了HTTPS
+        SESSION_COOKIE_SECURE=False,
         SESSION_COOKIE_SAMESITE='Lax',
         SESSION_COOKIE_PATH='/',
         SESSION_COOKIE_DOMAIN=None,
@@ -90,6 +91,7 @@ def create_app(config_name='production'):
     app.register_blueprint(favorite)
     app.register_blueprint(index)
     app.register_blueprint(tcenter)
+    app.register_blueprint(ucenter)
     app.register_blueprint(ueditor)
     app.register_blueprint(user)
     
@@ -197,7 +199,6 @@ def create_app(config_name='production'):
 
     @app.route('/math_train_login', methods=['POST'])
     def math_train_login():
-        print("begin to login")
         try:
             data = request.get_json()
             username = data.get('username', '').strip()
@@ -210,40 +211,35 @@ def create_app(config_name='production'):
             with connection.cursor() as cur:
                 cur.execute("SELECT id, username, password FROM math_train_users WHERE username = %s", (username,))
                 user = cur.fetchone()
-                print("user found:", user)
                 
                 if user is None:
                     return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
                 
-                # 确保密码字段存在
                 if not user.get('password'):
                     return jsonify({'success': False, 'message': '账户数据错误'}), 500
                 
-                # 验证密码
                 if check_password_hash(user['password'], password):
                     try:
                         # 生成会话数据
                         session_data = {
-                            'user_id': user['id'],
-                            'username': user['username'],
-                            'login_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                            'session_id': str(uuid.uuid4())
+                            'math_train_user_id': user['id'],  # 使用特定的key
+                            'math_train_username': user['username'],  # 使用特定的key
+                            'math_train_login_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            'math_train_session_id': str(uuid.uuid4())
                         }
                         
-                        # 清除旧session
-                        session.clear()
+                        # 只清除math_train相关的session数据
+                        for key in list(session.keys()):
+                            if key.startswith('math_train_'):
+                                session.pop(key, None)
                         
                         # 设置新session
                         session.permanent = True
                         for key, value in session_data.items():
                             session[key] = value
                         
-                        # 强制保存session
                         session.modified = True
                         
-                        print("Login successful, session data:", dict(session))
-                        
-                        # 创建响应
                         response = jsonify({
                             'success': True,
                             'username': user['username'],
@@ -267,7 +263,7 @@ def create_app(config_name='production'):
     @app.route('/math_train_save_result', methods=['POST'])
     def math_train_save_result():
         print("开始保存结果")
-        if 'user_id' not in session:
+        if 'math_train_user_id' not in session:
             return jsonify({'success': False, 'message': '未登录'}), 401
 
         try:
@@ -284,7 +280,7 @@ def create_app(config_name='production'):
                     (user_id, math_level, correct_count, total_questions, time_spent)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (
-                    session['user_id'],
+                    session['math_train_user_id'],
                     data['math_level'],
                     data['correct_count'],
                     data['total_questions'],
@@ -335,7 +331,10 @@ def create_app(config_name='production'):
     @app.route('/math_train_logout', methods=['POST'])
     def math_train_logout():
         print("begin math_train_logout")
-        session.clear()
+        # 只清除math_train相关的session数据
+        for key in list(session.keys()):
+            if key.startswith('math_train_'):
+                session.pop(key, None)
         return jsonify({
             'success': True,
             'redirect': url_for('math_train')
@@ -359,8 +358,8 @@ def create_app(config_name='production'):
         #     })
         #
         return jsonify({
-            'loggedIn': 'user_id' in session,
-            'username': session.get('username', '')
+            'loggedIn': 'math_train_user_id' in session,
+            'username': session.get('math_train_username', '')
         })
 
     @app.route("/math_train_user", methods=["GET"])
@@ -371,20 +370,24 @@ def create_app(config_name='production'):
             # print("Request cookies:", dict(request.cookies))
             # print("Current session:", dict(session))
             
-            # 检查session是否存在
-            if not session or 'user_id' not in session:
-                # print("No valid session found")
+            # 检查math_train专用的session
+            if 'math_train_user_id' not in session:
                 return redirect(url_for('math_train'))
             
             # 获取用户信息
             connection = get_db_connection(DATABASE_INFO)
             with connection.cursor() as cursor:
-                cursor.execute("SELECT id, username FROM math_train_users WHERE id = %s", (session['user_id'],))
+                cursor.execute(
+                    "SELECT id, username FROM math_train_users WHERE id = %s",
+                    (session['math_train_user_id'],)
+                )
                 user = cursor.fetchone()
                 
                 if not user:
-                    # print("User not found in database")
-                    session.clear()
+                    # 只清除math_train相关的session
+                    for key in list(session.keys()):
+                        if key.startswith('math_train_'):
+                            session.pop(key, None)
                     return redirect(url_for('math_train'))
                 
                 return render_template('math_train_user.html')
@@ -405,7 +408,7 @@ def create_app(config_name='production'):
                 cursor.execute(
                     "SELECT math_level, correct_count, total_questions, time_spent, created_at "
                     "FROM math_train_results WHERE user_id = %s ORDER BY created_at DESC LIMIT 10",
-                    (session['user_id'],)
+                    (session['math_train_user_id'],)
                 )
                 history = cursor.fetchall()
 
@@ -414,7 +417,7 @@ def create_app(config_name='production'):
                     "ROUND(AVG(correct_count/total_questions)*100, 1) AS avg_accuracy, "
                     "SUM(time_spent) AS total_time "  # 改为SUM
                     "FROM math_train_results WHERE user_id = %s",
-                    (session['user_id'],)
+                    (session['math_train_user_id'],)
                 )
                 stats = cursor.fetchone()
 

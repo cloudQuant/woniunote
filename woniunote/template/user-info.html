@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+.user-info {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-top: 20px;
+}
+
+.user-info h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #eee;
+}
+
+.info-item {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.info-label {
+  width: 120px;
+  color: #7f8c8d;
+  font-weight: 500;
+}
+
+.info-value {
+  flex: 1;
+  color: #2c3e50;
+}
+
+.btn-edit {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-edit:hover {
+  background: #2980b9;
+}
+</style>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <div class="user-info">
+        <h2>个人资料</h2>
+        <div class="info-item">
+          <span class="info-label">用户名：</span>
+          <span class="info-value">{{ user.username }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">邮箱：</span>
+          <span class="info-value">{{ user.email }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">角色：</span>
+          <span class="info-value">{{ user.role }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">注册时间：</span>
+          <span class="info-value">{{ user.createtime }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">最后更新：</span>
+          <span class="info-value">{{ user.updatetime }}</span>
+        </div>
+        <div class="text-center mt-4">
+          <button class="btn-edit" onclick="editProfile()">编辑资料</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function editProfile() {
+  bootbox.alert({
+    title: "功能提示",
+    message: "个人资料编辑功能即将上线，敬请期待！"
+  });
+}
+</script>
+{% endblock %}
