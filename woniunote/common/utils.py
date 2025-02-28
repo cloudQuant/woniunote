@@ -2,6 +2,7 @@ import random
 import string
 import time
 import yaml
+import re
 from datetime import datetime
 from email.header import Header
 from email.mime.text import MIMEText
@@ -37,46 +38,32 @@ def parse_db_uri(db_uri):
     """
     解析 SQLALCHEMY_DATABASE_URI，提取数据库连接信息
     """
-    # 解析 URI
-    parsed = urlparse(db_uri)
+    try:
+        # 解析 URI
+        parsed = urlparse(db_uri)
 
-    # 提取用户名和密码
-    username = parsed.username
-    password = parsed.password
+        # 提取用户名和密码
+        username = parsed.username
+        password = parsed.password
 
-    # 提取主机和端口
-    host = parsed.hostname
-    port = parsed.port or 3306  # 如果未指定端口，默认为 3306
+        # 提取主机和端口
+        host = parsed.hostname
+        port = parsed.port or 3306  # 如果未指定端口，默认为 3306
 
-    # 提取数据库名称
-    database = parsed.path.lstrip('/')  # 去掉路径开头的斜杠
+        # 提取数据库名称
+        database = parsed.path.lstrip('/')  # 去掉路径开头的斜杠
 
-    return {
-        'host': host,
-        'port': port,
-        'user': username,
-        'password': password,
-        'database': database
-    }
-
-
-def find_md5(args):
-    md = "10a99b8bfa26650a562ecb14f8a14260"
-    starttime = datetime.now()
-    for i in open(args.file):
-        md5 = hashlib.md5()  # 获取一个md5加密算法对象
-        rs = i.strip()  # 去掉行尾的换行符
-        md5.update(rs.encode('utf-8'))  # 指定需要加密的字符串
-        newmd5 = md5.hexdigest()  # 获取加密后的16进制字符串
-        # print newmd5
-        if newmd5 == md:
-            print('明文是：' + rs)  # 打印出明文字符串
-            break
-        else:
-            pass
-
-    endtime = datetime.now()
-    print(endtime - starttime)  # 计算用时，非必须
+        result = {
+            'host': host,
+            'port': port,
+            'user': username,
+            'password': password,
+            'database': database
+        }
+        print(result)
+        return result
+    except Exception as e:
+        print(e)
 
 
 def get_package_path(package_name="lv"):
@@ -105,12 +92,19 @@ def read_config(config_file=None):
             config_result = yaml.load(f.read(), Loader=yaml.FullLoader)
     else:
         file_path = package_path + f"/{config_file}"
+        if not os.path.exists(file_path):
+            return None
         with open(file_path, 'r', encoding='utf-8') as f:
             config_result = yaml.load(f.read(), Loader=yaml.FullLoader)
     return config_result
 
 
 class ImageCode:
+    def __init__(self, width=120, height=40):
+        self.width = width
+        self.height = height
+        self.img = Image.new('RGB', (width, height), color=(255, 255, 255))
+        self.font = ImageFont.truetype(get_system_font_path(), 32)
     # 生成用于绘制字符串的随机颜色
     def rand_color(self):
         red = random.randint(32, 200)
@@ -137,9 +131,8 @@ class ImageCode:
     # 绘制验证码图片
     def draw_verify_code(self):
         code = self.gen_text()
-        width, height = 120, 50  # 设定图片大小，可根据实际需求调整
         # 创建图片对象，并设定背景色为白色
-        im = Image.new('RGB', (width, height), 'white')
+        im = Image.new('RGB', (self.width, self.height), 'white')
         # 选择使用何种字体及字体大小
         font = ImageFont.load_default(size=40)  # 使用 Pillow 自带的字体
         draw = ImageDraw.Draw(im)  # 新建ImageDraw对象
@@ -233,7 +226,7 @@ def compress_image(source, dest, width):
         ys = int(y * width / x)
         xs = width
         # 调整当前图片的尺寸（同时也会压缩大小）
-        temp = im.resize((xs, ys), Image.ANTIALIAS)
+        temp = im.resize((xs, ys), Image.Resampling.LANCZOS)
         # 将图片保存并使用80%的质量进行压缩
         temp.save(dest, quality=80)
     # 如果尺寸小于指定宽度则不缩减尺寸，只压缩保存
@@ -243,48 +236,30 @@ def compress_image(source, dest, width):
 
 # 解析文章内容中的图片地址
 def parse_image_url(content):
-    import re
-    temp_list = re.findall('<img src="(.+?)"', content)
+    # 正则表达式改进：考虑到可能有额外的空格或不同的属性顺序，确保提取 `src` 属性中的 URL
+    temp_list = re.findall(r'<img[^>]*\s+src="([^"]+)"', content)
+
     url_list = []
     for url in temp_list:
-        # 如果图片类型为gif，则直接跳过，不对其作任何处理
+        # 如果图片类型为 gif，则跳过
         if url.lower().endswith('.gif'):
             continue
         url_list.append(url)
+
     return url_list
 
 
 # 远程下载指定URL地址的图片，并保存到临时目录中
 def download_image(url, dest):
-    response = requests.get(url)  # 获取图片的响应
-    # 将图片以二进制方式保存到指定文件中
-    with open(file=dest, mode='wb') as file:
-        file.write(response.content)
-
-
-# 解析列表中的图片URL地址并生成缩略图，返回缩略图名称
-def generate_thumb(url_list):
-    # 根据URL地址解析出其文件名和域名
-    # 通常建议使用文章内容中的第一张图片来生成缩略图
-    # 先遍历url_list，查找里面是否存在本地上传图片，找到即处理，代码运行结束
-    for url in url_list:
-        if url.startswith('/upload/'):
-            filename_ = url.split('/')[-1]
-            # 找到本地图片后对其进行压缩处理，设置缩略图宽度为400像素即可
-            compress_image('./resource/upload/' + filename_,
-                           './resource/thumb/' + filename_, 400)
-            return filename_
-
-    # 如果在内容中没有找到本地图片，则需要先将网络图片下载到本地再处理
-    # 直接将第一张图片作为缩略图，并生成基于时间戳的标准文件名
-    url = url_list[0]
-    filename_ = url.split('/')[-1]
-    suffix = filename_.split('.')[-1]  # 取得文件的后缀名
-    thumbname = time.strftime('%Y%m%d_%H%M%S.' + suffix)
-    download_image(url, './resource/download/' + thumbname)
-    compress_image('./resource/download/' + thumbname, './resource/thumb/' + thumbname, 400)
-
-    return thumbname  # 返回当前缩略图的文件名
+    try:
+        response = requests.get(url)  # 获取图片的响应
+        # 将图片以二进制方式保存到指定文件中
+        with open(file=dest, mode='wb') as file:
+            file.write(response.content)
+            return True
+    except Exception as e:
+        print(e)
+        return False
 
 
 def convert_image_to_webp(folder_, filename_):
@@ -393,80 +368,9 @@ def create_thumb_png():
 
     print(f"Images saved to {output_dir}")
 
-def create_beautiful_thumb_png():
-    """
-    创建更美观的文章类型缩略图，改进包括：
-    1. 更现代的设计风格
-    2. 更丰富的视觉效果
-    3. 更好的字体渲染
-    4. 更智能的布局调整
-    """
-    # 从文件加载 YAML 内容
-    yaml_file_path = '../configs/article_type_config.yaml'
-
-    if not os.path.exists(yaml_file_path):
-        raise FileNotFoundError(f"配置文件 {yaml_file_path} 不存在!")
-
-    # 读取并解析 YAML 文件
-    with open(yaml_file_path, 'r', encoding='utf-8') as file:
-        yaml_content = file.read()
-
-    # 解析 YAML 内容
-    article_types = yaml.safe_load(yaml_content)["ARTICLE_TYPES"]
-
-    # 输出查看
-    print(article_types)
-
-    # Directory to save images
-    output_dir = "../resource/thumb/"
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Font configuration
-    font_path = get_system_font_path()
-    image_size = (300, 180)  # (width, height)
-
-    # Generate images
-    for key, value in article_types.items():
-        # 创建带渐变的底图
-        image = Image.new('RGBA', image_size)
-        draw = ImageDraw.Draw(image)
-
-        # 生成优雅的渐变背景
-        gradient = generate_elegant_gradient(image_size)
-        image.paste(gradient, (0, 0))
-
-        # 添加图案装饰
-        add_pattern_overlay(draw, image_size)
-
-        # 计算最佳字体大小
-        font_size = calculate_optimal_font_size(draw, value, font_path, image_size)
-        font = ImageFont.truetype(font_path, font_size)
-
-        # 获取文本边界
-        text_bbox = draw.textbbox((0, 0), value, font=font)
-        text_width = text_bbox[2] - text_bbox[0]
-        text_height = text_bbox[3] - text_bbox[1]
-
-        # 居中定位
-        position = ((image_size[0] - text_width) // 2, (image_size[1] - text_height) // 2)
-
-        # 添加文本装饰
-        add_text_decorations(draw, value, position, font, image_size)
-
-        # 绘制主文本
-        draw_beautiful_text(draw, value, position, font)
-
-        # 添加边框和装饰
-        add_frame_and_decorations(draw, image_size)
-
-        # 保存图片
-        filename = os.path.join(output_dir, f"{key}.png")
-        image.save(filename)
-
-    print(f"美化版缩略图已保存至 {output_dir}")
 
 def generate_elegant_gradient(size):
-    """生成优雅的渐变背景"""
+    """生成优雅地渐变背景"""
     gradient = Image.new('RGBA', size)
     draw = ImageDraw.Draw(gradient)
     

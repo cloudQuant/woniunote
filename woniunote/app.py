@@ -33,41 +33,42 @@ def create_app(config_name='production'):
     if not app.config.get('SECRET_KEY'):
         app.config['SECRET_KEY'] = os.urandom(24)
     
+    # 读取自定义配置
+    custom_config = read_config()
+    
     # 配置Session
-    is_production = config_name == 'production'
-    session_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sessions')
+    session_dir = app.config.get('SESSION_FILE_DIR')
+    if not session_dir:
+        session_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sessions')
+        if config_name == 'testing':
+            session_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_sessions')
     
     # 确保session目录存在
     if not os.path.exists(session_dir):
         os.makedirs(session_dir, mode=0o700)
     
-    app.config.update(
-        # Session配置
-        SESSION_TYPE='filesystem',  # 使用文件系统存储session
-        SESSION_FILE_DIR=session_dir,  # session文件存储路径
-        SESSION_FILE_THRESHOLD=500,  # 最大session文件数
-        SESSION_FILE_MODE=0o600,  # 文件权限
-        SESSION_PERMANENT=True,  # 启用永久session
-        PERMANENT_SESSION_LIFETIME=timedelta(days=7),  # session有效期
-        
-        # Cookie配置
-        SESSION_COOKIE_NAME='woniunote_session',  # 主系统使用这个cookie名
-        SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SECURE=False,
-        SESSION_COOKIE_SAMESITE='Lax',
-        SESSION_COOKIE_PATH='/',
-        SESSION_COOKIE_DOMAIN=None,
-        
-        # 其他配置
-        SECRET_KEY=os.environ.get('SECRET_KEY', os.urandom(24))
-    )
+    # 更新Session配置
+    session_config = {
+        'SESSION_TYPE': 'filesystem',
+        'SESSION_FILE_DIR': session_dir,
+        'SESSION_FILE_THRESHOLD': 500,
+        'SESSION_FILE_MODE': 0o600,
+        'SESSION_PERMANENT': True,
+        'PERMANENT_SESSION_LIFETIME': timedelta(days=7),
+        'SESSION_COOKIE_NAME': 'woniunote_session',
+        'SESSION_COOKIE_HTTPONLY': True,
+        'SESSION_COOKIE_SECURE': False if config_name in ['development', 'testing'] else True,
+        'SESSION_COOKIE_SAMESITE': 'Lax',
+        'SESSION_COOKIE_PATH': '/',
+        'SESSION_COOKIE_DOMAIN': None
+    }
+    app.config.update(session_config)
     
     # 初始化Flask-Session
     Session(app)
     
+    # 数据库配置
     SQLALCHEMY_DATABASE_URI = None
-    # 读取自定义配置
-    custom_config = read_config()
     if custom_config:
         SQLALCHEMY_DATABASE_URI = custom_config['database']["SQLALCHEMY_DATABASE_URI"]
         app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
@@ -79,6 +80,7 @@ def create_app(config_name='production'):
             app.config.update(custom_config['session'])
             
     DATABASE_INFO = parse_db_uri(SQLALCHEMY_DATABASE_URI)
+    
     # 初始化扩展
     cache = Cache(app)
     db.init_app(app)
@@ -98,17 +100,13 @@ def create_app(config_name='production'):
     # 定义404错误页面
     @app.errorhandler(404)
     def page_not_found(e):
-        print(e)
-        file_path = "error-404.html"
-        return render_template(file_path)
-
+        return render_template('404.html'), 404
+    
     # 定义500错误页面
     @app.errorhandler(500)
-    def server_error(e):
-        print(e)
-        file_path = "error-500.html"
-        return render_template(file_path)
-
+    def internal_server_error(e):
+        return render_template('500.html'), 500
+    
     @app.before_request
     def before():
         # 只在生产环境强制HTTPS

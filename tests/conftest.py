@@ -1,39 +1,26 @@
 import os
 import pytest
-from playwright.sync_api import sync_playwright
-from woniunote import app
+import tempfile
+import yaml
+from woniunote.common.utils import get_db_connection, parse_db_uri, read_config
+
 
 @pytest.fixture(scope="session")
-def app_client():
-    app.config['TESTING'] = True
-    with app.test_client() as client:
-        yield client
+def test_db_info():
+    """数据库连接信息"""
+    config = read_config()
+    return parse_db_uri(config['database']['SQLALCHEMY_DATABASE_URI'])
 
 @pytest.fixture(scope="session")
-def browser_context():
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context()
-        page = context.new_page()
-        yield page
-        context.close()
-        browser.close()
+def test_db_uri():
+    """测试数据库URI"""
+    config = read_config()
+    return config['database']['SQLALCHEMY_DATABASE_URI']
 
-@pytest.fixture
-def test_user():
-    return {
-        'username': 'testuser',
-        'password': 'testpass123',
-        'email': 'test@example.com'
-    }
-
-@pytest.fixture
-def authenticated_client(app_client, test_user):
-    # 登录用户
-    response = app_client.post('/login', data={
-        'username': test_user['username'],
-        'password': test_user['password'],
-        'vcode': '0000'  # 测试环境验证码
-    })
-    assert response.status_code == 200
-    return app_client
+@pytest.fixture(scope="session")
+def test_images_dir():
+    """测试图片目录"""
+    test_dir = os.path.join(os.path.dirname(__file__), 'test_images/')
+    if not os.path.exists(test_dir):
+        os.makedirs(test_dir)
+    return test_dir

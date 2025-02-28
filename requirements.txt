@@ -33,7 +33,20 @@ cython
 pytest>=7.0.0
 pytest-cov>=4.0.0
 pytest-flask>=1.2.0
+pytest-playwright
+pytest-asyncio
+pytest-xdist
+pytest-html
+pytest-ordering
+pytest-cov
+pytest-mock
+requests-mock
+playwright
+locust
+faker
 coverage>=7.0.0
 requests>=2.32.0
 beautifulsoup4>=4.11.0
+
+
 
