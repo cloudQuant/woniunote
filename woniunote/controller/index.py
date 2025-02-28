@@ -33,12 +33,11 @@ def home():
 def get_home():
     try:
         # 下述代码跟之前版本保持不变，正常查询数据库
-        article = Articles()
-        result = article.find_limit_with_users(-10, 10)
+        result = Articles.find_limit_with_users(-10, 10)
         # result = article.find_all()
-        total = math.ceil(article.get_total_count() / 10)
+        total = math.ceil(Articles.get_total_count() / 10)
 
-        last, most, recommended = article.find_last_most_recommended()
+        last, most, recommended = Articles.find_last_most_recommended()
         # content = render_template('index.html', result=result, page=1, total=total)
         html_file = 'index.html'
         content = render_template(html_file, result=result, page=1, total=total,
@@ -60,11 +59,11 @@ def get_home():
 def paginate(page):
     try:
         start = (page - 1) * 10  # Calculate the correct start index
-        article = Articles()
-        result = article.find_limit_with_users(start, 10)
-        total = math.ceil(article.get_total_count() / 10)
+        result = Articles.find_limit_with_users(start, 10)
+        # result = [i[0] for i in result]
+        total = math.ceil(Articles.get_total_count() / 10)
 
-        last, most, recommended = article.find_last_most_recommended()
+        last, most, recommended = Articles.find_last_most_recommended()
         _current_time = datetime.now(UTC)
         html_file = 'index.html'
         content = render_template(html_file, result=result, page=page, total=total,

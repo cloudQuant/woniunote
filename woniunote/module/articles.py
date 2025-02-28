@@ -98,13 +98,14 @@ class Articles(DBase):
         try:
             result = dbsession.query(Article, Users.nickname).join(Users, Users.userid == Article.userid) \
                 .all()
+            result = sorted(result, key=lambda row: row[0].articleid, reverse=True)
             begin = start
             end = start + count
             if begin == -10:
-                result = result[begin:]
+                result = result[:count]
             else:
                 result = result[begin:end]
-            result = result[::-1]
+            # result = result[::-1]
             return result
         except Exception as e:
             print(e)
