@@ -266,7 +266,8 @@ class Articles(DBase):
             traceback.print_exc()
 
     # 获取当前文章的 上一篇和下一篇
-    def find_prev_next_by_id(self, articleid):
+    @staticmethod
+    def find_prev_next_by_id(articleid):
         try:
             m_dict = {}
 
@@ -283,7 +284,7 @@ class Articles(DBase):
                 prev_id = row.articleid
 
             m_dict['prev_id'] = prev_id
-            m_dict['prev_headline'] = self.find_headline_by_id(prev_id)
+            m_dict['prev_headline'] = Articles.find_headline_by_id(prev_id)
 
             # 查询比当前编号大的当中最小的一个
             row = dbsession.query(Article).filter(Article.hidden == 0,
@@ -298,7 +299,7 @@ class Articles(DBase):
                 next_id = row.articleid
 
             m_dict['next_id'] = next_id
-            m_dict['next_headline'] = self.find_headline_by_id(next_id)
+            m_dict['next_headline'] = Articles.find_headline_by_id(next_id)
 
             return m_dict
         except Exception as e:
