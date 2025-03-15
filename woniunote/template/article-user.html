@@ -3,6 +3,24 @@
 
 <!-- 引入 highlight.js -->
 <!--<script src="/js/vue.js"></script>>-->
+<!-- 引入 MathJax 用于渲染数学公式 -->
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+<script>
+  // MathJax配置
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      processEscapes: true
+    },
+    options: {
+      ignoreHtmlClass: 'tex2jax_ignore',
+      processHtmlClass: 'tex2jax_process'
+    }
+  };
+</script>
 
 <style>
     .article-detail {
