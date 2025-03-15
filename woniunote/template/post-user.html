@@ -136,6 +136,11 @@
             bootbox.alert({ title: "错误提示", message: "权限不足，无法操作。" });
         } else if (data === 'post-fail') {
             bootbox.alert({ title: "错误提示", message: "操作失败，请联系管理员。" });
+        } else if (data === 'not-login') {
+            bootbox.alert({ title: "错误提示", message: "您尚未登录或登录已过期，请重新登录。" });
+            setTimeout(() => { location.href = '/login'; }, 1500);
+        } else if (data === 'user-not-found') {
+            bootbox.alert({ title: "错误提示", message: "用户信息不存在，请重新登录。" });
         } else if (/^\d+$/.test(data)) {
             bootbox.alert({ title: "信息提示", message: "操作成功！" });
             ARTICLEID = parseInt(data);
@@ -143,7 +148,8 @@
                 setTimeout(() => { location.href = '/article/' + data; }, 1000);
             }
         } else {
-            bootbox.alert({ title: "错误提示", message: "操作失败，可能没有权限。" });
+            console.error("未处理的响应:", data);
+            bootbox.alert({ title: "错误提示", message: "操作失败，可能没有权限或系统错误。" });
         }
     }
 
