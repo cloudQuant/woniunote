@@ -322,7 +322,7 @@ class Articles(DBase):
     def insert_article(article_type, headline, content, thumbnail, credit, drafted=0, checked=1):
         try:
             now = time.strftime('%Y-%m-%d %H:%M:%S')
-            userid = session.get('userid')
+            userid = session.get('main_userid')
             # 其他字段在数据库中均已设置好默认值，无须手工插入
             article = Article(userid=userid, type=article_type, headline=headline, content=content,
                               thumbnail=thumbnail, credit=credit, drafted=drafted, readcount=0,

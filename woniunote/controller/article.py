@@ -241,8 +241,7 @@ def add_article():
                     credit=credit,
                     thumbnail=thumbname,
                     drafted=drafted,
-                    checked=checked,
-                    userid=userid  
+                    checked=checked
                 )
                 return str(article_id)
             except Exception as e:
