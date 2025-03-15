@@ -11,13 +11,42 @@
   // MathJax配置
   window.MathJax = {
     tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      inlineMath: [['$', '$'], ['\\(', '\\)'], ['[', ']']],
       displayMath: [['$$', '$$'], ['\\[', '\\]']],
       processEscapes: true
     },
     options: {
       ignoreHtmlClass: 'tex2jax_ignore',
       processHtmlClass: 'tex2jax_process'
+    },
+    startup: {
+      ready: function() {
+        // 调用默认的ready函数
+        MathJax.startup.defaultReady();
+        
+        // 在MathJax初始化完成后执行自定义处理
+        setTimeout(function() {
+          // 获取文章内容元素
+          const contentElement = document.getElementById('content');
+          if (!contentElement) return;
+          
+          // 获取HTML内容
+          let html = contentElement.innerHTML;
+          
+          // 使用正则表达式查找 [ ... ] 格式的数学公式
+          // 并将其转换为 \[ ... \] 格式（MathJax支持的行间公式格式）
+          html = html.replace(/\[(.*?\\frac.*?)\]/g, function(match, formula) {
+            // 返回替换后的格式
+            return '\\[' + formula + '\\]';
+          });
+          
+          // 更新内容
+          contentElement.innerHTML = html;
+          
+          // 重新渲染数学公式
+          MathJax.typeset([contentElement]);
+        }, 500);
+      }
     }
   };
 </script>
