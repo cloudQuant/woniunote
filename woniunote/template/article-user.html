@@ -2,6 +2,8 @@
 {% block content %}
 
 <!-- 引入 highlight.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
 <!--<script src="/js/vue.js"></script>>-->
 <!-- 引入 MathJax 用于渲染数学公式 -->
 <script type="text/javascript" id="MathJax-script" async
@@ -11,7 +13,7 @@
   // MathJax配置
   window.MathJax = {
     tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)'], ['[', ']']],
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
       displayMath: [['$$', '$$'], ['\\[', '\\]']],
       processEscapes: true
     },
@@ -241,23 +243,52 @@
 
 <script>
     function initHighlightJS() {
+        // 扩展识别范围，包括多种常见的代码块格式
+        // 1. 处理带有brush:语言的pre标签
         document.querySelectorAll('pre[class*="brush:"]').forEach((block) => {
-            console.log('Processing block:', block);
+            console.log('Processing brush block:', block);
 
-            // Extract the language class from the "brush:" prefix (e.g., brush:python -> python)
+            // 提取语言类从"brush:"前缀 (例如, brush:python -> python)
             const languageClass = block.className.match(/brush:(\S+)/);
 
             if (languageClass) {
-                const language = languageClass[1]; // Extracted language, like "python"
-
-                // Add the language class (like "python") to the <pre> element
+                const language = languageClass[1]; // 提取出的语言，如 "python"
+                
+                // 添加语言类到<pre>元素
                 block.classList.add(language);
-                // Remove the "brush:" part of the class
+                // 移除带"brush:"的部分
                 block.classList.remove(`brush:${language}`);
-
-                // Highlight the content of the <pre> tag directly
-                hljs.highlightElement(block); // Apply syntax highlighting to the <pre> block itself
+                
+                // 直接高亮<pre>标签的内容
+                hljs.highlightElement(block);
             }
+        });
+        
+        // 2. 处理带有language-*类的pre和code标签 (常见于Markdown)
+        document.querySelectorAll('pre code[class*="language-"], code[class*="language-"]').forEach((block) => {
+            console.log('Processing language block:', block);
+            hljs.highlightElement(block);
+        });
+        
+        // 3. 处理带有lang-*类的pre和code标签
+        document.querySelectorAll('pre code[class*="lang-"], code[class*="lang-"]').forEach((block) => {
+            console.log('Processing lang block:', block);
+            hljs.highlightElement(block);
+        });
+        
+        // 4. 处理普通code标签，尝试自动检测语言
+        document.querySelectorAll('pre > code:not([class*="language-"]):not([class*="lang-"]):not([class*="brush:"])').forEach((block) => {
+            console.log('Processing plain code block:', block);
+            hljs.highlightElement(block);
+        });
+        
+        // 5. 处理直接带有编程语言名称作为类的pre或code标签
+        const commonLanguages = ['python', 'javascript', 'java', 'cpp', 'csharp', 'php', 'ruby', 'go', 'rust', 'sql', 'bash', 'shell', 'html', 'css', 'json', 'xml'];
+        commonLanguages.forEach(lang => {
+            document.querySelectorAll(`pre.${lang}, code.${lang}`).forEach((block) => {
+                console.log(`Processing ${lang} block:`, block);
+                hljs.highlightElement(block);
+            });
         });
     }
     // Initialize highlight.js when the page is loaded

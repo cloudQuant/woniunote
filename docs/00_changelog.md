@@ -1,7 +1,8 @@
 ### changelog
--[ ] 2025-03-15: fix doPost function导致的发布文章失败
--[ ] 2025-02-22: update math_train function
--[ ] 2025-02-21: `todo` try to fix why `https://www.yunjinqi.top/type/101/1` not right sometime
+-[x] 2025-03-15: fix 数学公式显示不正常的问题
+-[x] 2025-03-15: fix doPost function导致的发布文章失败
+-[x] 2025-02-22: update math_train function
+-[x] 2025-02-21: `todo` try to fix why `https://www.yunjinqi.top/type/101/1` not right sometime
 -[x] 2025-02-21: try to fix the headline not show '+' sign
 -[x] 2025-02-21: fix phone header show, change '量化交易与量化自我' to '专注量化'
 -[x] 2025-02-21: fix phone show not perfectly about previous page and next page
