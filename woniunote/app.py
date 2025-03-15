@@ -100,12 +100,12 @@ def create_app(config_name='production'):
     # 定义404错误页面
     @app.errorhandler(404)
     def page_not_found(e):
-        return render_template('404.html'), 404
+        return render_template('error-404.html'), 404
     
     # 定义500错误页面
     @app.errorhandler(500)
     def internal_server_error(e):
-        return render_template('500.html'), 500
+        return render_template('error-500.html'), 500
     
     @app.before_request
     def before():
