@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, session, abort, url_for
 from woniunote.module.articles import Articles
 from woniunote.module.users import Users
-from woniunote.common.session_util import get_current_user_id, is_logged_in
+from woniunote.common.session_util import get_current_user_id
 from woniunote.module.comments import Comments
 from woniunote.module.credits import Credits
 from woniunote.module.favorites import Favorites
@@ -207,10 +207,10 @@ def edit_article():
 @article.route('/article/add', methods=['POST'])
 def add_article():
     try:
-        if not is_logged_in():
+        if session.get('main_islogin') != 'true':
             return 'not-login'
         
-        userid = get_current_user_id()
+        userid = session.get('main_userid')
         if userid is None:
             return 'not-login'
             
