@@ -148,52 +148,61 @@
                 setTimeout(() => { location.href = '/article/' + data; }, 1000);
             }
         } else {
-            console.error("未处理的响应:", data);
-            bootbox.alert({ title: "错误提示", message: "操作失败，可能没有权限或系统错误。" });
+            handleUnknownResponse(data);
         }
     }
 
+    // 处理未处理的响应
+    function handleUnknownResponse(data) {
+        console.error("未处理的响应:", data);
+        bootbox.alert({ title: "错误提示", message: "操作失败，可能没有权限或系统错误。" });
+    }
+</script>
+
+<!-- 使用单独的脚本块来初始化后端数据 -->
+<script type="text/javascript">
+    // 使用后端传递的子类型数据
+    var subTypeMapping = {{ subTypesData | tojson | safe }};
+</script>
+
+<script type="text/javascript">
     // 主类型与子类型联动
     const mainTypeSelect = document.getElementById('main-type');
     const subTypeSelect = document.getElementById('sub-type');
 
-    const subTypesData = {
-        {% for key, value in article_type.items() if key >= 100 %}
-            {{ key // 100 }}: { {{ key }}: "{{ value }}" },
-        {% endfor %}
-    };
+    // 主类型变化时更新子类型
+    mainTypeSelect.addEventListener('change', function() {
+        const selectedMainType = parseInt(this.value);
+        const subTypes = subTypeMapping[selectedMainType];
 
-    // 动态加载子类型并默认选中第一个子类型
-    function updateSubTypes() {
-        const selectedMainType = mainTypeSelect.value;
-        const subTypes = subTypesData[selectedMainType] || {};
-        subTypeSelect.innerHTML = ''; // 清空子类型下拉框
+        // 清空子类型选项
+        subTypeSelect.innerHTML = '';
 
-        let firstSubTypeId = null;
-        for (const [subId, subName] of Object.entries(subTypes)) {
-            const option = document.createElement('option');
-            option.value = subId;
-            option.textContent = subName;
-            subTypeSelect.appendChild(option);
-
-            // 记录第一个子类型的ID
-            if (firstSubTypeId === null) {
-                firstSubTypeId = subId;
+        // 添加新的子类型选项
+        if (subTypes) {
+            let firstOption = null;
+            Object.entries(subTypes).forEach(([subId, subName]) => {
+                const option = document.createElement('option');
+                option.value = subId;
+                option.textContent = subName;
+                subTypeSelect.appendChild(option);
+                
+                if (!firstOption) {
+                    firstOption = subId;
+                }
+            });
+            
+            // 默认选中第一个子类型
+            if (firstOption) {
+                subTypeSelect.value = firstOption;
             }
         }
+    });
 
-        // 默认选中第一个子类型
-        if (firstSubTypeId !== null) {
-            subTypeSelect.value = firstSubTypeId;
-        }
-    }
-
-    // 监听主类型变化
-    mainTypeSelect.addEventListener('change', updateSubTypes);
-
-    // 页面加载时初始化子类型
-    window.addEventListener('load', function () {
-        updateSubTypes(); // 初始化子类型
+    // 页面加载完成后初始化子类型
+    document.addEventListener('DOMContentLoaded', function() {
+        // 触发主类型的change事件来初始化子类型
+        mainTypeSelect.dispatchEvent(new Event('change'));
     });
 </script>
 
