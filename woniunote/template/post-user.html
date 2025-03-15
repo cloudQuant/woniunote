@@ -96,8 +96,8 @@
             articleid: ARTICLEID,
         };
 
-        $.post('/article', param, function (data) {
-            handlePostResponse(data);
+        $.post('/article/add', param, function (data) {
+            handlePostResponse(data, param);
         });
     }
 
@@ -125,13 +125,13 @@
             articleid: ARTICLEID,
         };
 
-        $.post('/article', param, function (data) {
-            handlePostResponse(data);
+        $.post('/article/add', param, function (data) {
+            handlePostResponse(data, param);
         });
     }
 
     // 处理发布和保存草稿的响应
-    function handlePostResponse(data) {
+    function handlePostResponse(data, param) {
         if (data === 'perm-denied') {
             bootbox.alert({ title: "错误提示", message: "权限不足，无法操作。" });
         } else if (data === 'post-fail') {
@@ -192,183 +192,3 @@
 </script>
 
 {% endblock %}
-
-{##}
-{#{% extends 'base.html' %}#}
-{#{% block content %}#}
-{##}
-{#<!-- 引入 UEditor 配置和脚本 -->#}
-{#<script type="text/javascript" src="/ueditor/ueditor.config.js"></script>#}
-{#<script type="text/javascript" src="/ueditor/ueditor.all.js"></script>#}
-{#<script type="text/javascript">#}
-{#    var ue = UE.getEditor('content', {#}
-{#        initialFrameHeight: 400,#}
-{#        autoHeightEnabled: true,#}
-{#        serverUrl: '/uedit',#}
-{#    });#}
-{#</script>#}
-{##}
-{#<!-- 页面布局 -->#}
-{#<div class="container" style="margin-top: 20px; background-color: white; padding: 20px;">#}
-{#    <div class="form-group row">#}
-{#        <label for="headline" class="col-2 col-form-label text-right">文章标题：</label>#}
-{#        <div class="col-10">#}
-{#            <input type="text" class="form-control" id="headline" placeholder="请输入文章标题" />#}
-{#        </div>#}
-{#    </div>#}
-{##}
-{#    <div class="form-group">#}
-{#        <script id="content" name="content" type="text/plain"></script>#}
-{#    </div>#}
-{##}
-{#    <!-- 类型、子类型、积分、提交按钮 -->#}
-{#    <div class="form-group row align-items-center">#}
-{#        <!-- 主类型 -->#}
-{#        <label for="main-type" class="col-2 col-form-label text-right">类型：</label>#}
-{#        <div class="col-2">#}
-{#            <select class="form-control" id="main-type">#}
-{#                {% for key, value in article_type.items() if key < 100 %}#}
-{#                    <option value="{{ key }}">{{ value }}</option>#}
-{#                {% endfor %}#}
-{#            </select>#}
-{#        </div>#}
-{##}
-{#        <!-- 子类型 -->#}
-{#        <label for="sub-type" class="col-2 col-form-label text-right">子类型：</label>#}
-{#        <div class="col-2">#}
-{#            <select class="form-control" id="sub-type">#}
-{#                <!-- 子类型初始为空，动态加载 -->#}
-{#            </select>#}
-{#        </div>#}
-{##}
-{#        <!-- 积分 -->#}
-{#        <label for="credit" class="col-2 col-form-label text-right">积分：</label>#}
-{#        <div class="col-2">#}
-{#            <select class="form-control" id="credit">#}
-{#                <option value="0">免费</option>#}
-{#                <option value="1">1分</option>#}
-{#                <option value="2">2分</option>#}
-{#                <option value="5">5分</option>#}
-{#                <option value="10">10分</option>#}
-{#                <option value="20">20分</option>#}
-{#                <option value="50">50分</option>#}
-{#            </select>#}
-{#        </div>#}
-{#    </div>#}
-{##}
-{#    <!-- 提交按钮 -->#}
-{#    <div class="form-group row text-center">#}
-{#        <div class="col">#}
-{#            <button class="btn btn-secondary" onclick="doDraft()">保存草稿</button>#}
-{#            <button class="btn btn-primary" onclick="doPost()">发布文章</button>#}
-{#        </div>#}
-{#    </div>#}
-{#</div>#}
-{##}
-{#<script>#}
-{#    var ARTICLEID = 0;  // 全局变量保存文章 ID#}
-{##}
-{#    // 文章发布逻辑#}
-{#    function doPost() {#}
-{#        var headline = $.trim($("#headline").val());#}
-{#        var contentPlain = UE.getEditor("content").getContentTxt();#}
-{##}
-{#        if (headline.length < 5) {#}
-{#            bootbox.alert({ title: "错误提示", message: "标题不能少于5个字" });#}
-{#            return false;#}
-{#        } else if (contentPlain.length < 100) {#}
-{#            bootbox.alert({ title: "错误提示", message: "内容不能低于100个字" });#}
-{#            return false;#}
-{#        }#}
-{##}
-{#        var param = {#}
-{#            headline: headline,#}
-{#            content: UE.getEditor("content").getContent(),#}
-{#            type: $("#main-type").val(),#}
-{#            subtype: $("#sub-type").val(),#}
-{#            credit: $("#credit").val(),#}
-{#            drafted: 0,#}
-{#            checked: 1,#}
-{#            articleid: ARTICLEID,#}
-{#        };#}
-{##}
-{#        $.post('/article', param, function (data) {#}
-{#            handlePostResponse(data);#}
-{#        });#}
-{#    }#}
-{##}
-{#    // 保存草稿逻辑#}
-{#    function doDraft() {#}
-{#        var headline = $.trim($("#headline").val());#}
-{#        var contentPlain = UE.getEditor("content").getContentTxt();#}
-{##}
-{#        if (headline.length < 5) {#}
-{#            bootbox.alert({ title: "错误提示", message: "草稿标题不能少于5个字" });#}
-{#            return false;#}
-{#        } else if (contentPlain.length < 10) {#}
-{#            bootbox.alert({ title: "错误提示", message: "草稿内容不能低于10个字" });#}
-{#            return false;#}
-{#        }#}
-{##}
-{#        var param = {#}
-{#            headline: headline,#}
-{#            content: UE.getEditor("content").getContent(),#}
-{#            type: $("#main-type").val(),#}
-{#            subtype: $("#sub-type").val(),#}
-{#            credit: $("#credit").val(),#}
-{#            drafted: 1,#}
-{#            checked: 1,#}
-{#            articleid: ARTICLEID,#}
-{#        };#}
-{##}
-{#        $.post('/article', param, function (data) {#}
-{#            handlePostResponse(data);#}
-{#        });#}
-{#    }#}
-{##}
-{#    // 处理发布和保存草稿的响应#}
-{#    function handlePostResponse(data) {#}
-{#        if (data === 'perm-denied') {#}
-{#            bootbox.alert({ title: "错误提示", message: "权限不足，无法操作。" });#}
-{#        } else if (data === 'post-fail') {#}
-{#            bootbox.alert({ title: "错误提示", message: "操作失败，请联系管理员。" });#}
-{#        } else if (/^\d+$/.test(data)) {#}
-{#            bootbox.alert({ title: "信息提示", message: "操作成功！" });#}
-{#            ARTICLEID = parseInt(data);#}
-{#            if (!param.drafted) {#}
-{#                setTimeout(() => { location.href = '/article/' + data; }, 1000);#}
-{#            }#}
-{#        } else {#}
-{#            bootbox.alert({ title: "错误提示", message: "操作失败，可能没有权限。" });#}
-{#        }#}
-{#    }#}
-{##}
-{#    // 主类型与子类型联动#}
-{#    const mainTypeSelect = document.getElementById('main-type');#}
-{#    const subTypeSelect = document.getElementById('sub-type');#}
-{##}
-{#    const subTypesData = {#}
-{#        {% for key, value in article_type.items() if key >= 100 %}#}
-{#            {{ key // 100 }}: { {{ key }}: "{{ value }}" },#}
-{#        {% endfor %}#}
-{#    };#}
-{##}
-{#    mainTypeSelect.addEventListener('change', function () {#}
-{#        const selectedMainType = this.value;#}
-{#        const subTypes = subTypesData[selectedMainType] || {};#}
-{#        subTypeSelect.innerHTML = '';#}
-{#        for (const [subId, subName] of Object.entries(subTypes)) {#}
-{#            const option = document.createElement('option');#}
-{#            option.value = subId;#}
-{#            option.textContent = subName;#}
-{#            subTypeSelect.appendChild(option);#}
-{#        }#}
-{#    });#}
-{##}
-{#    mainTypeSelect.dispatchEvent(new Event('change')); // 初始化子类型#}
-{##}
-{#</script>#}
-{##}
-{#{% endblock %}#}
-
-

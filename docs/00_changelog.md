@@ -1,4 +1,5 @@
 ### changelog
+-[ ] 2025-03-15: fix doPost function导致的发布文章失败
 -[ ] 2025-02-22: update math_train function
 -[ ] 2025-02-21: `todo` try to fix why `https://www.yunjinqi.top/type/101/1` not right sometime
 -[x] 2025-02-21: try to fix the headline not show '+' sign
