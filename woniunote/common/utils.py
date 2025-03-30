@@ -398,7 +398,7 @@ def generate_pastel_color():
     v = value / 100
     
     if s == 0:
-        return (v, v, v)
+        return v, v, v
     
     i = int(h * 6)
     f = (h * 6) - i
@@ -424,7 +424,7 @@ def generate_pastel_color():
 
 def generate_complementary_color(color):
     """生成互补色"""
-    return (255 - color[0], 255 - color[1], 255 - color[2])
+    return 255 - color[0], 255 - color[1], 255 - color[2]
 
 def add_pattern_overlay(draw, size):
     """添加图案装饰"""

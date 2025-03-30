@@ -5,20 +5,20 @@ from flask_caching import Cache
 from flask_session import Session
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from woniunote.configs.config import config
-from woniunote.common.utils import read_config, get_package_path, get_db_connection, parse_db_uri
-from woniunote.common.database import db, ARTICLE_TYPES
-from woniunote.controller.admin import admin
-from woniunote.controller.article import article
-from woniunote.controller.card_center import card_center
-from woniunote.controller.comment import comment
-from woniunote.controller.favorite import favorite
-from woniunote.controller.index import index
-from woniunote.controller.todo_center import tcenter
-from woniunote.controller.ueditor import ueditor
-from woniunote.controller.ucenter import ucenter
-from woniunote.controller.user import user
-from woniunote.module.users import Users
+from .configs.config import config
+from .common.utils import read_config, get_package_path, get_db_connection, parse_db_uri
+from .common.database import db, ARTICLE_TYPES
+from .controller.admin import admin
+from .controller.article import article
+from .controller.card_center import card_center
+from .controller.comment import comment
+from .controller.favorite import favorite
+from .controller.index import index
+from .controller.todo_center import tcenter
+from .controller.ueditor import ueditor
+from .controller.ucenter import ucenter
+from .controller.user import user
+from .module.users import Users
 pymysql.install_as_MySQLdb()
 
 
