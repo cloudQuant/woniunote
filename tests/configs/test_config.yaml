@@ -1,0 +1,60 @@
+# WoniuNote 测试环境配置
+
+# 应用配置
+app:
+  DEBUG: false
+  SECRET_KEY: 'test_secret_key_for_testing'
+  PERMANENT_SESSION_LIFETIME: 1800
+  SESSION_TYPE: 'filesystem'
+  SESSION_FILE_DIR: 'sessions'
+  SESSION_PERMANENT: true
+  SESSION_FILE_THRESHOLD: 100
+  SESSION_FILE_MODE: 384  # 0600
+
+
+admin:
+  username: woniunote_admin
+  nickname: admin
+  password: woniunote_admin_password1!
+
+# 用于生成编辑账户的用户名，昵称和密码
+editor:
+  username: woniunote_editor
+  nickname: editor
+  password: woniunote_editor_password1!
+
+# 用于生成一个普通账户的用户名，昵称和密码
+user:
+  username: woniunote_user
+  nickname: user
+  password: woniunote_user_password1!
+
+# 数据库配置
+database:
+  # 使用本地MySQL数据库进行测试
+  SQLALCHEMY_DATABASE_URI: 'mysql+pymysql://woniunote_user:Woniunote_password1!@127.0.0.1:3306/woniunote?charset=utf8mb4'
+  SQLALCHEMY_TRACK_MODIFICATIONS: false
+  SQLALCHEMY_ECHO: false
+  
+# 日志配置
+logging:
+  LOG_LEVEL: 'INFO'
+  LOG_FILE: 'logs/test.log'
+  LOG_FORMAT: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+# 文件上传配置
+upload:
+  UPLOAD_FOLDER: 'tests/test_uploads'
+  ALLOWED_EXTENSIONS:
+    - txt
+    - pdf
+    - png
+    - jpg
+    - jpeg
+    - gif
+  MAX_CONTENT_LENGTH: 16777216  # 16MB
+
+# 缓存配置
+cache:
+  CACHE_TYPE: 'simple'
+  CACHE_DEFAULT_TIMEOUT: 300

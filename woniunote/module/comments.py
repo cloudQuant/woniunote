@@ -7,7 +7,6 @@ from sqlalchemy.orm import relationship
 from woniunote.common.database import dbconnect
 from woniunote.module.users import Users
 from woniunote.common.create_database import Comment
-from woniunote.module.articles import Articles, Article
 
 dbsession, md, DBase = dbconnect()
 
@@ -191,51 +190,6 @@ class Comments(DBase):
         except Exception as e:
             print(e)
             traceback.print_exc()
-
-    # 添加兼容方法，作为get_count_by_article的别名
-    @staticmethod
-    def get_comment_count(articleid):
-        return Comments.get_count_by_article(articleid)
-
-    # 根据当前登录用户查询他的所有评论
-    @staticmethod
-    def find_my_comments():
-        try:
-            userid = session.get('userid')
-            if not userid:
-                return []
-            comments = dbsession.query(Comment).filter_by(userid=userid, hidden=0).order_by(Comment.commentid.desc()).all()
-            return comments
-        except Exception as e:
-            print(e)
-            traceback.print_exc()
-            return []
-            
-    # 根据评论ID查询单条评论
-    @staticmethod
-    def find_by_commentid(commentid):
-        try:
-            comment = dbsession.query(Comment).filter_by(commentid=commentid, hidden=0).first()
-            return comment
-        except Exception as e:
-            print(e)
-            traceback.print_exc()
-            return None
-            
-    # 删除评论（软删除，将hidden标记为1）
-    @staticmethod
-    def delete(commentid):
-        try:
-            comment = dbsession.query(Comment).filter_by(commentid=commentid).first()
-            if comment:
-                comment.hidden = 1
-                dbsession.commit()
-                return True
-            return False
-        except Exception as e:
-            print(e)
-            traceback.print_exc()
-            return False
 
 
 if __name__ == '__main__':

@@ -1,257 +1,325 @@
 """
-WoniuNote Test Configuration
+WoniuNote测试配置模块
+提供pytest测试所需的fixtures和通用配置
 
-This module contains fixtures and setup code for all tests.
+遵循企业级测试标准设计，支持可重复、隔离的测试执行
 """
+
 import os
 import sys
+import time
+import logging
 import pytest
-import yaml
-import importlib.util
-import importlib.machinery
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from typing import Dict, Any, Tuple, List, Optional
 
-# ===== 重要：解决pytest导入问题 =====
-# 将项目根目录添加到Python路径
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, BASE_DIR)
+# 添加项目根目录到Python路径
+project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, project_root)
 
-# 将woniunote目录添加到Python路径
-WONIUNOTE_DIR = os.path.join(BASE_DIR, 'woniunote')
-if WONIUNOTE_DIR not in sys.path:
-    sys.path.insert(0, WONIUNOTE_DIR)
+# 导入测试数据辅助模块
+from tests.utils.test_data_helper import TestDataManager, TestUserFactory, TestArticleFactory
+from tests.utils import test_data_helper
 
-# 调试信息
-print("\n===== PYTEST DEBUG INFO =====")
-print(f"Python路径: {sys.path[:3]}...")
-print(f"BASE_DIR: {BASE_DIR}")
-print(f"当前目录: {os.getcwd()}")
-print(f"woniunote目录: {WONIUNOTE_DIR}")
-print("============================\n")
+# 配置日志
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("test_fixtures")
 
-# ===== 创建woniunote命名空间包的虚拟模块 =====
-print("\n===== 创建woniunote虚拟模块 =====")
+# Playwright相关导入
+from playwright.sync_api import Page, Browser, BrowserContext, Playwright, sync_playwright
 
-# 记录所有虚拟模块和对应的实际文件路径
-virtual_modules = {}
 
-# 创建虚拟模块的辅助函数
-def create_virtual_module(name, actual_path=None):
-    if name in sys.modules:
-        return sys.modules[name]
+# ---------------------- 通用测试工具函数 ----------------------
+
+def auto_login_steps(page: Page, username: str, password: str) -> None:
+    """
+    执行自动登录步骤
     
-    # 创建模块规格和模块对象
-    spec = importlib.machinery.ModuleSpec(name, None)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
+    Args:
+        page: Playwright页面对象
+        username: 用户名
+        password: 密码
+    """
+    logger.info(f"执行自动登录: {username}")
     
-    # 记录实际路径（如果有）
-    if actual_path:
-        virtual_modules[name] = actual_path
+    # 访问登录页面
+    page.goto("/login")
     
-    print(f"创建了虚拟模块: {name}")
-    return module
-
-# 创建woniunote顶级包
-woniunote_module = create_virtual_module('woniunote')
-
-# 递归创建所有子包和子模块的虚拟模块
-def create_subpackages(parent_dir, parent_module_name):
-    if not os.path.isdir(parent_dir):
-        return
+    # 填写登录表单
+    page.fill("input[name='username']", username)
+    page.fill("input[name='password']", password)
     
-    # 为所有子目录创建虚拟包
-    for item_name in os.listdir(parent_dir):
-        item_path = os.path.join(parent_dir, item_name)
-        
-        # 跳过特殊目录和非目录项
-        if item_name.startswith('__') or item_name.startswith('.'):
-            continue
-        
-        # 处理子包（目录）
-        if os.path.isdir(item_path):
-            sub_module_name = f"{parent_module_name}.{item_name}"
-            create_virtual_module(sub_module_name)
-            
-            # 递归处理子包的子包
-            create_subpackages(item_path, sub_module_name)
-        
-        # 处理模块（.py文件）
-        elif item_name.endswith('.py'):
-            module_name = item_name[:-3]  # 去掉.py后缀
-            if module_name != '__init__':
-                sub_module_name = f"{parent_module_name}.{module_name}"
-                module_path = os.path.join(parent_dir, item_name)
-                create_virtual_module(sub_module_name, module_path)
+    # 提交表单
+    page.click("input[type='submit']")
+    
+    # 等待登录完成
+    page.wait_for_selector("a:has-text('个人中心')")
+    logger.info("登录成功")
 
-# 开始创建子包
-create_subpackages(WONIUNOTE_DIR, 'woniunote')
 
-# 使用自定义导入钩子来为woniunote命名空间提供实际实现
-class WoniuNoteFinder:
-    @staticmethod
-    def find_spec(fullname, path=None, target=None):
-        # 只处理woniunote命名空间下的导入
-        if not fullname.startswith('woniunote.'):
-            return None
-        
-        # 检查是否有对应的实际模块文件
-        path_components = fullname.split('.')
-        rel_path = os.path.join(*path_components[1:]) + '.py'
-        abs_path = os.path.join(WONIUNOTE_DIR, rel_path)
-        
-        # 如果是目录，查找__init__.py
-        if not os.path.exists(abs_path):
-            dir_path = os.path.join(WONIUNOTE_DIR, *path_components[1:])
-            init_path = os.path.join(dir_path, '__init__.py')
-            if os.path.exists(init_path):
-                return importlib.machinery.FileFinder(os.path.dirname(init_path)).find_spec(
-                    path_components[-1], [os.path.dirname(init_path)])
-        else:
-            return importlib.machinery.FileFinder(os.path.dirname(abs_path)).find_spec(
-                path_components[-1], [os.path.dirname(abs_path)])
-        
+def get_article_link_by_headline(page: Page, headline: str) -> Optional[str]:
+    """
+    通过文章标题获取文章链接
+    
+    Args:
+        page: Playwright页面对象
+        headline: 文章标题
+    
+    Returns:
+        文章链接或None
+    """
+    logger.info(f"查找文章链接: '{headline}'")
+    
+    # 等待文章列表加载
+    page.wait_for_selector(".article-list")
+    
+    # 查找指定标题的文章链接
+    article_link = page.query_selector(f"a:has-text('{headline}')")
+    
+    if article_link:
+        href = article_link.get_attribute("href")
+        logger.info(f"找到文章链接: {href}")
+        return href
+    else:
+        logger.warning(f"未找到标题为'{headline}'的文章链接")
         return None
 
-# 注册导入钩子
-sys.meta_path.insert(0, WoniuNoteFinder())
-print("已注册 WoniuNote 自定义导入钩子")
 
-# 手动加载关键模块
-print("\n===== 尝试按原始方式导入 =====")
-try:
-    import app
-    create_app = app.create_app
-    print("成功导入 app 模块")
-except Exception as e:
-    print(f"导入 app 模块失败: {e}")
+def get_article_id_from_url(url: str) -> Optional[int]:
+    """
+    从URL中提取文章ID
     
-    # 尝试直接加载 app.py
-    try:
-        print("尝试直接加载 app.py...")
-        app_path = os.path.join(WONIUNOTE_DIR, 'app.py')
-        spec = importlib.util.spec_from_file_location('app', app_path)
-        app = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(app)
-        create_app = app.create_app
-        print("成功加载 app.py 并获取 create_app 函数")
-    except Exception as e:
-        print(f"直接加载 app.py 失败: {e}")
+    Args:
+        url: 文章URL
+    
+    Returns:
+        文章ID或None
+    """
+    import re
+    match = re.search(r'/article/(\d+)', url)
+    if match:
+        article_id = int(match.group(1))
+        logger.info(f"从URL '{url}' 提取到文章ID: {article_id}")
+        return article_id
+    else:
+        logger.warning(f"无法从URL '{url}' 提取文章ID")
+        return None
 
-try:
-    from common.create_database import db, User, Article, Comment, Favorite, Credit, Category, Item, Card, CardCategory
-    print("成功导入数据库模型")
-except Exception as e:
-    print(f"导入数据库模型失败: {e}")
+
+# ---------------------- Pytest Fixtures ----------------------
+
+@pytest.fixture(scope="session")
+def base_url() -> str:
+    """
+    提供测试基础URL
     
-    # 尝试直接加载
-    try:
-        print("尝试直接加载 create_database.py...")
-        db_path = os.path.join(WONIUNOTE_DIR, 'common', 'create_database.py')
-        spec = importlib.util.spec_from_file_location('common.create_database', db_path)
-        db_module = importlib.util.module_from_spec(spec)
-        sys.modules['common.create_database'] = db_module
-        spec.loader.exec_module(db_module)
+    Returns:
+        测试服务器基础URL
+    """
+    from tests.utils.test_base import get_base_url
+    url = get_base_url()
+    logger.info(f"使用基础URL: {url}")
+    return url
+
+@pytest.fixture(scope="session")
+def browser_type_launch_args() -> Dict[str, Any]:
+    """
+    定义浏览器启动参数
+    """
+    return {
+        # 减慢执行速度，方便观察 (毫秒)
+        "slow_mo": 100,
+        # 启用无头模式（测试时不显示浏览器窗口）
+        "headless": True
+    }
+
+
+@pytest.fixture(scope="session")
+def browser_context_args() -> Dict[str, Any]:
+    """
+    定义浏览器上下文参数
+    """
+    return {
+        # 模拟设备类型
+        "user_agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) WoniuNote Test Agent',
+        # 忽略HTTPS错误
+        "ignore_https_errors": True,
+        # 允许下载文件
+        "accept_downloads": True,
+        # 启用JavaScript
+        "java_script_enabled": True,
+    }
+
+
+@pytest.fixture(scope="session")
+def test_data() -> Dict[str, Any]:
+    """
+    准备测试所需的数据，包括测试用户和文章
+    在整个测试会话期间共享
+    
+    Returns:
+        包含测试数据的字典
+    """
+    logger.info("准备测试数据...")
+    
+    # 准备测试数据
+    data = TestDataManager.prepare_test_data(article_count=5)
+    
+    # 确保数据创建成功
+    if not data["user"] or not data["articles"]:
+        logger.error("测试数据准备失败")
+        pytest.fail("无法创建必要的测试数据")
+    
+    logger.info(f"测试数据准备完成: 用户={data['user'].username}, 文章数量={len(data['articles'])}")
+    
+    # 自定义数据字段以供测试使用
+    data["password"] = "Test@12345"  # 用于登录的密码
+    data["test_marker"] = data["test_marker"]  # 用于清理的标记
+    
+    yield data
+    
+    # 在所有测试完成后清理测试数据
+    logger.info("清理测试数据...")
+    TestDataManager.clean_test_data()
+
+
+@pytest.fixture
+def browser(playwright: Playwright, browser_name: str = "chromium") -> Browser:
+    """
+    启动浏览器
+    
+    Args:
+        playwright: Playwright对象
+        browser_name: 浏览器名称，默认为chromium
+    
+    Returns:
+        浏览器实例
+    """
+    browser = playwright[browser_name].launch(headless=True)
+    yield browser
+    browser.close()
+
+
+@pytest.fixture
+def page(browser, base_url, browser_name="chromium"):
+    """
+    创建一个Playwright页面
+    
+    Args:
+        browser: Browser实例
+        base_url: 测试基础URL
+        browser_name: 浏览器名称，默认为chromium
+    
+    Returns:
+        Playwright页面
+    """
+    page = browser.new_page()
+    yield page
+    page.close()
+
+
+@pytest.fixture
+def user_browser_context(playwright: Playwright, base_url: str, test_data: Dict[str, Any], browser_name: str = "chromium") -> BrowserContext:
+    """
+    创建一个已登录用户的浏览器上下文
+    每个测试函数使用一个新的上下文
+    
+    Args:
+        playwright: Playwright对象
+        base_url: 测试基础URL
+        test_data: 测试数据
+        browser_name: 浏览器名称，默认为chromium
+    
+    Returns:
+        已登录的浏览器上下文
+    """
+    browser = playwright[browser_name].launch(headless=True)
+    context = browser.new_context(
+        base_url=base_url,
+        viewport={"width": 1280, "height": 720}
+    )
+    
+    # 使用上下文创建页面并登录
+    page = context.new_page()
+    username = test_data["user"].username
+    password = test_data["password"]
+    
+    auto_login_steps(page, username, password)
+    
+    # 存储cookies以验证登录状态
+    storage_state = context.storage_state()
+    logger.info(f"用户 {username} 登录成功，存储了 {len(storage_state['cookies'])} 个cookies")
+    
+    # 关闭初始页面
+    page.close()
+    
+    yield context
+    
+    # 测试完成后关闭浏览器
+    context.close()
+    browser.close()
+
+
+@pytest.fixture
+def authenticated_page(user_browser_context: BrowserContext) -> Page:
+    """
+    提供一个已通过身份验证的页面
+    """
+    page = user_browser_context.new_page()
+    
+    yield page
+    
+    # 测试完成后关闭页面
+    page.close()
+
+
+@pytest.fixture
+def article(test_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    提供可用于测试的单个文章数据
+    """
+    if not test_data["articles"]:
+        # 如果没有现有的文章，创建一个
+        user = test_data["user"]
+        headline = f"测试文章 - 单独测试 - {int(time.time())}"
+        content = "这是为单独测试创建的文章内容。"
         
-        db = db_module.db
-        User = db_module.User
-        Article = db_module.Article
-        Comment = db_module.Comment
-        Favorite = db_module.Favorite
-        Credit = db_module.Credit
-        Category = db_module.Category
-        Item = db_module.Item
-        Card = db_module.Card
-        CardCategory = db_module.CardCategory
-        print("成功直接加载数据库模型")
-    except Exception as e:
-        print(f"直接加载数据库模型失败: {e}")
-
-# 安装测试和导入钩子修复
-def pytest_collect_file(parent, path):
-    # 这个钩子可以用来控制pytest如何收集测试文件
-    return None
-
-
-@pytest.fixture(scope="session")
-def test_config():
-    """Load test configuration from test_config.yaml"""
-    config_path = os.path.join(BASE_DIR, 'tests', 'test_config.yaml')
-    with open(config_path, 'r', encoding='utf-8') as file:
-        return yaml.safe_load(file)
-
-
-@pytest.fixture(scope="session")
-def app():
-    """Create and return a Flask application for testing"""
-    from tests.test_helpers import app
-    app.testing = True
-    return app
-
-
-@pytest.fixture(scope="session")
-def app_context(app):
-    """Provide a Flask application context for testing"""
-    with app.app_context():
-        yield
-
-
-@pytest.fixture(scope="session", autouse=True)
-def setup_app_context(app_context):
-    """Automatically setup app context for all tests"""
-    # This automatically sets up the app context for all tests
-    pass
-
-
-@pytest.fixture(scope="session")
-def db_engine(test_config):
-    """Create and return a database engine"""
-    db_uri = test_config['database']['SQLALCHEMY_DATABASE_URI']
-    return create_engine(db_uri)
-
-
-@pytest.fixture(scope="session")
-def db_session_factory(db_engine):
-    """Create a factory for database sessions"""
-    return sessionmaker(bind=db_engine)
-
-
-@pytest.fixture(scope="function")
-def db_session(db_session_factory):
-    """Create a new database session for a test"""
-    session = scoped_session(db_session_factory)
-    yield session
-    session.close()
-
-
-@pytest.fixture(scope="session")
-def test_app(test_config):
-    """Create a Flask test application"""
-    app = create_app('test')
-    app.config.update(test_config)
+        article = TestArticleFactory.create(user.id, headline, content, "1")
+        if not article:
+            pytest.fail("无法创建测试文章")
+        
+        article_data = {
+            "id": article.id,
+            "headline": article.headline,
+            "content": article.content,
+            "type": article.type,
+            "user_id": article.user_id
+        }
+    else:
+        # 使用第一篇现有文章
+        article = test_data["articles"][0]
+        article_data = {
+            "id": article.id,
+            "headline": article.headline,
+            "content": article.content,
+            "type": article.type,
+            "user_id": article.user_id
+        }
     
-    # Create the application context
-    with app.app_context():
-        yield app
+    logger.info(f"使用测试文章: ID={article_data['id']}, 标题='{article_data['headline']}'")
+    return article_data
 
 
-@pytest.fixture(scope="session")
-def test_client(test_app):
-    """Create a Flask test client"""
-    with test_app.test_client() as client:
-        yield client
-
-
-@pytest.fixture(scope="function")
-def authenticated_client(test_app, db_session):
-    """Create an authenticated test client"""
-    with test_app.test_client() as client:
-        # Log in as admin user
-        client.post('/user/login', data={
-            'username': 'admin',
-            'password': 'admin123'  # Assuming this is the admin password from init_test_db.py
-        }, follow_redirects=True)
-        yield client
-        # Log out after test
-        client.get('/user/logout', follow_redirects=True)
+@pytest.fixture(scope="module")
+def clean_db():
+    """
+    在模块级别清理和准备数据库
+    """
+    # 测试开始前清理旧的测试数据
+    logger.info("模块开始前清理旧测试数据...")
+    TestDataManager.clean_test_data()
+    
+    yield
+    
+    # 测试完成后再次清理
+    logger.info("模块结束后清理测试数据...")
+    TestDataManager.clean_test_data()

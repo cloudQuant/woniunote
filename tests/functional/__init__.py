@@ -1,5 +1,5 @@
 """
-Functional Tests for WoniuNote
+功能测试包
 
-This package contains functional tests for the WoniuNote application.
+此包包含所有功能测试，按照应用功能模块组织
 """
