@@ -20,6 +20,8 @@ from requests.packages.urllib3.util.retry import Retry
 from urllib3.exceptions import InsecureRequestWarning
 import warnings
 import pytest
+import functools
+import time
 
 # 添加项目根目录到Python路径
 project_root = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -63,7 +65,9 @@ class FlaskAppContextProvider:
     @staticmethod
     def with_app_context(func):
         """装饰器：使函数在Flask应用上下文中运行"""
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            # 简化装饰器，只负责提供应用上下文，不干扰参数传递
             with flask_app.app_context():
                 return func(*args, **kwargs)
         return wrapper

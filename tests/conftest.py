@@ -120,6 +120,16 @@ def base_url() -> str:
     logger.info(f"使用基础URL: {url}")
     return url
 
+@pytest.fixture
+def browser_name():
+    """
+    提供浏览器名称
+    
+    Returns:
+        浏览器名称，默认为chromium
+    """
+    return "chromium"
+
 @pytest.fixture(scope="session")
 def browser_type_launch_args() -> Dict[str, Any]:
     """
@@ -183,31 +193,29 @@ def test_data() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def browser(playwright: Playwright, browser_name: str = "chromium") -> Browser:
+def browser(playwright: Playwright) -> Browser:
     """
     启动浏览器
     
     Args:
         playwright: Playwright对象
-        browser_name: 浏览器名称，默认为chromium
     
     Returns:
         浏览器实例
     """
-    browser = playwright[browser_name].launch(headless=True)
+    browser = playwright[browser_name()].launch(headless=True)
     yield browser
     browser.close()
 
 
 @pytest.fixture
-def page(browser, base_url, browser_name="chromium"):
+def page(browser, base_url):
     """
     创建一个Playwright页面
     
     Args:
         browser: Browser实例
         base_url: 测试基础URL
-        browser_name: 浏览器名称，默认为chromium
     
     Returns:
         Playwright页面
@@ -218,7 +226,7 @@ def page(browser, base_url, browser_name="chromium"):
 
 
 @pytest.fixture
-def user_browser_context(playwright: Playwright, base_url: str, test_data: Dict[str, Any], browser_name: str = "chromium") -> BrowserContext:
+def user_browser_context(playwright: Playwright, base_url: str, test_data: Dict[str, Any]) -> BrowserContext:
     """
     创建一个已登录用户的浏览器上下文
     每个测试函数使用一个新的上下文
@@ -227,12 +235,11 @@ def user_browser_context(playwright: Playwright, base_url: str, test_data: Dict[
         playwright: Playwright对象
         base_url: 测试基础URL
         test_data: 测试数据
-        browser_name: 浏览器名称，默认为chromium
     
     Returns:
         已登录的浏览器上下文
     """
-    browser = playwright[browser_name].launch(headless=True)
+    browser = playwright[browser_name()].launch(headless=True)
     context = browser.new_context(
         base_url=base_url,
         viewport={"width": 1280, "height": 720}

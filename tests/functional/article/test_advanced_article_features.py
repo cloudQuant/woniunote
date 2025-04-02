@@ -19,6 +19,7 @@ sys.path.insert(0, project_root)
 from tests.utils.test_data_helper import TEST_DATA_MARKER
 # 导入Flask应用上下文提供者
 from tests.utils.test_base import FlaskAppContextProvider
+from tests.utils.test_base import flask_app
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -50,14 +51,27 @@ def debug_page_info(page, prefix=""):
     except Exception as e:
         logger.error(f"{prefix} 获取页面信息出错: {e}")
 
+# 确保测试类只在本模块中被收集
+__test__ = True
+
+# 在模块级别定义fixture，这样当前模块中的测试可以使用
+import pytest
+
+@pytest.fixture
+def app_context():
+    """提供Flask应用上下文"""
+    with flask_app.app_context():
+        yield
+
+# 将所有测试整合到一个测试类中，便于管理和参数传递
 class TestAdvancedArticleFeatures:
     """高级文章功能测试类"""
+    
+    # 标识此类属于当前模块，避免在导入时被其他模块的pytest收集
+    __module__ = __name__
 
-    # 使用装饰器确保在Flask应用上下文中运行
-    @FlaskAppContextProvider.with_app_context
-    @pytest.mark.parametrize("browser_name", ["chromium"])
     @pytest.mark.browser
-    def test_home_page_with_data(self, page, base_url, browser_name):
+    def test_home_page_with_data(self, app_context, page, base_url, browser_name):
         """测试首页包含测试文章"""
         try:
             # 尝试从测试数据管理器获取测试数据
@@ -86,11 +100,8 @@ class TestAdvancedArticleFeatures:
             logger.error(f"测试失败: {e}")
             pytest.fail(f"首页文章加载测试失败: {e}")
 
-    # 使用装饰器确保在Flask应用上下文中运行
-    @FlaskAppContextProvider.with_app_context
-    @pytest.mark.parametrize("browser_name", ["chromium"])
     @pytest.mark.browser
-    def test_article_pagination(self, page, base_url, browser_name):
+    def test_article_pagination(self, app_context, page, base_url, browser_name):
         """测试文章分页功能"""
         try:
             logger.info("===== 测试文章分页功能 =====")
@@ -167,11 +178,8 @@ class TestAdvancedArticleFeatures:
             logger.error(f"测试失败: {e}")
             pytest.fail(f"文章分页测试失败: {e}")
 
-    # 使用装饰器确保在Flask应用上下文中运行
-    @FlaskAppContextProvider.with_app_context
-    @pytest.mark.parametrize("browser_name", ["chromium"])
     @pytest.mark.browser
-    def test_article_view_details(self, page, base_url, browser_name):
+    def test_article_view_details(self, app_context, page, base_url, browser_name):
         """测试查看文章详情"""
         try:
             # 尝试从测试数据管理器获取测试数据
@@ -265,11 +273,8 @@ class TestAdvancedArticleFeatures:
             logger.error(f"测试失败: {e}")
             pytest.fail(f"文章详情页测试失败: {e}")
 
-    # 使用装饰器确保在Flask应用上下文中运行
-    @FlaskAppContextProvider.with_app_context
-    @pytest.mark.parametrize("browser_name", ["chromium"])
     @pytest.mark.browser
-    def test_article_category_filter(self, page, base_url, browser_name):
+    def test_article_category_filter(self, app_context, page, base_url, browser_name):
         """测试文章分类过滤功能"""
         try:
             logger.info("===== 测试文章分类过滤 =====")
@@ -364,11 +369,8 @@ class TestAdvancedArticleFeatures:
             logger.error(f"测试失败: {e}")
             pytest.fail(f"文章分类过滤测试失败: {e}")
 
-    # 使用装饰器确保在Flask应用上下文中运行
-    @FlaskAppContextProvider.with_app_context
-    @pytest.mark.parametrize("browser_name", ["chromium"])
     @pytest.mark.browser
-    def test_article_search(self, page, base_url, browser_name):
+    def test_article_search(self, app_context, page, base_url, browser_name):
         """测试文章搜索功能"""
         try:
             # 尝试从测试数据管理器获取测试数据
