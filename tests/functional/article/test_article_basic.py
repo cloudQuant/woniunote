@@ -12,52 +12,108 @@
 import pytest
 import sys
 import os
+import requests
+import time
 
 # 导入测试基类和配置
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
-from utils.test_base import TestBase, logger
+from utils.test_base import logger
 from utils.test_config import TEST_DATA
+from tests.utils.test_base import FlaskAppContextProvider
 
-@pytest.mark.unit
-class TestArticleBasic(TestBase):
-    """文章基本功能测试类"""
+# 添加app_context fixture
+app_context = FlaskAppContextProvider.with_app_context_fixture()
+
+@pytest.mark.browser
+def test_article_list(app_context, page, base_url, browser_name):
+    """测试文章列表页面"""
+    logger.info(f"===== 测试文章列表页面 ({browser_name}) =====")
     
-    def test_article_list(self):
-        """测试文章列表页面"""
-        # 发送请求到文章列表页
-        response = self.make_request('get', '/')
-        
-        # 验证响应
-        assert response.status_code == 200, f"文章列表页返回错误状态码: {response.status_code}"
-        
-        # 检查是否包含文章列表相关标记
-        page_content = response.text.lower()
-        assert "文章" in page_content or "article" in page_content, "响应不包含文章列表内容"
-        
-        logger.info("✓ 文章列表页面测试通过")
+    # 访问文章列表页
+    page.goto(f"{base_url}/")
     
-    def test_article_detail(self):
-        """测试文章详情页面"""
-        # 使用配置的示例文章ID
-        article_id = TEST_DATA['article']['sample_id']
-        
-        # 发送请求到文章详情页
-        response = self.make_request('get', f'/article/{article_id}')
-        
-        # 验证响应
-        assert response.status_code == 200, f"文章详情页返回错误状态码: {response.status_code}"
-        
-        # 检查是否包含文章内容相关标记
-        page_content = response.text.lower()
-        assert "article" in page_content, "响应不包含文章内容"
-        
-        logger.info("✓ 文章详情页面测试通过")
+    # 等待页面加载
+    page.wait_for_load_state("networkidle")
     
-    def test_article_by_type(self):
-        """测试按类型筛选文章"""
-        # 注意: 'type' 字段在数据库中是varchar(10)类型，而非整数
+    # 检查是否包含文章列表相关标记
+    assert page.content().lower().find("article") > -1 or page.content().lower().find("文章") > -1, "页面不包含文章内容"
+    
+    logger.info("✓ 文章列表页面测试通过")
+    
+@pytest.mark.browser
+def test_article_detail(app_context, page, base_url, browser_name):
+    """测试文章详情页面"""
+    logger.info(f"===== 测试文章详情页面 ({browser_name}) =====")
+    
+    # 先获取文章ID，试图查找一篇可访问的文章
+    # 访问主页，从那里点击第一篇文章
+    page.goto(f"{base_url}/")
+    page.wait_for_load_state("networkidle")
+    
+    # 尝试点击第一篇文章
+    article_link = page.locator("a[href*='/article/']").first
+    
+    if article_link.count() > 0:
+        article_link.click()
+        page.wait_for_load_state("networkidle")
         
-        # 尝试多种可能的类型筛选路径
+        # 验证是否进入文章详情页
+        current_url = page.url
+        assert "/article/" in current_url, f"未能进入文章详情页，当前URL: {current_url}"
+        
+        # 检查是否显示文章内容
+        article_content = page.locator(".article-content, .content, #content")
+        assert article_content.count() > 0, "页面不包含文章内容区域"
+    else:
+        # 直接访问一个预设的文章ID
+        # 尝试多个ID，直到找到一个有效的
+        for article_id in [1, 2, 3, 4, 5]:
+            page.goto(f"{base_url}/article/{article_id}")
+            page.wait_for_load_state("networkidle")
+            
+            # 检查是否有文章内容
+            if "/article/" in page.url and not "/404" in page.url and not "/error" in page.url:
+                logger.info(f"找到可访问的文章ID: {article_id}")
+                break
+    
+    # 检查页面源码是否包含文章相关内容
+    page_content = page.content().lower()
+    assert "article" in page_content or "文章" in page_content, "页面不包含文章内容"
+    
+    logger.info("✓ 文章详情页面测试通过")
+    
+@pytest.mark.browser
+def test_article_by_type(app_context, page, base_url, browser_name):
+    """测试按类型筛选文章"""
+    logger.info(f"===== 测试按类型筛选文章 ({browser_name}) =====")
+    
+    # 注意: 'type' 字段在数据库中是varchar(10)类型，而非整数
+    
+    # 访问首页，尝试查找分类链接
+    page.goto(f"{base_url}/")
+    page.wait_for_load_state("networkidle")
+    
+    # 尝试查找分类链接
+    category_links = page.locator("a[href*='/type/'], a[href*='/category/']")
+    
+    if category_links.count() > 0:
+        # 点击第一个分类链接
+        logger.info("找到分类链接，尝试访问")
+        first_category = category_links.first
+        category_url = first_category.get_attribute("href")
+        first_category.click()
+        
+        # 等待页面加载
+        page.wait_for_load_state("networkidle")
+        
+        # 验证是否进入分类页面
+        logger.info(f"访问分类页面: {page.url}")
+        
+        # 检查页面内容
+        assert page.content().lower().find("article") > -1 or page.content().lower().find("文章") > -1, "分类页面不包含文章内容"
+        logger.info("✓ 分类页面测试通过")
+    else:
+        # 如果没有找到分类链接，尝试直接访问可能的分类路径
         possible_paths = [
             '/article/type/1',      # 整数ID
             '/article/type/tech',   # 字符串类型名称
@@ -69,40 +125,34 @@ class TestArticleBasic(TestBase):
         success = False
         for path in possible_paths:
             try:
-                # 发送请求到当前路径
-                response = self.make_request('get', path)
+                full_url = f"{base_url}{path}"
+                logger.info(f"尝试访问分类路径: {full_url}")
+                page.goto(full_url)
+                page.wait_for_load_state("networkidle")
                 
-                # 检查响应
-                if response.status_code == 200:
-                    logger.info(f"找到有效的文章类型筛选路径: {path}")
-                    success = True
-                    break
+                # 检查是否是404页面
+                if "/404" not in page.url and "/error" not in page.url:
+                    # 检查是否有文章内容
+                    if page.content().lower().find("article") > -1 or page.content().lower().find("文章") > -1:
+                        logger.info(f"找到有效的文章类型筛选路径: {path}")
+                        success = True
+                        break
             except Exception as e:
-                logger.debug(f"路径 {path} 请求失败: {str(e)}")
+                logger.debug(f"路径 {path} 访问失败: {str(e)}")
                 continue
         
         if not success:
-            # 如果所有路径都失败，尝试检查首页，看是否有类型筛选的链接
-            response = self.make_request('get', '/')
-            assert response.status_code == 200, "无法访问首页"
-            
             # 记录发现，但不设置为失败
             logger.warning("未找到有效的文章类型筛选路径，请检查应用的实际路由结构")
-            logger.info("✓ 测试通过：虽然未找到类型筛选路径，但我们不确定是否需要此功能")
+            # 替代测试，返回首页确认访问正常
+            page.goto(f"{base_url}/")
+            page.wait_for_load_state("networkidle")
+            assert page.content().lower().find("article") > -1 or page.content().lower().find("文章") > -1, "首页不包含文章内容"
+            
+            logger.info("✓ 测试通过：虽然未找到类型筛选路径，但确认首页访问正常")
 
 
 if __name__ == "__main__":
     # 直接运行测试
-    test = TestArticleBasic()
-    test.setup_class()
-    
-    try:
-        test.test_article_list()
-        test.test_article_detail()
-        test.test_article_by_type()
-        print("所有文章基本功能测试通过！")
-    except Exception as e:
-        print(f"测试失败: {str(e)}")
-        sys.exit(1)
-    finally:
-        test.teardown_class()
+    print("请使用pytest运行测试： python -m pytest tests/functional/article/test_article_basic.py -v")
+

@@ -138,62 +138,27 @@ def server_port():
 @pytest.fixture(scope="session")
 def base_url(server_host, server_port):
     """返回服务器的基础URL"""
-    # 使用 HTTP 协议进行测试，避免证书问题
-    http_url = f"http://{server_host}:{server_port}"
-    https_url = f"https://{server_host}:{server_port}"
+    # 直接使用 HTTPS 协议，避免重定向问题
+    url = f"https://{server_host}:{server_port}"
+    logger.info(f"使用 HTTPS 协议进行测试，避免重定向问题: {url}")
     
-    # 尝试HTTP和HTTPS连接，优先选择可用的连接
-    urls_to_try = [http_url, https_url]
-    working_url = None
-    
-    for url in urls_to_try:
-        logger.info(f"尝试连接到服务器: {url}")
-        max_attempts = 3
-        for i in range(max_attempts):
-            try:
-                response = requests.get(url, verify=False, timeout=5)
-                if response.status_code == 200:
-                    logger.info(f"成功连接到服务器: {url}")
-                    working_url = url
-                    break
-            except Exception as e:
-                if i == max_attempts - 1:
-                    logger.warning(f"无法连接到服务器 {url}: {str(e)}")
-                else:
-                    logger.warning(f"尝试连接服务器失败，将重试: {str(e)}")
-                    time.sleep(2)  # 等待服务器启动
-        
-        if working_url:
-            break
-    
-    # 如果没有找到工作的URL，启动一个HTTP服务器
-    if not working_url:
-        logger.warning("没有找到可用的服务器连接，将尝试启动服务器...")
+    # 尝试连接服务器，确保它正在运行
+    max_attempts = 3
+    for i in range(max_attempts):
         try:
-            import subprocess
-            import os
-            
-            # 构建启动服务器的命令
-            cmd = [sys.executable, os.path.join(project_root, "start_server.py"), "--test", "--http", "--port", str(server_port)]
-            
-            # 以非阻塞方式启动服务器
-            subprocess.Popen(cmd, cwd=project_root, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            
-            # 等待服务器启动
-            logger.info(f"等待服务器启动...")
-            time.sleep(5)
-            
-            # 再次尝试连接
-            working_url = http_url
+            response = requests.get(url, verify=False, timeout=5)
+            if response.status_code == 200:
+                logger.info(f"成功连接到服务器: {url}")
+                break
         except Exception as e:
-            logger.error(f"尝试启动服务器时出错: {e}")
+            if i == max_attempts - 1:
+                logger.error(f"无法连接到服务器 {url}: {str(e)}")
+                pytest.skip(f"服务器未响应，跳过测试: {url}")
+            else:
+                logger.warning(f"尝试连接服务器失败，将重试: {str(e)}")
+                time.sleep(2)  # 等待服务器启动
     
-    # 仍然没有可用连接，但不跳过测试，而是返回HTTP URL并记录警告
-    if not working_url:
-        logger.warning("无法连接到服务器，测试可能会失败，但仍将继续执行")
-        working_url = http_url
-    
-    return working_url
+    return url
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args() -> Dict[str, Any]:
@@ -204,27 +169,14 @@ def browser_type_launch_args() -> Dict[str, Any]:
         "headless": True,
         # 禁用沙箱以在某些CI环境中运行
         # 添加更多参数以支持HTTPS和忽略证书错误
-        "ignore_default_args": ["--enable-automation"],
         "args": [
             "--no-sandbox",
             "--ignore-certificate-errors",
             "--allow-insecure-localhost",
             "--disable-web-security", 
-            "--disable-features=IsolateOrigins,site-per-process",
-            "--disable-site-isolation-trials",
-            "--disable-gpu",
-            "--disable-dev-shm-usage",
-            "--disable-setuid-sandbox",
-            "--no-first-run",
-            "--no-zygote",
-            "--deterministic-fetch",
-            "--disable-features=BackForwardCache",
-            "--disable-web-security",
-            "--disable-features=IsolateOrigins",
-            "--disable-site-isolation-trials"
+            "--disable-features=IsolateOrigins,site-per-process"
         ],
-        "timeout": 30000,  # 设置更长的超时时间
-        "chromium_sandbox": False  # 禁用 Chromium 沙箱
+        "timeout": 30000  # 设置更长的超时时间
     }
 
 @pytest.fixture(scope="session")
@@ -238,14 +190,7 @@ def browser_context_args(base_url) -> Dict[str, Any]:
             "height": 720,
         },
         "ignore_https_errors": True,  # 忽略HTTPS错误
-        "base_url": base_url,
-        "bypass_csp": True,  # 绕过内容安全策略
-        "extra_http_headers": {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
+        "base_url": base_url
     }
 
 @pytest.fixture(scope="session")

@@ -11,16 +11,17 @@ sys.path.insert(0, project_root)
 # 导入Flask应用上下文提供者
 from tests.utils.test_base import FlaskAppContextProvider
 
+# 创建app_context fixture
+app_context = FlaskAppContextProvider.with_app_context_fixture()
+
 """
 评论功能测试
 测试查看、添加和管理评论的功能
 """
 
-# 使用装饰器确保在Flask应用上下文中运行
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
+# 确保在Flask应用上下文中运行
 @pytest.mark.browser
-def test_view_comments(page, base_url, browser_name):
+def test_view_comments(app_context, page, base_url, browser_name):
     """测试查看文章评论"""
     # 访问一篇已有评论的文章
     # 假设ID为1的文章存在且有评论
@@ -37,11 +38,9 @@ def test_view_comments(page, base_url, browser_name):
     comments_list = page.locator(".comment-list")
     expect(comments_list).to_be_visible()
 
-# 使用装饰器确保在Flask应用上下文中运行
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
+# 确保在Flask应用上下文中运行
 @pytest.mark.browser
-def test_add_comment_authenticated(authenticated_page, base_url, browser_name):
+def test_add_comment_authenticated(app_context, authenticated_page, base_url, browser_name):
     """测试已登录用户添加评论"""
     page = authenticated_page
     
@@ -68,11 +67,9 @@ def test_add_comment_authenticated(authenticated_page, base_url, browser_name):
     # 验证评论显示
     expect(page.locator(".comment-list")).to_contain_text(comment_text)
 
-# 使用装饰器确保在Flask应用上下文中运行
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
+# 确保在Flask应用上下文中运行
 @pytest.mark.browser
-def test_add_comment_unauthenticated(page, base_url, browser_name):
+def test_add_comment_unauthenticated(app_context, page, base_url, browser_name):
     """测试未登录用户尝试添加评论"""
     # 访问一篇文章
     page.goto(f"{base_url}/article/1")
@@ -95,11 +92,9 @@ def test_add_comment_unauthenticated(page, base_url, browser_name):
         # 如果评论框不可见，验证有登录提示
         expect(page.locator(".login-required-message")).to_be_visible()
 
-# 使用装饰器确保在Flask应用上下文中运行
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
+# 确保在Flask应用上下文中运行
 @pytest.mark.browser
-def test_delete_own_comment(authenticated_page, base_url, browser_name):
+def test_delete_own_comment(app_context, authenticated_page, base_url, browser_name):
     """测试用户删除自己的评论"""
     page = authenticated_page
     
@@ -127,11 +122,9 @@ def test_delete_own_comment(authenticated_page, base_url, browser_name):
     # 验证评论已被删除
     expect(page.locator(f".comment-list:has-text('{comment_text}')")).to_have_count(0)
 
-# 使用装饰器确保在Flask应用上下文中运行
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
+# 确保在Flask应用上下文中运行
 @pytest.mark.browser
-def test_reply_to_comment(authenticated_page, base_url, browser_name):
+def test_reply_to_comment(app_context, authenticated_page, base_url, browser_name):
     """测试回复评论功能"""
     page = authenticated_page
     

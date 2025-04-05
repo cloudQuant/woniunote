@@ -12,6 +12,9 @@ import argparse
 import signal
 import logging
 import atexit
+from flask import request, session
+import hashlib
+from woniunote.module.users import Users
 
 # 配置日志
 logging.basicConfig(
@@ -94,6 +97,7 @@ def parse_args():
     parser.add_argument('--port', type=int, default=5001, help='Flask服务器端口')
     parser.add_argument('--host', type=str, default='127.0.0.1', help='Flask服务器主机')
     parser.add_argument('--debug', action='store_true', help='启用调试模式')
+    parser.add_argument('--test-mode', action='store_true', help='启用测试模式（禁用HTTPS重定向）')
     return parser.parse_args()
 
 # 恢复配置文件
@@ -142,6 +146,7 @@ def main():
     port = args.port
     host = args.host
     debug = args.debug
+    test_mode = args.test_mode
     
     try:
         logger.info(f"使用配置文件: {config_paths}")
@@ -169,15 +174,69 @@ def main():
             def test_health_check():
                 return {'status': 'ok', 'timestamp': time.time(), 'test': True}, 200
         
+        # 禁用HTTP到HTTPS的重定向，确保测试环境可以使用HTTP
+        if test_mode:
+            logger.info("正在禁用测试环境中的HTTP到HTTPS重定向...")
+            
+            # 找到并替换before_request处理器
+            for func in flask_app.before_request_funcs.get(None, []):
+                # 检查函数是否是重定向处理器
+                if func.__name__ == 'before':
+                    # 保存原始函数以便参考
+                    original_before = func
+                    
+                    # 创建一个新函数，跳过HTTPS重定向部分
+                    @flask_app.before_request
+                    def modified_before():
+                        url = request.path
+                        pass_list = ['/user', '/login', '/logout', '/vcode']
+                        
+                        if url in pass_list or url.endswith('.js') or url.endswith('.jpg'):
+                            return
+                            
+                        # 检查session是否存在，其余逻辑保持不变
+                        session_id = request.cookies.get('session_id')
+                        if session_id and session.get(f'islogin_{session_id}') == 'true':
+                            return
+                            
+                        if session.get('islogin') is None:
+                            username = request.cookies.get('username')
+                            password = request.cookies.get('password')
+                            
+                            if username is not None and password is not None:
+                                user_ = Users()
+                                result = user_.find_by_username(username)
+                                
+                                if len(result) == 1 and hashlib.md5(password.encode()).hexdigest() == result[0].password:
+                                    # 设置session
+                                    session['islogin'] = 'true'
+                                    session['userid'] = result[0].userid
+                                    session['username'] = username
+                                    session['nickname'] = result[0].nickname
+                                    session['role'] = result[0].role
+                                    # 确保session被保存
+                                    session.modified = True
+                                return
+                    
+                    # 移除原始函数并注册新函数
+                    flask_app.before_request_funcs[None].remove(func)
+                    # 新函数已通过装饰器注册，不需要再次添加
+                    
+                    logger.info("已成功禁用HTTP到HTTPS重定向")
+                    break
+        
         logger.info(f"启动Flask服务器在 {host}:{port}...")
+        logger.info("注意: 始终使用HTTP协议启动，不支持HTTPS")
         
         # 使用非阻塞方式启动服务器，以便可以响应信号
+        # 注意: 不传入ssl_context参数，确保使用HTTP
         flask_app.run(
             host=host, 
             port=port, 
             debug=debug, 
             threaded=True, 
-            use_reloader=False  # 禁用重载器，避免创建子进程
+            use_reloader=False,  # 禁用重载器，避免创建子进程
+            ssl_context=None  # 显式设置为None，确保使用HTTP
         )
     except Exception as e:
         logger.error(f"启动Flask应用时出错: {e}")

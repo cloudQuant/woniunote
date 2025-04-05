@@ -55,13 +55,8 @@ def debug_page_info(page, prefix=""):
 __test__ = True
 
 # 在模块级别定义fixture，这样当前模块中的测试可以使用
-import pytest
-
-@pytest.fixture
-def app_context():
-    """提供Flask应用上下文"""
-    with flask_app.app_context():
-        yield
+# 使用更兼容的fixture方法
+app_context = FlaskAppContextProvider.with_app_context_fixture()
 
 # 将所有测试整合到一个测试类中，便于管理和参数传递
 class TestAdvancedArticleFeatures:
@@ -71,12 +66,39 @@ class TestAdvancedArticleFeatures:
     __module__ = __name__
 
     @pytest.mark.browser
-    def test_home_page_with_data(self, app_context, page, base_url, browser_name):
+    def test_home_page_with_data(self, app_context, page, base_url):
         """测试首页包含测试文章"""
         try:
             # 尝试从测试数据管理器获取测试数据
             from tests.utils.test_data_helper import get_or_create_test_data
-            test_data = get_or_create_test_data(article_count=5)
+            from sqlalchemy import text
+            from woniunote.common.database import dbconnect
+            
+            # 创建测试数据
+            user, articles = get_or_create_test_data(article_count=5)
+            
+            # 验证数据库中是否有测试文章
+            session = dbconnect()[0]
+            
+            # 直接查询 article 表 (修复表名)
+            result = session.execute(text("SELECT COUNT(*) FROM article"))
+            article_count_db = result.scalar()
+            logger.info(f"数据库中的文章总数: {article_count_db}")
+            
+            # 直接查询 article 视图（如果存在）
+            try:
+                result = session.execute(text("SELECT COUNT(*) FROM article"))
+                article_view_count = result.scalar()
+                logger.info(f"article视图中的文章总数: {article_view_count}")
+            except Exception as e:
+                logger.error(f"查询article视图失败: {e}")
+            
+            # 查看最近创建的文章
+            result = session.execute(
+                text("SELECT articleid, headline, type, userid, createtime FROM article ORDER BY articleid DESC LIMIT 5")
+            )
+            recent_articles = result.fetchall()
+            logger.info(f"最近创建的5篇文章: {recent_articles}")
             
             logger.info("===== 测试首页显示测试文章 =====")
             logger.info(f"访问首页: {base_url}")
@@ -84,6 +106,57 @@ class TestAdvancedArticleFeatures:
             # 原有测试代码逻辑
             page.goto(base_url)
             debug_page_info(page, "首页")
+            
+            # 获取并记录页面HTML用于调试
+            html_content = page.content()
+            logger.info(f"页面HTML内容前1000字符: {html_content[:1000]}")
+            
+            # 尝试等待不同的选择器
+            selectors_to_try = [
+                ".article-list", ".articles", "#article-list", 
+                ".article-item", ".article", "article",
+                ".news-list", ".news-item", ".list-group"
+            ]
+            
+            for selector in selectors_to_try:
+                try:
+                    count = page.locator(selector).count()
+                    logger.info(f"选择器 {selector} 找到 {count} 个元素")
+                    if count > 0:
+                        # 获取第一个元素的内容
+                        text = page.locator(selector).first.inner_text()
+                        logger.info(f"第一个 {selector} 元素内容: {text[:100]}...")
+                except Exception as e:
+                    logger.info(f"选择器 {selector} 检查失败: {e}")
+            
+            # 检查首页上的所有链接
+            links = page.locator("a")
+            link_count = links.count()
+            logger.info(f"页面上的链接数量: {link_count}")
+            
+            for i in range(min(10, link_count)):
+                try:
+                    link_text = links.nth(i).inner_text()
+                    link_href = links.nth(i).get_attribute("href")
+                    logger.info(f"链接 {i+1}: 文本='{link_text}', href='{link_href}'")
+                except Exception as e:
+                    logger.info(f"链接 {i+1} 获取失败: {e}")
+            
+            # 尝试查找原始测试中指定的元素
+            try:
+                # 等待文章列表加载
+                page.wait_for_selector(".article-list", timeout=5000)
+                
+                # 检查是否显示文章
+                article_count = page.locator(".article-item").count()
+                logger.info(f"首页显示的文章数量: {article_count}")
+                assert article_count > 0, "首页应该显示至少一篇文章"
+                
+                # 成功示例
+                logger.info("✓ 测试通过: 首页成功显示文章列表")
+            except Exception as e:
+                logger.warning(f"原始文章元素检测失败: {e}")
+                # 不立即失败，继续进行其他检查
             
             # 等待文章列表加载
             page.wait_for_selector(".article-list", timeout=5000)
@@ -101,7 +174,7 @@ class TestAdvancedArticleFeatures:
             pytest.fail(f"首页文章加载测试失败: {e}")
 
     @pytest.mark.browser
-    def test_article_pagination(self, app_context, page, base_url, browser_name):
+    def test_article_pagination(self, app_context, page, base_url):
         """测试文章分页功能"""
         try:
             logger.info("===== 测试文章分页功能 =====")
@@ -179,12 +252,12 @@ class TestAdvancedArticleFeatures:
             pytest.fail(f"文章分页测试失败: {e}")
 
     @pytest.mark.browser
-    def test_article_view_details(self, app_context, page, base_url, browser_name):
+    def test_article_view_details(self, app_context, page, base_url):
         """测试查看文章详情"""
         try:
             # 尝试从测试数据管理器获取测试数据
             from tests.utils.test_data_helper import get_or_create_test_data
-            test_data = get_or_create_test_data(article_count=3)
+            user, articles = get_or_create_test_data(article_count=3)
             
             logger.info("===== 测试文章详情页 =====")
             logger.info(f"访问首页: {base_url}")
@@ -274,7 +347,7 @@ class TestAdvancedArticleFeatures:
             pytest.fail(f"文章详情页测试失败: {e}")
 
     @pytest.mark.browser
-    def test_article_category_filter(self, app_context, page, base_url, browser_name):
+    def test_article_category_filter(self, app_context, page, base_url):
         """测试文章分类过滤功能"""
         try:
             logger.info("===== 测试文章分类过滤 =====")
@@ -370,12 +443,12 @@ class TestAdvancedArticleFeatures:
             pytest.fail(f"文章分类过滤测试失败: {e}")
 
     @pytest.mark.browser
-    def test_article_search(self, app_context, page, base_url, browser_name):
+    def test_article_search(self, app_context, page, base_url):
         """测试文章搜索功能"""
         try:
             # 尝试从测试数据管理器获取测试数据
             from tests.utils.test_data_helper import get_or_create_test_data
-            test_data = get_or_create_test_data(article_count=3)
+            user, articles = get_or_create_test_data(article_count=3)
             
             logger.info("===== 测试文章搜索功能 =====")
             
@@ -404,8 +477,8 @@ class TestAdvancedArticleFeatures:
                     # 获取一个搜索关键词
                     # 如果有测试数据，使用第一篇文章标题的一部分作为关键词
                     sample_keyword = "测试"  # 默认关键词
-                    if hasattr(test_data, 'articles') and test_data.articles:
-                        article = test_data.articles[0]
+                    if hasattr(articles, 'articles') and articles.articles:
+                        article = articles.articles[0]
                         if hasattr(article, 'title'):
                             title = article.title
                         elif hasattr(article, 'headline'):

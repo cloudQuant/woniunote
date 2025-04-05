@@ -1,5 +1,5 @@
 import pytest
-from playwright.sync_api import expect
+from playwright.sync_api import expect, Page
 import time
 import logging
 import re
@@ -9,9 +9,6 @@ import sys
 # 添加项目根目录到Python路径
 project_root = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 sys.path.insert(0, project_root)
-
-# 导入Flask应用上下文提供者
-from tests.utils.test_base import FlaskAppContextProvider
 
 """
 文章功能测试
@@ -51,11 +48,10 @@ def debug_page_content(page, prefix=""):
     except Exception as e:
         logger.error(f"{prefix} 获取页面内容出错: {e}")
 
-# 使用装饰器确保在Flask应用上下文中运行
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
-@pytest.mark.browser
-def test_basic_page_access(page, base_url, browser_name):
+# 使用 pytestmark 标记所有测试为浏览器测试
+pytestmark = pytest.mark.browser
+
+def test_basic_page_access(page: Page, base_url: str):
     """基本页面访问测试"""
     logger.info("===== 开始基本页面访问测试 =====")
     logger.info(f"访问基础URL: {base_url}")
@@ -73,10 +69,7 @@ def test_basic_page_access(page, base_url, browser_name):
     # 测试通过
     logger.info("✓ 基本页面访问测试通过")
 
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
-@pytest.mark.browser
-def test_error_page_detection(page, base_url, browser_name):
+def test_error_page_detection(page: Page, base_url: str):
     """错误页面检测测试"""
     logger.info("===== 开始错误页面检测测试 =====")
     
@@ -93,10 +86,7 @@ def test_error_page_detection(page, base_url, browser_name):
     
     logger.info("✓ 错误页面检测测试完成")
 
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
-@pytest.mark.browser
-def test_navigation_flow(page, base_url, browser_name):
+def test_navigation_flow(page: Page, base_url: str):
     """导航流程测试"""
     logger.info("===== 开始导航流程测试 =====")
     
@@ -149,10 +139,7 @@ def test_navigation_flow(page, base_url, browser_name):
     logger.info("✓ 导航流程测试完成")
 
 @pytest.mark.skip("暂时跳过登录后的测试，直到基本测试可靠通过")
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
-@pytest.mark.browser
-def test_simple_article_creation(authenticated_page, base_url, cleanup_test_data, browser_name):
+def test_simple_article_creation(authenticated_page: Page, base_url: str, cleanup_test_data):
     """简化的文章创建测试"""
     page = authenticated_page
     
@@ -169,17 +156,40 @@ def test_simple_article_creation(authenticated_page, base_url, cleanup_test_data
     
     # 尝试填写表单
     try:
-        # 尝试找到标题字段 - 可能是headline或title
-        if page.locator("input[name='headline']").count() > 0:
-            page.fill("input[name='headline']", test_title)
-        else:
-            page.fill("input[name='title']", test_title)
+        # 尝试找到标题字段 - 先尝试使用数据库实际字段名 title，再尝试代码中使用的 headline
+        title_field_found = False
+        for field_name in ["title", "headline"]:
+            try:
+                title_element = page.locator(f"input[name='{field_name}']")
+                if title_element.count() > 0:
+                    logger.info(f"找到标题字段: {field_name}")
+                    title_element.fill(test_title)
+                    title_field_found = True
+                    break
+            except Exception as e:
+                logger.warning(f"尝试填写标题字段 {field_name} 时出错: {e}")
+        
+        if not title_field_found:
+            logger.warning("未能找到任何标题字段，尝试使用通用选择器")
+            # 尝试更通用的选择器
+            page.fill("input[type='text']:first-child", test_title)
         
         # 尝试选择类型
         try:
-            page.select_option("select[name='type']", "1")
-        except:
-            logger.warning("无法选择文章类型")
+            # 先尝试选择有显示文本为1的选项
+            type_selector = page.locator("select[name='type']")
+            if type_selector.count() > 0:
+                logger.info("找到类型选择器")
+                # 尝试不同的值格式（数字和字符串）
+                for type_value in ["1", "原创"]:
+                    try:
+                        page.select_option("select[name='type']", type_value)
+                        logger.info(f"成功选择文章类型: {type_value}")
+                        break
+                    except Exception as type_error:
+                        logger.warning(f"尝试选择类型值 {type_value} 失败: {type_error}")
+        except Exception as e:
+            logger.warning(f"选择文章类型时出错: {e}")
         
         # 尝试填写内容
         try:

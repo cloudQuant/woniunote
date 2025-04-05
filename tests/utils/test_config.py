@@ -19,8 +19,8 @@ TEMP_DIR = os.path.join(TESTS_DIR, 'temp')
 # 服务器配置
 SERVER_CONFIG = {
     'host': '127.0.0.1',
-    'port': 5000,
-    'protocol': 'https',
+    'port': 5001,
+    'protocol': 'http',  # 修改为HTTP，因为服务器是以HTTP模式启动的
     'timeout': 5,
     'retry_count': 3,
     'retry_delay': 1,
@@ -105,7 +105,7 @@ def test_server_config():
     assert 'port' in SERVER_CONFIG
     assert 'protocol' in SERVER_CONFIG
     assert SERVER_CONFIG['host'] == '127.0.0.1'
-    assert SERVER_CONFIG['port'] == 5000
+    assert SERVER_CONFIG['port'] == 5001
     assert SERVER_CONFIG['protocol'] in ['http', 'https']
     logging.info("服务器配置测试通过")
 

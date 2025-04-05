@@ -16,7 +16,6 @@ from tests.utils.test_base import FlaskAppContextProvider
 """
 
 @FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
 @pytest.mark.browser
 def test_home_page_loads(page, base_url, browser_name):
     """测试首页是否能正常加载"""
@@ -31,7 +30,6 @@ def test_home_page_loads(page, base_url, browser_name):
     expect(page.locator("footer")).to_be_visible()
 
 @FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
 @pytest.mark.browser
 def test_login_page_loads(page, base_url, browser_name):
     """测试登录页是否能正常加载"""
@@ -45,7 +43,6 @@ def test_login_page_loads(page, base_url, browser_name):
     expect(page.locator("input[name='vcode']")).to_be_visible()
 
 @FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
 @pytest.mark.browser
 def test_register_page_loads(page, base_url, browser_name):
     """测试注册页是否能正常加载"""
@@ -59,7 +56,6 @@ def test_register_page_loads(page, base_url, browser_name):
     expect(page.locator("input[name='ecode']")).to_be_visible()
 
 @FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
 @pytest.mark.browser
 def test_article_list_loads(page, base_url, browser_name):
     """测试文章列表页是否能正常加载"""
@@ -70,7 +66,6 @@ def test_article_list_loads(page, base_url, browser_name):
     expect(page.locator(".article-list")).to_be_visible()
 
 @FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
 @pytest.mark.browser
 def test_article_detail_loads(page, base_url, browser_name):
     """测试文章详情页是否能正常加载"""

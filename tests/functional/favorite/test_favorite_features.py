@@ -11,16 +11,17 @@ sys.path.insert(0, project_root)
 # 导入Flask应用上下文提供者
 from tests.utils.test_base import FlaskAppContextProvider
 
+# 创建app_context fixture
+app_context = FlaskAppContextProvider.with_app_context_fixture()
+
 """
 收藏功能测试
 测试用户对文章的收藏和取消收藏功能
 """
 
-# 使用装饰器确保在Flask应用上下文中运行
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
+# 确保在Flask应用上下文中运行
 @pytest.mark.browser
-def test_favorite_article(authenticated_page, base_url, browser_name):
+def test_favorite_article(app_context, authenticated_page, base_url, browser_name):
     """测试收藏文章功能"""
     page = authenticated_page
     
@@ -44,11 +45,9 @@ def test_favorite_article(authenticated_page, base_url, browser_name):
     # 验证按钮文本变为"已收藏"
     expect(favorite_button).to_contain_text("已收藏")
 
-# 使用装饰器确保在Flask应用上下文中运行
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
+# 确保在Flask应用上下文中运行
 @pytest.mark.browser
-def test_unfavorite_article(authenticated_page, base_url, browser_name):
+def test_unfavorite_article(app_context, authenticated_page, base_url, browser_name):
     """测试取消收藏文章功能"""
     page = authenticated_page
     
@@ -73,11 +72,9 @@ def test_unfavorite_article(authenticated_page, base_url, browser_name):
     expect(favorite_button).to_contain_text("收藏")
     expect(favorite_button).not_to_contain_text("已收藏")
 
-# 使用装饰器确保在Flask应用上下文中运行
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
+# 确保在Flask应用上下文中运行
 @pytest.mark.browser
-def test_view_favorite_list(authenticated_page, base_url, browser_name):
+def test_view_favorite_list(app_context, authenticated_page, base_url, browser_name):
     """测试查看收藏列表"""
     page = authenticated_page
     
@@ -97,11 +94,9 @@ def test_view_favorite_list(authenticated_page, base_url, browser_name):
         # 否则检查收藏项目显示
         expect(page.locator(".favorite-item")).to_be_visible()
 
-# 使用装饰器确保在Flask应用上下文中运行
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
+# 确保在Flask应用上下文中运行
 @pytest.mark.browser
-def test_favorite_from_list_to_detail(authenticated_page, base_url, browser_name):
+def test_favorite_from_list_to_detail(app_context, authenticated_page, base_url, browser_name):
     """测试从收藏列表访问文章详情"""
     page = authenticated_page
     

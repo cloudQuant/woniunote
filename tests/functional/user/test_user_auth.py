@@ -20,11 +20,12 @@ sys.path.insert(0, project_root)
 # 导入Flask应用上下文提供者
 from tests.utils.test_base import FlaskAppContextProvider, logger
 
-# 使用装饰器确保在Flask应用上下文中运行
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
+# 创建app_context fixture
+app_context = FlaskAppContextProvider.with_app_context_fixture()
+
+# 确保在Flask应用上下文中运行
 @pytest.mark.browser
-def test_login_page_access(page, base_url, browser_name):
+def test_login_page_access(app_context, page, base_url, browser_name):
     """测试登录页面访问"""
     logger.info("===== 测试登录页面访问 =====")
     
@@ -41,10 +42,8 @@ def test_login_page_access(page, base_url, browser_name):
     
     logger.info("✓ 登录页面访问测试通过")
 
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
 @pytest.mark.browser
-def test_login_with_valid_credentials(page, base_url, browser_name):
+def test_login_with_valid_credentials(app_context, page, base_url, browser_name):
     """测试使用有效凭据登录"""
     logger.info("===== 测试使用有效凭据登录 =====")
     
@@ -81,10 +80,8 @@ def test_login_with_valid_credentials(page, base_url, browser_name):
         logger.error(f"登录测试失败: {e}")
         raise
 
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
 @pytest.mark.browser
-def test_register_page_access(page, base_url, browser_name):
+def test_register_page_access(app_context, page, base_url, browser_name):
     """测试注册页面访问"""
     logger.info("===== 测试注册页面访问 =====")
     
@@ -104,27 +101,19 @@ def test_register_page_access(page, base_url, browser_name):
 
 # 只在需要执行测试时取消注释这些测试
 """
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
-def test_login_with_invalid_credentials(page, base_url, browser_name):
+def test_login_with_invalid_credentials(app_context, page, base_url, browser_name):
     # 测试使用无效凭据登录
     pass
 
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
-def test_registration_with_valid_data(page, base_url, browser_name):
+def test_registration_with_valid_data(app_context, page, base_url, browser_name):
     # 测试使用有效数据注册
     pass
 
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
-def test_logout(page, base_url, browser_name):
+def test_logout(app_context, page, base_url, browser_name):
     # 测试登出功能
     pass
 
-@FlaskAppContextProvider.with_app_context
-@pytest.mark.parametrize("browser_name", ["chromium"])
-def test_invalid_verification_code(page, base_url, browser_name):
+def test_invalid_verification_code(app_context, page, base_url, browser_name):
     # 测试使用无效验证码登录
     pass
 """

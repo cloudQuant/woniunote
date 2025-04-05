@@ -137,33 +137,38 @@ class TestArticleFactory:
             # 获取数据库会话
             session = dbconnect()[0]
             
-            # 创建新文章 - 确保使用headline字段
+            # 修正：使用正确的表名 'article' 而不是 'articles'
+            # 使用正确的字段名：headline 而不是 title, readcount 而不是 read_count
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             result = session.execute(
                 text("""
-                    INSERT INTO articles 
-                    (headline, content, type, user_id, read_count, create_time) 
-                    VALUES (:headline, :content, :type, :user_id, :read_count, :create_time)
+                    INSERT INTO article 
+                    (headline, content, type, userid, readcount, createtime, hidden, drafted, checked, recommended) 
+                    VALUES (:headline, :content, :type, :userid, :readcount, :createtime, :hidden, :drafted, :checked, :recommended)
                 """),
                 {
-                    "headline": headline,
+                    "headline": headline,  # 使用正确的字段名
                     "content": content,
-                    "type": article_type,  # 作为字符串处理
-                    "user_id": user_id,
-                    "read_count": 0,
-                    "create_time": now
+                    "type": article_type,  # 保持原始类型格式，数据库将处理类型转换
+                    "userid": user_id,
+                    "readcount": 0,
+                    "createtime": now,
+                    "hidden": 0,  # 确保文章可见
+                    "drafted": 0,  # 确保不是草稿
+                    "checked": 1,  # 确保文章已审核
+                    "recommended": random.randint(0, 1)  # 随机推荐状态
                 }
             )
             
             # 获取新文章ID
             result = session.execute(
-                text("SELECT * FROM articles WHERE headline = :headline AND user_id = :user_id ORDER BY id DESC LIMIT 1"),
-                {"headline": headline, "user_id": user_id}
+                text("SELECT * FROM article WHERE headline = :headline AND userid = :userid ORDER BY articleid DESC LIMIT 1"),
+                {"headline": headline, "userid": user_id}
             )
             article = result.fetchone()
             
             session.commit()
-            logger.info(f"已创建测试文章: {headline}, ID={article.id if article else 'unknown'}")
+            logger.info(f"已创建测试文章: {headline}, ID={article.articleid if article else 'unknown'}")
             return article
         except Exception as e:
             logger.error(f"创建测试文章出错: {e}")
@@ -187,7 +192,7 @@ class TestArticleFactory:
         for i in range(count):
             headline = f"测试文章 {TEST_DATA_MARKER} #{i+1}"
             content = f"这是第{i+1}篇测试文章的内容。包含一些测试数据。{TEST_DATA_MARKER}"
-            article_type = str(random.randint(1, 4))  # 随机类型，作为字符串
+            article_type = str(random.randint(1, 4))  # 随机类型，作为字符串，在create方法中会转换为整数
             
             article = TestArticleFactory.create(user_id, headline, content, article_type)
             if article:
@@ -212,7 +217,7 @@ class TestDataManager:
                 # 清理标题中包含TEST_标记的文章
                 marker = TEST_DATA_MARKER.split('_')[0] + '_%'  # TEST_%
                 result = session.execute(
-                    text("DELETE FROM articles WHERE headline LIKE :marker"),
+                    text("DELETE FROM article WHERE headline LIKE :marker"),
                     {"marker": marker}
                 )
                 logger.info(f"已清理{result.rowcount}篇测试文章")
@@ -257,8 +262,8 @@ class TestDataManager:
         try:
             session = dbconnect()[0]
             result = session.execute(
-                text("SELECT * FROM articles WHERE user_id = :user_id"),
-                {"user_id": test_user.id}
+                text("SELECT * FROM article WHERE userid = :userid"),
+                {"userid": test_user.id}
             )
             existing_articles = result.fetchall()
             

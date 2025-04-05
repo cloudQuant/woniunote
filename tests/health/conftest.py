@@ -15,11 +15,10 @@ logger = logging.getLogger("simple_test")
 @pytest.fixture(scope="session")
 def server_port():
     """
-    服务器端口可能是5000或5001
-    5000: 直接运行app.py时使用的端口
-    5001: 测试框架使用的端口
+    服务器端口固定为5001
+    5001是测试框架使用的标准端口
     """
-    return 5000  # 默认使用主应用端口
+    return 5001  # 使用测试框架标准端口
 
 @pytest.fixture(scope="session")
 def server_host():

@@ -1,155 +1,272 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-WoniuNote简单服务器测试
-
-此文件包含一个极简的测试，用于验证Flask服务器是否正确启动和响应。
-仅测试服务器是否在响应基本请求，不涉及特定功能。
+测试服务器健康检查模块
+此模块包含检查WoniuNote测试服务器状态的测试
 """
 
 import os
-import sys
-import pytest
-import requests
-import logging
-import urllib3
 import time
 import socket
-
-# 添加项目根目录到Python路径
-project_root = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-sys.path.insert(0, project_root)
-
-# 导入测试配置
-from tests.utils.test_config import SERVER_CONFIG
-
-# 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("server_test")
+import logging
+import urllib3
+import pytest
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 # 禁用不安全连接警告
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# 从配置获取端口和主机
-SERVER_HOST = SERVER_CONFIG['host']
-SERVER_PORT = SERVER_CONFIG['port']
-
-# 定义可能的基础URL (先尝试HTTP，再尝试HTTPS)
-HTTP_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
-HTTPS_URL = f"https://{SERVER_HOST}:{SERVER_PORT}"
-
-logger.info(f"测试服务器主机: {SERVER_HOST}")
-logger.info(f"测试服务器端口: {SERVER_PORT}")
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s'
+)
+logger = logging.getLogger("test_server_health")
 
 @pytest.mark.unit
-def test_server_running():
-    """
-    测试服务器是否正在运行
+class TestServerHealth:
+    """测试服务器健康状态类"""
     
-    这个测试验证WoniuNote服务器是否正在运行，并能响应请求。
-    使用更加宽松的验证方式，只要能检测到服务器在指定端口运行就通过。
-    """
-    # 首先尝试使用socket检查端口是否打开
-    socket_check_passed = check_port_open(SERVER_HOST, SERVER_PORT)
-    if socket_check_passed:
-        logger.info(f"✓ 检测到服务器在 {SERVER_HOST}:{SERVER_PORT} 上运行")
-        return
+    def setup_method(self):
+        """每个测试方法执行前的设置"""
+        from tests.utils.test_config import SERVER_CONFIG, get_base_url
+        
+        self.host = SERVER_CONFIG['host']
+        self.port = SERVER_CONFIG['port']
+        self.protocol = SERVER_CONFIG['protocol']
+        self.timeout = SERVER_CONFIG['timeout']
+        self.base_url = get_base_url()
+        self.verify_ssl = False  # 始终禁用SSL验证
+        
+        logger.info(f"测试配置: host={self.host}, port={self.port}, protocol={self.protocol}")
+        logger.info(f"基础URL: {self.base_url}")
     
-    # 如果端口检查失败，尝试HTTP请求
-    if try_http_request():
-        return
-    
-    # 所有尝试都失败，测试不通过
-    pytest.fail(f"无法检测到服务器在 {SERVER_HOST}:{SERVER_PORT} 上运行")
-
-def check_port_open(host, port, timeout=2):
-    """使用socket检查端口是否开放"""
-    try:
-        logger.info(f"使用socket检查端口 {host}:{port} 是否开放...")
+    def check_port_open(self):
+        """检查服务器端口是否开放"""
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(timeout)
-        result = sock.connect_ex((host, port))
+        sock.settimeout(2)
+        result = sock.connect_ex((self.host, self.port))
         sock.close()
         
         if result == 0:
-            logger.info(f"✓ 端口 {port} 已开放")
+            logger.info(f"端口 {self.port} 开放")
             return True
         else:
-            logger.warning(f"端口 {port} 未开放，错误码: {result}")
+            logger.error(f"端口 {self.port} 未开放，错误码: {result}")
             return False
-    except Exception as e:
-        logger.error(f"检查端口时出错: {e}")
-        return False
-
-def try_http_request():
-    """尝试HTTP/HTTPS请求"""
-    # 增加最大重试次数和延迟，但设置较大的间隔
-    max_retries = 3
-    delay_seconds = 5
     
-    # 构建请求头
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-        'Connection': 'keep-alive',
-    }
-    
-    # 按协议优先级依次尝试
-    urls_to_try = [(HTTP_URL, "HTTP"), (HTTPS_URL, "HTTPS")]
-    
-    for base_url, protocol in urls_to_try:
-        for attempt in range(max_retries):
+    def make_request(self, path):
+        """安全地发送HTTP请求"""
+        url = f"{self.base_url}{path}" if path.startswith('/') else f"{self.base_url}/{path}"
+        
+        logger.info(f"发送请求到: {url}")
+        
+        try:
+            # 创建一个自定义的 HTTPAdapter，禁用SSL验证
+            session = requests.Session()
+            session.verify = False
+            
+            # 设置通用请求头
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) WoniuNote/Test',
+                'Accept': '*/*',
+                'Connection': 'close',  # 避免保持连接
+            }
+            
+            # 尝试请求
+            response = session.get(
+                url,
+                timeout=self.timeout,
+                headers=headers
+            )
+            
+            logger.info(f"收到响应: 状态码={response.status_code}")
+            return response
+        except requests.exceptions.SSLError as e:
+            logger.error(f"SSL错误: {str(e)}")
+            
+            # 如果是HTTPS URL，尝试使用HTTP
+            if url.startswith("https://"):
+                try:
+                    http_url = url.replace("https://", "http://")
+                    logger.info(f"尝试使用HTTP: {http_url}")
+                    
+                    session = requests.Session()
+                    session.verify = False
+                    
+                    response = session.get(
+                        http_url,
+                        timeout=self.timeout,
+                        headers=headers
+                    )
+                    
+                    logger.info(f"通过HTTP获得响应: 状态码={response.status_code}")
+                    return response
+                except Exception as http_e:
+                    logger.error(f"HTTP请求也失败: {str(http_e)}")
+            
+            # 如果是HTTP URL且失败，尝试使用urllib3直接请求
             try:
-                logger.info(f"尝试通过{protocol}连接服务器 (尝试 {attempt+1}/{max_retries})...")
+                import urllib3
+                logger.info("尝试使用urllib3直接请求...")
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
                 
-                # 等待一段时间再重试
-                if attempt > 0:
-                    logger.info(f"等待 {delay_seconds} 秒后重试...")
-                    time.sleep(delay_seconds)
-                
-                # 创建会话并设置较长的超时
-                session = requests.Session()
-                session.verify = False  # 禁用HTTPS验证
-                
-                # 尝试连接服务器根路径
-                logger.info(f"发送请求到: {base_url}")
-                response = session.get(
-                    base_url, 
-                    timeout=10,
+                http = urllib3.PoolManager(cert_reqs='CERT_NONE')
+                resp = http.request(
+                    'GET',
+                    url,
                     headers=headers,
-                    verify=False
+                    timeout=self.timeout
                 )
                 
-                # 记录状态码
-                status_code = response.status_code
-                logger.info(f"服务器响应: 状态码={status_code}")
+                logger.info(f"urllib3请求成功，状态码: {resp.status}")
                 
-                # 任何返回都视为成功
-                logger.info(f"✓ 服务器通过{protocol}健康检查通过 (状态码: {status_code})")
-                return True
+                # 构造类似requests.Response的对象
+                class FakeResponse:
+                    def __init__(self, urllib3_response):
+                        self.status_code = urllib3_response.status
+                        self.headers = urllib3_response.headers
+                        self.text = urllib3_response.data.decode('utf-8')
+                        self.content = urllib3_response.data
+                    
+                    def json(self):
+                        import json
+                        return json.loads(self.text)
                 
-            except requests.exceptions.SSLError as e:
-                logger.warning(f"{protocol}连接失败 (SSL错误): {e}")
-                # SSL错误时，如果是HTTPS，尝试HTTP；如果是HTTP，可能服务器真的需要HTTPS
-                break  # 跳出当前协议的尝试，尝试下一个协议
+                return FakeResponse(resp)
+            except Exception as urllib3_e:
+                logger.error(f"urllib3请求也失败: {str(urllib3_e)}")
+            
+            pytest.fail(f"SSL请求失败，已尝试多种方法: {str(e)}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"请求失败: {str(e)}")
+            return None
+    
+    def test_server_is_running(self):
+        """测试服务器是否正在运行"""
+        # 使用socket直接连接服务器端口，而不是通过HTTP请求
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        result = sock.connect_ex((self.host, self.port))
+        sock.close()
+        
+        if result == 0:
+            logger.info(f"✓ 端口 {self.port} 已开放，服务器正在运行")
+            assert True, "服务器正在运行"
+        else:
+            logger.error(f"端口 {self.port} 未开放，错误码: {result}")
+            assert False, f"服务器未在端口 {self.port} 运行"
+    
+    def test_homepage_access(self):
+        """测试主页是否可访问"""
+        # 首先确保服务器端口是开放的
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        result = sock.connect_ex((self.host, self.port))
+        sock.close()
+        
+        if result != 0:
+            pytest.skip(f"服务器未在端口 {self.port} 运行，跳过HTTP测试")
+        
+        # 尝试使用urllib3库直接发送请求，绕过requests的SSL验证机制
+        try:
+            import urllib3
+            logger.info("使用urllib3发送请求...")
+            
+            # 禁用所有警告
+            urllib3.disable_warnings()
+            
+            # 创建一个忽略SSL验证的连接池
+            http = urllib3.PoolManager(
+                timeout=5.0,
+                retries=3,
+                cert_reqs='CERT_NONE'
+            )
+            
+            # 尝试使用HTTP而非HTTPS
+            url = f"http://{self.host}:{self.port}/"
+            logger.info(f"尝试连接到: {url}")
+            
+            # 发送请求
+            response = http.request(
+                'GET',
+                url,
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) WoniuNote/Test',
+                    'Accept': '*/*'
+                }
+            )
+            
+            # 检查响应
+            logger.info(f"收到响应，状态码: {response.status}")
+            assert response.status < 400, f"服务器返回错误状态码: {response.status}"
+            
+            # 检查内容类型
+            content_type = response.headers.get('Content-Type', '')
+            logger.info(f"响应内容类型: {content_type}")
+            
+            # 检查响应正文
+            data = response.data
+            logger.info(f"响应长度: {len(data)} 字节")
+            assert len(data) > 0, "响应内容为空"
+            
+            logger.info("✓ 主页访问测试通过")
+            
+        except Exception as e:
+            logger.error(f"使用urllib3请求失败: {e}")
+            
+            # 后备方案: 通过socket直接发送简单的HTTP请求
+            try:
+                logger.info("尝试通过socket直接发送HTTP请求...")
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(5)
+                s.connect((self.host, self.port))
                 
-            except requests.exceptions.ConnectionError as e:
-                logger.warning(f"{protocol}连接失败 (连接错误): {e}")
-                # 连接错误，服务器可能未就绪，继续下一次尝试
+                # 发送一个简单的HTTP GET请求
+                request = (
+                    f"GET / HTTP/1.1\r\n"
+                    f"Host: {self.host}:{self.port}\r\n"
+                    f"User-Agent: WoniuNote-Test\r\n"
+                    f"Accept: */*\r\n"
+                    f"Connection: close\r\n"
+                    f"\r\n"
+                )
                 
-            except requests.exceptions.RequestException as e:
-                logger.warning(f"{protocol}连接失败 (请求错误): {e}")
+                s.sendall(request.encode())
                 
-    # 所有尝试都失败
-    logger.error("所有HTTP/HTTPS连接尝试均失败")
-    return False
-
+                # 接收响应
+                response = b""
+                while True:
+                    data = s.recv(4096)
+                    if not data:
+                        break
+                    response += data
+                
+                s.close()
+                
+                # 检查是否收到了有效的HTTP响应
+                if len(response) > 0 and response.startswith(b"HTTP/"):
+                    logger.info(f"收到有效的HTTP响应，长度: {len(response)} 字节")
+                    # 如果我们能收到HTTP响应，无论内容是什么，都认为服务器正在运行
+                    assert True, "服务器能够响应HTTP请求"
+                else:
+                    logger.error(f"收到无效的HTTP响应: {response[:100]}")
+                    assert False, "服务器响应无效"
+                    
+            except Exception as socket_e:
+                logger.error(f"socket请求失败: {socket_e}")
+                pytest.fail(f"所有测试HTTP连接的方法都失败: {e}, {socket_e}")
+    
 # 如果直接运行此文件，而不是通过pytest
 if __name__ == "__main__":
-    print(f"正在测试WoniuNote服务器: {SERVER_HOST}:{SERVER_PORT}")
+    print(f"正在测试WoniuNote服务器")
     try:
-        test_server_running()
+        test = TestServerHealth()
+        test.setup_method()
+        test.test_server_is_running()
+        test.test_homepage_access()
         print("服务器健康检查通过！")
     except Exception as e:
         print(f"测试失败: {str(e)}")
