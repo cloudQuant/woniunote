@@ -21,6 +21,8 @@ body {
 
 .page-header {
   background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+  background-size: 200% 200%;
+  animation: gradientShift 15s ease infinite;
   color: white;
   padding: 30px 0;
   margin-top: 0;
@@ -28,6 +30,26 @@ body {
   border-radius: 0 0 10px 10px;
   box-shadow: var(--shadow);
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="none" width="100" height="100"/><rect fill="rgba(255,255,255,0.05)" x="25" y="25" width="50" height="50" transform="rotate(45 50 50)"/></svg>');
+  opacity: 0.3;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.page-header > div {
+  position: relative;
+  z-index: 1;
 }
 
 .page-header h2 {
@@ -336,11 +358,26 @@ body {
   padding: 15px;
   border-left: 4px solid var(--primary-color);
   transition: var(--transition);
+  position: relative;
+  overflow: hidden;
 }
 
 .card-list-item:hover {
   transform: translateX(3px);
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* 装饰性背景效果 */
+.card-list-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle at top right, rgba(52, 152, 219, 0.05) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .card-list-item.priority-1 {
@@ -501,6 +538,8 @@ body {
 /* 自定义分类 */
 .custom-category-section {
   margin-bottom: 20px;
+  border-radius: var(--card-radius);
+  transition: var(--transition);
 }
 
 .custom-category-section h4 {
@@ -508,7 +547,19 @@ body {
   color: var(--dark-color);
   margin-bottom: 15px;
   padding-bottom: 5px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 2px solid #eee;
+  position: relative;
+  display: inline-block;
+}
+
+.custom-category-section h4:after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 40%;
+  height: 2px;
+  background-color: var(--primary-color);
 }
 
 .custom-categories {
@@ -529,6 +580,55 @@ body {
 .custom-category-item:hover {
   background-color: #f9f9f9;
   transform: translateX(3px);
+}
+
+/* 重要清单区域样式 */
+.important-cards-section {
+  margin-bottom: 20px;
+}
+
+.important-cards-section h4 {
+  color: var(--dark-color);
+  border-bottom: 2px solid #eee;
+  padding-bottom: 8px;
+  margin-bottom: 15px;
+  position: relative;
+  display: inline-block;
+}
+
+.important-cards-section h4:after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 40%;
+  height: 2px;
+  background-color: #f39c12;
+}
+
+/* 特殊清单项样式 */
+.priority-item .category-link i {
+  color: #e74c3c;
+}
+
+.progress-item .category-link i {
+  color: #27ae60;
+}
+
+.completed-item .category-link i {
+  color: #3498db;
+}
+
+.priority-item:hover {
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+.progress-item:hover {
+  background-color: rgba(39, 174, 96, 0.1);
+}
+
+.completed-item:hover {
+  background-color: rgba(52, 152, 219, 0.1);
 }
 
 .custom-category-item.active {
@@ -704,6 +804,18 @@ body {
   100% { transform: scale(1); }
 }
 
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
 .card-panel,
 .category-card,
 .custom-category-item,
@@ -768,11 +880,100 @@ body {
   transition: 0s;
 }
 
+/* 按钮交互增强 */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn.btn-primary,
+.btn.btn-success,
+.btn.btn-danger {
+  border: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.16);
+  transition: all 0.2s ease;
+}
+
+.btn.btn-primary:hover,
+.btn.btn-success:hover,
+.btn.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn.btn-primary:active,
+.btn.btn-success:active,
+.btn.btn-danger:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* 浮动图标效果 */
+.custom-category-item .category-link i,
+.card-actions a i {
+  animation: float 3s ease-in-out infinite;
+}
+
 /* 为编辑器添加样式 */
 .edui-default {
   border-radius: var(--card-radius) !important;
   box-shadow: var(--shadow) !important;
   border: 1px solid #eee !important;
+}
+
+/* 表单美化 */
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+  transition: all 0.2s ease;
+}
+
+/* 选择框美化 */
+select.form-control {
+  background-image: linear-gradient(45deg, transparent 50%, #aaa 50%), linear-gradient(135deg, #aaa 50%, transparent 50%);
+  background-position: calc(100% - 20px) center, calc(100% - 15px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* 搜索框和输入框动画效果 */
+.form-control {
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+/* 表格增强 */
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table > thead > tr > th {
+  border-bottom: 2px solid var(--primary-color);
+  background-color: #f8f9fa;
+  transition: background-color 0.2s;
+  padding: 12px 8px;
+}
+
+.table > tbody > tr {
+  transition: all 0.2s;
+}
+
+.table > tbody > tr:hover {
+  background-color: #f0f7fc !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.table > tbody > tr:nth-child(odd) {
+  background-color: #f9f9f9;
 }
 
 /* 响应式调整 */

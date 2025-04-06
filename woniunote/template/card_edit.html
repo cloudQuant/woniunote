@@ -4,9 +4,11 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>my cards</title>
+    <title>编辑卡片 - WoniuNote</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
-    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/modern-v2.css" rel="stylesheet">
     <script type="text/javascript" src="/ue/ueditor.config.js"></script>
     <script type="text/javascript" src="/ue/ueditor.all.min.js"> </script>
     <script type="text/javascript" src="/ue/lang/zh-cn/zh-cn.js"></script>
@@ -21,25 +23,127 @@
 </head>
 
 <body>
-    <h2 align="center">我的清单人生</h2>
-
+    <div class="page-header">
     <div class="container">
-        <!-- 卡片编辑表单 -->
+        <h2><i class="fas fa-edit"></i> 编辑卡片</h2>
+        <p class="text-muted">更新您的卡片信息和内容</p>
+    </div>
+</div>
+
+    <!-- 简化分隔符 -->
+    <div class="spacer-20"></div>
+    
+    <div class="container">
+        <!-- 简化内部分隔符 -->
+        <div class="spacer-10"></div>
+        
+        <!-- 三栏布局区域 -->
         <div class="row">
-            <div class="col-xs-12">
-                <div class="card-panel">
-                    <h4>编辑卡片</h4>
+            <!-- 左侧边栏 - 分类导航 -->
+            <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+                <!-- 优先级分类 -->
+                <div class="card-panel shadow-sm">
+                    <h4><i class="fas fa-flag"></i> 优先级分类</h4>
+                    <div class="custom-categories">
+                        {% for category in categories[2:] if category.name in ["重要紧急","重要不紧急","紧急不重要","不重要不紧急","已开始清单"] %}
+                        <div class="custom-category-item {% if category.id == card.cardcategory_id %}active{% endif %}
+                            {% if category.name == "重要紧急" %}priority-item{% endif %}
+                            {% if category.name == "重要不紧急" %}important-item{% endif %}
+                            {% if category.name == "紧急不重要" %}secondary-item{% endif %}
+                            {% if category.name == "不重要不紧急" %}low-item{% endif %}
+                            {% if category.name == "已开始清单" %}progress-item{% endif %}">
+                            <a href="/cards/category/{{category.id}}" class="category-link">
+                                {% if category.name == "重要紧急" %}
+                                    <i class="fas fa-exclamation-circle"></i>
+                                {% elif category.name == "重要不紧急" %}
+                                    <i class="fas fa-exclamation"></i>
+                                {% elif category.name == "紧急不重要" %}
+                                    <i class="fas fa-bolt"></i>
+                                {% elif category.name == "不重要不紧急" %}
+                                    <i class="fas fa-check"></i>
+                                {% elif category.name == "已开始清单" %}
+                                    <i class="fas fa-play-circle"></i>
+                                {% endif %}
+                                {{ category.name }}
+                                <span class="category-count">{{ category.cards.count() }}</span>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- 时间分类 -->
+                <div class="card-panel shadow-sm mt-3">
+                    <h4><i class="fas fa-calendar"></i> 时间分类</h4>
+                    <div class="custom-categories">
+                        {% for category in categories[2:] if category.name in ["日清单","周清单","月清单","年清单","十年清单"] %}
+                        <div class="custom-category-item time-item {% if category.id == card.cardcategory_id %}active{% endif %}">
+                            <a href="/cards/category/{{category.id}}" class="category-link">
+                                {% if category.name == "日清单" %}
+                                    <i class="fas fa-sun"></i>
+                                {% elif category.name == "周清单" %}
+                                    <i class="fas fa-calendar-week"></i>
+                                {% elif category.name == "月清单" %}
+                                    <i class="fas fa-calendar-alt"></i>
+                                {% elif category.name == "年清单" %}
+                                    <i class="fas fa-calendar-check"></i>
+                                {% elif category.name == "十年清单" %}
+                                    <i class="fas fa-hourglass-half"></i>
+                                {% endif %}
+                                {{ category.name }}
+                                <span class="category-count">{{ category.cards.count() }}</span>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- 自定义分类 -->
+                <div class="card-panel shadow-sm mt-3">
+                    <h4><i class="fas fa-folder-plus"></i> 自定义分类</h4>
+                    <div class="custom-categories">
+                        {% for category in categories[2:] if category.name not in ["日清单","周清单","月清单","年清单","十年清单","重要紧急","重要不紧急","紧急不重要","不重要不紧急","已开始清单"] and category.id != 2 %}
+                        <div class="custom-category-item {% if category.id == card.cardcategory_id %}active{% endif %}">
+                            <a href="/cards/category/{{category.id}}" class="category-link">
+                                <i class="fas fa-tag"></i> {{ category.name }}
+                                <span class="category-count">{{ category.cards.count() }}</span>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- 添加分类表单 -->
+                    <div class="add-category-form mt-3">
+                        <form id="add-category-form" action="/cards/new_category" method="POST">
+                            <div class="form-group">
+                                <label for="category-input"><i class="fas fa-plus-circle"></i> 添加分类</label>
+                                <div class="input-group">
+                                    <input class="form-control" placeholder="输入分类名称" name="name" id="category-input" type="text">
+                                    <span class="input-group-btn">
+                                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> 添加</button>
+                                    </span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 中间区域 - 卡片编辑表单 -->
+            <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+                <div class="card-panel shadow-sm">
+                    <h4 class="card-title"><i class="fas fa-pen"></i> 编辑卡片详情</h4>
                     <form id="edit-card-form" action="/cards/edit_item/{{ card.id }}" method="POST">
                         <div class="row">
                             <!-- 标题 -->
                             <div class="form-group col-md-6">
-                                <label for="headline">标题</label>
+                                <label for="headline"><i class="fas fa-heading"></i> 标题</label>
                                 <input class="form-control" id="headline" type="text" name="headline" value="{{ card.headline }}">
                             </div>
                             
                             <!-- 类别 -->
                             <div class="form-group col-md-6">
-                                <label for="category_id">类别</label>
+                                <label for="category_id"><i class="fas fa-folder"></i> 类别</label>
                                 <select id="category_id" name="category_id" class="form-control">
                                     {% for category in categories %}
                                         {% if category.id != 2 %}
@@ -53,7 +157,7 @@
                         <div class="row">
                             <!-- 类型 -->
                             <div class="form-group col-md-4">
-                                <label for="card_type">重要程度</label>
+                                <label for="card_type"><i class="fas fa-flag"></i> 重要程度</label>
                                 <select id="card_type" name="card_type" class="form-control">
                                     <option value="1" {% if card.type == 1 %}selected{% endif %}>重要紧急</option>
                                     <option value="2" {% if card.type == 2 %}selected{% endif %}>重要不紧急</option>
@@ -64,13 +168,13 @@
                             
                             <!-- 截止日期 -->
                             <div class="form-group col-md-4">
-                                <label for="updatetime">截止日期</label>
+                                <label for="updatetime"><i class="far fa-calendar-alt"></i> 截止日期</label>
                                 <input class="form-control" type="text" name="updatetime" id="updatetime" value="{{ card.updatetime }}">
                             </div>
                             
                             <!-- 已用时间 -->
                             <div class="form-group col-md-4">
-                                <label for="usedtime">已用时间（分钟）</label>
+                                <label for="usedtime"><i class="fas fa-stopwatch"></i> 已用时间（分钟）</label>
                                 <input class="form-control" type="number" name="usedtime" id="usedtime" value="{{ card.usedtime or 0 }}">
                             </div>
                         </div>
@@ -78,19 +182,19 @@
                         <div class="row">
                             <!-- 创建时间 -->
                             <div class="form-group col-md-4">
-                                <label for="createtime">创建时间</label>
+                                <label for="createtime"><i class="fas fa-plus-circle"></i> 创建时间</label>
                                 <input class="form-control" type="text" name="createtime" id="createtime" value="{{ card.createtime }}">
                             </div>
                             
                             <!-- 开始时间 -->
                             <div class="form-group col-md-4">
-                                <label for="begintime">开始时间</label>
+                                <label for="begintime"><i class="fas fa-play"></i> 开始时间</label>
                                 <input class="form-control" type="text" name="begintime" id="begintime" value="{{ card.begintime or 'None' }}">
                             </div>
                             
                             <!-- 结束时间 -->
                             <div class="form-group col-md-4">
-                                <label for="endtime">结束时间</label>
+                                <label for="endtime"><i class="fas fa-stop"></i> 结束时间</label>
                                 <input class="form-control" type="text" name="endtime" id="endtime" value="{{ card.endtime or 'None' }}">
                             </div>
                         </div>
@@ -98,55 +202,29 @@
                         <!-- 内容 -->
                         <div class="row">
                             <div class="form-group col-md-12">
-                                <label for="content">内容</label>
+                                <label for="content"><i class="fas fa-file-alt"></i> 内容</label>
                                 <script id="content" name="content" type="text/plain">{{ card.content or '' }}</script>
                             </div>
                         </div>
                         
                         <!-- 提交按钮 -->
                         <div class="row">
-                            <div class="col-md-12">
+                            <div class="col-md-12 card-actions">
                                 <input type="hidden" name="donetime" value="{{ card.donetime or 'None' }}">
-                                <button type="submit" class="btn btn-primary">保存修改</button>
-                                <a href="/cards/category/{{ card.cardcategory_id }}" class="btn btn-default">取消</a>
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存修改</button>
+                                <a href="/cards/category/{{ card.cardcategory_id }}" class="btn btn-default"><i class="fas fa-times"></i> 取消</a>
+                                <a href="/cards/done/{{ card.id }}" class="btn btn-success"><i class="fas fa-check-circle"></i> 标记完成</a>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-        
-        <!-- 分类列表 -->
-        <div class="row">
-            <h4>分类列表</h4>
-        </div>
-
-
-        <div class="row">
-            <!-- Category loop -->
-            {% for category in categories[2:] %}
-                {% if category.name not in ["日清单", "周清单", "月清单", "年清单", "十年清单", "不重要不紧急", "紧急不重要", "重要不紧急", "重要紧急", "已开始清单"] %}
-                    <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2 left">
-                        <a href="/cards/delete_category/{{ category.id }}" class="right delete-category red-text" title="delete it?">x</a>
-                        <a role="button" class="btn btn-success" href="/cards/category/{{ category.id }}">{{ category.name }}<span class="badge">{{ category.cards.count() }}</span></a>
-                    </div>
-                {% endif %}
-            {% endfor %}
-        </div>
-
-        <div class="row">
-            <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
-                <form id="add-category-form" action="/cards/new_category" method="POST">
-                    <input class="validate" placeholder="新分类？" name="name" id="category-input" type="text">
-                    <input type="submit" value="添加" role="button" class="btn btn-danger">
-                </form>
-            </div>
-        </div>
     </div>
 
     <!-- Scripts -->
-    <script src="https://fastly.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
-    <script src="/static/js/core.js" type="text/javascript"></script>
+    <script src="/js/core.js"></script>
 </body>
 </html>

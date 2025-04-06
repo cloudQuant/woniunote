@@ -1,5 +1,7 @@
 ### changelog
-create_app
+-[x] 2025-04-06: fix cards page and beautify it
+-[x] 2025-04-06: fix todo page
+-[x] 2025-04-05: add tests for woniunote
 -[x] 2025-03-15: fix 数学公式显示不正常的问题
 -[x] 2025-03-15: fix doPost function导致的发布文章失败
 -[x] 2025-02-22: update math_train function
