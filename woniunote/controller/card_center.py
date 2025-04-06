@@ -1,29 +1,9 @@
-from flask import Flask, render_template, redirect
-from flask_sqlalchemy import SQLAlchemy
+from flask import render_template, redirect, abort
 from woniunote.controller.user import *
-from woniunote.common.utils import read_config
-from woniunote.common.create_database import Card, CardCategory
-import os
+from woniunote.common.database import db
+from woniunote.models.card import Card, CardCategory
 import time
 import datetime
-
-app = Flask(__name__)
-# todo_app.config['SECRET_KEY'] = 'a secret string'
-# todo_app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite://')
-# todo_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.urandom(24)
-config_result = read_config()
-SQLALCHEMY_DATABASE_URI = config_result['database']["SQLALCHEMY_DATABASE_URI"]
-# 使用集成方式处理SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # True: 跟踪数据库的修改，及时发送信号
-app.config['SQLALCHEMY_POOL_SIZE'] = 100  # 数据库连接池的大小。默认是数据库引擎的默认值（通常是 5）
-# 实例化db对象
-app.config['DEBUG'] = True
-db = SQLAlchemy(app)
-
-dbsession = db.session
-DBase = db.Model
 
 card_center = Blueprint("card_center", __name__)
 
@@ -32,20 +12,22 @@ card_center = Blueprint("card_center", __name__)
 
 
 def cal_leave_day(target_date):
+    """计算自target_date以来经过的天数
+    返回值为正数表示已经过去的天数
+    """
     if not target_date:
         return 0
     now_datetime = datetime.datetime.now()
-    total_delta = target_date - now_datetime
-    leave_days = total_delta.days
-    leave_seconds = (target_date - now_datetime).seconds
-    # print(leave_days,leave_seconds,now_datetime,target_date)
-    return leave_days
+    total_delta = now_datetime - target_date  # 修正：现在减去目标日期
+    days_passed = total_delta.days
+    # 确保返回非负数
+    return max(0, days_passed)
 
 
 @card_center.route('/cards/', methods=['GET', 'POST'])
 def card_index():
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
     # if request.method == 'POST':
     #     headline = request.form.get('card')
     #     category_id = request.form.get('cardcategory')
@@ -59,8 +41,8 @@ def card_index():
 
 @card_center.route('/cards/add_new_card', methods=['GET', 'POST'])
 def add_new_card():
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
     # print(dir(request))
     if request.method == 'POST':
         headline = request.form.get('card_headline')
@@ -83,10 +65,10 @@ def add_new_card():
     return redirect(f"/cards/category/1")
 
 
-@card_center.route('/cards/begin_card/<int:id>', methods=['GET', 'POST'])
+@card_center.route('/cards/begin_card/<int:card_id>', methods=['GET', 'POST'])
 def begin_card(card_id):
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
     # print("begin_card ","run")
     card = Card.query.get_or_404(card_id)
     # print("Card.query.get_or_404 ","run")
@@ -100,10 +82,10 @@ def begin_card(card_id):
     return redirect(f"/cards/category/{category_id}")
 
 
-@card_center.route('/cards/end_card/<int:id>', methods=['GET', 'POST'])
+@card_center.route('/cards/end_card/<int:card_id>', methods=['GET', 'POST'])
 def end_card(card_id):
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
     time.sleep(0.5)
     card = Card.query.get_or_404(card_id)
     head_line = card.headline
@@ -166,10 +148,10 @@ def end_card(card_id):
     return redirect(f"/cards/category/{category_id}")
 
 
-@card_center.route('/cards/category/<int:id>', methods=['GET', 'POST'])
+@card_center.route('/cards/category/<int:card_id>', methods=['GET', 'POST'])
 def category(card_id):
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
     time.sleep(0.2)
     categories = []
     while not categories:
@@ -238,7 +220,7 @@ def category(card_id):
     times_cards = {"日清单": day_cards, "周清单": week_cards,
                    "月清单": month_cards, "年清单": year_cards, "十年清单": ten_year_cards}
 
-    card_category = CardCategory.query.get_or_404(id)
+    card_category = CardCategory.query.get_or_404(card_id)
     items = card_category.cards
     items = sorted(items, key=lambda x: getattr(x, "updatetime"))
     category_name = card_category.name
@@ -256,6 +238,14 @@ def category(card_id):
         items = all_begin_cards
     # print("calling category/id",category_name,items,times_cards,types_cards,category.name)
     html_file = 'card_index.html'
+    # 在渲染模板前确保所有字典有安全的默认值，防止KeyError
+    # 添加一个空列表作为默认值，使用.get()方法会更安全
+    for category in categories:
+        if category.name not in times_cards and category.name in ["日清单", "周清单", "月清单", "年清单", "十年清单"]:
+            times_cards[category.name] = []
+        if category.name not in types_cards and category.name in ["不重要不紧急", "紧急不重要", "重要不紧急", "重要紧急", "已开始清单"]:
+            types_cards[category.name] = []
+    
     return render_template(html_file, items=items,
                            categories=categories,
                            category_now=card_category,
@@ -268,8 +258,8 @@ def category(card_id):
 
 @card_center.route('/cards/category/2/<int:year_month>', methods=['GET', 'POST'])
 def get_done_category(year_month):
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
     time.sleep(0.2)
     # year,month = year_month.split("_")
     categories = []
@@ -339,7 +329,7 @@ def get_done_category(year_month):
         items = types_cards[category_name]
 
     important_cards = type_1_cards + type_2_cards
-    if id == 1:
+    if card_id == 1:
         if len(type_1_cards) + len(type_2_cards) > 0:
             items = important_cards
     if category_name == "已开始清单":
@@ -360,8 +350,8 @@ def get_done_category(year_month):
 
 @card_center.route('/cards/new_category', methods=['GET', 'POST'])
 def new_category():
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
     # print("enter new_category")
     name = request.form.get('name')
     # print("enter new_category",name)
@@ -372,10 +362,10 @@ def new_category():
     return redirect(f"/cards/category/{card_category.id}")
 
 
-@card_center.route('/cards/edit_card/<int:id>', methods=['GET', 'POST'])
+@card_center.route('/cards/edit_card/<int:card_id>', methods=['GET', 'POST'])
 def edit_card(card_id):
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
 
     card_0 = Card.query.get_or_404(card_id)
     # print(id,card.id,card.headline)
@@ -438,10 +428,10 @@ def edit_card(card_id):
                            important_cards=important_cards, )
 
 
-@card_center.route('/cards/edit_item/<int:id>', methods=['GET', 'POST'])
+@card_center.route('/cards/edit_item/<int:card_id>', methods=['GET', 'POST'])
 def edit_item(card_id):
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
     # print("edit_item",id)
     card = Card.query.get_or_404(card_id)
     # print("card_category_id",card.cardcategory_id)
@@ -497,10 +487,10 @@ def edit_item(card_id):
     return redirect(f"/cards/category/{category_id}")
 
 
-@card_center.route('/cards/edit_category/<int:id>', methods=['GET', 'POST'])
+@card_center.route('/cards/edit_category/<int:card_id>', methods=['GET', 'POST'])
 def edit_category(card_id):
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
     # print("edit_category",id)
     card_category = CardCategory.query.get_or_404(card_id)
     card_category.name = request.form.get('name')
@@ -510,10 +500,10 @@ def edit_category(card_id):
     return redirect(f"/cards/category/1")
 
 
-@card_center.route('/cards/done/<int:id>', methods=['GET', 'POST'])
+@card_center.route('/cards/done/<int:card_id>', methods=['GET', 'POST'])
 def done(card_id):
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
     card = Card.query.get_or_404(card_id)
     category_id = card.cardcategory_id
     now_time = datetime.datetime.now()
@@ -533,10 +523,10 @@ def done(card_id):
     return redirect(f"/cards/category/{category_id}")
 
 
-@card_center.route('/cards/delete_item/<int:id>', methods=['GET', 'POST'])
+@card_center.route('/cards/delete_item/<int:card_id>', methods=['GET', 'POST'])
 def delete_item(card_id):
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
     # print("del_item",id)
     item = Card.query.get_or_404(card_id)
     category_id = item.cardcategory_id
@@ -548,14 +538,16 @@ def delete_item(card_id):
     return redirect(f"/cards/category/1")
 
 
-@card_center.route('/cards/delete_category/<int:id>', methods=['GET', 'POST'])
+@card_center.route('/cards/delete_category/<int:card_id>', methods=['GET', 'POST'])
 def delete_category(card_id):
-    if session.get('islogin') is None:
-        return 404
+    if session.get('main_islogin') is None:
+        abort(404)
     card_category = CardCategory.query.get_or_404(card_id)
     if card_category is None or card_id in [1, 2]:
         return redirect(f"/cards/category/1")
     db.session.delete(card_category)
+    db.session.commit()
+    return redirect(f"/cards/category/{card_category.id}")
     db.session.commit()
     time.sleep(0.2)
     return redirect(f"/cards/category/1")

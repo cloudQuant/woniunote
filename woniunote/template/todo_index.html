@@ -60,9 +60,9 @@
         <div class="row">
             <div class="col s12 m4 l4">
                 <div class="right-align nav-button">
-                    <a class="waves-effect waves-light btn blue center-align" href="/todo/category/1"><i class="material-icons left">email</i>收件箱 {{ categories[0].items|length }}</a>
+                    <a class="waves-effect waves-light btn blue center-align" href="/todo/category/1"><i class="material-icons left">email</i>收件箱 {{ categories[0].items.count() }}</a>
                     <br><br>
-                    <a class="waves-effect waves-light btn green center-align" href="/todo/category/2"><i class="material-icons left">done</i>已完成 {{ categories[1].items|length }}</a>
+                    <a class="waves-effect waves-light btn green center-align" href="/todo/category/2"><i class="material-icons left">done</i>已完成 {{ categories[1].items.count() }}</a>
                     <br><br>
                 </div>
                 <div class="row">
@@ -70,7 +70,7 @@
                             {% for category in categories[2:] %}
                             <span class="categories">
                             <a href="/todo/delete_category/{{category.id}}" class="right delete-category red-text" title="delete it?">x</a>
-                            <a href="/todo/category/{{category.id}}" class="collection-item {% if category == category_now %}active{% endif %}"><span class="badge {% if category == category_now %}white-text{% endif %}">{{ category.items|length }}</span>{{ category.name }}</a>
+                            <a href="/todo/category/{{category.id}}" class="collection-item {% if category == category_now %}active{% endif %}"><span class="badge {% if category == category_now %}white-text{% endif %}">{{ category.items.count() }}</span>{{ category.name }}</a>
                             </span>
                             {% endfor %}
                         </div>

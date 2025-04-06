@@ -24,48 +24,103 @@
     <h2 align="center">我的清单人生</h2>
 
     <div class="container">
-        <!-- Simplify spacing -->
+        <!-- 卡片编辑表单 -->
         <div class="row">
-            <form id="add-card-form" action="/cards/add_new_card" method="POST">
-                <div class="row">
-                    <div class="input-field col-xs-12 col-sm-2 col-md-2 col-lg-2">
-                        <select id="category-select" name="category">
-                            {% if category_now.id == 2 %}
-                                <option value="" selected disabled>选择分类</option>
-                            {% else %}
-                                <option value="{{ category_now.id }}" selected>{{ category_now.name }}</option>
-                            {% endif %}
-                            {% for category in categories %}
-                                {% if category != category_now and category.id != 2 %}
-                                    <option value="{{ category.id }}">{{ category.name }}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="input-field col-xs-12 col-sm-2 col-md-2 col-lg-2">
-                        <input class="validate" id="card_headline" type="text" name="card_headline" placeholder="想要做些什么呢">
-                    </div>
-
-                    <div class="input-field col-xs-12 col-sm-2 col-md-2 col-lg-2">
-                        <input class="validate" id="card_date" type="text" name="card_date" placeholder="输入截止日期">
-                    </div>
-
-                    <div class="input-field col-xs-12 col-sm-2 col-md-2 col-lg-2">
-                        <select id="type-select" name="card_type">
-                            <option value="3" selected>紧急不重要</option>
-                            <option value="4" selected>不重要不紧急</option>
-                            <option value="2" selected>重要不紧急</option>
-                            <option value="1" selected>重要紧急</option>
-                        </select>
-                    </div>
-
-                    <div class="input-field col-xs-12 col-sm-2 col-md-2 col-lg-2">
-                        <input type="submit" value="添加" role="button" class="btn btn-danger">
-                    </div>
+            <div class="col-xs-12">
+                <div class="card-panel">
+                    <h4>编辑卡片</h4>
+                    <form id="edit-card-form" action="/cards/edit_item/{{ card.id }}" method="POST">
+                        <div class="row">
+                            <!-- 标题 -->
+                            <div class="form-group col-md-6">
+                                <label for="headline">标题</label>
+                                <input class="form-control" id="headline" type="text" name="headline" value="{{ card.headline }}">
+                            </div>
+                            
+                            <!-- 类别 -->
+                            <div class="form-group col-md-6">
+                                <label for="category_id">类别</label>
+                                <select id="category_id" name="category_id" class="form-control">
+                                    {% for category in categories %}
+                                        {% if category.id != 2 %}
+                                            <option value="{{ category.id }}" {% if category.id == card.cardcategory_id %}selected{% endif %}>{{ category.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- 类型 -->
+                            <div class="form-group col-md-4">
+                                <label for="card_type">重要程度</label>
+                                <select id="card_type" name="card_type" class="form-control">
+                                    <option value="1" {% if card.type == 1 %}selected{% endif %}>重要紧急</option>
+                                    <option value="2" {% if card.type == 2 %}selected{% endif %}>重要不紧急</option>
+                                    <option value="3" {% if card.type == 3 %}selected{% endif %}>紧急不重要</option>
+                                    <option value="4" {% if card.type == 4 %}selected{% endif %}>不重要不紧急</option>
+                                </select>
+                            </div>
+                            
+                            <!-- 截止日期 -->
+                            <div class="form-group col-md-4">
+                                <label for="updatetime">截止日期</label>
+                                <input class="form-control" type="text" name="updatetime" id="updatetime" value="{{ card.updatetime }}">
+                            </div>
+                            
+                            <!-- 已用时间 -->
+                            <div class="form-group col-md-4">
+                                <label for="usedtime">已用时间（分钟）</label>
+                                <input class="form-control" type="number" name="usedtime" id="usedtime" value="{{ card.usedtime or 0 }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- 创建时间 -->
+                            <div class="form-group col-md-4">
+                                <label for="createtime">创建时间</label>
+                                <input class="form-control" type="text" name="createtime" id="createtime" value="{{ card.createtime }}">
+                            </div>
+                            
+                            <!-- 开始时间 -->
+                            <div class="form-group col-md-4">
+                                <label for="begintime">开始时间</label>
+                                <input class="form-control" type="text" name="begintime" id="begintime" value="{{ card.begintime or 'None' }}">
+                            </div>
+                            
+                            <!-- 结束时间 -->
+                            <div class="form-group col-md-4">
+                                <label for="endtime">结束时间</label>
+                                <input class="form-control" type="text" name="endtime" id="endtime" value="{{ card.endtime or 'None' }}">
+                            </div>
+                        </div>
+                        
+                        <!-- 内容 -->
+                        <div class="row">
+                            <div class="form-group col-md-12">
+                                <label for="content">内容</label>
+                                <script id="content" name="content" type="text/plain">{{ card.content or '' }}</script>
+                            </div>
+                        </div>
+                        
+                        <!-- 提交按钮 -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <input type="hidden" name="donetime" value="{{ card.donetime or 'None' }}">
+                                <button type="submit" class="btn btn-primary">保存修改</button>
+                                <a href="/cards/category/{{ card.cardcategory_id }}" class="btn btn-default">取消</a>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
+        
+        <!-- 分类列表 -->
+        <div class="row">
+            <h4>分类列表</h4>
+        </div>
+
 
         <div class="row">
             <!-- Category loop -->
@@ -73,7 +128,7 @@
                 {% if category.name not in ["日清单", "周清单", "月清单", "年清单", "十年清单", "不重要不紧急", "紧急不重要", "重要不紧急", "重要紧急", "已开始清单"] %}
                     <div class="col-xs-4 col-sm-2 col-md-2 col-lg-2 left">
                         <a href="/cards/delete_category/{{ category.id }}" class="right delete-category red-text" title="delete it?">x</a>
-                        <a role="button" class="btn btn-success" href="/cards/category/{{ category.id }}">{{ category.name }}<span class="badge">{{ category.cards|length }}</span></a>
+                        <a role="button" class="btn btn-success" href="/cards/category/{{ category.id }}">{{ category.name }}<span class="badge">{{ category.cards.count() }}</span></a>
                     </div>
                 {% endif %}
             {% endfor %}

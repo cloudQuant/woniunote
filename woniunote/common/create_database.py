@@ -2,31 +2,16 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Nov 13, 22:20:56 2021
+更新：集中使用主应用的数据库连接，避免多个SQLAlchemy实例
 
 @author: ubuntu
 """
 import hashlib
-import os
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from woniunote.common.database import db
 from woniunote.common.utils import read_config
 
-# pymysql.install_as_MySQLdb()    # ModuleNotFoundError: No module named 'MySQLdb'
+# 读取配置，仅用于初始化数据
 config_result = read_config()
-SQLALCHEMY_DATABASE_URI = config_result['database']["SQLALCHEMY_DATABASE_URI"]
-
-app = Flask(__name__, template_folder='template', static_url_path='/', static_folder='resource')
-app.config['SECRET_KEY'] = os.urandom(24)
-
-# 使用集成方式处理SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # True: 跟踪数据库的修改，及时发送信号
-app.config['SQLALCHEMY_POOL_SIZE'] = 100  # 数据库连接池的大小。默认是数据库引擎的默认值（通常是 5）
-# 实例化db对象
-db = SQLAlchemy(app)
-
-dbsession = db.session
-DBase = db.Model
 
 
 class User(db.Model):
@@ -147,44 +132,9 @@ class Credit(db.Model):
                 f" updatetime = {self.updatetime}")
 
 
-class Item(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    body = db.Column(db.Text)
-    category_id = db.Column(
-        db.Integer, db.ForeignKey('category.id'), default=1)
-
-
-class Category(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64))
-    items = db.relationship('Item', backref='category')
-
-
-class Card(db.Model):
-    __tablename__ = "card"
-
-    id = db.Column(db.Integer, primary_key=True,
-                   nullable=False, autoincrement=True)
-    type = db.Column(db.Integer, default=1)
-    headline = db.Column(db.Text(200), nullable=False)
-    content = db.Column(db.TEXT(16777216), default="")
-    createtime = db.Column(db.DateTime)
-    updatetime = db.Column(db.DateTime)
-    donetime = db.Column(db.DateTime)
-    usedtime = db.Column(db.Integer, default=0)
-    begintime = db.Column(db.DateTime)
-    endtime = db.Column(db.DateTime)
-    cardcategory_id = db.Column(
-        db.Integer, db.ForeignKey('cardcategory.id'), default=1)
-    # 创建一个外键，和django不一样。flask需要指定具体的字段创建外键，不能根据类名创建外键
-    # role_id = db.Column(db.Integer,db.ForeignKey("roles.id"))
-
-
-class CardCategory(db.Model):
-    __tablename__ = "cardcategory"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64))
-    cards = db.relationship('Card', backref='cardcategory')
+# Todo和Card模型已移动到models目录下的专门文件中
+# 从woniunote.models.todo导入Item, Category
+# 从woniunote.models.card导入Card, CardCategory
 
 
 if __name__ == '__main__':
