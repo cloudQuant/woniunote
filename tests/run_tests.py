@@ -83,6 +83,13 @@ def parse_args():
     parser.add_argument('--unit-only', action='store_true', help='只运行单元测试，跳过所有浏览器测试')
     parser.add_argument('--continue-on-failure', action='store_true', help='即使测试失败也继续运行其他测试')
     parser.add_argument('--debug', action='store_true', help='启用调试模式')
+    
+    # 添加直接测试相关选项
+    parser.add_argument('--direct', action='store_true', help='使用直接测试方式（不使用pytest）')
+    parser.add_argument('--cards-only', action='store_true', help='只运行卡片测试')
+    parser.add_argument('--todos-only', action='store_true', help='只运行待办事项测试')
+    parser.add_argument('--model-only', action='store_true', help='只运行模型验证测试')
+    
     return parser.parse_args()
 
 def kill_process_on_port(port):
