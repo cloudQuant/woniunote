@@ -16,7 +16,7 @@ import os
 import requests
 import pymysql
 from pymysql.cursors import DictCursor
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageFont, ImageDraw, ImageOps, ImageFilter
 from urllib.parse import urlparse
 import math
 
@@ -198,6 +198,133 @@ def model_list(result):
 
 
 # SQLAlchemy连接查询两张表的结果集转换为[{},{}]
+
+
+# 获取系统默认字体路径
+def get_system_font_path():
+    """Get a valid font path for different OS"""
+    if os.name == 'nt':  # Windows
+        return "C:\\Windows\\Fonts\\Arial.ttf"
+    elif os.name == 'posix':  # Linux/Mac
+        # 常见Linux/Mac字体位置
+        common_fonts = [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/System/Library/Fonts/Helvetica.ttc",
+            "/Library/Fonts/Arial.ttf"
+        ]
+        for font in common_fonts:
+            if os.path.exists(font):
+                return font
+    return None  # 如果都找不到，返回None
+
+
+# 创建七彩蜗牛图标函数
+def create_colorful_snail_icon():
+    """Create a colorful snail icon as favicon based on the left part of the logo.png"""
+    try:
+        # 获取包路径
+        package_path = get_package_path("woniunote")
+        
+        # 读取原始图标
+        logo_path = f"{package_path}/resource/img/logo.png"
+        favicon_path = f"{package_path}/resource/static/favicon.ico"
+        
+        if not os.path.exists(logo_path):
+            print(f"Logo file not found at {logo_path}")
+            return False
+        
+        # 打开原始图标并转换为RGBA模式以支持透明
+        logo = Image.open(logo_path).convert('RGBA')
+        
+        # 获取图标尺寸
+        width, height = logo.width, logo.height
+        
+        # 裁剪左半部分(假设蜗牛在左半部分)
+        snail_part = logo.crop((0, 0, width // 2, height))
+        
+        # 创建新的正方形画布，由于favicon通常是正方形
+        favicon_size = max(width // 2, height)
+        
+        # 创建新图像为透明背景
+        new_icon = Image.new('RGBA', (favicon_size, favicon_size), (0, 0, 0, 0))
+        
+        # 将裁剪后的蜗牛图标粘贴到中心位置
+        paste_position = (
+            (favicon_size - snail_part.width) // 2,
+            (favicon_size - snail_part.height) // 2
+        )
+        new_icon.paste(snail_part, paste_position, snail_part)
+        
+        # 应用七彩色彩效果 - 使用色相旋转和强化饱和度
+        enhancer = ImageOps.colorize(
+            snail_part.convert('L'), 
+            black=(30, 0, 50),  # 深色调(紫色)
+            white=(255, 100, 50),  # 浅色调(橙红色)
+            mid=(50, 180, 230)   # 中间色调(蓝色)
+        ).convert('RGBA')
+        
+        # 应用彩色效果
+        colored_snail = Image.new('RGBA', snail_part.size, (0, 0, 0, 0))
+        for y in range(snail_part.height):
+            for x in range(snail_part.width):
+                r, g, b, a = snail_part.getpixel((x, y))
+                if a > 50:  # 只对非透明像素应用彩色
+                    # 使用渐变色彩效果
+                    h = (x + y) % 360  # 基于像素位置的色相值
+                    s = 0.8  # 饱和度
+                    v = 0.9  # 亮度
+                    r, g, b = hsv_to_rgb(h/360, s, v)
+                    colored_snail.putpixel((x, y), (int(r*255), int(g*255), int(b*255), a))
+            
+        # 将彩色蜗牛图像粘贴到新图标上
+        new_icon.paste(colored_snail, paste_position, colored_snail)
+        
+        # 应用轮廓效果使图标更清晰
+        new_icon = new_icon.filter(ImageFilter.SHARPEN)
+        
+        # 调整大小为标准favicon尺寸(32x32)
+        new_icon = new_icon.resize((32, 32), Image.LANCZOS)
+        
+        # 保存为ICO格式
+        new_icon.save(favicon_path, format='ICO')
+        
+        print(f"Colorful snail favicon created at {favicon_path}")
+        return True
+    except Exception as e:
+        print(f"Error creating favicon: {e}")
+        return False
+
+
+# HSV到RGB的转换函数
+def hsv_to_rgb(h, s, v):
+    """
+    Convert HSV color values to RGB
+    h: 0-1 (hue)
+    s: 0-1 (saturation)
+    v: 0-1 (value)
+    """
+    if s == 0.0:
+        return v, v, v
+    
+    i = int(h * 6)
+    f = (h * 6) - i
+    p = v * (1 - s)
+    q = v * (1 - s * f)
+    t = v * (1 - s * (1 - f))
+    
+    i %= 6
+    if i == 0:
+        return v, t, p
+    elif i == 1:
+        return q, v, p
+    elif i == 2:
+        return p, v, t
+    elif i == 3:
+        return p, q, v
+    elif i == 4:
+        return t, p, v
+    else:
+        return v, p, q
 # Comment，Users， [(Comment, Users),(Comment, Users),(Comment, Users)]
 def model_join_list(result):
     m_list = []  # 定义列表用于存放所有行
