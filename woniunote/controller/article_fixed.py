@@ -260,8 +260,8 @@ def add_article():
                     drafted=drafted,
                     checked=checked
                 )
-                # 返回文章ID字符串，前端AJAX处理需要这种格式
-                return str(article_id)
+                # 返回重定向而不是字符串ID，确保通过正常流程加载文章页面
+                return redirect(url_for('article.read', articleid=article_id))
             except Exception as e:
                 print('post-fail', e)
                 return 'post-fail'
@@ -282,8 +282,8 @@ def add_article():
                         drafted=drafted,
                         checked=checked
                     )
-                    # 返回文章ID字符串，前端AJAX处理需要这种格式
-                    return str(article_id)
+                    # 返回重定向而不是字符串ID，确保通过正常流程加载文章页面
+                    return redirect(url_for('article.read', articleid=article_id))
                 else:
                     return 'perm-denied'
             except Exception as e:

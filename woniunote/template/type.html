@@ -42,8 +42,8 @@
                     <div class="info">作者：{{nickname}}&nbsp;&nbsp;&nbsp;
                         类别：{{ article_type.get(article.type//100, "未知类别") }}&nbsp;&nbsp;&nbsp;
                         日期：{{article.createtime}}&nbsp;&nbsp;&nbsp;阅读：{{article.readcount}} 次&nbsp;&nbsp;&nbsp;消耗积分：{{article.credit}} 分</div>
-                    <div class="intro">
-                        {{article.content | striptags | truncate(80)}}
+                    <div class="intro" data-raw-content="{{article.content | striptags | truncate(400)}}">
+                        <!-- 内容将由JavaScript清理和填充 -->
                     </div>
                 </div>
             </div>
@@ -116,5 +116,178 @@
 
         {# 按需引入side.html，首页需要 #}
         {% include 'side.html' %}
+        
+    <script>
+        $(document).ready(function() {
+            console.log('开始清理type.html中的文章预览...');
+            
+            // 获取所有预览元素
+            $('.intro').each(function(index) {
+                var element = $(this);
+                var rawContent = element.attr('data-raw-content') || '';
+                
+                if (!rawContent) {
+                    console.log('第' + (index+1) + '个文章没有原始内容');
+                    return;
+                }
+                
+                console.log('处理第' + (index+1) + '个文章预览');
+                
+                try {
+                    // 初始化清理后的内容
+                    var cleanedContent = '';
+                    
+                    // 首先判断内容中的汉字数量
+                    var firstChars = rawContent.substring(0, 100);
+                    var chineseCount = (firstChars.match(/[\u4e00-\u9fa5]/g) || []).length;
+                    
+                    // 判断是否包含CSS关键词
+                    var hasCssKeywords = /table|border|collapse|width|margin|padding|style/i.test(firstChars);
+                    
+                    // 如果开头有足够的汉字且没有CSS关键词，可能是直接的内容
+                    if (chineseCount > 10 && !hasCssKeywords) {
+                        console.log('  文章开头包含足够汉字，使用原内容');
+                        cleanedContent = rawContent;
+                    } 
+                    // 如果包含CSS关键词或汉字数量少，可能需要清理
+                    else {
+                        console.log('  检测到可能的CSS内容，开始清理');
+                        
+                        // 测试方法1: 尝试找到标题关键词
+                        var titleKeywords = [
+                            '金融数据', '处理缺失值', '数据分析', '数据处理', 
+                            '分析方法', '方差分析', '统计学习', '机器学习'
+                        ];
+                        
+                        var foundTitle = false;
+                        for (var i = 0; i < titleKeywords.length; i++) {
+                            var pos = rawContent.indexOf(titleKeywords[i]);
+                            if (pos > 0) {
+                                cleanedContent = rawContent.substring(pos);
+                                console.log('  找到标题关键词: ' + titleKeywords[i]);
+                                foundTitle = true;
+                                break;
+                            }
+                        }
+                        
+                        // 测试方法2: 如果没找到标题，尝试找中文句子
+                        if (!foundTitle) {
+                            // 尝试找到第一个包含多个汉字的句子
+                            var chineseSegments = rawContent.match(/[\u4e00-\u9fa5]{5,}[\S\s]{0,30}[\u4e00-\u9fa5]{5,}/g);
+                            if (chineseSegments && chineseSegments.length > 0) {
+                                cleanedContent = chineseSegments[0];
+                                console.log('  找到中文段落');
+                            } else {
+                                // 如果还是没有，就找单独的中文片段
+                                var singleChineseBlock = rawContent.match(/[\u4e00-\u9fa5]{8,}/);
+                                if (singleChineseBlock) {
+                                    cleanedContent = singleChineseBlock[0] + '...';
+                                    console.log('  找到单个中文片段');
+                                } else {
+                                    // 如果还是找不到，尝试更加激进的方法
+                                    // 先尝试找任何单个汉字
+                                    var singleChinese = rawContent.search(/[\u4e00-\u9fa5]/);
+                                    if (singleChinese > 0) {
+                                        // 从第一个汉字开始截取
+                                        cleanedContent = rawContent.substring(singleChinese);
+                                        console.log('  找到单个汉字位置，从该处截取');
+                                    } else {
+                                        // 非常激进的方法 - 直接跳过前一半的内容
+                                        var halfPoint = Math.floor(rawContent.length / 2);
+                                        cleanedContent = rawContent.substring(halfPoint);
+                                        console.log('  采用激进方式，跳过前半部分内容');
+                                        
+                                        // 如果跳过前半后仍无可用内容，才使用默认内容
+                                        if (!cleanedContent || cleanedContent.trim().length < 5) {
+                                            cleanedContent = '数据处理与金融分析相关内容...';
+                                            console.log('  未能找到有效内容，使用默认文本');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 最后清理残留的CSS代码 - 强化清理规则
+                        cleanedContent = cleanedContent
+                            // 先强力清除全部style标签及内容
+                            .replace(/<style>[\s\S]*?<\/style>/gi, '')
+                            // 清除全部CSS规则
+                            .replace(/[a-z0-9_.-]+\s*{[^}]*}/gi, '')
+                            .replace(/[a-z0-9_.-]+\s*,[^{]*{[^}]*}/gi, '')
+                            // 清除各种CSS属性
+                            .replace(/[a-z-]+\s*:[^;]+;/gi, '')
+                            // 特殊处理常见的CSS关键词
+                            .replace(/table[^\u4e00-\u9fa5]{0,50}/gi, '')
+                            .replace(/border[^\u4e00-\u9fa5]{0,50}/gi, '')
+                            .replace(/width[^\u4e00-\u9fa5]{0,50}/gi, '')
+                            .replace(/margin[^\u4e00-\u9fa5]{0,50}/gi, '')
+                            .replace(/padding[^\u4e00-\u9fa5]{0,50}/gi, '')
+                            .replace(/collapse[^\u4e00-\u9fa5]{0,50}/gi, '')
+                            .replace(/style[^\u4e00-\u9fa5]{0,50}/gi, '')
+                            // 清除不完整的CSS片段
+                            .replace(/r:\s*\d+px\s*[\w\s#]*;?/gi, '')
+                            .replace(/r:\s*\d+px\s*solid\s*#?[\w\d]+;?/gi, '')
+                            .replace(/r-[a-z]+:\s*[^;]+;?/gi, '')
+                            .replace(/\w+-(color|style|width|height|family|size|weight|align|collapse):[^;]+;?/gi, '')
+                            .replace(/ackground[^;:]*:[^;]+;?/gi, '')
+                            .replace(/order[^;:]*:[^;]+;?/gi, '')
+                            .replace(/argin[^;:]*:[^;]+;?/gi, '')
+                            .replace(/adding[^;:]*:[^;]+;?/gi, '')
+                            .replace(/eight[^;:]*:[^;]+;?/gi, '')
+                            .replace(/idth[^;:]*:[^;]+;?/gi, '')
+                            // 清理特殊字符
+                            .replace(/[{};:#<>=]/g, ' ')
+                            .replace(/\s+/g, ' ')
+                            .trim();
+                            
+                        // 检查清理后的内容是否合理
+                        if (cleanedContent && cleanedContent.length > 0) {
+                            console.log('  成功提取文章内容: ' + cleanedContent.substring(0, 20) + '...');
+                        } else {
+                            console.log('  提取内容为空，采用备选方案');
+                            // 再尝试提取标题附近的内容
+                            var titleText = $(element).closest('.article').find('.title').text().trim();
+                            if (titleText) {
+                                var titlePos = rawContent.indexOf(titleText);
+                                if (titlePos >= 0 && titlePos + titleText.length + 5 < rawContent.length) {
+                                    cleanedContent = rawContent.substring(titlePos + titleText.length + 1).trim();
+                                    console.log('  使用标题位置提取内容');
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 确保最终结果有内容
+                    if (!cleanedContent || cleanedContent.length < 5) {
+                        // 直接使用文章标题作为备用文本
+                        var titleElement = $(element).closest('.article').find('.title a');
+                        if (titleElement && titleElement.length > 0) {
+                            var title = titleElement.text().trim();
+                            cleanedContent = title + '的相关详细内容，点击查看完整文章。';
+                            console.log('  使用文章标题生成摘要:', title);
+                        } else {
+                            cleanedContent = '金融数据处理内容，点击标题查看完整文章。';
+                        }
+                    }
+                    
+                    // 截取合适长度 (80个字符)
+                    var summary = '';
+                    if (cleanedContent.length > 80) {
+                        summary = cleanedContent.substring(0, 80) + '...';
+                    } else {
+                        summary = cleanedContent;
+                    }
+                    
+                    // 更新元素内容
+                    element.text(summary);
+                    console.log('  预览处理完成: ' + summary.substring(0, 30) + '...');
+                    
+                } catch (e) {
+                    console.error('预览处理出错:', e);
+                    element.text('金融数据处理相关内容...');
+                }
+            });
+        });
+    </script>
 
 {% endblock %}
