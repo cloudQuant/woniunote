@@ -38,7 +38,6 @@ pytest-asyncio
 pytest-xdist
 pytest-html
 pytest-ordering
-pytest-cov
 pytest-mock
 requests-mock
 playwright

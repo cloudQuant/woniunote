@@ -484,7 +484,13 @@ def create_app(config_name='production'):
         # print("Request Headers:", request.headers)
         return '/static/favicon.ico'
 
+    @app.route('/health')
+    def health_check():
+        return {'status': 'ok', 'timestamp': time.time()}, 200
+
     return app
+
+   
 
 # 创建应用实例
 app = create_app()
@@ -496,3 +502,4 @@ if __name__ == '__main__':
             debug=True,
             port=5000,
             ssl_context=(path + "/configs/cert.pem", path + "/configs/key.pem"))
+        

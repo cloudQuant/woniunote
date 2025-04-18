@@ -1,0 +1,102 @@
+name: WoniuNote CI
+
+on:
+  push:
+    branches: [ development, main, master ]
+  pull_request:
+    branches: [ development, main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: woniunote_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; else pip install -r requirements.txt; fi
+        
+    - name: Run tests
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+        TEST_DATABASE_URI: mysql+pymysql://root:root@localhost/woniunote_test
+      run: |
+        # 替换配置文件中的数据库连接字符串为测试数据库
+        sed -i 's|SQLALCHEMY_DATABASE_URI:.*|SQLALCHEMY_DATABASE_URI: ${{ env.TEST_DATABASE_URI }}|g' configs/config.yaml
+        # 运行测试
+        pytest tests/ --cov=woniunote --cov-report=xml
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy
+        
+    - name: Lint with flake8
+      run: |
+        # 停止构建，如有严重错误（例如语法错误）
+        flake8 woniunote --count --select=E9,F63,F7,F82 --show-source --statistics
+        # 仅显示警告，不停止构建
+        flake8 woniunote --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+        
+    - name: Check formatting with black
+      run: |
+        black --check --line-length=100 woniunote
+        
+    - name: Check imports with isort
+      run: |
+        isort --check-only --profile black woniunote
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+        
+    - name: Security check with bandit
+      run: |
+        bandit -r woniunote -x tests/ -ll
+        
+    - name: Check dependencies with safety
+      run: |
+        safety check

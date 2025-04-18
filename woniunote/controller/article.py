@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, abort, url_for
+from flask import Blueprint, render_template, request, session, abort, url_for, redirect
 from woniunote.module.articles import Articles
 from woniunote.module.users import Users
 from woniunote.common.session_util import get_current_user_id
@@ -89,7 +89,8 @@ def read(articleid):
                             last_articles=last,
                             most_articles=most,
                             recommended_articles=recommended,
-                            current_userid=current_userid)
+                            current_userid=current_userid,
+                            article_type=ARTICLE_TYPES)
     except Exception as e:
         print("Error in read:", e)
         traceback.print_exc()
@@ -166,7 +167,15 @@ def edit_article():
         # 获取表单数据
         headline = request.form.get('headline')
         content = request.form.get('content')
-        article_type = int(request.form.get('type'))
+        main_type = int(request.form.get('type'))
+        sub_type = request.form.get('subtype')
+        
+        # 优先使用子类型，如果有子类型则使用子类型的值作为文章类型
+        if sub_type and sub_type.strip():
+            article_type = int(sub_type)
+        else:
+            article_type = main_type
+            
         credit = int(request.form.get('credit'))
         drafted = int(request.form.get('drafted'))
         checked = int(request.form.get('checked'))
@@ -220,7 +229,15 @@ def add_article():
 
         headline = request.form.get('headline')
         content = request.form.get('content')
-        article_type = int(request.form.get('type'))
+        main_type = int(request.form.get('type'))
+        sub_type = request.form.get('subtype')
+        
+        # 优先使用子类型，如果有子类型则使用子类型的值作为文章类型
+        if sub_type and sub_type.strip():
+            article_type = int(sub_type)
+        else:
+            article_type = main_type
+        
         credit = int(request.form.get('credit'))
         drafted = int(request.form.get('drafted'))
         checked = int(request.form.get('checked'))
@@ -243,6 +260,7 @@ def add_article():
                     drafted=drafted,
                     checked=checked
                 )
+                # 返回文章ID字符串，前端AJAX处理需要这种格式
                 return str(article_id)
             except Exception as e:
                 print('post-fail', e)
@@ -264,6 +282,7 @@ def add_article():
                         drafted=drafted,
                         checked=checked
                     )
+                    # 返回文章ID字符串，前端AJAX处理需要这种格式
                     return str(article_id)
                 else:
                     return 'perm-denied'

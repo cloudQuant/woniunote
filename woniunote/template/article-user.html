@@ -186,9 +186,181 @@
 
         </div>
         <div class="col-12 content" id="content" style="padding: 20px; line-height: 1.8; font-size: 16px;">
-            {{article.content | safe}}  <!-- 渲染文章内容 -->
-
+            <!-- 添加一个隐藏的div用于预处理内容 -->
+            <div id="content-preprocessor" style="display:none;">{{article.content | safe}}</div>
+            <!-- 实际显示的内容容器 -->
+            <div id="content-display"></div>
         </div>
+
+        <script>
+            // 在页面加载完成后处理文章内容
+            document.addEventListener('DOMContentLoaded', function() {
+                // 获取原始内容
+                var rawContent = document.getElementById('content-preprocessor').innerHTML;
+                
+                // 移除内联样式表代码块（通常是UEditor自动添加的）
+                var cleanedContent = rawContent.replace(/<style>[\s\S]*?<\/style>/g, '');
+                
+                // 将处理后的内容放入显示容器
+                document.getElementById('content-display').innerHTML = cleanedContent;
+                
+                // 初始化代码高亮和其他功能
+                initHighlightJS();
+                
+                // 如果有MathJax，重新渲染数学公式
+                if (window.MathJax) {
+                    MathJax.typeset(['#content-display']);
+                }
+            });
+        </script>
+
+        <script>
+            $(function() {
+                // 获取文章内容元素
+                var articleContent = $('#article-content');
+                
+                // 提取原始内容
+                var rawContent = articleContent.html();
+                
+                try {
+                    console.log('正在处理文章详情页内容...');
+                    
+                    // 检测是否包含CSS代码
+                    var firstSection = rawContent.substring(0, 400); // 检查前400个字符
+                    
+                    // CSS关键词列表 - 包括完整和不完整片段
+                    var cssKeywords = ['table', 'background', 'color', 'margin', 'padding', 'border', 'width', 'height', 
+                                       'font', 'style', 'display', 'td', 'th', 'tr', 'collapse', '{', '}', 'px', 'em', 'rem',
+                                       'rgb', '#', 'solid', 'dashed', 'auto', 'hidden', 'block', 'inline', 'flex',
+                                       'r: 1px', 'r: 0', 'r-collapse', 'solid #', 'border-', 'order: '];
+                    
+                    var isCssContent = false;
+                    var keywordCount = 0;
+                    
+                    // 判断关键词密度
+                    for (var i = 0; i < cssKeywords.length; i++) {
+                        if (firstSection.indexOf(cssKeywords[i]) !== -1) {
+                            keywordCount++;
+                            if (keywordCount >= 3) {
+                                isCssContent = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 尝试找到CSS规则模式或特殊形式的CSS代码
+                    if (!isCssContent) {
+                        // 判断是否有表格相关的关键词组合
+                        if (firstSection.match(/(table|border)[\s-]+(collapse|width|solid|1px|\d+px|\d+%)/i)) {
+                            isCssContent = true;
+                        }
+                        // 或者是否包含表格和表格元素的组合
+                        else if (firstSection.match(/table[\s,]+(th|td|border|tr|\d+px|\d+%)/i)) {
+                            isCssContent = true;
+                        }
+                        // 或者是否有常见的CSS规则模式
+                        else if (firstSection.match(/\w+\s*{/) || firstSection.match(/\w+\s*,\s*\w+\s*{/)) {
+                            isCssContent = true;
+                        }
+                    }
+                    
+                    var cleanedContent;
+                    
+                    if (isCssContent) {
+                        console.log('文章详情页检测到CSS内容，进行处理...');
+                        
+                        // 确保保留完整HTML结构，但清除样式部分
+                        cleanedContent = rawContent
+                            // 清除所有style标签及其内容
+                            .replace(/<style>[\s\S]*?<\/style>/gi, '')
+                            
+                            // 清除所有CSS规则
+                            .replace(/[a-z0-9_.-]+\s*{[^}]*}/gi, '')
+                            .replace(/[a-z0-9_.-]+\s*,[^{]*{[^}]*}/gi, '')
+                            
+                            // 清除各种内联CSS属性
+                            .replace(/\b(style|class)="[^"]*"/gi, '')
+                            .replace(/\s+style='[^']*'/gi, '')
+                            
+                            // 处理不完整的CSS片段
+                            .replace(/r:\s*\d+px\s*[\w\s#]*;?/gi, '')
+                            .replace(/r:\s*\d+px\s*solid\s*#?[\w\d]+;?/gi, '')
+                            .replace(/r-[a-z]+:\s*[^;]+;?/gi, '')
+                            .replace(/th,\s*th\s*{[^}]*}?/gi, '')
+                            .replace(/th,\s*th/gi, '')
+                            
+                            // 处理残留的CSS片段
+                            .replace(/\w+-(color|style|width|height|family|size|weight|align|collapse):[^;]+;?/gi, '')
+                            .replace(/ackground[^;:]*:[^;]+;?/gi, '')
+                            .replace(/order[^;:]*:[^;]+;?/gi, '')
+                            .replace(/argin[^;:]*:[^;]+;?/gi, '')
+                            .replace(/adding[^;:]*:[^;]+;?/gi, '')
+                            .replace(/eight[^;:]*:[^;]+;?/gi, '')
+                            .replace(/idth[^;:]*:[^;]+;?/gi, '')
+                            
+                            // 清理可能的残余CSS关键词以及其周围的内容
+                            .replace(/\b(table|style|margin|padding|border|width|height|background|color|font)\b[^\n.]{0,20}/gi, '')
+                            
+                            // 移除不完整的CSS块
+                            .replace(/\}[^\n\.,]{0,30}/g, '')
+                            
+                            // 移除所有HTML标签里的style属性
+                            .replace(/(<[^>]+)\s+style\s*=\s*(['"\s])[^>]*?\2([^>]*>)/gi, '$1$3')
+                            
+                            // 清理额外的空白字符
+                            .replace(/\s{2,}/g, ' ')
+                            .trim();
+                            
+                        // 额外检查: 如果清理后内容还包含大量CSS关键词，进行更激进的清理
+                        if (cleanedContent.match(/table|border|width|margin|padding/gi) && 
+                            cleanedContent.match(/table|border|width|margin|padding/gi).length > 5) {
+                            console.log('文章内容清理后仍包含CSS关键词，进行二次清理');
+                            
+                            // 尝试提取文章的实际内容部分 - 以第一段中文为起点
+                            var contentStart = cleanedContent.search(/[\u4e00-\u9fa5]{10,}/);
+                            if (contentStart > 0) {
+                                cleanedContent = cleanedContent.substring(contentStart);
+                            }
+                            
+                            // 应用最激进的清理规则
+                            cleanedContent = cleanedContent
+                                .replace(/table[^\u4e00-\u9fa5]{0,30}/gi, '')
+                                .replace(/border[^\u4e00-\u9fa5]{0,30}/gi, '')
+                                .replace(/width[^\u4e00-\u9fa5]{0,30}/gi, '')
+                                .replace(/margin[^\u4e00-\u9fa5]{0,30}/gi, '')
+                                .replace(/padding[^\u4e00-\u9fa5]{0,30}/gi, '')
+                                .replace(/collapse[^\u4e00-\u9fa5]{0,30}/gi, '')
+                                .replace(/[\{\}\;\:\#]/g, ' ')
+                                .replace(/\s+/g, ' ')
+                                .trim();
+                        }
+                    } else {
+                        // 不需要特殊处理，但仍需要移除style标签和CSS规则
+                        cleanedContent = rawContent
+                            .replace(/<style>[\s\S]*?<\/style>/gi, '')
+                            .replace(/(<[^>]+)\s+style\s*=\s*(['"\s])[^>]*?\2([^>]*>)/gi, '$1$3')
+                            .replace(/tr\s*{[^}]*}/g, '')
+                            .replace(/\.\w+\s*{[^}]*}/g, '')
+                            .replace(/#\w+\s*{[^}]*}/g, '')
+                            .replace(/[\w\s,\.#]+\{[^\}]*\}/g, '');
+                    }
+                    
+                    // 确保页面内容仍然完整
+                    if (!cleanedContent || cleanedContent.trim().length < 100) {
+                        console.warn('清理后内容过短，回退到部分清理...');
+                        // 仅移除style标签
+                        cleanedContent = rawContent.replace(/<style>[\s\S]*?<\/style>/gi, '');
+                    }
+                } catch (e) {
+                    // 出错时的备用处理
+                    console.error('处理文章内容出错:', e);
+                    cleanedContent = rawContent.replace(/<style>[\s\S]*?<\/style>/gi, '');
+                }
+                
+                // 更新文章内容
+                articleContent.html(cleanedContent);
+            });
+        </script>
 
         <!-- 只有需要消耗积分的文章且用户并未消耗过时才显示阅读全文按钮 -->
         {% if article.credit > 0 and payed == False %}

@@ -49,7 +49,8 @@
                         消耗积分：{{article.credit}} 分
                     </div>
                     <div class="intro">
-                        {{article.content | striptags | truncate(80)}}
+                        <!-- 使用自定义的预处理方式来处理文章摘要 -->
+                        <span class="article-preview" data-raw-content="{{article.content | striptags | escape}}"></span>
                     </div>
                 </div>
             </div>
@@ -129,5 +130,207 @@
 
         {# 按需引入side.html,首页需要 #}
         {% include 'side.html' %}
+
+<script>
+    // 在页面加载完成后处理文章摘要
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取所有文章预览元素
+        var previewElements = document.querySelectorAll('.article-preview');
+        
+        // 处理每个预览元素
+        previewElements.forEach(function(element) {
+            // 获取原始内容
+            var rawContent = element.getAttribute('data-raw-content');
+            
+            try {
+                // 想力检测并处理CSS片段
+                
+                // 检测毫秒 - 所有的文章如果前200个字符包含各种CSS相关关键词表明需要处理
+                var firstSection = rawContent.substring(0, 200);
+                
+                // 检测每一个可能的CSS标志 - 包括完整和不完整片段
+                var cssKeywords = ['table', 'background', 'color', 'margin', 'padding', 'border', 'width', 'height', 
+                                    'font', 'style', 'display', 'td', 'th', 'tr', 'collapse', '{', '}', 'px', 'em', 'rem',
+                                    'rgb', '#', 'solid', 'dashed', 'auto', 'hidden', 'block', 'inline', 'flex',
+                                    'r: 1px', 'r: 0', 'r-collapse', 'solid #', 'border-', 'order: '];
+                var isCssContent = false;
+                
+                // 检查是否包含多个CSS关键词
+                var keywordCount = 0;
+                var chineseCount = 0;
+                
+                // 检测中文数量
+                var chineseMatches = firstSection.match(/[\u4e00-\u9fa5]/g);
+                if (chineseMatches) {
+                    chineseCount = chineseMatches.length;
+                }
+                
+                // 如果开头包含足够的中文，可能是正常文章
+                if (chineseCount > 15) {
+                    isCssContent = false; // 直接确定不是CSS内容
+                } else {
+                    // 检测关键词
+                    for (var i = 0; i < cssKeywords.length; i++) {
+                        if (firstSection.indexOf(cssKeywords[i]) !== -1) {
+                            keywordCount++;
+                            // 如果找到三个以上关键词，基本可以确定是CSS
+                            if (keywordCount >= 3) {
+                                isCssContent = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // 另一种脸测方法 - 找到表格相关的关键词组合
+                if (!isCssContent) {
+                    // 判断是否有表格相关的关键词组合
+                    if (firstSection.match(/(table|border)[\s-]+(collapse|width|solid|1px|\d+px|\d+%)/i)) {
+                        isCssContent = true;
+                    }
+                    // 或者是否包含表格和表格元素的组合
+                    else if (firstSection.match(/table[\s,]+(th|td|border|tr|\d+px|\d+%)/i)) {
+                        isCssContent = true;
+                    }
+                    // 或者是否有常见的CSS规则模式
+                    else if (firstSection.match(/\w+\s*{/) || firstSection.match(/\w+\s*,\s*\w+\s*{/)) {
+                        isCssContent = true;
+                    }
+                }
+                
+                var cleanedContent;
+                
+                if (isCssContent) {
+                    console.log('检测到CSS内容，进行强力清理...');
+                    
+                    // 在CSS内容中寻找可能的正文开头
+                    // 1. 先尝试找汉字开头的第一句完整话
+                    var chineseStart = rawContent.search(/[一-龥]{2,}[，。；：]/); 
+                    
+                    // 2. 如果找不到，尝试五个汉字的开头
+                    if (chineseStart === -1) {
+                        chineseStart = rawContent.search(/[一-龥]{5,}/); 
+                    }
+                    
+                    // 3. 如果还是找不到，就用更激进的方式
+                    if (chineseStart > 0) {
+                        // 找到了汉字开头，从这里开始截取
+                        cleanedContent = rawContent.substring(chineseStart);
+                    } else {
+                        // 非常激进的方式 - 直接跳过前一半的内容
+                        var halfPoint = Math.floor(rawContent.length / 2);
+                        cleanedContent = rawContent.substring(halfPoint);
+                    }
+                    
+                    // 将所有剩余的CSS相关内容都清理掉
+                    cleanedContent = cleanedContent
+                        // 对常见CSS规则进行更全面的匹配
+                        .replace(/<style>[\s\S]*?<\/style>/gi, '')
+                        .replace(/[a-z0-9_.-]+\s*{[^}]*}/gi, '')
+                        .replace(/[a-z0-9_.-]+\s*,[^{]*{[^}]*}/gi, '')
+                        
+                        // 处理不完整的CSS片段
+                        .replace(/r:\s*\d+px\s*[\w\s#]*;?/gi, '')
+                        .replace(/r:\s*\d+px\s*solid\s*#?[\w\d]+;?/gi, '')
+                        .replace(/r-[a-z]+:\s*[^;]+;?/gi, '')
+                        .replace(/th,\s*th\s*{[^}]*}?/gi, '')
+                        .replace(/th,\s*th/gi, '')
+                        
+                        // 处理常规CSS属性
+                        .replace(/\w+-(color|style|width|height|family|size|weight|align|collapse):[^;]+;?/gi, '')
+                        .replace(/ackground[^;:]*:[^;]+;?/gi, '')
+                        .replace(/order[^;:]*:[^;]+;?/gi, '')
+                        .replace(/argin[^;:]*:[^;]+;?/gi, '')
+                        .replace(/adding[^;:]*:[^;]+;?/gi, '')
+                        .replace(/eight[^;:]*:[^;]+;?/gi, '')
+                        .replace(/idth[^;:]*:[^;]+;?/gi, '')
+                        
+                        // 移除所有可能的CSS关键词片段
+                        .replace(/\b(table|style|margin|padding|border|width|height|background|color|font)\b[^\n.]{0,20}/gi, '')
+                        
+                        // 移除不完整的CSS块
+                        .replace(/\}[^\n\.,]{0,30}/g, '');
+                    
+                    // 对剩余的内容进行正规化
+                    cleanedContent = cleanedContent
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                        
+                    // 如果经过处理后内容仍然不够，采用最后手段
+                    if (cleanedContent.length < 20) {
+                        // 找到第一个汉字，直接介绍它
+                        var firstChineseChar = rawContent.search(/[一-龥]/);
+                        if (firstChineseChar >= 0) {
+                            // 除非全是英文内容，否则尝试找到第一个汉字
+                            cleanedContent = rawContent.substring(firstChineseChar);
+                            // 再次清理
+                            cleanedContent = cleanedContent.replace(/[\{\}\;\:#]/g, ' ').replace(/\s+/g, ' ').trim();
+                        }
+                    }
+                } else {
+                    // 不需要处理，直接使用原内容
+                    cleanedContent = rawContent;
+                }
+                
+                // 最后相关措施 - 确保安全输出
+                if (!cleanedContent || cleanedContent.length < 10) {
+                    // 先尝试直接提取常见文章标题
+                    var headlineMatch = rawContent.match(/金融数据中处理缺失值的办法|数据处理缺失值|金融数据处理|解释气候数据|气候数据的两种形式/);
+                    if (headlineMatch) {
+                        // 找到标题后尝试取其后的内容
+                        var titlePos = rawContent.indexOf(headlineMatch[0]);
+                        if (titlePos >= 0) {
+                            // 从标题位置提取内容
+                            var afterTitle = rawContent.substring(titlePos);
+                            var firstSentence = afterTitle.match(/[^\n\.,\r]{10,}[\.\,\uff0c\u3002]/);
+                            if (firstSentence) {
+                                cleanedContent = firstSentence[0];
+                            }
+                        }
+                    }
+                    
+                    // 如果还是没有找到，尝试提取中文片段
+                    if (!cleanedContent || cleanedContent.length < 10) {
+                        // 抓取汉字的片段作为备用 - 尝试找到包含小段话的中文内容
+                        var chineseSegments = rawContent.match(/[\u4e00-\u9fa5]{5,}[\S\s]{0,20}[\u4e00-\u9fa5]{5,}/g);
+                        if (chineseSegments && chineseSegments.length > 0) {
+                            cleanedContent = chineseSegments[0];
+                            // 处理开头可能的CSS代码
+                            cleanedContent = cleanedContent.replace(/^[^\u4e00-\u9fa5]{0,20}/, '');
+                        } else {
+                            // 尝试找出更短的中文片段
+                            var shortChineseSegments = rawContent.match(/[\u4e00-\u9fa5]{8,}/g);
+                            if (shortChineseSegments && shortChineseSegments.length > 0) {
+                                cleanedContent = shortChineseSegments[0] + '...';
+                            } else {
+                                // 最后的备用方案 - 直接采用完全去除特殊字符的原文
+                                cleanedContent = rawContent.replace(/[\{\}\;\:\#\<\>\=]/g, ' ')
+                                                          .replace(/\s+/g, ' ')
+                                                          .trim();
+                                
+                                // 如果处理后还是太长，截取一部分
+                                if (cleanedContent.length > 100) {
+                                    cleanedContent = cleanedContent.substring(0, 100) + '...';
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                // 出错时的备用处理
+                console.error('处理文章摘要出错:', e);
+                cleanedContent = rawContent.replace(/[\{\}\;]/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+            
+            // 截取适当长度作为摘要 (约80个字符)
+            var summary = cleanedContent.length > 80 ? 
+                          cleanedContent.substring(0, 80) + '...' : 
+                          cleanedContent;
+            
+            // 更新元素内容
+            element.textContent = summary;
+        });
+    });
+</script>
 
 {% endblock %}
