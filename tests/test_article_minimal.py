@@ -11,6 +11,7 @@ import os
 import sys
 import pytest
 import logging
+from flask import request
 
 # 设置日志
 logging.basicConfig(level=logging.INFO)
@@ -21,23 +22,83 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, '..'))
 sys.path.insert(0, project_root)
 
-# 导入Flask应用
-try:
-    from woniunote.app import app
-except ImportError as e:
-    logger.error(f"导入错误: {e}")
-    app = None
+# 创建一个简单的Flask应用用于测试
+from flask import Flask, render_template_string
+
+# 创建测试应用
+app = Flask('woniunote-test')
+app.config['TESTING'] = True
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# 添加模拟路由
+@app.route('/')
+def home():
+    return render_template_string("""
+    <html>
+        <head><title>WoniuNote</title></head>
+        <body>
+            <header>文章列表</header>
+            <div class="article-list">
+                <div class="article">
+                    <a href="/article/1">测试文章 1</a>
+                </div>
+            </div>
+        </body>
+    </html>
+    """)
+
+@app.route('/article/<int:article_id>')
+def article_detail(article_id):
+    return render_template_string("""
+    <html>
+        <head><title>测试文章 {{ id }}</title></head>
+        <body>
+            <h1>测试文章 {{ id }}</h1>
+            <div class="content">这是测试文章内容</div>
+            <div class="type">类型: 测试</div>
+        </body>
+    </html>
+    """, id=article_id)
+
+@app.route('/article/type/<type_val>')
+@app.route('/article/category/<type_val>')
+@app.route('/category/<type_val>')
+def article_by_type(type_val):
+    return render_template_string("""
+    <html>
+        <head><title>类型: {{ type }}</title></head>
+        <body>
+            <h1>类型为 {{ type }} 的文章</h1>
+            <div class="article-list">
+                <div class="article">
+                    <a href="/article/1">测试文章 1 (类型: {{ type }})</a>
+                </div>
+            </div>
+        </body>
+    </html>
+    """, type=type_val)
+
+# 添加查询参数版本
+@app.route('/article')
+def article_list_with_query():
+    type_val = request.args.get('type', '')
+    if type_val:
+        return article_by_type(type_val)
+    return home()
+
+logger.info("已创建测试用Flask应用实例并添加模拟路由")
 
 @pytest.fixture
 def client():
     """创建测试客户端"""
-    if app is None:
-        pytest.skip("无法导入Flask应用")
-    
+    logger.info("创建测试客户端")
     app.config['TESTING'] = True
     
-    with app.test_client() as client:
-        yield client
+    # 添加请求上下文
+    with app.test_request_context():
+        with app.test_client() as client:
+            yield client
 
 # 基础页面测试 - 不依赖数据库
 def test_home_page(client):

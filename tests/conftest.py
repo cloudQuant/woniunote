@@ -248,42 +248,7 @@ def browser_context_args(base_url) -> Dict[str, Any]:
         }
     }
 
-@pytest.fixture(scope="session")
-def test_data():
-    """
-    准备测试所需的数据，包括测试用户和文章
-    在整个测试会话期间共享
-    
-    Returns:
-        包含测试数据的字典
-    """
-    # 在Flask应用上下文中运行
-    with FlaskAppContextProvider.get_app_context():
-        # 确保有测试用户
-        user = TestUserFactory.get_or_create_test_user()
-        logger.info(f"使用测试用户: ID={user.id}, 用户名={user.username}")
-        
-        # 尝试从utils.test_data_factory导入
-        try:
-            from tests.utils.test_data_factory import TestDataFactory
-            TestDataFactory.ensure_test_data_exists()
-            logger.info("已通过自定义工厂确保测试数据存在")
-        except ImportError:
-            # 如果没有此模块，使用原有方法
-            logger.info("使用标准方法创建测试数据")
-            
-        # 获取一些测试文章
-        articles = TestArticleFactory.get_test_articles()
-        logger.info(f"获取到 {len(articles)} 篇测试文章")
-        
-        test_data = {
-            "user": user,
-            "articles": articles
-        }
-        
-        return test_data
-
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def prepare_test_database():
     """准备测试数据库环境，创建必要的视图以适配应用程序代码和数据库结构的不匹配"""
     # 在Flask应用上下文中进行数据库操作
@@ -291,31 +256,140 @@ def prepare_test_database():
         try:
             session, engine = dbconnect()
             
-            # 检查并处理数据库架构问题
+            # 检查并创建 article 表（若不存在）
+            from sqlalchemy import text
+            result = session.execute(text("""
+                SELECT COUNT(*) AS cnt
+                FROM information_schema.tables
+                WHERE table_schema = DATABASE() AND table_name = 'article'
+            """))
             
-            # 1. 检查article表结构中的type字段类型
-            # 在模型中是Integer，但数据库可能是VARCHAR(10)，确保处理这种不匹配
-            try:
-                # 查询表结构
-                from sqlalchemy import text
-                result = session.execute(text("""
-                    SELECT column_name, data_type
-                    FROM information_schema.columns
-                    WHERE table_name = 'article' AND column_name = 'type'
+            exists = result.fetchone()[0] > 0
+            if not exists:
+                logger.warning("article 表不存在，正在创建测试专用表 ...")
+                session.execute(text("""
+                    CREATE TABLE article (
+                        articleid INT AUTO_INCREMENT PRIMARY KEY,
+                        userid INT NULL,
+                        type VARCHAR(10) NOT NULL DEFAULT '1',
+                        headline VARCHAR(100) NOT NULL,
+                        content TEXT,
+                        readcount INT DEFAULT 0,
+                        replycount INT DEFAULT 0,
+                        hidden INT DEFAULT 0,
+                        drafted INT DEFAULT 0,
+                        checked INT DEFAULT 1,
+                        recommended INT DEFAULT 0,
+                        createtime DATETIME NULL,
+                        updatetime DATETIME NULL
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
                 """))
-                
-                column_info = result.fetchone()
-                
-                if column_info and 'varchar' in column_info.data_type.lower():
-                    logger.info("检测到article表的type字段为varchar类型，但模型定义为Integer")
-                    logger.info("将确保在测试中正确处理此类型转换")
-                    
-                    # 可以选择创建一个视图或触发器来自动处理类型转换
-                    # 这里我们不修改数据库结构，而是确保在测试代码中正确处理
-            except Exception as e:
-                logger.warning(f"检查article表结构时出错: {e}")
+                session.commit()
+                logger.info("已创建 article 表 (测试环境)")
             
-            logger.info("已完成测试数据库准备")
+            # === 确保 comment 表存在 ===
+            result = session.execute(text("""
+                SELECT COUNT(*) AS cnt
+                FROM information_schema.tables
+                WHERE table_schema = DATABASE() AND table_name = 'comment'
+            """))
+            comment_exists = result.fetchone()[0] > 0
+            if not comment_exists:
+                logger.warning("comment 表不存在，正在创建测试专用表 ...")
+                session.execute(text("""
+                    CREATE TABLE comment (
+                        commentid INT AUTO_INCREMENT PRIMARY KEY,
+                        articleid INT NOT NULL,
+                        userid INT NOT NULL,
+                        content TEXT NOT NULL,
+                        ipaddress VARCHAR(45) DEFAULT '127.0.0.1',
+                        createtime DATETIME NULL,
+                        hidden INT DEFAULT 0,
+                        INDEX idx_article (articleid)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                """))
+                session.commit()
+                logger.info("已创建 comment 表 (测试环境)")
+            
+            # === 确保 users 表存在，便于登录相关测试 ===
+            result = session.execute(text("""
+                SELECT COUNT(*) FROM information_schema.tables
+                WHERE table_schema = DATABASE() AND table_name = 'users'
+            """))
+            users_exists = result.fetchone()[0] > 0
+            if not users_exists:
+                logger.warning("users 表不存在，正在创建测试专用表 ...")
+                session.execute(text("""
+                    CREATE TABLE users (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        username VARCHAR(50) UNIQUE,
+                        password VARCHAR(100),
+                        nickname VARCHAR(100),
+                        avatar VARCHAR(100),
+                        role VARCHAR(20) DEFAULT 'common',
+                        credit INT DEFAULT 0,
+                        create_time DATETIME NULL
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                """))
+                session.commit()
+                logger.info("已创建 users 表 (测试环境)")
+            
+            # 生成一个默认管理员账户，供登录测试使用
+            try:
+                result = session.execute(text("SELECT COUNT(*) FROM users WHERE username = 'admin'"))
+                if result.fetchone()[0] == 0:
+                    session.execute(text("""
+                        INSERT INTO users (username, password, nickname, role, credit, create_time)
+                        VALUES ('admin', 'admin', '管理员', 'admin', 1000, NOW())
+                    """))
+                    session.commit()
+                    logger.info("已插入默认管理员账户 admin/admin")
+            except Exception as admin_e:
+                logger.warning(f"插入默认管理员账户时出错: {admin_e}")
+            
+            # 确保关键列存在（兼容已有旧表结构）
+            required_columns = {
+                'readcount': "ALTER TABLE article ADD COLUMN readcount INT DEFAULT 0",
+                'replycount': "ALTER TABLE article ADD COLUMN replycount INT DEFAULT 0",
+                'hidden': "ALTER TABLE article ADD COLUMN hidden INT DEFAULT 0",
+                'drafted': "ALTER TABLE article ADD COLUMN drafted INT DEFAULT 0",
+                'checked': "ALTER TABLE article ADD COLUMN checked INT DEFAULT 1",
+                'recommended': "ALTER TABLE article ADD COLUMN recommended INT DEFAULT 0"
+            }
+            for col, ddl in required_columns.items():
+                try:
+                    col_result = session.execute(text(f"""
+                        SELECT COUNT(*) FROM information_schema.columns
+                        WHERE table_schema = DATABASE() AND table_name = 'article' AND column_name = '{col}'
+                    """))
+                    if col_result.fetchone()[0] == 0:
+                        logger.info(f"列 {col} 不存在，执行DDL: {ddl}")
+                        session.execute(text(ddl))
+                        session.commit()
+                except Exception as col_e:
+                    logger.warning(f"确保列 {col} 存在时出错: {col_e}")
+            
+            # 校验 type 字段类型，如不符则尝试调整视图
+            try:
+                result = session.execute(text("""
+                    SELECT data_type FROM information_schema.columns
+                    WHERE table_schema = DATABASE() AND table_name = 'article' AND column_name = 'type'
+                """))
+                column_info = result.fetchone()
+                if column_info and column_info[0].lower() != 'varchar':
+                    logger.warning("article.type 字段非 varchar，创建视图 article_view 以varchar暴露 ...")
+                    session.execute(text("DROP VIEW IF EXISTS article_view"))
+                    session.execute(text("""
+                        CREATE VIEW article_view AS
+                        SELECT articleid, userid, CAST(type AS CHAR(10)) AS type,
+                               headline, content, createtime, updatetime
+                        FROM article;
+                    """))
+                    session.commit()
+            except Exception as e:
+                logger.warning(f"处理 article.type 字段时出错: {e}")
+            
+            logger.info("测试数据库准备完毕")
             
         except Exception as e:
             logger.error(f"准备测试数据库时发生错误: {e}")
