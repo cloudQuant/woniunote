@@ -335,10 +335,22 @@ class Articles(DBase):
         # 生成跟踪ID
         trace_id = get_articles_trace_id()
         
+        # 确保 article_type 是整数类型
+        try:
+            article_type_int = int(article_type)
+        except (ValueError, TypeError):
+            # 记录类型转换异常
+            articles_logger.error("文章类型参数转换异常", {
+                'trace_id': trace_id,
+                'article_type': article_type,
+                'error': f"无法将 {article_type} 转换为整数"
+            })
+            return []
+        
         # 记录查询开始
         articles_logger.info("开始按类型查询文章", {
             'trace_id': trace_id,
-            'article_type': article_type,
+            'article_type': article_type_int,
             'start': start,
             'count': count
         })
@@ -347,14 +359,17 @@ class Articles(DBase):
             # 执行查询
             query_start_time = time.time()
             result = dbsession.query(Article, Users.nickname).join(Users, Users.userid == Article.userid) \
-                .filter(Article.hidden == 0, Article.drafted == 0, Article.checked == 1, Article.type == article_type) \
+                .filter(Article.hidden == 0, 
+                        Article.drafted == 0, 
+                        # Article.checked == 1, 
+                        Article.type == article_type_int) \
                 .order_by(Article.articleid.desc()).limit(count).offset(start).all()
             query_end_time = time.time()
             
             # 记录查询结果
             articles_logger.info("按类型查询文章成功", {
                 'trace_id': trace_id,
-                'article_type': article_type,
+                'article_type': article_type_int,
                 'start': start,
                 'count': count,
                 'result_count': len(result) if result else 0,
@@ -366,7 +381,7 @@ class Articles(DBase):
             # 记录异常
             articles_logger.error("按类型查询文章异常", {
                 'trace_id': trace_id,
-                'article_type': article_type,
+                'article_type': article_type_int,
                 'start': start,
                 'count': count,
                 'error': str(e),
@@ -381,25 +396,37 @@ class Articles(DBase):
         # 生成跟踪ID
         trace_id = get_articles_trace_id()
         
+        # 确保 article_type 是整数类型
+        try:
+            article_type_int = int(article_type)
+        except (ValueError, TypeError):
+            # 记录类型转换异常
+            articles_logger.error("文章类型参数转换异常", {
+                'trace_id': trace_id,
+                'article_type': article_type,
+                'error': f"无法将 {article_type} 转换为整数"
+            })
+            return 0
+        
         # 记录开始统计
         articles_logger.info("开始按类型统计文章数量", {
             'trace_id': trace_id,
-            'article_type': article_type
+            'article_type': article_type_int
         })
         
         try:
             # 执行统计查询
             query_start_time = time.time()
             count = dbsession.query(Article).filter(Article.hidden == 0,
-                                                    Article.drafted == 0,
-                                                    Article.checked == 1,
-                                                    Article.type == article_type).count()
+                                                Article.drafted == 0,
+                                                # Article.checked == 1,
+                                                Article.type == article_type_int).count()
             query_end_time = time.time()
             
             # 记录统计结果
             articles_logger.info("按类型统计文章数量成功", {
                 'trace_id': trace_id,
-                'article_type': article_type,
+                'article_type': article_type_int,
                 'count': count,
                 'query_time_ms': round((query_end_time - query_start_time) * 1000, 2)
             })
@@ -409,7 +436,7 @@ class Articles(DBase):
             # 记录异常
             articles_logger.error("按类型统计文章数量异常", {
                 'trace_id': trace_id,
-                'article_type': article_type,
+                'article_type': article_type_int,
                 'error': str(e),
                 'error_type': type(e).__name__
             })
