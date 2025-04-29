@@ -278,6 +278,7 @@ def classify(class_type, page):
         start = (page - 1) * 10
         article = Articles()
         result = article.find_by_type(class_type, start, 10)
+        print(result)
         total = math.ceil(article.get_count_by_type(class_type) / 10)
         
         # 记录文章列表查询结果

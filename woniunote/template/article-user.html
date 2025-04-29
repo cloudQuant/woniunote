@@ -201,6 +201,9 @@
                 // 移除内联样式表代码块（通常是UEditor自动添加的）
                 var cleanedContent = rawContent.replace(/<style>[\s\S]*?<\/style>/g, '');
                 
+                // 处理UEditor的Markdown代码块格式 (code0, code1, code2等)
+                cleanedContent = processUEditorCodeBlocks(cleanedContent);
+                
                 // 将处理后的内容放入显示容器
                 document.getElementById('content-display').innerHTML = cleanedContent;
                 
@@ -212,6 +215,52 @@
                     MathJax.typeset(['#content-display']);
                 }
             });
+            
+            // 处理UEditor的Markdown代码块格式
+            function processUEditorCodeBlocks(content) {
+                // 查找UEditor生成的代码块模式 (code0, code1, code2等)
+                var codePattern = /<pre class="code(\d+)">(([\s\S](?!<\/pre>))*)<\/pre>/g;
+                
+                // 替换为标准的代码块格式
+                return content.replace(codePattern, function(match, codeNum, codeContent) {
+                    // 尝试检测代码语言
+                    var language = detectCodeLanguage(codeContent);
+                    
+                    // 创建新的代码块，添加language-*类以便highlight.js识别
+                    return '<pre><code class="language-' + language + '">' + 
+                           codeContent.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&') + 
+                           '</code></pre>';
+                });
+            }
+            
+            // 尝试检测代码语言
+            function detectCodeLanguage(code) {
+                // 默认为普通文本
+                var language = 'plaintext';
+                
+                // 简单的语言检测逻辑
+                if (code.match(/^\s*(import|from|def|class|if __name__)/m)) {
+                    language = 'python';
+                } else if (code.match(/^\s*(function|const|let|var|import from|export|=>)/m)) {
+                    language = 'javascript';
+                } else if (code.match(/^\s*(public class|private|protected|void|static|@Override)/m)) {
+                    language = 'java';
+                } else if (code.match(/^\s*(#include|int main|std::)/m)) {
+                    language = 'cpp';
+                } else if (code.match(/^\s*(<html|<!DOCTYPE|<head|<body|<div|<script)/m)) {
+                    language = 'html';
+                } else if (code.match(/^\s*(body|margin|padding|font-size|color:|background:)/m)) {
+                    language = 'css';
+                } else if (code.match(/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE TABLE)/im)) {
+                    language = 'sql';
+                } else if (code.match(/^\s*(package|import|func|type|struct)/m)) {
+                    language = 'go';
+                } else if (code.match(/^\s*(\{|\[)\s*"[^"]+"\s*:/m)) {
+                    language = 'json';
+                }
+                
+                return language;
+            }
         </script>
 
         <script>
@@ -448,13 +497,45 @@
             hljs.highlightElement(block);
         });
         
-        // 4. 处理普通code标签，尝试自动检测语言
+        // 4. 处理UEditor生成的特殊代码块格式 (code0, code1等)
+        document.querySelectorAll('pre[class*="code"]').forEach((block) => {
+            console.log('Processing UEditor code block:', block);
+            
+            // 检查是否匹配模式 code0, code1, code2等
+            const codeClassMatch = block.className.match(/code(\d+)/);
+            if (codeClassMatch) {
+                // 如果内部没有code标签，则创建一个
+                if (!block.querySelector('code')) {
+                    const codeContent = block.innerHTML;
+                    const codeElement = document.createElement('code');
+                    
+                    // 尝试检测代码语言
+                    const language = detectCodeLanguage(codeContent);
+                    codeElement.className = `language-${language}`;
+                    codeElement.innerHTML = codeContent;
+                    
+                    // 清空原来的内容并添加新的code元素
+                    block.innerHTML = '';
+                    block.appendChild(codeElement);
+                }
+                
+                // 高亮代码
+                const codeElement = block.querySelector('code');
+                if (codeElement) {
+                    hljs.highlightElement(codeElement);
+                } else {
+                    hljs.highlightElement(block);
+                }
+            }
+        });
+        
+        // 5. 处理普通code标签，尝试自动检测语言
         document.querySelectorAll('pre > code:not([class*="language-"]):not([class*="lang-"]):not([class*="brush:"])').forEach((block) => {
             console.log('Processing plain code block:', block);
             hljs.highlightElement(block);
         });
         
-        // 5. 处理直接带有编程语言名称作为类的pre或code标签
+        // 6. 处理直接带有编程语言名称作为类的pre或code标签
         const commonLanguages = ['python', 'javascript', 'java', 'cpp', 'csharp', 'php', 'ruby', 'go', 'rust', 'sql', 'bash', 'shell', 'html', 'css', 'json', 'xml'];
         commonLanguages.forEach(lang => {
             document.querySelectorAll(`pre.${lang}, code.${lang}`).forEach((block) => {

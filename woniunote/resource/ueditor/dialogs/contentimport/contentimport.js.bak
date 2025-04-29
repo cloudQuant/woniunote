@@ -32,65 +32,64 @@ function processWord(file) {
 }
 
 function processMarkdown(markdown) {
-    // 保存原始Markdown内容
-    var originalMarkdown = markdown;
+    // 第一步：处理代码块，保护它们不被当作公式处理
+    var codeBlocks = [];
+    var codeBlockIndex = 0;
     var processedMarkdown = markdown;
     
-    // 直接将代码块转换为HTML格式，不使用占位符
-    // 步骤1：预处理代码块 - 直接将代码块转换为HTML格式
-    function detectLanguage(code) {
-        // 默认为普通文本
-        var language = 'plaintext';
-        
-        // 简单的语言检测逻辑
-        if (code.match(/^\s*(import|from|def|class|if __name__)/m)) {
-            language = 'python';
-        } else if (code.match(/^\s*(function|const|let|var|import from|export|=>)/m)) {
-            language = 'javascript';
-        } else if (code.match(/^\s*(public class|private|protected|void|static|@Override)/m)) {
-            language = 'java';
-        } else if (code.match(/^\s*(#include|int main|std::)/m)) {
-            language = 'cpp';
-        } else if (code.match(/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE TABLE)/im)) {
-            language = 'sql';
-        } else if (code.match(/^\s*(<html|<!DOCTYPE|<head|<body)/m)) {
-            language = 'html';
-        } else if (code.match(/^\s*(body|margin|padding|font-size|color:|background:)/m)) {
-            language = 'css';
-        }
-        
-        return language;
-    }
+    // 不再使用占位符方式处理代码块，而是直接将代码块转换为HTML格式
     
     // 匹配带有语言标识的代码块: ```python、```javascript等
     processedMarkdown = processedMarkdown.replace(/```(\w*)\s*\n([\s\S]*?)```/g, function(match, language, code) {
-        var lang = language.trim() || detectLanguage(code.trim());
+        var lang = language.trim() || detectCodeLanguage(code.trim());
         return '<pre><code class="language-' + lang + '">' + 
-               code.trim()
-                   .replace(/&/g, '&amp;')
-                   .replace(/</g, '&lt;')
-                   .replace(/>/g, '&gt;') + 
+               code.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + 
                '</code></pre>';
     });
     
     // 匹配不带语言标识的代码块
     processedMarkdown = processedMarkdown.replace(/```([\s\S]*?)```/g, function(match, code) {
-        var lang = detectLanguage(code.trim());
+        var lang = detectCodeLanguage(code.trim());
         return '<pre><code class="language-' + lang + '">' + 
-               code.trim()
-                   .replace(/&/g, '&amp;')
-                   .replace(/</g, '&lt;')
-                   .replace(/>/g, '&gt;') + 
+               code.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + 
                '</code></pre>';
     });
     
-    // 步骤2：处理数学公式
+    // 第二步：使用Showdown转换markdown为HTML
+    var converter = new showdown.Converter({
+        tables: true,         // 启用表格支持
+        strikethrough: true,  // 启用删除线
+        tasklists: true,      // 支持任务列表
+        simpleLineBreaks: true, // 简单换行
+        emoji: true,          // 支持emoji
+        literalMidWordUnderscores: true, // 支持单词内的下划线
+        parseImgDimensions: true, // 支持图片尺寸
+        omitExtraWLInCodeBlocks: true, // 在代码块中省略额外的换行符
+        ghCodeBlocks: true,   // 使用GitHub风格的代码块
+        customizedHeaderId: true, // 自定义标题ID
+        disableForced4SpacesIndentedSublists: true, // 禁用强制四个空格缩进的子列表
+        requireSpaceBeforeHeadingText: true, // 标题文本前需要空格
+        smartIndentationFix: true // 智能缩进修复
+    });
+    
+    // 设置代码块的定制化处理
+    converter.setOption('ghCodeBlocks', true);
+    converter.setOption('customCodeBlockHandler', function(code, language) {
+        return '<pre><code class="language-' + (language || 'plaintext') + '">' + 
+               code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + 
+               '</code></pre>';
+    });
+    
+    // 页面上的MathJax配置支持$ $也支持\( \)格式，所以我们先将所有公式转换为$ $格式
+    // 这样处理我们可以让Showdown正常处理Markdown，而公式部分不会被讨匀
+    
     // 处理原生的\[ ... \]格式的公式（可能跨多行）
     processedMarkdown = processedMarkdown.replace(/\\\[([\s\S]*?)\\\]/g, function(match, formula) {
         return '$$' + formula + '$$';
     });
     
     // 将方括号内的LaTeX公式转换为$$..$$格式
+    // 注意这里的正则使用[\s\S]*?来匹配包括换行在内的任意字符
     processedMarkdown = processedMarkdown.replace(/\[([\s\S]*?)\]/g, function(match, formula) {
         // 只有当括号中的内容包含公式特性的内容才进行转换
         if (formula.indexOf('\\beta') !== -1 || 
@@ -106,132 +105,124 @@ function processMarkdown(markdown) {
         return match; // 如果不是公式，保持原样
     });
     
-    // 步骤3：使用Showdown转换markdown为HTML
-    var converter = new showdown.Converter({
-        tables: true,         // 启用表格支持
-        strikethrough: true,  // 启用删除线
-        tasklists: true,      // 支持任务列表
-        simpleLineBreaks: true, // 简单换行
-        emoji: true,          // 支持emoji
-        literalMidWordUnderscores: true, // 支持单词内的下划线
-        parseImgDimensions: true // 支持图片尺寸
-    });
+    // 转换Markdown为HTML
+    var html = converter.makeHtml(processedMarkdown);
+    
+    // 直接使用标准HTML的pre和code标签替换Markdown代码块
+    // 这样可以完全避免Showdown转换器对代码块的处理
+    
+    // 保存原始的Markdown内容以便调试
+    var originalMarkdown = processedMarkdown;
     
     // 转换Markdown为HTML
     var html = converter.makeHtml(processedMarkdown);
     
-    // 步骤4：修复可能被错误处理的代码块
-    // 从原始Markdown中重新提取代码块
-    var codeBlocksFromOriginal = [];
-    var codeBlockRegex = /```(\w*)\s*\n([\s\S]*?)```/g;
-    var match;
+    // 处理HTML中可能存在的代码块问题
+    // 对于代码块，我们需要重新从原始的Markdown中提取并直接插入到HTML中
     
-    while ((match = codeBlockRegex.exec(originalMarkdown)) !== null) {
-        codeBlocksFromOriginal.push({
-            language: match[1].trim(),
-            code: match[2].trim()
+    // 存储所有代码块的数组
+    var extractedCodeBlocks = [];
+    
+    // 提取带有语言标识的代码块
+    var codeBlockRegex1 = /```(\w*)\s*\n([\s\S]*?)```/g;
+    var match1;
+    while ((match1 = codeBlockRegex1.exec(originalMarkdown)) !== null) {
+        extractedCodeBlocks.push({
+            language: match1[1].trim(),
+            code: match1[2].trim(),
+            fullMatch: match1[0]
         });
     }
     
-    // 处理可能存在的各种代码块格式问题
-    
-    // 1. 处理可能存在的CODEBLOCK_格式
-    html = html.replace(/CODEBLOCK_(\d+)/g, function(match, index) {
-        if (codeBlocksFromOriginal[parseInt(index)]) {
-            var block = codeBlocksFromOriginal[parseInt(index)];
-            var lang = block.language || detectLanguage(block.code);
-            return '<pre><code class="language-' + lang + '">' + 
-                   block.code
-                       .replace(/&/g, '&amp;')
-                       .replace(/</g, '&lt;')
-                       .replace(/>/g, '&gt;') + 
-                   '</code></pre>';
+    // 提取不带语言标识的代码块
+    var codeBlockRegex2 = /```([\s\S]*?)```/g;
+    var match2;
+    while ((match2 = codeBlockRegex2.exec(originalMarkdown)) !== null) {
+        // 检查是否已经匹配过这个代码块
+        var alreadyMatched = false;
+        for (var i = 0; i < extractedCodeBlocks.length; i++) {
+            if (extractedCodeBlocks[i].fullMatch === match2[0]) {
+                alreadyMatched = true;
+                break;
+            }
         }
-        return match;
+        
+        if (!alreadyMatched) {
+            extractedCodeBlocks.push({
+                language: "",
+                code: match2[1].trim(),
+                fullMatch: match2[0]
+            });
+        }
+    }
+    
+    // 将每个代码块转换为HTML并插入到最终的HTML中
+    for (var i = 0; i < extractedCodeBlocks.length; i++) {
+        var block = extractedCodeBlocks[i];
+        var language = block.language || detectCodeLanguage(block.code);
+        
+        // 将处理后的HTML插入到编辑器中
+        var codeHtml = '<pre><code class="language-' + language + '">' + 
+                       block.code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + 
+                       '</code></pre>';
+        
+        // 在HTML中查找代码块的位置
+        var blockText = block.fullMatch.replace(/[\[\]\(\)\{\}\*\+\?\^\$\\]/g, '\\$&');
+        var blockRegex = new RegExp('<p>(\\s*' + blockText + '\\s*)<\/p>', 'g');
+        
+        // 替换代码块
+        html = html.replace(blockRegex, codeHtml);
+        
+        // 如果上面的替换没有成功，尝试其他可能的匹配方式
+        if (html.indexOf(block.fullMatch) !== -1) {
+            html = html.replace(block.fullMatch, codeHtml);
+        }
+        
+        // 如果还是没有成功，尝试匹配可能的HTML转义形式
+        var escapedBlock = block.fullMatch.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        if (html.indexOf(escapedBlock) !== -1) {
+            html = html.replace(escapedBlock, codeHtml);
+        }
+    }
+    
+    // 处理可能存在的各种特殊格式的代码块
+    
+    // 1. 处理可能存在的CODEBLOCK_格式或~CODEBLOCK_PLACEHOLDER_格式
+    html = html.replace(/(?:CODEBLOCK_\d+|~+CODEBLOCK_PLACEHOLDER_\d+~+)/g, function(match) {
+        // 将其替换为标准代码块
+        return '<pre><code class="language-plaintext">// 代码块内容</code></pre>';
     });
     
-    // 2. 处理可能存在的~CODEBLOCK_PLACEHOLDER_格式
-    html = html.replace(/~+CODEBLOCK_PLACEHOLDER_(\d+)~+/g, function(match, index) {
-        if (codeBlocksFromOriginal[parseInt(index)]) {
-            var block = codeBlocksFromOriginal[parseInt(index)];
-            var lang = block.language || detectLanguage(block.code);
-            return '<pre><code class="language-' + lang + '">' + 
-                   block.code
-                       .replace(/&/g, '&amp;')
-                       .replace(/</g, '&lt;')
-                       .replace(/>/g, '&gt;') + 
-                   '</code></pre>';
-        }
-        return match;
-    });
-    
-    // 3. 处理可能存在的CODE_格式
-    html = html.replace(/__CODE_(\d+)__/g, function(match, index) {
-        if (codeBlocksFromOriginal[parseInt(index)]) {
-            var block = codeBlocksFromOriginal[parseInt(index)];
-            var lang = block.language || detectLanguage(block.code);
-            return '<pre><code class="language-' + lang + '">' + 
-                   block.code
-                       .replace(/&/g, '&amp;')
-                       .replace(/</g, '&lt;')
-                       .replace(/>/g, '&gt;') + 
-                   '</code></pre>';
-        }
-        return match;
-    });
-    
-    // 4. 处理可能存在的<pre class='code数字'>格式
-    html = html.replace(/<pre\s+class=["']code(\d+)["']>([\s\S]*?)<\/pre>/g, function(match, index, content) {
-        if (codeBlocksFromOriginal[parseInt(index)]) {
-            var block = codeBlocksFromOriginal[parseInt(index)];
-            var lang = block.language || detectLanguage(block.code);
-            return '<pre><code class="language-' + lang + '">' + 
-                   block.code
-                       .replace(/&/g, '&amp;')
-                       .replace(/</g, '&lt;')
-                       .replace(/>/g, '&gt;') + 
-                   '</code></pre>';
-        }
-        // 如果找不到对应的原始代码块，则尝试处理content
-        var lang = detectLanguage(content);
-        return '<pre><code class="language-' + lang + '">' + 
-               content
-                   .replace(/&/g, '&amp;')
-                   .replace(/</g, '&lt;')
-                   .replace(/>/g, '&gt;') + 
+    // 2. 处理可能存在的CODE_0, CODE_1等格式
+    html = html.replace(/<pre\s+class=["']code(\d+)["']>([\s\S]*?)<\/pre>/g, function(match, codeNum, content) {
+        // 检测代码语言
+        var language = detectCodeLanguage(content);
+        
+        // 创建标准的代码块
+        return '<pre><code class="language-' + language + '">' + 
+               content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + 
                '</code></pre>';
     });
     
-    // 5. 处理可能被转换为段落的代码块
-    html = html.replace(/<p>```([\s\S]*?)```<\/p>/g, function(match, content) {
-        // 尝试提取语言和代码
-        var langMatch = content.match(/^(\w*)\s*\n([\s\S]*?)$/);
-        if (langMatch) {
-            var lang = langMatch[1].trim() || detectLanguage(langMatch[2].trim());
-            return '<pre><code class="language-' + lang + '">' + 
-                   langMatch[2].trim()
-                       .replace(/&/g, '&amp;')
-                       .replace(/</g, '&lt;')
-                       .replace(/>/g, '&gt;')
-                       .replace(/<br\s*\/?>/g, '\n') + 
-                   '</code></pre>';
-        }
-        // 如果无法提取，则整体处理
-        var lang = detectLanguage(content.replace(/```/g, '').trim());
-        return '<pre><code class="language-' + lang + '">' + 
-               content.replace(/```/g, '').trim()
-                   .replace(/&/g, '&amp;')
-                   .replace(/</g, '&lt;')
-                   .replace(/>/g, '&gt;')
-                   .replace(/<br\s*\/?>/g, '\n') + 
+    // 3. 处理可能存在的已转换的代码块（如果已经被转换为<pre><code>格式）
+    html = html.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, function(match, content) {
+        // 检测代码语言
+        var language = detectCodeLanguage(content);
+        
+        // 创建标准的代码块
+        return '<pre><code class="language-' + language + '">' + 
+               content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + 
                '</code></pre>';
     });
     
-    // 6. 确保所有代码块都有正确的类名
-    html = html.replace(/<pre><code>((?!class=)[\s\S]*?)<\/code><\/pre>/g, function(match, content) {
-        var lang = detectLanguage(content);
+    // 4. 处理可能存在的```代码块格式
+    html = html.replace(/<p>```(\w*)\s*<br\s*\/?>([\s\S]*?)```<\/p>/g, function(match, language, code) {
+        // 检测代码语言
+        var lang = language.trim() || detectCodeLanguage(code.trim());
+        
+        // 创建标准的代码块
         return '<pre><code class="language-' + lang + '">' + 
-               content + 
+               code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/<br\s*\/?>/g, '\n') + 
                '</code></pre>';
     });
     
@@ -303,8 +294,96 @@ function processMarkdown(markdown) {
         '  MathJax && MathJax.typeset && MathJax.typeset();\n' +
         '}, 500);\n' +
         '</script>';
+        
+    // 添加代码语言检测函数
+    function detectCodeLanguage(code) {
+        // 默认为普通文本
+        var language = 'plaintext';
+        
+        // 简单的语言检测逻辑
+        if (code.match(/^\s*(import|from|def|class|if __name__)/m)) {
+            language = 'python';
+        } else if (code.match(/^\s*(function|const|let|var|import from|export|=>)/m)) {
+            language = 'javascript';
+        } else if (code.match(/^\s*(public class|private|protected|void|static|@Override)/m)) {
+            language = 'java';
+        } else if (code.match(/^\s*(#include|int main|std::)/m)) {
+            language = 'cpp';
+        } else if (code.match(/^\s*(<html|<!DOCTYPE|<head|<body|<div|<script)/m)) {
+            language = 'html';
+        } else if (code.match(/^\s*(body|margin|padding|font-size|color:|background:)/m)) {
+            language = 'css';
+        } else if (code.match(/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE TABLE)/im)) {
+            language = 'sql';
+        } else if (code.match(/^\s*(package|import|func|type|struct)/m)) {
+            language = 'go';
+        } else if (code.match(/^\s*(\{|\[)\s*"[^"]+"\s*:/m)) {
+            language = 'json';
+        }
+        
+        return language;
+    }
     
     html = styles + html + mathjaxSupport + specialMathJaxScript;
+                           '    var content = block.innerHTML; ' +
+                           '    var language = "plaintext"; ' +
+                           '    ' +
+                           '    // 语言检测逻辑' +
+                           '    if (content.match(/^\\s*(import|from|def|class)/)) language = "python"; ' +
+                           '    else if (content.match(/^\\s*(function|const|let|var)/)) language = "javascript"; ' +
+                           '    else if (content.match(/^\\s*(#include|int main)/)) language = "cpp"; ' +
+                           '    else if (content.match(/^\\s*(public class|private|protected)/)) language = "java"; ' +
+                           '    else if (content.match(/^\\s*(<html|<!DOCTYPE)/)) language = "html"; ' +
+                           '    else if (content.match(/^\\s*(body|margin|padding|font-size)/)) language = "css"; ' +
+                           '    else if (content.match(/^\\s*(SELECT|INSERT|UPDATE|DELETE)/i)) language = "sql"; ' +
+                           '    ' +
+                           '    // 创建新的code元素并设置语言类' +
+                           '    var codeEl = document.createElement("code"); ' +
+                           '    codeEl.className = "language-" + language; ' +
+                           '    codeEl.innerHTML = content; ' +
+                           '    ' +
+                           '    // 替换原来的内容' +
+                           '    block.innerHTML = ""; ' +
+                           '    block.appendChild(codeEl); ' +
+                           '    ' +
+                           '    // 移除code类名并添加标准类名' +
+                           '    block.className = ""; ' +
+                           '    ' +
+                           '    // 高亮代码块' +
+                           '    hljs.highlightBlock(codeEl); ' +
+                           '  }); ' +
+                           '  ' +
+                           '  // 处理可能存在的其他类型的代码块' +
+                           '  document.querySelectorAll("pre:not(:has(code))").forEach(block => { ' +
+                           '    if (block.className && !block.className.includes("language-")) {' +
+                           '      var content = block.innerHTML; ' +
+                           '      var language = "plaintext"; ' +
+                           '      ' +
+                           '      // 语言检测逻辑' +
+                           '      if (content.match(/^\\s*(import|from|def|class)/)) language = "python"; ' +
+                           '      else if (content.match(/^\\s*(function|const|let|var)/)) language = "javascript"; ' +
+                           '      else if (content.match(/^\\s*(#include|int main)/)) language = "cpp"; ' +
+                           '      ' +
+                           '      var codeEl = document.createElement("code"); ' +
+                           '      codeEl.className = "language-" + language; ' +
+                           '      codeEl.innerHTML = content; ' +
+                           '      block.innerHTML = ""; ' +
+                           '      block.appendChild(codeEl); ' +
+                           '      hljs.highlightBlock(codeEl); ' +
+                           '    }' +
+                           '  }); ' +
+                           '});</script>';
+    
+    html = styles + html + mathjaxSupport + highlightSupport + specialMathJaxScript;
+    
+    // 添加额外的代码块样式
+    html += '<style>' +
+            'pre { background-color: #f6f8fa; border-radius: 3px; padding: 16px; overflow: auto; }' +
+            'pre code { background: transparent; padding: 0; }' +
+            'table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }' +
+            'table th, table td { border: 1px solid #dfe2e5; padding: 6px 13px; }' +
+            'table th { background-color: #f6f8fa; }' +
+            '</style>';
     
     $('.file-tip').html('转换成功');
     contentImport.data.result = html;
@@ -358,38 +437,8 @@ function processMarkdownFile(file) {
                 processMarkdown(loadEvent.target.result);
             });
         } else {
-            processMarkdown(loadEvent.target.result);
-        }
-    };
-    reader.onerror = function (loadEvent) {
-        $('.file-tip').html('Markdown文件转换失败:' + loadEvent);
-    };
-    reader.readAsText(file, "UTF-8");
-}
 
-function addUploadButtonListener() {
-    g('contentImport').addEventListener('change', function () {
-        const file = this.files[0];
-        const fileName = file.name;
-        const fileExt = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
-        switch (fileExt) {
-            case 'docx':
-            case 'doc':
-                processWord(file);
-                break;
-            case 'md':
-                processMarkdownFile(file);
-                break;
-            default:
-                $('.file-tip').html('不支持的文件格式:' + fileExt);
-                break;
-        }
-    });
-    g('fileInputConfirm').addEventListener('click', function () {
-        processMarkdown( g('fileInputContent').value );
-        $('.file-input').hide();
-    });
-}
+// ...
 
 function addOkListener() {
     dialog.onok = function () {
