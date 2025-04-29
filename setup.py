@@ -7,7 +7,7 @@ extensions = [
 
 setup(
     name='woniunote',  # 项目的名称
-    version='0.1.3',  # 版本号
+    version='0.1.4',  # 版本号
     packages=find_packages(exclude=['demos', "docs", "tests", "scripts"]),
     package_data={
         'woniunote': [
