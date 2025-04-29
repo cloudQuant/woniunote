@@ -8,6 +8,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from woniunote.configs.config import config
 from woniunote.common.utils import read_config, get_package_path, get_db_connection, parse_db_uri
 from woniunote.common.database import db, ARTICLE_TYPES
+# 使用相对导入方式
+from woniunote.common.simple_logger import get_simple_logger
 from woniunote.controller.admin import admin
 from woniunote.controller.article import article
 from woniunote.controller.card_center import card_center
@@ -23,11 +25,16 @@ pymysql.install_as_MySQLdb()
 
 
 def create_app(config_name='production'):
+    # 初始化日志系统
+    app_logger = get_simple_logger('app')
+    app_logger.info("正在初始化应用程序...")
+    
     app = Flask(__name__, template_folder='template',
                 static_url_path='/', static_folder='resource')
     
     # 加载配置
     app.config.from_object(config[config_name])
+    app_logger.info("应用程序配置已加载")
     
     # 设置安全的SECRET_KEY
     if not app.config.get('SECRET_KEY'):

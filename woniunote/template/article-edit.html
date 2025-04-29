@@ -1,42 +1,26 @@
 {% extends 'base.html' %}   {# 将当前页面继承至base.html母版 #}
 {% block content %}
 
-<script type="text/plain" style="height:300px;"></script>
+<!-- 引入必要的脚本文件 -->
 <script type="text/javascript" src="/ueditor/ueditor.config.js"></script>
 <script type="text/javascript" src="/ueditor/ueditor.all.js"></script>
-    <!-- 引入 Bootbox.js -->
 <script type="text/javascript" src="/js/bootbox.min.js"></script>
 
+<!-- 初始化编辑器 -->
 <script type="text/javascript">
-    let ue = UE.getEditor('content', {
+    // 编辑器初始化配置
+    const editorConfig = {
         initialFrameHeight: 400,
         autoHeightEnabled: true,
-        // 启用代码块功能
         enableCodeBlock: true,
-        // 设置代码块的样式类名
         codeBlockClass: 'hljs',
         serverUrl: '/uedit',
+    };
+    
+    // 等待DOM加载完成后初始化编辑器
+    document.addEventListener('DOMContentLoaded', function() {
+        window.ue = UE.getEditor('content', editorConfig);
     });
-    ue.on('contentchange', function () {
-        // console.log('contentchange', ue.getContent());
-    });
-
-    function isFocus(e) {
-        alert(UE.getEditor('content').isFocus());
-        UE.dom.domUtils.preventDefault(e)
-    }
-
-    function setBlur(e) {
-        UE.getEditor('content').blur();
-        UE.dom.domUtils.preventDefault(e)
-    }
-
-    function getSelectText() {
-        let range = UE.getEditor('content').selection.getRange();
-        range.select();
-        let txt = UE.getEditor('content').selection.getText();
-        alert(txt)
-    }
 </script>
 
 <!-- 中部区域布局 -->
@@ -98,100 +82,234 @@
 </div>
 
 <script>
+/**
+ * 处理文章编辑提交
+ */
 function doEdit() {
+    // 获取并验证表单数据
     const headline = $.trim($("#headline").val());
     const contentPlain = UE.getEditor("content").getContentTxt();
-
-    // 输出headline的内容
-    console.log("Headline 内容: " + headline);
-
-    if (headline.length < 5) {
-        bootbox.alert({ title: "错误提示", message: "标题不能少于5个字" });
-        return false;
-    } else if (contentPlain.length < 100) {
-        bootbox.alert({ title: "错误提示", message: "内容不能低于100个字" });
+    
+    // 表单验证
+    if (!validateForm(headline, contentPlain)) {
         return false;
     }
+    
+    // 确保子类型选项存在
+    ensureSubTypeOptions(headline, contentPlain);
+}
 
-    const formData = new FormData();
-    formData.append("headline", headline);
-    formData.append("content", UE.getEditor("content").getContent());
-    formData.append("type", $("#sub-type").val());
-    formData.append("credit", $("#credit").val());
-    formData.append("drafted", "0");
-    formData.append("checked", "0");
-    formData.append("articleid", "{{ result.articleid }}");
+/**
+ * 表单验证
+ */
+function validateForm(headline, contentPlain) {
+    if (headline.length < 5) {
+        showError("标题不能少于5个字");
+        return false;
+    } 
+    
+    if (contentPlain.length < 100) {
+        showError("内容不能低于100个字");
+        return false;
+    }
+    
+    return true;
+}
 
+/**
+ * 显示错误提示
+ */
+function showError(message) {
+    bootbox.alert({ 
+        title: "错误提示", 
+        message: message 
+    });
+}
+
+/**
+ * 确保子类型选项存在
+ */
+function ensureSubTypeOptions(headline, contentPlain) {
+    const mainTypeVal = $("#main-type").val();
+    const subTypeVal = $("#sub-type").val();
+    
+    console.log("类型检查 - 主类型:", mainTypeVal, "子类型:", subTypeVal);
+    
+    // 如果子类型为空，则重新加载子类型选项
+    if (!subTypeVal || subTypeVal === "") {
+        console.log("子类型为空，重新加载子类型选项");
+        $("#main-type").trigger("change");
+        
+        // 等待子类型选项加载完成
+        setTimeout(() => submitEditForm(headline, contentPlain), 100);
+        return;
+    }
+    
+    submitEditForm(headline, contentPlain);
+}
+
+/**
+ * 提交编辑表单
+ */
+function submitEditForm(headline, contentPlain) {
+    // 准备表单数据
+    const formData = prepareFormData(headline);
+    
+    // 发送AJAX请求
     $.ajax({
         url: '/article/edit',
         type: 'POST',
         data: formData,
         processData: false,
         contentType: false,
-        success: function(data) {
-            console.log("Server response:", data);
-            if (data === 'perm-denied') {
-                bootbox.alert({ title: "错误提示", message: "权限不足，无法修改文章." });
-            } else if (data === 'post-fail') {
-                bootbox.alert({ title: "错误提示", message: "文章修改失败，请联系管理员." });
-            } else if (data === 'edit-fail') {
-                bootbox.alert({ title: "错误提示", message: "文章修改失败，请稍后重试." });
-            } else if (data.match(/^\d+$/)) {
-                bootbox.alert({ 
-                    title: "信息提示", 
-                    message: "恭喜你，文章修改成功.",
-                    callback: function() {
-                        location.href = '/article/' + data;
-                    }
-                });
-            } else {
-                bootbox.alert({ title: "错误提示", message: "未知错误，请联系管理员." });
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error("Error details:", {
-                status: status,
-                error: error,
-                response: xhr.responseText
-            });
-            bootbox.alert({ 
-                title: "错误提示", 
-                message: "提交失败，请检查网络连接或联系管理员. 错误: " + error 
-            });
-        }
+        success: handleEditSuccess,
+        error: handleEditError
+    });
+}
+
+/**
+ * 准备表单数据
+ */
+function prepareFormData(headline) {
+    const formData = new FormData();
+    formData.append("headline", headline);
+    formData.append("content", UE.getEditor("content").getContent());
+    
+    // 获取并处理类型值
+    const mainTypeVal = $("#main-type").val();
+    let subTypeVal = $("#sub-type").val();
+    
+    // 确保子类型值有效
+    if (!subTypeVal || subTypeVal === "") {
+        const defaultSubType = parseInt(mainTypeVal) * 100 + 1;
+        console.log("使用默认子类型值:", defaultSubType);
+        subTypeVal = defaultSubType.toString();
+    }
+    
+    formData.append("type", mainTypeVal);
+    formData.append("subtype", subTypeVal);
+    formData.append("credit", $("#credit").val());
+    formData.append("drafted", "0");
+    formData.append("checked", "0");
+    formData.append("articleid", "{{ result.articleid }}");
+    
+    console.log("提交数据 - 主类型:", mainTypeVal, "子类型:", subTypeVal);
+    return formData;
+}
+
+/**
+ * 处理编辑成功响应
+ */
+function handleEditSuccess(data) {
+    console.log("Response data:", data);
+    
+    if (data === "login") {
+        showMessage("错误提示", "请先登录后再进行操作.", function() {
+            location.href = '/login';
+        });
+    } else if (data === "perm-denied") {
+        showError("您没有权限操作此文章.");
+    } else if (data === "empty") {
+        showError("文章修改失败，请稍后重试.");
+    } else if (data.match(/^\d+$/)) {
+        showMessage("信息提示", "恭喜你，文章修改成功.", function() {
+            location.href = '/article/' + data;
+        });
+    } else {
+        showError("未知错误，请联系管理员.");
+    }
+}
+
+/**
+ * 处理编辑错误响应
+ */
+function handleEditError(xhr, status, error) {
+    console.error("Error details:", {
+        status: status,
+        error: error,
+        response: xhr.responseText
+    });
+    
+    showError("提交失败，请检查网络连接或联系管理员. 错误: " + error);
+}
+
+/**
+ * 显示消息对话框
+ */
+function showMessage(title, message, callback) {
+    bootbox.alert({ 
+        title: title, 
+        message: message,
+        callback: callback
     });
 }
 </script>
 
-
 <script>
-    // 获取主类型和子类型下拉框
-    const mainTypeSelect = document.getElementById('main-type');
-    const subTypeSelect = document.getElementById('sub-type');
+    /**
+     * 类型选择处理
+     * 负责处理主类型和子类型的联动关系
+     */
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取主类型和子类型下拉框
+        const mainTypeSelect = document.getElementById('main-type');
+        const subTypeSelect = document.getElementById('sub-type');
+        // 当前文章的子类型（确保安全解析）
+        const originalSubType = "{{ result.type }}" ? parseInt("{{ result.type }}") : 0;
 
-    // 定义子类型数据（由后端生成并传递给前端）
-    const subTypesData = {{ subTypesData | tojson | safe }};
+        // 子类型数据 (从后端传递)
+        const subTypesData = JSON.parse('{{ subTypesData | tojson | safe }}');
 
-    // 主类型变化时更新子类型
-    mainTypeSelect.addEventListener('change', function () {
-        const selectedMainType = parseInt(this.value);
-        const subTypes = subTypesData[selectedMainType];
+        /**
+         * 更新子类型选项
+         */
+        function updateSubTypes() {
+            const selectedMainType = parseInt(mainTypeSelect.value);
+            const subTypes = subTypesData[selectedMainType];
 
-        // 清空子类型选项
-        subTypeSelect.innerHTML = '';
+            // 清空现有选项
+            subTypeSelect.innerHTML = '';
 
-        // 添加新的子类型选项
-        if (subTypes) {
-            for (const [subId, subName] of Object.entries(subTypes)) {
-                const option = document.createElement('option');
-                option.value = subId;
-                option.textContent = subName;
-                subTypeSelect.appendChild(option);
+            // 添加子类型选项
+            if (subTypes) {
+                Object.entries(subTypes).forEach(([subIdStr, subName]) => {
+                    const subId = parseInt(subIdStr);
+                    const option = new Option(subName, subId);
+                    if (subId === originalSubType) {
+                        option.selected = true;
+                    }
+                    subTypeSelect.add(option);
+                });
+            }
+            
+            // 如果没有子类型选项，添加默认选项
+            if (subTypeSelect.options.length === 0 && selectedMainType) {
+                addDefaultSubType(selectedMainType);
             }
         }
-    });
 
-    // 初始化时触发一次 change 事件，确保子类型选项正确
-    mainTypeSelect.dispatchEvent(new Event('change'));
+        /**
+         * 添加默认子类型选项
+         */
+        function addDefaultSubType(mainType) {
+            // 创建默认子类型选项（主类型*100 + 1）
+            const defaultSubType = mainType * 100 + 1;
+            
+            // 尝试获取子类型名称
+            let subTypeName = "默认子类型";
+            if (subTypesData[mainType] && subTypesData[mainType][defaultSubType]) {
+                subTypeName = subTypesData[mainType][defaultSubType];
+            }
+            
+            const option = new Option(subTypeName, defaultSubType);
+            subTypeSelect.add(option);
+        }
+
+        // 主类型变化时更新子类型
+        mainTypeSelect.addEventListener('change', updateSubTypes);
+
+        // 初始化时触发一次更新
+        updateSubTypes();
+    });
 </script>
 {% endblock %}

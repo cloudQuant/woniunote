@@ -83,7 +83,8 @@
         // 发送请求时，带上articleid
         let param = "headline=" + headline;
             param += "&content=" + encodeURIComponent(UE.getEditor("content").getContent());
-            param += "&type=" + $("#type").val();
+            param += "&type=" + $("#main-type").val();
+            param += "&subtype=" + $("#sub-type").val();
             param += "&credit=" + $("#credit").val();
             param += "&drafted=0&checked=0&articleid=0";
         $.post('/article', param, function (data) {
