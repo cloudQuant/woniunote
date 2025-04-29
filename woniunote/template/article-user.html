@@ -92,6 +92,36 @@
         padding: 15px;
         border-radius: 4px;
         overflow-x: auto;
+        position: relative;
+        margin: 1em 0;
+        border: 1px solid #e1e4e8;
+    }
+    
+    /* 代码块语言标签样式 */
+    .code-language-label {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 0.2em 0.5em;
+        font-size: 0.8em;
+        background-color: #f0f0f0;
+        border-left: 1px solid #ddd;
+        border-bottom: 1px solid #ddd;
+        border-bottom-left-radius: 4px;
+        color: #666;
+        font-family: monospace;
+    }
+    
+    /* 代码样式 */
+    .article-detail .content code {
+        font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+        white-space: pre;
+        word-spacing: normal;
+        word-break: normal;
+        word-wrap: normal;
+        line-height: 1.5;
+        tab-size: 4;
+        hyphens: none;
     }
     .article-nav {
         margin: 20px 0;
@@ -216,7 +246,6 @@
                 }
             });
             
-            // 处理UEditor的Markdown代码块格式
             function processUEditorCodeBlocks(content) {
                 // 查找UEditor生成的代码块模式 (code0, code1, code2等)
                 var codePattern = /<pre class="code(\d+)">(([\s\S](?!<\/pre>))*)<\/pre>/g;
@@ -226,10 +255,16 @@
                     // 尝试检测代码语言
                     var language = detectCodeLanguage(codeContent);
                     
+                    // 清理代码内容中的HTML实体
+                    var cleanedCode = codeContent.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+                    
                     // 创建新的代码块，添加language-*类以便highlight.js识别
-                    return '<pre><code class="language-' + language + '">' + 
-                           codeContent.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&') + 
-                           '</code></pre>';
+                    // 同时添加语言标识标签
+                    return '<pre style="position: relative;">' +
+                        '<div class="code-language-label">' + language + '</div>' +
+                        '<code class="language-' + language + '">' + 
+                        cleanedCode + 
+                        '</code></pre>';
                 });
             }
             
