@@ -1,4 +1,7 @@
 ### changelog
+
+-[x] 2025-04-29: fix type.html function bugs
+-[x] 2025-04-29: add log function for controller and module
 -[x] 2025-04-06: fix cards page and beautify it
 -[x] 2025-04-06: fix todo page
 -[x] 2025-04-05: add tests for woniunote

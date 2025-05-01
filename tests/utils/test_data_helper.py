@@ -136,29 +136,36 @@ class TestArticleFactory:
         try:
             # 获取数据库会话
             session = dbconnect()[0]
+            engine = session.get_bind()
+            from sqlalchemy import inspect
+            inspector = inspect(engine)
+            columns = [col['name'] for col in inspector.get_columns('article')]
             
-            # 修正：使用正确的表名 'article' 而不是 'articles'
-            # 使用正确的字段名：headline 而不是 title, readcount 而不是 read_count
+            # 构造待插入的数据字典
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            result = session.execute(
-                text("""
-                    INSERT INTO article 
-                    (headline, content, type, userid, readcount, createtime, hidden, drafted, checked, recommended) 
-                    VALUES (:headline, :content, :type, :userid, :readcount, :createtime, :hidden, :drafted, :checked, :recommended)
-                """),
-                {
-                    "headline": headline,  # 使用正确的字段名
-                    "content": content,
-                    "type": article_type,  # 保持原始类型格式，数据库将处理类型转换
-                    "userid": user_id,
-                    "readcount": 0,
-                    "createtime": now,
-                    "hidden": 0,  # 确保文章可见
-                    "drafted": 0,  # 确保不是草稿
-                    "checked": 1,  # 确保文章已审核
-                    "recommended": random.randint(0, 1)  # 随机推荐状态
-                }
-            )
+            data_dict = {
+                'headline': headline,
+                'content': content,
+                'type': article_type,
+                'userid': user_id,
+                'readcount': 0,
+                'createtime': now,
+                'hidden': 0,
+                'drafted': 0,
+                'checked': 1,
+                'recommended': random.randint(0, 1)
+            }
+            
+            # 仅保留表中存在的列
+            filtered_data = {k: v for k, v in data_dict.items() if k in columns}
+            if not filtered_data:
+                raise RuntimeError("无法匹配到 article 表字段进行插入")
+            
+            col_names = ", ".join(filtered_data.keys())
+            placeholders = ", ".join(f":{k}" for k in filtered_data.keys())
+            
+            sql_text = text(f"INSERT INTO article ({col_names}) VALUES ({placeholders})")
+            result = session.execute(sql_text, filtered_data)
             
             # 获取新文章ID
             result = session.execute(
