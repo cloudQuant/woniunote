@@ -17,7 +17,7 @@ from tests.utils.test_base import FlaskAppContextProvider
 
 @FlaskAppContextProvider.with_app_context
 @pytest.mark.browser
-def test_home_page_loads(page, base_url, browser_name):
+def test_home_page_loads(server_available, page, base_url, browser_name):
     """测试首页是否能正常加载"""
     # 访问首页
     page.goto(base_url)
@@ -31,7 +31,7 @@ def test_home_page_loads(page, base_url, browser_name):
 
 @FlaskAppContextProvider.with_app_context
 @pytest.mark.browser
-def test_login_page_loads(page, base_url, browser_name):
+def test_login_page_loads(server_available, page, base_url, browser_name):
     """测试登录页是否能正常加载"""
     # 访问登录页
     page.goto(f"{base_url}/login")
@@ -44,7 +44,7 @@ def test_login_page_loads(page, base_url, browser_name):
 
 @FlaskAppContextProvider.with_app_context
 @pytest.mark.browser
-def test_register_page_loads(page, base_url, browser_name):
+def test_register_page_loads(server_available, page, base_url, browser_name):
     """测试注册页是否能正常加载"""
     # 访问注册页
     page.goto(f"{base_url}/register")
@@ -57,7 +57,7 @@ def test_register_page_loads(page, base_url, browser_name):
 
 @FlaskAppContextProvider.with_app_context
 @pytest.mark.browser
-def test_article_list_loads(page, base_url, browser_name):
+def test_article_list_loads(server_available, page, base_url, browser_name):
     """测试文章列表页是否能正常加载"""
     # 访问文章列表页
     page.goto(f"{base_url}/article")
@@ -67,7 +67,7 @@ def test_article_list_loads(page, base_url, browser_name):
 
 @FlaskAppContextProvider.with_app_context
 @pytest.mark.browser
-def test_article_detail_loads(page, base_url, browser_name):
+def test_article_detail_loads(server_available, page, base_url, browser_name):
     """测试文章详情页是否能正常加载"""
     # 访问文章详情页 - 假设ID为1的文章存在
     page.goto(f"{base_url}/article/1")

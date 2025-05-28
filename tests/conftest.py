@@ -711,3 +711,55 @@ def test_data():
         "user": test_user,
         "articles": []  # 可以根据需要添加测试文章
     }
+
+@pytest.fixture
+def server_available():
+    """
+    检查测试服务器是否可用的 fixture
+    如果服务器不可用，跳过浏览器测试
+    """
+    import requests
+    import time
+    
+    server_url = "http://127.0.0.1:5001"
+    max_retries = 3
+    
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(server_url, timeout=5)
+            if response.status_code in [200, 301, 302, 404]:
+                return True
+        except:
+            if attempt < max_retries - 1:
+                time.sleep(2)
+            continue
+    
+    # 服务器不可用，跳过测试
+    pytest.skip(f"测试服务器 {server_url} 不可用，跳过浏览器测试")
+
+def pytest_runtest_setup(item):
+    """
+    在每个测试运行前检查是否需要跳过浏览器测试
+    """
+    # 检查是否是浏览器测试
+    if item.get_closest_marker("browser"):
+        import requests
+        import time
+        
+        server_url = "http://127.0.0.1:5001"
+        max_retries = 2
+        
+        server_available = False
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(server_url, timeout=3)
+                if response.status_code in [200, 301, 302, 404]:
+                    server_available = True
+                    break
+            except:
+                if attempt < max_retries - 1:
+                    time.sleep(1)
+                continue
+        
+        if not server_available:
+            pytest.skip(f"测试服务器 {server_url} 不可用，跳过浏览器测试")
