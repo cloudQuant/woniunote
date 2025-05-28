@@ -9,79 +9,144 @@
 import os
 import sys
 import logging
+import yaml
 from pathlib import Path
+from cryptography.fernet import Fernet
+from dotenv import load_dotenv
+from woniunote.common.simple_logger import get_simple_logger
+
+# 加载环境变量
+load_dotenv()
 
 # 项目路径配置
 PROJECT_ROOT = Path(__file__).parent.parent.parent.absolute()
 TESTS_DIR = os.path.join(PROJECT_ROOT, 'tests')
 TEMP_DIR = os.path.join(TESTS_DIR, 'temp')
 
+# 配置加密密钥
+ENCRYPTION_KEY = os.getenv('TEST_CONFIG_KEY', Fernet.generate_key())
+cipher_suite = Fernet(ENCRYPTION_KEY)
+
+def encrypt_value(value):
+    """加密配置值"""
+    if isinstance(value, str):
+        return cipher_suite.encrypt(value.encode()).decode()
+    return value
+
+def decrypt_value(value):
+    """解密配置值"""
+    if isinstance(value, str):
+        try:
+            return cipher_suite.decrypt(value.encode()).decode()
+        except:
+            return value
+    return value
+
 # 服务器配置
 SERVER_CONFIG = {
-    'host': '127.0.0.1',
-    'port': 5001,
-    'protocol': 'http',  # 修改为HTTP，因为服务器是以HTTP模式启动的
-    'timeout': 5,
-    'retry_count': 3,
-    'retry_delay': 1,
-    'health_endpoint': '/health'
+    'host': os.getenv('TEST_SERVER_HOST', '127.0.0.1'),
+    'port': int(os.getenv('TEST_SERVER_PORT', '5001')),
+    'protocol': os.getenv('TEST_SERVER_PROTOCOL', 'http'),
+    'timeout': int(os.getenv('TEST_SERVER_TIMEOUT', '5')),
+    'retry_count': int(os.getenv('TEST_SERVER_RETRY_COUNT', '3')),
+    'retry_delay': int(os.getenv('TEST_SERVER_RETRY_DELAY', '1')),
+    'health_endpoint': os.getenv('TEST_SERVER_HEALTH_ENDPOINT', '/health')
 }
 
 # 数据库配置
 DATABASE_CONFIG = {
-    'host': '127.0.0.1',
-    'port': 3306,
-    'user': 'woniunote_user',
-    'password': 'Woniunote_password1!',
-    'database': 'woniunote'
+    'host': os.getenv('TEST_DB_HOST', '127.0.0.1'),
+    'port': int(os.getenv('TEST_DB_PORT', '3306')),
+    'user': os.getenv('TEST_DB_USER', 'woniunote_user'),
+    'password': decrypt_value(os.getenv('TEST_DB_PASSWORD', 'Woniunote_password1!')),
+    'database': os.getenv('TEST_DB_NAME', 'woniunote')
 }
 
 # 测试用户账户
 TEST_USERS = {
     'admin': {
-        'username': 'admin',
-        'password': 'admin123',
-        'email': 'admin@example.com'
+        'username': os.getenv('TEST_ADMIN_USERNAME', 'admin'),
+        'password': decrypt_value(os.getenv('TEST_ADMIN_PASSWORD', 'admin123')),
+        'email': os.getenv('TEST_ADMIN_EMAIL', 'admin@example.com')
     },
     'normal': {
-        'username': 'testuser',
-        'password': 'password123',
-        'email': 'test@example.com'
+        'username': os.getenv('TEST_USER_USERNAME', 'testuser'),
+        'password': decrypt_value(os.getenv('TEST_USER_PASSWORD', 'password123')),
+        'email': os.getenv('TEST_USER_EMAIL', 'test@example.com')
     }
 }
 
 # 测试数据
 TEST_DATA = {
     'article': {
-        'sample_id': 398,  # 用于简单测试的文章ID
-        'headline': '测试文章',  # 数据库和代码模型都使用headline字段
-        'content': '这是一篇测试文章的内容',
-        'type': 'test',  # 注意字段类型为varchar(10)，使用字符串而不是整数
-        'numeric_type': 1  # 当需要整数类型时使用此字段
+        'sample_id': int(os.getenv('TEST_ARTICLE_SAMPLE_ID', '398')),
+        'headline': os.getenv('TEST_ARTICLE_HEADLINE', '测试文章'),
+        'content': os.getenv('TEST_ARTICLE_CONTENT', '这是一篇测试文章的内容'),
+        'type': os.getenv('TEST_ARTICLE_TYPE', 'test'),
+        'numeric_type': int(os.getenv('TEST_ARTICLE_NUMERIC_TYPE', '1'))
     },
     'comment': {
-        'content': '这是一条测试评论'
+        'content': os.getenv('TEST_COMMENT_CONTENT', '这是一条测试评论')
     },
     'favorite': {
-        'reason': '测试收藏'
+        'reason': os.getenv('TEST_FAVORITE_REASON', '测试收藏')
     }
 }
 
 # 日志配置
 LOG_CONFIG = {
-    'level': logging.INFO,
-    'format': '%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-    'file': os.path.join(TESTS_DIR, 'test.log')
+    'level': getattr(logging, os.getenv('TEST_LOG_LEVEL', 'INFO')),
+    'format': os.getenv('TEST_LOG_FORMAT', '%(asctime)s - %(levelname)s - %(name)s - %(message)s'),
+    'file': os.getenv('TEST_LOG_FILE', os.path.join(TESTS_DIR, 'test.log'))
 }
 
-# 配置日志
-def setup_logging(name='test'):
-    """设置日志配置"""
-    logging.basicConfig(
-        level=LOG_CONFIG['level'],
-        format=LOG_CONFIG['format']
-    )
-    return logging.getLogger(name)
+# 性能测试配置
+PERFORMANCE_CONFIG = {
+    'concurrent_users': int(os.getenv('TEST_CONCURRENT_USERS', '10')),
+    'request_timeout': int(os.getenv('TEST_REQUEST_TIMEOUT', '30')),
+    'think_time': int(os.getenv('TEST_THINK_TIME', '1')),
+    'ramp_up_time': int(os.getenv('TEST_RAMP_UP_TIME', '60'))
+}
+
+# 测试覆盖率配置
+COVERAGE_CONFIG = {
+    'enabled': os.getenv('TEST_COVERAGE_ENABLED', 'true').lower() == 'true',
+    'report_dir': os.getenv('TEST_COVERAGE_REPORT_DIR', os.path.join(TESTS_DIR, 'coverage')),
+    'source_dir': os.getenv('TEST_COVERAGE_SOURCE_DIR', os.path.join(PROJECT_ROOT, 'woniunote')),
+    'exclude_patterns': os.getenv('TEST_COVERAGE_EXCLUDE', 'tests/*,venv/*').split(',')
+}
+
+def load_yaml_config(config_path):
+    """加载YAML配置文件"""
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+            # 解密敏感信息
+            if 'database' in config:
+                config['database']['password'] = decrypt_value(config['database']['password'])
+            return config
+    except Exception as e:
+        logger.error(f"加载配置文件失败: {e}")
+        return {}
+
+def save_yaml_config(config_path, config):
+    """保存YAML配置文件"""
+    try:
+        # 加密敏感信息
+        if 'database' in config:
+            config['database']['password'] = encrypt_value(config['database']['password'])
+        with open(config_path, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(config, f, allow_unicode=True)
+        return True
+    except Exception as e:
+        logger.error(f"保存配置文件失败: {e}")
+        return False
+
+def setup_logging(name="woniunote_test"):
+    """使用SimpleLogger初始化日志记录器"""
+    return get_simple_logger(name)
+
+logger = setup_logging("woniunote_test")
 
 # 获取基础URL
 def get_base_url():
@@ -126,3 +191,13 @@ def test_get_base_url():
     assert SERVER_CONFIG['host'] in base_url
     assert str(SERVER_CONFIG['port']) in base_url
     logging.info(f"基础URL测试通过: {base_url}")
+
+@pytest.mark.unit
+def test_config_encryption():
+    """测试配置加密功能"""
+    test_value = "test_password"
+    encrypted = encrypt_value(test_value)
+    decrypted = decrypt_value(encrypted)
+    assert decrypted == test_value
+    assert encrypted != test_value
+    logging.info("配置加密测试通过")

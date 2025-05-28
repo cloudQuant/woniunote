@@ -1,0 +1,30 @@
+[run]
+source = woniunote
+omit = 
+    */tests/*
+    */venv/*
+    */migrations/*
+    */__init__.py
+    */config.py
+    */wsgi.py
+    */manage.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+    raise ImportError
+    except ImportError:
+    def main()
+    if TYPE_CHECKING:
+    @abstractmethod
+
+[html]
+directory = coverage/html
+title = WoniuNote Test Coverage Report
+
+[xml]
+output = coverage/coverage.xml 

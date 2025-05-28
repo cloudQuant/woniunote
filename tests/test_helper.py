@@ -134,7 +134,7 @@ def create_flask_context():
 
 # 修复请求上下文问题
 def fix_request_context_issues():
-    """修复常见的“在请求上下文外工作”的错误"""
+    """修复常见的"在请求上下文外工作"的错误"""
     try:
         from flask import Flask, current_app, request, _request_ctx_stack
         
@@ -455,148 +455,58 @@ def handle_database_connection():
         logger.error(f"Error handling database connection: {e}")
         return False
 
-# 修夌Card和Todo模块问题
+# 修复Card和Todo模块问题
 def fix_card_todo_modules():
-    """修夌Card和Todo模块的独立应用实例和表名问题"""
+    """修复Card和Todo模块中的问题"""
     try:
-        import sys
+        from woniunote.app import create_app
+        app = create_app(config_name='testing')
         
-        # 1. 先修夌card_center模块
-        try:
-            card_module_names = [mod for mod in sys.modules.keys() if 'card_center' in mod or 'card.center' in mod]
+        with app.app_context():
+            # 修复Card模块
+            try:
+                from woniunote.controller import card_center
+                # 替换SQLAlchemy实例
+                card_center.db = db
+                logger.info("已替换woniunote.controller.card_center的SQLAlchemy实例")
+                
+                # 检查函数参数
+                for attr_name in dir(card_center):
+                    attr = getattr(card_center, attr_name)
+                    if callable(attr) and hasattr(attr, '__code__'):
+                        if 'request' in attr.__code__.co_varnames:
+                            logger.info(f"已标记{card_center.__name__}.{attr_name}函数可能需要URL参数修复")
+            except Exception as e:
+                logger.warning(f"修复Card模块时出错: {e}")
             
-            for module_name in card_module_names:
-                module = sys.modules.get(module_name)
-                if module:
-                    # 检查是否有独立的Flask实例
-                    if hasattr(module, 'app'):
-                        try:
-                            from flask import current_app
-                            # 将模块的app替换为当前应用
-                            try:
-                                if current_app:
-                                    module.app = current_app
-                                    logger.info(f"已替换{module_name}的Flask实例")
-                            except RuntimeError:
-                                # 如果没有应用上下文，创建一个
-                                app = create_flask_context()
-                                if app:
-                                    module.app = app
-                                    logger.info(f"已用新应用上下文替换{module_name}的Flask实例")
-                        except ImportError:
-                            pass
-                    
-                    # 检查是否有独立的SQLAlchemy实例
-                    if hasattr(module, 'db'):
-                        try:
-                            from woniunote.common.database import db as main_db
-                            # 将模块的db替换为主应用的db
-                            module.db = main_db
-                            logger.info(f"已替换{module_name}的SQLAlchemy实例")
-                        except ImportError:
-                            pass
-                    
-                    # 修复模型类
-                    if hasattr(module, 'Card'):
-                        card_model = module.Card
-                        if hasattr(card_model, '__tablename__') and card_model.__tablename__ != 'card':
-                            card_model.__tablename__ = 'card'
-                            logger.info(f"已修正Card模型的表名为'card'")
-                        
-                        # 确保外键关系正确
-                        if hasattr(card_model, 'category_id') and hasattr(card_model.category_id, 'property'):
-                            # 这里可以检查外键关系，但修改外键比较复杂
-                            logger.info("已处理Card模型的外键关系")
-                    
-                    # 修夌路由参数不匹配问题
-                    for attr_name in dir(module):
-                        attr = getattr(module, attr_name)
-                        if callable(attr) and hasattr(attr, '__code__'):
-                            try:
-                                code = attr.__code__
-                                # 检查函数参数
-                                var_names = code.co_varnames
-                                if 'card_id' in var_names and attr_name in dir(module):
-                                    # 这是一个可能需要修复的函数
-                                    logger.info(f"已标记{module_name}.{attr_name}函数可能需要URL参数修复")
-                            except Exception:
-                                pass
-        except Exception as e:
-            logger.warning(f"修夌Card模块时出错: {e}")
-        
-        # 2. 然后修夌todo_center模块
-        try:
-            todo_module_names = [mod for mod in sys.modules.keys() if 'todo_center' in mod or 'todo.center' in mod]
+            # 修复Todo模块
+            try:
+                from woniunote.controller import todo_center
+                # 替换SQLAlchemy实例
+                todo_center.db = db
+                logger.info("已替换woniunote.controller.todo_center的SQLAlchemy实例")
+                
+                # 检查函数参数
+                for attr_name in dir(todo_center):
+                    attr = getattr(todo_center, attr_name)
+                    if callable(attr) and hasattr(attr, '__code__'):
+                        if 'request' in attr.__code__.co_varnames:
+                            logger.info(f"已标记{todo_center.__name__}.{attr_name}函数可能需要URL参数修复")
+            except Exception as e:
+                logger.warning(f"修复Todo模块时出错: {e}")
             
-            for module_name in todo_module_names:
-                module = sys.modules.get(module_name)
-                if module:
-                    # 检查是否有独立的Flask实例
-                    if hasattr(module, 'app'):
-                        try:
-                            from flask import current_app
-                            # 将模块的app替换为当前应用
-                            try:
-                                if current_app:
-                                    module.app = current_app
-                                    logger.info(f"已替换{module_name}的Flask实例")
-                            except RuntimeError:
-                                # 如果没有应用上下文，创建一个
-                                app = create_flask_context()
-                                if app:
-                                    module.app = app
-                                    logger.info(f"已用新应用上下文替换{module_name}的Flask实例")
-                        except ImportError:
-                            pass
-                    
-                    # 检查是否有独立的SQLAlchemy实例
-                    if hasattr(module, 'db'):
-                        try:
-                            from woniunote.common.database import db as main_db
-                            # 将模块的db替换为主应用的db
-                            module.db = main_db
-                            logger.info(f"已替换{module_name}的SQLAlchemy实例")
-                        except ImportError:
-                            pass
-                    
-                    # 修复模型类
-                    if hasattr(module, 'Todo'):
-                        todo_model = module.Todo
-                        if hasattr(todo_model, '__tablename__') and todo_model.__tablename__ != 'todo':
-                            todo_model.__tablename__ = 'todo'
-                            logger.info(f"已修正Todo模型的表名为'todo'")
-                    
-                    # 修夌路由参数不匹配问题
-                    for attr_name in dir(module):
-                        attr = getattr(module, attr_name)
-                        if callable(attr) and hasattr(attr, '__code__'):
-                            try:
-                                code = attr.__code__
-                                # 检查函数参数
-                                var_names = code.co_varnames
-                                if 'todo_id' in var_names and attr_name in dir(module):
-                                    # 这是一个可能需要修复的函数
-                                    logger.info(f"已标记{module_name}.{attr_name}函数可能需要URL参数修复")
-                            except Exception:
-                                pass
-        except Exception as e:
-            logger.warning(f"修夌Todo模块时出错: {e}")
-        
-        # 3. 最后检查一些特殊别名
-        try:
-            from flask import current_app
-            if hasattr(current_app, 'view_functions'):
-                # 检查是否有不匹配参数名的路由
-                for endpoint, view_func in current_app.view_functions.items():
-                    if 'card_' in endpoint or 'todo_' in endpoint:
-                        logger.info(f"已修正路由绑定参数: {endpoint}")
-        except Exception as e:
-            logger.warning(f"修夌路由参数时出错: {e}")
-        
-        return True
+            # 修复路由参数
+            try:
+                from flask import current_app
+                if hasattr(current_app, 'view_functions'):
+                    for endpoint, view_func in current_app.view_functions.items():
+                        if hasattr(view_func, '__code__') and 'request' in view_func.__code__.co_varnames:
+                            logger.info(f"已标记路由 {endpoint} 可能需要URL参数修复")
+            except Exception as e:
+                logger.warning(f"修复路由参数时出错: {e}")
+                
     except Exception as e:
-        logger.error(f"修夌Card和Todo模块时出错: {e}")
-        return False
+        logger.error(f"修复模块时出错: {e}")
 
 # 为某个特定的测试文件应用补丁
 def prepare_test_file(filepath):

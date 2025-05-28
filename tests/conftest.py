@@ -254,7 +254,8 @@ def prepare_test_database():
     # 在Flask应用上下文中进行数据库操作
     with FlaskAppContextProvider.get_app_context():
         try:
-            session, engine = dbconnect()
+            session, metadata, dbase = dbconnect()
+            engine = metadata.bind
             
             # 检查并创建 article 表（若不存在）
             from sqlalchemy import text
@@ -321,14 +322,16 @@ def prepare_test_database():
                 logger.warning("users 表不存在，正在创建测试专用表 ...")
                 session.execute(text("""
                     CREATE TABLE users (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        userid INT AUTO_INCREMENT PRIMARY KEY,
                         username VARCHAR(50) UNIQUE,
                         password VARCHAR(100),
                         nickname VARCHAR(100),
                         avatar VARCHAR(100),
-                        role VARCHAR(20) DEFAULT 'common',
-                        credit INT DEFAULT 0,
-                        create_time DATETIME NULL
+                        qq VARCHAR(15),
+                        role VARCHAR(20) DEFAULT 'user',
+                        credit INT DEFAULT 50,
+                        createtime DATETIME NULL,
+                        updatetime DATETIME NULL
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
                 """))
                 session.commit()
@@ -339,7 +342,7 @@ def prepare_test_database():
                 result = session.execute(text("SELECT COUNT(*) FROM users WHERE username = 'admin'"))
                 if result.fetchone()[0] == 0:
                     session.execute(text("""
-                        INSERT INTO users (username, password, nickname, role, credit, create_time)
+                        INSERT INTO users (username, password, nickname, role, credit, createtime)
                         VALUES ('admin', 'admin', '管理员', 'admin', 1000, NOW())
                     """))
                     session.commit()
@@ -500,7 +503,7 @@ def cleanup_test_data():
         # 清理测试期间创建的文章
         logger.info("清理测试期间创建的数据...")
         with FlaskAppContextProvider.get_app_context():
-            session = dbconnect()[0]
+            session, _, _ = dbconnect()
             
             # 查找并删除测试期间创建的文章
             # 通常这些文章标题中会包含"自动化测试"或"测试"，并且时间戳在测试开始之后
@@ -559,7 +562,7 @@ def article(test_data: Dict[str, Any]) -> Dict[str, Any]:
                 )
                 
                 # 查询文章数据
-                session = dbconnect()[0]
+                session, _, _ = dbconnect()
                 result = session.execute(
                     text("SELECT * FROM article WHERE articleid = :id"),
                     {"id": article_id}
@@ -650,3 +653,61 @@ def pytest_configure(config):
                         article_type=str(random.randint(1, 4))  # 使用字符串类型
                     )
                 logger.info("已创建初始化测试文章")
+
+# 在测试开始前禁用所有代理设置
+@pytest.fixture(scope="session", autouse=True)
+def disable_proxy():
+    """禁用代理设置，防止代理连接错误"""
+    # 保存原始环境变量
+    original_proxies = {
+        'HTTP_PROXY': os.environ.get('HTTP_PROXY', ''),
+        'HTTPS_PROXY': os.environ.get('HTTPS_PROXY', ''),
+        'FTP_PROXY': os.environ.get('FTP_PROXY', ''),
+        'NO_PROXY': os.environ.get('NO_PROXY', ''),
+        'http_proxy': os.environ.get('http_proxy', ''),
+        'https_proxy': os.environ.get('https_proxy', ''),
+        'ftp_proxy': os.environ.get('ftp_proxy', ''),
+        'no_proxy': os.environ.get('no_proxy', ''),
+    }
+    
+    # 禁用所有代理
+    proxy_vars = ['HTTP_PROXY', 'HTTPS_PROXY', 'FTP_PROXY', 'http_proxy', 'https_proxy', 'ftp_proxy']
+    for var in proxy_vars:
+        os.environ[var] = ''
+    
+    # 设置NO_PROXY以绕过所有代理
+    os.environ['NO_PROXY'] = '*'
+    os.environ['no_proxy'] = '*'
+    
+    # 配置requests的默认会话禁用代理
+    requests.adapters.DEFAULT_POOLBLOCK = False
+    
+    yield
+    
+    # 恢复原始环境变量
+    for var, value in original_proxies.items():
+        if value:
+            os.environ[var] = value
+        elif var in os.environ:
+            del os.environ[var]
+
+@pytest.fixture
+def test_data():
+    """
+    提供测试数据的 fixture
+    """
+    from tests.utils.test_config import TEST_USERS, TEST_DATA
+    from collections import namedtuple
+    
+    # 创建一个简单的用户对象
+    User = namedtuple('User', ['id', 'username', 'email'])
+    test_user = User(
+        id=1,
+        username=TEST_USERS['normal']['username'],
+        email=TEST_USERS['normal']['username']
+    )
+    
+    return {
+        "user": test_user,
+        "articles": []  # 可以根据需要添加测试文章
+    }

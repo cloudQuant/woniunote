@@ -19,7 +19,7 @@ sys.path.insert(0, project_root)
 from tests.utils.test_data_helper import TEST_DATA_MARKER
 # 导入Flask应用上下文提供者
 from tests.utils.test_base import FlaskAppContextProvider
-from tests.utils.test_base import flask_app
+from woniunote.app import create_app
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

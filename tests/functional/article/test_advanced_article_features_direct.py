@@ -22,29 +22,31 @@ test_root = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__fi
 sys.path.insert(0, test_root)
 
 # 导入测试基础设施
-from tests.utils.test_base import logger, flask_app
+from tests.utils.test_base import logger, FlaskAppContextProvider
 from tests.utils.test_config import TEST_DATA
 from tests.utils.test_data_helper import get_or_create_test_data
 from sqlalchemy import text
 from woniunote.common.database import dbconnect
 from tests.utils.article_test_helper import get_article_types, get_articles_by_headline
+from woniunote.app import create_app
 
 # 创建全局测试客户端
 @pytest.fixture(scope="module")
 def client():
     """创建测试客户端"""
-    flask_app.config['TESTING'] = True
-    flask_app.config['SERVER_NAME'] = '127.0.0.1:5001'
-    flask_app.config['PREFERRED_URL_SCHEME'] = 'http'
+    app = create_app(config_name='testing')
+    app.config['TESTING'] = True
+    app.config['SERVER_NAME'] = '127.0.0.1:5001'
+    app.config['PREFERRED_URL_SCHEME'] = 'http'
     
     # 禁用SSL验证
     import urllib3
     urllib3.disable_warnings()
     
     # 初始化应用上下文
-    with flask_app.app_context():
+    with app.app_context():
         # 创建测试客户端，设置允许跟随重定向
-        with flask_app.test_client() as client:
+        with app.test_client() as client:
             yield client
 
 class TestAdvancedArticleFeaturesDirect:

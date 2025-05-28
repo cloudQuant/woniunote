@@ -84,59 +84,100 @@ class SimpleLogger:
         # 打印日志文件路径
         print(f"简单日志记录器初始化: {self.log_file}")
     
-    def _write_log(self, level, message, extra=None):
-        """写入日志
-        
-        Args:
-            level: 日志级别
-            message: 日志消息
-            extra: 额外信息
-        """
+    def _setup_logger(self):
+        """重新设置logger"""
         try:
-            # 获取当前时间
-            now = datetime.datetime.now()
-            now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+            # 清除现有的处理器
+            if self.logger.handlers:
+                for handler in self.logger.handlers[:]:
+                    try:
+                        handler.close()
+                        self.logger.removeHandler(handler)
+                    except:
+                        pass
             
-            # 检查是否需要更新日志目录（如果跨月份）
+            # 重新创建文件处理器
             today = datetime.datetime.now()
             year_month_dir = os.path.join(self.log_dir, f"{today.year:04d}-{today.month:02d}")
-            expected_log_file_base = os.path.join(year_month_dir, f"{self.name}")
+            try:
+                os.makedirs(year_month_dir, exist_ok=True)
+            except:
+                pass
             
-            # 如果当前日志文件基础路径与预期不符，则需要更新处理器
-            if self.log_file_base != expected_log_file_base:
-                # 更新日志文件路径
-                self.log_file_base = expected_log_file_base
-                self.log_file = f"{self.log_file_base}.log"
-                
-                # 确保目录存在
-                try:
-                    os.makedirs(year_month_dir, exist_ok=True)
-                except Exception as e:
-                    print(f"创建年月日志目录失败: {str(e)}")
+            self.log_file_base = os.path.join(year_month_dir, f"{self.name}")
+            self.log_file = f"{self.log_file_base}.log"
             
-            # 构建日志内容
-            log_data = {
-                'time': now_str,
-                'level': level,
-                'module': self.name,
-                'message': message
-            }
+            file_handler = TimedRotatingFileHandler(
+                self.log_file,
+                when='midnight',
+                interval=1,
+                backupCount=31,
+                encoding='utf-8',
+                atTime=datetime.time(0, 0, 0)
+            )
+            file_handler.suffix = "%Y-%m-%d.log"
+            file_handler.setLevel(logging.DEBUG)
             
-            # 添加额外信息
-            if extra:
-                log_data.update(extra)
-                
-            # 转换为JSON字符串
-            log_content = json.dumps(log_data, ensure_ascii=False)
+            formatter = logging.Formatter('%(message)s')
+            file_handler.setFormatter(formatter)
             
-            # 使用logging模块记录日志
-            log_level = self._level_map.get(level, logging.INFO)
-            self.logger.log(log_level, log_content)
-                
+            self.logger.addHandler(file_handler)
+        except Exception as e:
+            # 如果设置失败，只能输出到stderr
+            import sys
+            print(f"Logger setup failed: {e}", file=sys.stderr)
+    
+    def _format_log_content(self, level, message, extra=None):
+        """格式化日志内容"""
+        # 获取当前时间
+        now = datetime.datetime.now()
+        now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # 构建日志内容
+        log_data = {
+            'time': now_str,
+            'level': level,
+            'module': self.name,
+            'message': message
+        }
+        
+        # 添加额外信息
+        if extra:
+            log_data.update(extra)
+            
+        # 转换为JSON字符串
+        return json.dumps(log_data, ensure_ascii=False)
+    
+    def _write_log(self, level, message, extra=None):
+        """写入日志的统一方法"""
+        try:
+            # 获取log级别对应的数字
+            log_level = getattr(logging, level.upper(), logging.INFO)
+            
+            # 创建统一的日志内容
+            log_content = self._format_log_content(level, message, extra)
+            
+            # 写入日志
+            try:
+                self.logger.log(log_level, log_content)
+            except (OSError, ValueError) as e:
+                # 处理Windows下的句柄错误
+                if "invalid handle" in str(e).lower() or "invalid argument" in str(e).lower():
+                    # 尝试重新初始化日志器
+                    try:
+                        self._setup_logger()
+                        self.logger.log(log_level, log_content)
+                    except:
+                        # 如果重新初始化失败，输出到标准错误流
+                        import sys
+                        print(f"Logger error: {log_content}", file=sys.stderr)
+                else:
+                    raise
+            
             return True
         except Exception as e:
-            print(f"写入日志失败: {str(e)}")
-            print(traceback.format_exc())
+            import sys
+            print(f"Logging failed: {str(e)}, Message: {message}", file=sys.stderr)
             return False
     
     def info(self, message, extra=None):

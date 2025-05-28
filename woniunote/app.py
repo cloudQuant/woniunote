@@ -43,6 +43,18 @@ def create_app(config_name='production'):
     # 读取自定义配置
     custom_config = read_config()
     
+    # 配置数据库
+    app.config['SQLALCHEMY_DATABASE_URI'] = custom_config['database']['SQLALCHEMY_DATABASE_URI']
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_POOL_SIZE'] = 100
+    
+    # 初始化SQLAlchemy
+    db.init_app(app)
+    
+    # 在应用上下文中创建所有数据库表
+    with app.app_context():
+        db.create_all()
+    
     # 配置Session
     session_dir = app.config.get('SESSION_FILE_DIR')
     if not session_dir:
@@ -73,24 +85,6 @@ def create_app(config_name='production'):
     
     # 初始化Flask-Session
     Session(app)
-    
-    # 数据库配置
-    SQLALCHEMY_DATABASE_URI = None
-    if custom_config:
-        SQLALCHEMY_DATABASE_URI = custom_config['database']["SQLALCHEMY_DATABASE_URI"]
-        app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-        if 'redis' in custom_config:
-            app.config['CACHE_REDIS_URL'] = custom_config['redis']['REDIS_URL']
-            
-        # 如果自定义配置中有session配置，则使用自定义配置
-        if 'session' in custom_config:
-            app.config.update(custom_config['session'])
-            
-    DATABASE_INFO = parse_db_uri(SQLALCHEMY_DATABASE_URI)
-    
-    # 初始化扩展
-    cache = Cache(app)
-    db.init_app(app)
     
     # 注册蓝图
     app.register_blueprint(article)

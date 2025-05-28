@@ -33,32 +33,11 @@ def base_url(server_host, server_port):
     return url
 
 @pytest.fixture(scope="session", autouse=True)
-def ensure_server_ready(server_port):
-    """确保服务器已准备好接受连接的辅助fixture"""
-    max_retries = 10
-    retry_delay = 1
+def ensure_server_ready():
+    """确保测试环境已准备好的辅助fixture
     
-    logger.info(f"等待服务器在端口 {server_port} 启动...")
-    
-    # 首先使用socket确认端口开放
-    for i in range(max_retries):
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(1)
-            result = sock.connect_ex(('127.0.0.1', server_port))
-            sock.close()
-            
-            if result == 0:
-                logger.info(f"✓ 端口 {server_port} 已开放 (尝试 {i+1}/{max_retries})")
-                time.sleep(1)  # 给一点额外时间让服务器完全初始化
-                return
-            else:
-                logger.warning(f"✗ 端口 {server_port} 未开放 (尝试 {i+1}/{max_retries})")
-        except Exception as e:
-            logger.warning(f"检查端口时出错: {e}")
-        
-        # 如果未成功，等待后重试
-        time.sleep(retry_delay)
-    
-    # 如果所有尝试都失败
-    pytest.fail(f"服务器未在端口 {server_port} 启动")
+    对于health测试，我们不需要真实的服务器，而是使用Flask test client
+    """
+    logger.info("健康测试使用Flask test client，无需外部服务器")
+    yield
+    logger.info("健康测试环境清理完成")

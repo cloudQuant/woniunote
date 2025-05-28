@@ -22,61 +22,30 @@ logger = logging.getLogger(__name__)
 
 # 尝试不同的方式导入dbconnect
 try:
-    from woniunote.common.database import dbconnect
-    logger.info("成功导入woniunote.common.database.dbconnect")
+    from woniunote.common.database import db
+    from sqlalchemy import text
+    logger.info("成功导入woniunote.common.database")
 except ImportError:
+    logger.warning("无法导入数据库模块，将使用模拟数据")
+    db = None
+
+# 导入数据库连接函数
+def dbconnect():
+    """
+    数据库连接函数，返回(session, cursor, connection)
+    """
     try:
-        # 尝试直接导入
-        from common.database import dbconnect
-        logger.info("成功导入common.database.dbconnect")
-    except ImportError:
-        # 如果无法导入，创建一个模拟的dbconnect函数
-        logger.warning("无法导入dbconnect，使用模拟函数")
-        
-        def dbconnect():
-            """模拟的dbconnect函数，返回一个内存SQLite会话"""
-            try:
-                engine = create_engine('sqlite:///:memory:')
-                Session = sessionmaker(bind=engine)
-                session = Session()
-                
-                # 创建测试表
-                session.execute(text("""
-                CREATE TABLE IF NOT EXISTS article (
-                    articleid INTEGER PRIMARY KEY,
-                    title VARCHAR(100),
-                    userid INTEGER,
-                    type VARCHAR(10),
-                    content TEXT,
-                    createtime TIMESTAMP,
-                    updatetime TIMESTAMP,
-                    readcount INTEGER DEFAULT 0,
-                    replycount INTEGER DEFAULT 0,
-                    credit INTEGER DEFAULT 0,
-                    recommended INTEGER DEFAULT 0,
-                    hidden INTEGER DEFAULT 0,
-                    drafted INTEGER DEFAULT 0,
-                    checked INTEGER DEFAULT 1
-                )
-                """))
-                
-                session.execute(text("""
-                CREATE TABLE IF NOT EXISTS comment (
-                    commentid INTEGER PRIMARY KEY,
-                    articleid INTEGER,
-                    userid INTEGER,
-                    content TEXT,
-                    createtime TIMESTAMP,
-                    hidden INTEGER DEFAULT 0
-                )
-                """))
-                
-                session.commit()
-                logger.info("创建了内存SQLite数据库和测试表")
-                return session, None, None
-            except Exception as e:
-                logger.error(f"创建内存数据库时出错: {e}")
-                return None, None, None
+        if db and hasattr(db, 'session'):
+            # 使用Flask-SQLAlchemy的session
+            session = db.session
+            connection = session.get_bind()
+            return session, None, connection
+        else:
+            logger.warning("无法获取数据库会话")
+            return None, None, None
+    except Exception as e:
+        logger.error(f"数据库连接失败: {e}")
+        return None, None, None
 
 class TestDataFactory:
     """测试数据工厂类，用于创建与数据库兼容的测试数据"""
@@ -311,26 +280,32 @@ class TestDataFactory:
                 
                 # 获取最新插入的评论 ID
                 try:
+                    # 尝试使用LAST_INSERT_ID()（MySQL）
                     comment_id = session.execute(text("SELECT LAST_INSERT_ID()")).scalar()
-                    if comment_id is None or comment_id == 0:
-                        # SQLite可能不支持LAST_INSERT_ID()，尝试使用sqlite_last_insert_rowid()
-                        comment_id = session.execute(text("SELECT sqlite_last_insert_rowid()")).scalar()
                     
                     if comment_id is None or comment_id == 0:
-                        # 如果仍然无法获取ID，尝试直接查询
+                        # 如果LAST_INSERT_ID()失败，尝试直接查询最新插入的记录
                         result = session.execute(
-                            text("SELECT commentid FROM comment WHERE articleid = :articleid AND content = :content ORDER BY createtime DESC LIMIT 1"),
-                            {"articleid": article_id, "content": content}
+                            text("SELECT commentid FROM comment WHERE articleid = :articleid AND userid = :userid AND content = :content ORDER BY createtime DESC LIMIT 1"),
+                            {"articleid": article_id, "userid": user_id, "content": content}
                         ).fetchone()
                         if result:
                             comment_id = result[0]
                         else:
-                            # 如果仍然无法获取，生成一个随机 ID
-                            comment_id = random.randint(1000, 9999)
+                            # 如果仍然无法获取，查询最大ID并加1
+                            max_id_result = session.execute(text("SELECT MAX(commentid) FROM comment")).scalar()
+                            comment_id = (max_id_result or 0) + 1
+                    
                 except Exception as e:
                     logger.error(f"获取插入ID时出错: {e}")
-                    # 生成一个随机 ID
-                    comment_id = random.randint(1000, 9999)
+                    # 如果所有方法都失败，查询最大ID并加1
+                    try:
+                        max_id_result = session.execute(text("SELECT MAX(commentid) FROM comment")).scalar()
+                        comment_id = (max_id_result or 0) + 1
+                    except Exception as e2:
+                        logger.error(f"获取最大ID也失败: {e2}")
+                        # 最后的备选方案：生成一个随机 ID
+                        comment_id = random.randint(1000, 9999)
                 
                 logger.info(f"评论创建成功，ID: {comment_id}")
                 return comment_id

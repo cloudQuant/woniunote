@@ -265,10 +265,14 @@ def db_session():
         pytest.skip(f"数据库连接失败: {e}")
         yield None
     finally:
-        if 'session' in locals() and session and not isinstance(session, MockSession):
+        # 安全地关闭数据库会话，检查session是否存在且不是模拟对象
+        if 'session' in locals() and session:
             try:
-                session.close()
-                logger.info("数据库会话已关闭")
+                # 检查是否是模拟会话（通过类型检查）
+                session_class_name = type(session).__name__
+                if session_class_name != 'MockSession' and hasattr(session, 'close'):
+                    session.close()
+                    logger.info("数据库会话已关闭")
             except Exception as e:
                 logger.warning(f"关闭数据库会话时出错: {e}")
 

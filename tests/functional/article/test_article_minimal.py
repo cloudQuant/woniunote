@@ -20,7 +20,8 @@ test_root = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__fi
 sys.path.insert(0, test_root)
 
 # 导入Flask应用
-from tests.utils.test_base import flask_app
+from tests.utils.test_base import FlaskAppContextProvider
+from woniunote.app import create_app
 from tests.utils.test_config import TEST_DATA
 
 # 配置日志
@@ -31,8 +32,9 @@ logger = logging.getLogger(__name__)
 @pytest.fixture(scope="module")
 def client():
     """创建最简化测试客户端"""
-    flask_app.config['TESTING'] = True  # 启用测试模式
-    with flask_app.test_client() as client:
+    app = create_app(config_name='testing')
+    app.config['TESTING'] = True  # 启用测试模式
+    with app.test_client() as client:
         yield client
 
 # 测试用例

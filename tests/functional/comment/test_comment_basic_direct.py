@@ -60,8 +60,10 @@ try:
     from flask import Flask, render_template_string, request
     try:
         # 先尝试导入测试基类
-        from tests.utils.test_base import logger, flask_app
+        from tests.utils.test_base import logger, FlaskAppContextProvider
         from tests.utils.test_config import TEST_DATA
+        from woniunote.app import create_app
+        flask_app = create_app('testing')
         logger.info("成功导入测试基类")
     except ImportError:
         # 如果失败，创建一个简单的Flask应用
@@ -147,21 +149,53 @@ except Exception as e:
     logger.error(f"设置测试环境时出错: {e}")
     flask_app = None
 
+# 导入Flask应用上下文提供者
+from tests.utils.test_base import logger, FlaskAppContextProvider
+from woniunote.app import create_app
+
+# 创建一个测试用的Flask应用实例
+app = create_app(config_name='testing')
+app.config['TESTING'] = True
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# 创建app_context fixture
+app_context = FlaskAppContextProvider.with_app_context_fixture()
+
+def test_comment_basic_functionality():
+    """测试基本的评论功能"""
+    global app
+    
+    print("\n\n===== 测试基本的评论功能 =====")
+    
+    # 确保应用实例存在
+    if app is None:
+        app = create_app(config_name='testing')
+    
+    app.config['TESTING'] = True
+    app.config['SERVER_NAME'] = '127.0.0.1:5001'  # 确保服务器名称一致
+    app.config['PREFERRED_URL_SCHEME'] = 'http'  # 强制使用HTTP
+    
+    # ... existing code ...
+
 @pytest.fixture
 def client():
     """创建测试客户端"""
-    if flask_app is None:
-        pytest.skip("无法创建Flask应用")
+    global app
+    
+    # 确保应用实例存在
+    if app is None:
+        app = create_app(config_name='testing')
         
-    flask_app.config['TESTING'] = True
-    flask_app.config['SERVER_NAME'] = '127.0.0.1:5001'  # 确保服务器名称一致
-    flask_app.config['PREFERRED_URL_SCHEME'] = 'http'  # 强制使用HTTP
+    app.config['TESTING'] = True
+    app.config['SERVER_NAME'] = '127.0.0.1:5001'  # 确保服务器名称一致
+    app.config['PREFERRED_URL_SCHEME'] = 'http'  # 强制使用HTTP
     
     try:
         # 初始化应用上下文
-        with flask_app.app_context():
+        with app.app_context():
             # 创建测试客户端，设置允许跟随重定向
-            with flask_app.test_client() as client:
+            with app.test_client() as client:
                 logger.info("成功创建测试客户端")
                 yield client
     except Exception as e:

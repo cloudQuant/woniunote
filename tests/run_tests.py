@@ -33,6 +33,8 @@ import requests
 from requests.exceptions import RequestException
 import socket
 import urllib3
+import coverage
+from datetime import datetime
 
 # 添加项目根目录到Python路径
 project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -41,6 +43,11 @@ sys.path.insert(0, project_root)
 # 添加tests目录到Python路径
 tests_dir = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, tests_dir)
+
+# 导入测试工具
+from tests.utils.test_config import COVERAGE_CONFIG, PERFORMANCE_CONFIG
+from tests.utils.test_cleanup import TestCleanupHelper
+from tests.utils.test_reporter import TestReporter
 
 # 配置日志
 logging.basicConfig(
@@ -91,6 +98,10 @@ def parse_args():
     parser.add_argument('--unit-only', action='store_true', help='只运行单元测试，跳过所有浏览器测试')
     parser.add_argument('--continue-on-failure', action='store_true', help='即使测试失败也继续运行其他测试')
     parser.add_argument('--debug', action='store_true', help='启用调试模式')
+    parser.add_argument('--coverage', action='store_true', help='生成测试覆盖率报告')
+    parser.add_argument('--performance', action='store_true', help='运行性能测试')
+    parser.add_argument('--clean', action='store_true', help='清理测试数据')
+    parser.add_argument('--report', action='store_true', help='生成测试报告')
     
     # 添加直接测试相关选项
     parser.add_argument('--direct', action='store_true', help='使用直接测试方式（不使用pytest）')
@@ -679,169 +690,24 @@ def collect_test_files(test_path=None):
         
         return basic_tests + other_tests
 
-def run_tests(args):
+def run_tests(args, test_files):
     """运行测试"""
-    success = True
-    test_files = collect_test_files(args.test_path)
+    pytest_args = [
+        '--verbose' if args.verbose else '',
+        '--continue-on-failure' if args.continue_on_failure else '',
+        '--debug' if args.debug else '',
+        '--unit-only' if args.unit_only else '',
+        '--performance' if args.performance else '',
+    ]
     
-    if not test_files:
-        logger.error("未找到测试文件")
-        return False
+    # 过滤掉空字符串
+    pytest_args = [arg for arg in pytest_args if arg]
     
-    logger.info(f"找到 {len(test_files)} 个测试文件")
+    # 添加测试文件
+    pytest_args.extend(test_files)
     
-    # 准备测试环境
-    os.environ['FLASK_ENV'] = 'testing'
-    os.environ['TESTING'] = 'true'
-    os.environ['FLASK_DEBUG'] = '1' if args.debug else '0'
-    os.environ['PYTHONPATH'] = project_root
-    
-    # 设置测试数据库配置
-    os.environ['WONIUNOTE_TEST_MODE'] = 'true'
-    os.environ['WONIUNOTE_DB_TEST'] = 'true'
-    
-    # 使用SQLite内存数据库进行测试，避免MySQL连接问题
-    os.environ['WONIUNOTE_TEST_DB'] = 'sqlite:///:memory:'
-    os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    
-    # 处理已知的字段映射问题（title vs headline, type字段类型）
-    os.environ['WONIUNOTE_FIELD_MAPPING_FIX'] = 'true'
-    
-    # 构建基础pytest命令行参数
-    base_pytest_args = [sys.executable, "-m", "pytest"]
-    
-    # 添加标准pytest参数
-    if args.verbose:
-        base_pytest_args.append("-v")
-    
-    # 添加单元测试标记
-    if args.unit_only:
-        base_pytest_args.extend(["-m", "unit"])
-    
-    # 确保测试有适当的超时设置
-    try:
-        import importlib.metadata as _im
-        if any(dj.startswith("pytest-timeout") for dj in _im.distributions()):
-            base_pytest_args.extend(["--timeout", str(max(60, args.timeout))])
-    except Exception:
-        # 无法检测到插件时直接忽略, 保障测试命令可正常执行
-        pass
-    
-    # 使用项目根目录作为工作目录
-    cwd = project_root
-    
-    # 首先运行test_helper.py来设置环境
-    helper_file = os.path.join(tests_dir, "test_helper.py")
-    if os.path.exists(helper_file):
-        try:
-            logger.info("运行测试辅助模块来设置环境...")
-            # 直接导入模块而不是作为测试运行
-            sys.path.insert(0, os.path.dirname(helper_file))
-            try:
-                # 使用exec动态执行模块代码，避免导入错误
-                with open(helper_file, 'r', encoding='utf-8') as f:
-                    helper_code = f.read()
-                    # 提取关键函数并执行
-                    exec_globals = {}
-                    exec(helper_code, exec_globals)
-                    
-                    # 执行关键函数
-                    if 'setup_test_environment' in exec_globals:
-                        exec_globals['setup_test_environment']()
-                    if 'patch_requests_module' in exec_globals:
-                        exec_globals['patch_requests_module']()
-                    if 'fix_article_model_fields' in exec_globals:
-                        exec_globals['fix_article_model_fields']()
-                    if 'fix_card_todo_modules' in exec_globals:
-                        exec_globals['fix_card_todo_modules']()
-                    
-                logger.info("成功执行测试辅助模块关键函数")
-            except Exception as e:
-                logger.warning(f"导入测试辅助模块时出错: {e}，但将继续测试")
-        except Exception as e:
-            logger.warning(f"运行测试辅助模块时出错: {e}，但将继续测试")
-    
-    failed_files = []
-    passed_files = []
-    
-    for test_file in test_files:
-        rel_path = os.path.relpath(test_file, project_root)
-        logger.info(f"运行测试: {rel_path}")
-        
-        # 跳过test_helper.py和测试服务器相关文件
-        if os.path.basename(test_file) == "test_helper.py":
-            logger.info("跳过test_helper.py，因为它已经被单独处理")
-            passed_files.append(rel_path)
-            continue
-        elif os.path.basename(test_file) == "test_server.py":
-            logger.info("跳过test_server.py，因为它是服务器启动脚本而非测试文件")
-            passed_files.append(rel_path)
-            continue
-        elif os.path.basename(test_file) == "start_server.py":
-            logger.info("跳过start_server.py，因为它是服务器启动脚本而非测试文件")
-            passed_files.append(rel_path)
-            continue
-        
-        # 构建pytest命令
-        cmd = [sys.executable, "-m", "pytest", test_file, "-v"]
-        if args.verbose:
-            cmd.append("-v")
-        
-        # 添加-s参数以显示print输出
-        cmd.append("-s")
-        
-        # 添加--no-header参数以避免pytest警告
-        cmd.append("--no-header")
-        
-        # 添加asyncio模式参数
-        cmd.append("--asyncio-mode=auto")
-        
-        # 运行测试
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            
-            # 检查测试结果
-            if result.returncode == 0:
-                logger.info(f"测试通过: {rel_path}")
-                passed_files.append(rel_path)
-            else:
-                # 处理已知的特定错误模式
-                stderr = result.stderr
-                if "too many values to unpack" in stderr or "asyncio_mode" in stderr or "__file__" in stderr:
-                    logger.warning(f"测试 {rel_path} 失败，但是已知问题，将其标记为跳过")
-                    # 将文件标记为跳过而不是失败
-                    # 在实际生产环境中应该修复这些问题，但在测试运行中我们允许跳过
-                    passed_files.append(rel_path)
-                    continue
-                    
-                logger.error(f"测试失败: {rel_path}")
-                logger.error(f"错误信息: {stderr[:500]}...") # 只显示前500个字符避免日志过长
-                failed_files.append(rel_path)
-                
-                # 如果是数据库相关错误，我们仍然继续测试
-                if "database" in stderr or "db" in stderr or "sql" in stderr:
-                    logger.warning(f"数据库相关错误，继续测试其他文件")
-                    continue
-                    
-                success = False
-                
-                # 如果不继续执行失败的测试，则停止
-                if not args.continue_on_failure:
-                    logger.warning("测试失败，停止后续测试")
-                    break
-        except Exception as e:
-            logger.exception(f"运行测试时出错: {e}")
-            failed_files.append(rel_path)
-            success = False
-    
-    # 汇总结果
-    logger.info(f"测试汇总: {len(passed_files)} 通过, {len(failed_files)} 失败")
-    if failed_files:
-        logger.error("失败的测试文件:")
-        for f in failed_files:
-            logger.error(f"  - {os.path.basename(f)}")
-    
-    return success
+    # 运行测试
+    return pytest.main(pytest_args)
 
 def check_port_available(port):
     """检查端口是否可用（可以连接）"""
@@ -1017,91 +883,101 @@ def cleanup():
     
     logger.info("清理完成")
 
+def setup_coverage():
+    """设置测试覆盖率工具"""
+    if not COVERAGE_CONFIG['enabled']:
+        return None
+    
+    cov = coverage.Coverage(
+        source=[COVERAGE_CONFIG['source_dir']],
+        omit=COVERAGE_CONFIG['exclude_patterns']
+    )
+    cov.start()
+    return cov
+
 def main():
     """主函数"""
+    # 初始化变量
+    cleanup = None
+    cov = None
+    
     try:
-        # 注册退出时的清理函数
-        atexit.register(cleanup)
-        
-        # 设置信号处理程序
-        if platform.system() != "Windows":
-            # 仅在非Windows平台设置信号处理
-            signal.signal(signal.SIGINT, lambda sig, frame: sys.exit(130))
-            signal.signal(signal.SIGTERM, lambda sig, frame: sys.exit(143))
-        
         # 解析命令行参数
         args = parse_args()
         
-        # 如果启用了调试模式，设置更详细的日志
+        # 设置日志级别
         if args.debug:
-            setup_logger(logging.DEBUG)
-        
-        # 动态查找可用端口
-        global server_port, base_url
-        
-        # 如果用户指定了端口，先尝试使用用户指定的端口
-        if args.port != 5002:  # 5002是默认值，如果用户没有指定其他端口，则动态查找
-            if not check_port_used(args.port):
-                server_port = args.port
-                logger.info(f"使用用户指定的端口: {server_port}")
-            else:
-                logger.warning(f"用户指定的端口 {args.port} 已被占用，将动态查找可用端口")
-                server_port = find_available_port(8000, 9000)
+            logging.basicConfig(level=logging.DEBUG)
         else:
-            # 动态查找可用端口
-            server_port = find_available_port(8000, 9000)
-            logger.info(f"动态选择的端口: {server_port}")
+            logging.basicConfig(level=logging.INFO)
         
-        # 更新端口相关变量
-        args.port = server_port
-        base_url = f"http://localhost:{server_port}"
+        # 初始化数据库
+        from woniunote import db
+        from woniunote.app import create_app
         
-        # 再次检查端口是否可用
-        if check_port_used(server_port):
-            logger.error(f"端口 {server_port} 仍然被占用，无法启动服务器")
-            return 1
+        # 创建测试应用实例
+        app = create_app(config_name='testing')
         
-        # 确保测试数据库和环境准备就绪
+        # 设置应用上下文
+        app_context = app.app_context()
+        app_context.push()
+        
+        # 设置请求上下文
+        request_context = app.test_request_context()
+        request_context.push()
+        
         try:
-            logger.info("检查测试数据...")
-            # 这里可以添加准备测试数据的代码
-            logger.info("测试数据准备就绪")
-        except Exception as e:
-            logger.warning(f"准备测试数据时出错: {e}，但将继续测试")
-        
-        # 启动Flask服务器（如果需要）
-        server_proc = None
-        if not args.no_server:
-            server_proc = start_server(args)
-            if not server_proc:
-                logger.error("无法启动Flask服务器")
-                return 1
+            # 在应用上下文中初始化数据库
+            db.create_all()
+            logger.info("数据库表已创建")
             
-            # 给服务器一些时间完全启动
-            logger.info("等待服务器完全启动...")
-            time.sleep(2)
-        
-        try:
+            # 设置清理函数
+            def cleanup_handler():
+                if cleanup:
+                    cleanup()
+            
+            # 注册清理函数
+            atexit.register(cleanup_handler)
+            
+            # 设置覆盖率
+            if args.coverage:
+                cov = setup_coverage()
+            
+            # 收集测试文件
+            test_files = collect_test_files(args.test_path)
+            
             # 运行测试
-            success = run_tests(args)
-            return 0 if success else 1
+            result = run_tests(args, test_files)
+            
+            # 生成报告
+            if args.report:
+                generate_reports(result, cov)
+            
+            return result
+            
         finally:
-            # 无论测试成功与否，确保停止服务器
-            if server_proc:
-                stop_server(server_proc)
-                logger.info("Flask服务器已停止")
-        
-    except KeyboardInterrupt:
-        logger.info("测试被用户中断")
-        # 确保在键盘中断时也进行清理
-        cleanup()
-        return 130
+            # 清理上下文，安全地处理空堆栈的情况
+            try:
+                request_context.pop()
+            except (RuntimeError, IndexError) as e:
+                logger.warning(f"清理请求上下文时出错: {e}")
+            
+            try:
+                app_context.pop()
+            except (RuntimeError, IndexError) as e:
+                logger.warning(f"清理应用上下文时出错: {e}")
+            
     except Exception as e:
-        logger.exception(f"测试执行时发生未处理异常: {e}")
-        # 确保在异常情况下也进行清理
-        cleanup()
-        return 1
-        
+        logger.error(f"测试执行失败: {str(e)}")
+        raise
+    finally:
+        # 清理资源
+        if cleanup:
+            cleanup()
+        if cov:
+            cov.stop()
+            cov.save()
+
 # 添加pytest集成，使此脚本可以直接被pytest运行
 def pytest_sessionstart(session):
     """pytest会话开始时的处理"""

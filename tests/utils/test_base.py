@@ -31,17 +31,12 @@ sys.path.insert(0, project_root)
 
 # 导入Flask应用
 try:
-    from woniunote.app import app as flask_app
+    from woniunote.app import create_app
+    flask_app = create_app('testing')
 except ImportError:
-    # 如果直接导入app失败，尝试导入create_app函数
-    try:
-        from woniunote.app import create_app
-        flask_app = create_app()
-    except ImportError:
-        # 如果都失败，提供一个空的Flask应用占位符
-        import flask
-        flask_app = flask.Flask(__name__)
-        logging.warning("无法导入WoniuNote Flask应用，使用空的Flask应用代替")
+    import flask
+    flask_app = flask.Flask(__name__)
+    logging.warning("无法导入WoniuNote Flask应用，使用空的Flask应用代替")
 
 # 导入测试配置
 from tests.utils.test_config import (
@@ -59,13 +54,24 @@ warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 class FlaskAppContextProvider:
     """提供Flask应用上下文的工具类"""
     
-    @staticmethod
-    def get_app_context():
-        """获取Flask应用上下文"""
-        return flask_app.app_context()
+    _app = None
     
-    @staticmethod
-    def with_app_context(func):
+    @classmethod
+    def get_app(cls):
+        """获取或创建Flask应用实例"""
+        if cls._app is None:
+            from woniunote.app import create_app
+            cls._app = create_app(config_name='testing')
+        return cls._app
+    
+    @classmethod
+    def get_app_context(cls):
+        """获取应用上下文"""
+        app = cls.get_app()
+        return app.app_context()
+    
+    @classmethod
+    def with_app_context(cls, func):
         """装饰器：使函数在Flask应用上下文中运行
         
         注意：此装饰器不应用于 pytest fixture，
@@ -74,18 +80,16 @@ class FlaskAppContextProvider:
         """
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            # 简化装饰器，只负责提供应用上下文，不干扰参数传递
-            with flask_app.app_context():
+            with cls.get_app_context():
                 try:
                     return func(*args, **kwargs)
                 except Exception as e:
-                    # 捕获并记录异常，但让它继续传播
                     logger.error(f"Flask应用上下文中出现错误: {str(e)}")
                     raise
         return wrapper
     
-    @staticmethod
-    def with_app_context_fixture():
+    @classmethod
+    def with_app_context_fixture(cls):
         """创建一个能与pytest fixture兼容的应用上下文管理器
         
         与with_app_context不同，这个方法返回一个可以在fixture中使用的上下文管理器
@@ -94,7 +98,7 @@ class FlaskAppContextProvider:
         def app_context():
             logger.info("创建Flask应用上下文")
             try:
-                with flask_app.app_context():
+                with cls.get_app_context():
                     yield
             except Exception as e:
                 logger.error(f"Flask应用上下文fixture出错: {str(e)}")
@@ -110,7 +114,16 @@ class TestBase:
     
     @classmethod
     def setup_class(cls):
-        """在类初始化时设置共享资源"""
+        """在类初始化时执行一次，为整个测试类创建应用上下文"""
+        try:
+            # 创建并推送应用上下文
+            cls.app_context = flask_app.app_context()
+            cls.app_context.push()
+            logger.info("成功创建类级别应用上下文")
+        except Exception as e:
+            logger.error(f"创建类级别应用上下文失败: {e}")
+            cls.app_context = None
+        
         # 动态获取最新的服务器配置
         from tests.utils.test_config import SERVER_CONFIG, get_base_url
         cls.SERVER_HOST = SERVER_CONFIG['host']
@@ -122,9 +135,23 @@ class TestBase:
         cls.base_url = get_base_url()
         logger.info(f"使用基础URL: {cls.base_url}")
         
-        # 创建会话，禁用证书验证
+        # 创建会话，禁用证书验证和代理
         cls.session = requests.Session()
         cls.session.verify = False
+        
+        # 禁用所有代理设置，避免代理连接错误
+        cls.session.proxies = {
+            'http': None,
+            'https': None,
+            'ftp': None,
+            'no_proxy': '*'
+        }
+        
+        # 设置环境变量禁用代理
+        os.environ['HTTP_PROXY'] = ''
+        os.environ['HTTPS_PROXY'] = ''
+        os.environ['FTP_PROXY'] = ''
+        os.environ['NO_PROXY'] = '*'
         
         # 禁用SSL警告
         import urllib3
@@ -133,8 +160,40 @@ class TestBase:
     @classmethod
     def teardown_class(cls):
         """在类销毁时清理资源"""
-        if hasattr(cls, 'session'):
-            cls.session.close()
+        # 移除应用上下文，安全地处理空堆栈的情况
+        if hasattr(cls, 'app_context') and cls.app_context:
+            try:
+                cls.app_context.pop()
+                logger.info("成功清理类级别应用上下文")
+            except (RuntimeError, IndexError, LookupError) as e:
+                logger.warning(f"清理类级别应用上下文时出错: {e}")
+            finally:
+                cls.app_context = None
+    
+    def setup_method(self, method):
+        """每个测试方法开始前执行"""
+        # 确保在测试方法执行时有应用上下文
+        # 如果类级别上下文不存在，为此方法创建一个
+        if not (hasattr(self.__class__, 'app_context') and self.__class__.app_context):
+            try:
+                self.method_app_context = flask_app.app_context()
+                self.method_app_context.push()
+                logger.info("为测试方法创建应用上下文")
+            except Exception as e:
+                logger.error(f"为测试方法创建应用上下文失败: {e}")
+                self.method_app_context = None
+    
+    def teardown_method(self, method):
+        """每个测试方法结束后执行"""
+        # 清理方法级别的应用上下文
+        if hasattr(self, 'method_app_context') and self.method_app_context:
+            try:
+                self.method_app_context.pop()
+                logger.info("成功清理方法级别应用上下文")
+            except (RuntimeError, IndexError, LookupError) as e:
+                logger.warning(f"清理方法级别应用上下文时出错: {e}")
+            finally:
+                self.method_app_context = None
     
     @staticmethod
     def wait_for_server(seconds=1):

@@ -153,7 +153,8 @@ def main():
         
         # 尝试直接导入 app 而不是 create_app
         try:
-            from woniunote.app import app as flask_app
+            from woniunote.app import create_app
+            flask_app = create_app('testing')
             logger.info("成功导入Flask应用")
         except ImportError:
             # 如果直接导入app失败，尝试导入create_app函数
