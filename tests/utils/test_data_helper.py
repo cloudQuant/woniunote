@@ -74,8 +74,8 @@ class TestUserFactory:
             result = session.execute(
                 text("""
                     INSERT INTO users 
-                    (username, password, nickname, avatar, role, credit, create_time) 
-                    VALUES (:username, :password, :nickname, :avatar, :role, :credit, :create_time)
+                    (username, password, nickname, avatar, role, credit, createtime) 
+                    VALUES (:username, :password, :nickname, :avatar, :role, :credit, :createtime)
                 """),
                 {
                     "username": username,
@@ -84,7 +84,7 @@ class TestUserFactory:
                     "avatar": "default.png",
                     "role": role,
                     "credit": 100,
-                    "create_time": now
+                    "createtime": now
                 }
             )
             

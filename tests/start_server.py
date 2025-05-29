@@ -85,22 +85,32 @@ def main():
     
     print(f"[INFO] 启动服务器: {args.host}:{args.port}")
     
-    # 去除 HTTPS 设置，方便测试
+    # 修复HTTP/HTTPS逻辑
     ssl_context = None
-    protocol = "HTTP"
+    protocol = "HTTPS"  # 默认使用HTTPS
     
-    # 除非明确要求HTTP，否则使用HTTPS
-    if not args.http:
+    # 如果明确要求HTTP，则使用HTTP
+    if args.http:
+        ssl_context = None  # 不使用SSL
+        protocol = "HTTP"
+    else:
         ssl_context = 'adhoc'  # 使用自签名证书启用 HTTPS
-        protocol = "HTTPS"
     
     print(f"[INFO] 使用{protocol}协议")
     
     # 在导入 Flask 应用前确保数据库准备就绪
     ensure_article_table()
     
-    # 现在导入 Flask 应用
-    from woniunote.app import app
+    # 现在导入 Flask 应用，使用工厂函数
+    from woniunote.app import create_app
+    
+    # 创建应用实例
+    if args.test:
+        app = create_app('testing')
+    else:
+        app = create_app()
+    
+    print(f"[INFO] Flask应用创建成功，测试模式: {app.config.get('TESTING', False)}")
     
     # 启动 Flask 应用
     app.run(

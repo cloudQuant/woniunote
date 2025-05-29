@@ -148,36 +148,49 @@ class SimpleLogger:
         # 转换为JSON字符串
         return json.dumps(log_data, ensure_ascii=False)
     
-    def _write_log(self, level, message, extra=None):
-        """写入日志的统一方法"""
-        try:
-            # 获取log级别对应的数字
-            log_level = getattr(logging, level.upper(), logging.INFO)
+    def _write_log(self, level: str, message: str, extra: dict = None) -> bool:
+        """
+        写入日志的核心方法
+        
+        Args:
+            level: 日志级别
+            message: 日志消息
+            extra: 额外信息
             
-            # 创建统一的日志内容
+        Returns:
+            bool: 写入是否成功
+        """
+        try:
+            # 格式化日志内容
             log_content = self._format_log_content(level, message, extra)
             
-            # 写入日志
+            # 获取对应的日志级别
+            log_level = getattr(logging, level.upper(), logging.INFO)
+            
+            # 写入日志 - 添加Windows句柄错误处理
             try:
                 self.logger.log(log_level, log_content)
-            except (OSError, ValueError) as e:
-                # 处理Windows下的句柄错误
-                if "invalid handle" in str(e).lower() or "invalid argument" in str(e).lower():
-                    # 尝试重新初始化日志器
+            except (OSError, IOError) as handle_error:
+                # Windows句柄错误，尝试重新初始化logger
+                if "句柄无效" in str(handle_error) or "handle" in str(handle_error).lower():
                     try:
                         self._setup_logger()
                         self.logger.log(log_level, log_content)
                     except:
-                        # 如果重新初始化失败，输出到标准错误流
-                        import sys
-                        print(f"Logger error: {log_content}", file=sys.stderr)
+                        # 如果重新初始化也失败，使用print作为备用
+                        print(f"[{level}] {message}")
+                        return False
                 else:
                     raise
             
             return True
+            
         except Exception as e:
-            import sys
-            print(f"Logging failed: {str(e)}, Message: {message}", file=sys.stderr)
+            # 备用日志输出
+            try:
+                print(f"[{level}] {message} (日志系统错误: {e})")
+            except:
+                pass
             return False
     
     def info(self, message, extra=None):

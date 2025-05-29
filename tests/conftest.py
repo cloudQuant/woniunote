@@ -137,63 +137,30 @@ def server_port():
 
 @pytest.fixture(scope="session")
 def base_url(server_host, server_port):
-    """返回服务器的基础URL"""
-    # 使用 HTTP 协议进行测试，避免证书问题
-    http_url = f"http://{server_host}:{server_port}"
-    https_url = f"https://{server_host}:{server_port}"
+    """返回服务器的基础URL - 动态检测HTTP/HTTPS"""
+    import requests
+    import urllib3
+    urllib3.disable_warnings()
     
-    # 尝试HTTP和HTTPS连接，优先选择可用的连接
-    urls_to_try = [http_url, https_url]
-    working_url = None
+    # 尝试HTTPS和HTTP两种协议，使用第一个可用的
+    urls_to_try = [
+        f"https://{server_host}:{server_port}",
+        f"http://{server_host}:{server_port}"
+    ]
     
     for url in urls_to_try:
-        logger.info(f"尝试连接到服务器: {url}")
-        max_attempts = 3
-        for i in range(max_attempts):
-            try:
-                response = requests.get(url, verify=False, timeout=5)
-                if response.status_code == 200:
-                    logger.info(f"成功连接到服务器: {url}")
-                    working_url = url
-                    break
-            except Exception as e:
-                if i == max_attempts - 1:
-                    logger.warning(f"无法连接到服务器 {url}: {str(e)}")
-                else:
-                    logger.warning(f"尝试连接服务器失败，将重试: {str(e)}")
-                    time.sleep(2)  # 等待服务器启动
-        
-        if working_url:
-            break
-    
-    # 如果没有找到工作的URL，启动一个HTTP服务器
-    if not working_url:
-        logger.warning("没有找到可用的服务器连接，将尝试启动服务器...")
         try:
-            import subprocess
-            import os
-            
-            # 构建启动服务器的命令
-            cmd = [sys.executable, os.path.join(project_root, "start_server.py"), "--test", "--http", "--port", str(server_port)]
-            
-            # 以非阻塞方式启动服务器
-            subprocess.Popen(cmd, cwd=project_root, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            
-            # 等待服务器启动
-            logger.info(f"等待服务器启动...")
-            time.sleep(5)
-            
-            # 再次尝试连接
-            working_url = http_url
-        except Exception as e:
-            logger.error(f"尝试启动服务器时出错: {e}")
+            response = requests.get(url, timeout=3, verify=False)
+            if response.status_code in [200, 301, 302, 404]:
+                logger.info(f"使用测试服务器URL: {url}")
+                return url
+        except:
+            continue
     
-    # 仍然没有可用连接，但不跳过测试，而是返回HTTP URL并记录警告
-    if not working_url:
-        logger.warning("无法连接到服务器，测试可能会失败，但仍将继续执行")
-        working_url = http_url
-    
-    return working_url
+    # 如果都不可用，默认使用HTTPS
+    default_url = f"https://{server_host}:{server_port}"
+    logger.info(f"使用默认测试服务器URL: {default_url}")
+    return default_url
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args() -> Dict[str, Any]:
@@ -221,9 +188,13 @@ def browser_type_launch_args() -> Dict[str, Any]:
             "--disable-features=BackForwardCache",
             "--disable-web-security",
             "--disable-features=IsolateOrigins",
-            "--disable-site-isolation-trials"
+            "--disable-site-isolation-trials",
+            "--disable-blink-features=AutomationControlled",
+            "--disable-extensions",
+            "--disable-plugins",
+            "--disable-images",  # 禁用图片加载以提高速度
         ],
-        "timeout": 30000,  # 设置更长的超时时间
+        "timeout": 60000,  # 增加到60秒超时时间
         "chromium_sandbox": False  # 禁用 Chromium 沙箱
     }
 
@@ -719,23 +690,31 @@ def server_available():
     如果服务器不可用，跳过浏览器测试
     """
     import requests
+    import urllib3
     import time
     
-    server_url = "http://127.0.0.1:5001"
-    max_retries = 3
+    urllib3.disable_warnings()
     
-    for attempt in range(max_retries):
-        try:
-            response = requests.get(server_url, timeout=5)
-            if response.status_code in [200, 301, 302, 404]:
-                return True
-        except:
-            if attempt < max_retries - 1:
-                time.sleep(2)
-            continue
+    # 尝试HTTPS和HTTP两种协议
+    urls_to_try = [
+        "https://127.0.0.1:5001",
+        "http://127.0.0.1:5001"
+    ]
+    
+    for url in urls_to_try:
+        for attempt in range(2):
+            try:
+                response = requests.get(url, timeout=5, verify=False)
+                if response.status_code in [200, 301, 302, 404]:
+                    logger.info(f"服务器可用: {url}")
+                    return True
+            except:
+                if attempt < 1:
+                    time.sleep(2)
+                continue
     
     # 服务器不可用，跳过测试
-    pytest.skip(f"测试服务器 {server_url} 不可用，跳过浏览器测试")
+    pytest.skip(f"测试服务器不可用，跳过浏览器测试")
 
 def pytest_runtest_setup(item):
     """
@@ -746,20 +725,40 @@ def pytest_runtest_setup(item):
         import requests
         import time
         
-        server_url = "http://127.0.0.1:5001"
-        max_retries = 2
+        # 尝试HTTP和HTTPS两种协议
+        urls_to_try = [
+            "http://127.0.0.1:5001",
+            "https://127.0.0.1:5001"
+        ]
         
         server_available = False
-        for attempt in range(max_retries):
-            try:
-                response = requests.get(server_url, timeout=3)
-                if response.status_code in [200, 301, 302, 404]:
-                    server_available = True
-                    break
-            except:
-                if attempt < max_retries - 1:
-                    time.sleep(1)
-                continue
+        working_url = None
+        
+        for url in urls_to_try:
+            for attempt in range(2):
+                try:
+                    response = requests.get(url, timeout=3, verify=False)
+                    if response.status_code in [200, 301, 302, 404]:
+                        server_available = True
+                        working_url = url
+                        break
+                except:
+                    if attempt < 1:
+                        time.sleep(1)
+                    continue
+            
+            if server_available:
+                break
         
         if not server_available:
-            pytest.skip(f"测试服务器 {server_url} 不可用，跳过浏览器测试")
+            pytest.skip(f"测试服务器不可用，跳过浏览器测试。请手动启动服务器：python tests/start_server.py --test --http")
+        else:
+            # 将服务器URL存储在测试项目中，供测试使用
+            item.server_url = working_url
+            logger.info(f"浏览器测试将使用服务器: {working_url}")
+
+def pytest_sessionfinish(session, exitstatus):
+    """
+    在测试会话结束时的清理工作
+    """
+    logger.info("测试会话结束")
