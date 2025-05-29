@@ -378,9 +378,23 @@ def user_browser_context(
     test_data
 ) -> BrowserContext:
     """
-    提供已登录用户的浏览器上下文
+    创建一个已登录用户的浏览器上下文
+    每个测试函数使用一个新的上下文
+    
+    Args:
+        playwright: Playwright对象
+        browser_type_launch_args: 浏览器启动参数
+        browser_context_args: 浏览器上下文参数
+        base_url: 测试基础URL
+        test_data: 测试数据
+    
+    Returns:
+        已登录的浏览器上下文
     """
+    # 启动浏览器
     browser = playwright.chromium.launch(**browser_type_launch_args)
+    
+    # 创建上下文
     context = browser.new_context(**browser_context_args)
     
     # 创建页面并执行登录
@@ -392,119 +406,28 @@ def user_browser_context(
         username = test_user.username
         password = "test123"  # 测试用户密码
         
-        # 首先访问首页
-        page.goto(f"{base_url}/", timeout=60000)
-        page.wait_for_load_state("networkidle", timeout=30000)
+        # 执行登录
+        page.goto(f"{base_url}/login")
         
-        # 查找登录链接或按钮并点击
-        login_trigger_selectors = [
-            "a:has-text('登录')",
-            "button:has-text('登录')",
-            ".nav-link:has-text('登录')",
-            "#loginButton",
-            ".login-btn"
-        ]
+        # 填写并提交登录表单
+        page.fill("input[name='username']", username)
+        page.fill("input[name='password']", password)
         
-        login_triggered = False
-        for selector in login_trigger_selectors:
-            if page.locator(selector).count() > 0:
-                page.locator(selector).first.click()
-                page.wait_for_timeout(2000)  # 等待模态框打开
-                login_triggered = True
-                break
+        # 修改验证码，绕过验证
+        if page.query_selector("input[name='vcode']"):
+            page.fill("input[name='vcode']", "1234")
         
-        if not login_triggered:
-            # 尝试直接访问登录页面
-            page.goto(f"{base_url}/login", timeout=60000)
-            page.wait_for_load_state("networkidle", timeout=30000)
-        
-        # 查找用户名输入框 - 根据实际模板使用正确的ID
-        username_selectors = [
-            "#loginname",  # 根据base.html模板，这是正确的ID
-            "input[name='username']",
-            "#username",
-            "input[type='text']"
-        ]
-        
-        username_input = None
-        for selector in username_selectors:
-            if page.locator(selector).count() > 0:
-                username_input = page.locator(selector).first
-                break
-        
-        if not username_input:
-            logger.warning("未找到用户名输入框，跳过登录")
-            page.close()
-            yield context
-            context.close()
-            browser.close()
-            return
-        
-        # 查找密码输入框
-        password_selectors = [
-            "#loginpass",  # 根据base.html模板，这是正确的ID
-            "input[name='password']",
-            "#password",
-            "input[type='password']"
-        ]
-        
-        password_input = None
-        for selector in password_selectors:
-            if page.locator(selector).count() > 0:
-                password_input = page.locator(selector).first
-                break
-        
-        if not password_input:
-            logger.warning("未找到密码输入框，跳过登录")
-            page.close()
-            yield context
-            context.close()
-            browser.close()
-            return
-        
-        # 填写登录表单
-        username_input.fill(username)
-        password_input.fill(password)
-        
-        # 处理验证码（如果有）
-        vcode_selectors = [
-            "#logincode",  # 根据base.html模板
-            "input[name='vcode']",
-            "input[name='captcha']"
-        ]
-        
-        for selector in vcode_selectors:
-            if page.locator(selector).count() > 0:
-                page.locator(selector).first.fill("1234")
-                break
-        
-        # 查找并点击登录按钮
-        login_button_selectors = [
-            "button:has-text('登录')",
-            "button[onclick*='doLogin']",
-            "button[type='submit']",
-            ".btn-primary:has-text('登录')"
-        ]
-        
-        login_button_clicked = False
-        for selector in login_button_selectors:
-            if page.locator(selector).count() > 0:
-                page.locator(selector).first.click()
-                login_button_clicked = True
-                break
-        
-        if login_button_clicked:
-            # 等待登录完成 - 可能是弹窗提示或页面跳转
-            page.wait_for_timeout(3000)
-            
-            # 检查登录是否成功
-            page_content = page.content()
-            if "登录成功" in page_content or "欢迎你" in page_content:
-                logger.info(f"成功登录测试用户: {username}")
-            else:
-                logger.warning("登录状态不确定，继续测试")
+        # 点击登录按钮
+        submit_button = page.query_selector("button[type='submit'], input[type='submit']")
+        if submit_button:
+            submit_button.click()
         else:
-            logger.warning("未找到登录按钮，跳过登录")
+            # 尝试查找可能的登录按钮
+            page.click("text=登录")
+        
+        # 等待登录完成
+        page.wait_for_url(f"{base_url}/")
+        logger.info(f"成功登录测试用户: {username}")
         
     except Exception as e:
         logger.error(f"登录测试用户时出错: {e}")
