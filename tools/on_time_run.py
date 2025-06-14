@@ -7,8 +7,8 @@ TARGET_POSITION = (100, 200)  # 替换为你的目标坐标 (x, y)
 INPUT_TEXT = """
 0. pip install -U .   to install the latest version of the project.
 1. run python tests/run_all_tests.py successfully.
-2. Improve the test cases for the woniunote project to achieve 100% test coverage 
-3. ensure a 100% test pass rate for all tests within the tests directory.
+2. you can add new test cases to improve the test cases for the woniunote project to achieve 100% test coverage 
+3. you can fix the bugs in the test cases or woniunote project to ensure a 100% test pass rate for all tests within the tests directory.
 """
 INTERVAL_MINUTES = 10  # 执行间隔（分钟）
 MAX_ATTEMPTS = 1000  # 最大执行次数（防止无限循环）

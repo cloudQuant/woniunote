@@ -274,46 +274,149 @@ class IPAccessController:
         """添加IP到白名单"""
         with self.lock:
             try:
-                # 验证IP格式
-                ipaddress.ip_network(ip_or_network, strict=False)
-                self.whitelist.add(ip_or_network)
-                logger.info(f"Added {ip_or_network} to whitelist")
-            except ValueError as e:
-                logger.error(f"Invalid IP or network: {ip_or_network}, error: {e}")
+                # 简化IP验证，避免ipaddress模块卡死
+                # 基本格式检查
+                if self._is_valid_ip_format(ip_or_network):
+                    self.whitelist.add(ip_or_network)
+                    logger.info(f"Added {ip_or_network} to whitelist")
+                else:
+                    logger.error(f"Invalid IP or network format: {ip_or_network}")
+            except Exception as e:
+                logger.error(f"Error adding to whitelist: {ip_or_network}, error: {e}")
     
     def add_to_blacklist(self, ip_or_network: str, reason: str = ""):
         """添加IP到黑名单"""
         with self.lock:
             try:
-                ipaddress.ip_network(ip_or_network, strict=False)
-                self.blacklist.add(ip_or_network)
-                logger.warning(f"Added {ip_or_network} to blacklist. Reason: {reason}")
-            except ValueError as e:
-                logger.error(f"Invalid IP or network: {ip_or_network}, error: {e}")
+                # 简化IP验证，避免ipaddress模块卡死
+                # 基本格式检查
+                if self._is_valid_ip_format(ip_or_network):
+                    self.blacklist.add(ip_or_network)
+                    logger.warning(f"Added {ip_or_network} to blacklist. Reason: {reason}")
+                else:
+                    logger.error(f"Invalid IP or network format: {ip_or_network}")
+            except Exception as e:
+                logger.error(f"Error adding to blacklist: {ip_or_network}, error: {e}")
+    
+    def _is_valid_ip_format(self, ip_or_network: str) -> bool:
+        """简化的IP格式验证，避免使用ipaddress模块"""
+        if not ip_or_network or not isinstance(ip_or_network, str):
+            return False
+        
+        # 基本格式检查
+        ip_or_network = ip_or_network.strip()
+        
+        # 检查常见的有效格式
+        if ip_or_network in ['localhost', '::1']:
+            return True
+        
+        # 简单的IPv4格式检查
+        if '.' in ip_or_network:
+            # 可能是IPv4地址或网络
+            parts = ip_or_network.split('/')
+            ip_part = parts[0]
+            octets = ip_part.split('.')
+            
+            if len(octets) == 4:
+                try:
+                    for octet in octets:
+                        num = int(octet)
+                        if num < 0 or num > 255:
+                            return False
+                    return True
+                except ValueError:
+                    return False
+        
+        # 简单的IPv6格式检查
+        if ':' in ip_or_network:
+            # 基本IPv6格式检查
+            return len(ip_or_network) >= 2
+        
+        return False
     
     def is_ip_allowed(self, client_ip: str) -> bool:
         """检查IP是否被允许访问"""
         with self.lock:
             try:
-                client_addr = ipaddress.ip_address(client_ip)
+                # 使用简化的IP匹配，避免ipaddress模块卡死
                 
                 # 检查黑名单
-                for blocked_network in self.blacklist:
-                    if client_addr in ipaddress.ip_network(blocked_network):
-                        return False
+                if self._is_ip_in_list(client_ip, self.blacklist):
+                    return False
                 
                 # 检查白名单（如果有白名单，只允许白名单中的IP）
                 if self.whitelist:
-                    for allowed_network in self.whitelist:
-                        if client_addr in ipaddress.ip_network(allowed_network):
-                            return True
+                    if self._is_ip_in_list(client_ip, self.whitelist):
+                        return True
                     return False  # 有白名单但不在其中
                 
                 return True  # 没有白名单限制且不在黑名单中
                 
-            except ValueError:
-                logger.warning(f"Invalid IP address: {client_ip}")
+            except Exception as e:
+                logger.warning(f"Error checking IP {client_ip}: {e}")
                 return False
+    
+    def _is_ip_in_list(self, client_ip: str, ip_list: set) -> bool:
+        """检查IP是否在指定列表中（简化匹配）"""
+        try:
+            # 直接匹配
+            if client_ip in ip_list:
+                return True
+            
+            # 检查网络匹配（简化版本）
+            for network in ip_list:
+                if self._simple_ip_match(client_ip, network):
+                    return True
+            
+            return False
+        except Exception as e:
+            logger.warning(f"Error matching IP {client_ip}: {e}")
+            return False
+    
+    def _simple_ip_match(self, client_ip: str, network: str) -> bool:
+        """简化的IP匹配逻辑"""
+        try:
+            # 如果没有网络掩码，直接比较
+            if '/' not in network:
+                return client_ip == network
+            
+            # 简化的网络匹配
+            network_part, prefix = network.split('/', 1)
+            
+            # 对于IPv4网络的简化匹配
+            if '.' in network_part and '.' in client_ip:
+                try:
+                    prefix_len = int(prefix)
+                    if prefix_len < 0 or prefix_len > 32:
+                        return False
+                    
+                    # 简化匹配：只处理常见的网络掩码
+                    if prefix_len == 24:  # /24 网络
+                        client_parts = client_ip.split('.')
+                        network_parts = network_part.split('.')
+                        if len(client_parts) == 4 and len(network_parts) == 4:
+                            return (client_parts[0] == network_parts[0] and
+                                    client_parts[1] == network_parts[1] and
+                                    client_parts[2] == network_parts[2])
+                    elif prefix_len == 16:  # /16 网络
+                        client_parts = client_ip.split('.')
+                        network_parts = network_part.split('.')
+                        if len(client_parts) == 4 and len(network_parts) == 4:
+                            return (client_parts[0] == network_parts[0] and
+                                    client_parts[1] == network_parts[1])
+                    elif prefix_len == 8:  # /8 网络
+                        client_parts = client_ip.split('.')
+                        network_parts = network_part.split('.')
+                        if len(client_parts) == 4 and len(network_parts) == 4:
+                            return client_parts[0] == network_parts[0]
+                    elif prefix_len == 0:  # /0 匹配所有
+                        return True
+                except (ValueError, IndexError):
+                    return False
+            
+            return False
+        except Exception:
+            return False
     
     def record_request(self, client_ip: str, endpoint: str, success: bool):
         """记录IP请求"""

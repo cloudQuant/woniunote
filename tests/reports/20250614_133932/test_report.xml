@@ -1,0 +1,30 @@
+{
+  "testsuites": {
+    "testsuite": {
+      "name": "WoniuNote Tests",
+      "timestamp": "2025-06-14T13:39:32.028631",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testcase": [
+        {
+          "name": "test_example",
+          "classname": "TestExample",
+          "time": 0.1,
+          "status": "passed"
+        },
+        {
+          "name": "test_failure",
+          "classname": "TestExample",
+          "time": 0.2,
+          "status": "failed",
+          "failure": {
+            "message": "Assertion failed",
+            "type": "AssertionError"
+          }
+        }
+      ]
+    }
+  }
+}
