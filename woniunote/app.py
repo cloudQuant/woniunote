@@ -107,9 +107,9 @@ def create_app(config_name='production'):
     app.config.from_object(config[config_name])
     app_logger.info("应用程序配置已加载")
     
-    # 设置安全的SECRET_KEY
-    if not app.config.get('SECRET_KEY'):
-        app.config['SECRET_KEY'] = os.urandom(24)
+    # 确保始终有静态的SECRET_KEY
+    app.config['SECRET_KEY'] = config[config_name].SECRET_KEY
+    app_logger.info("已设置静态SECRET_KEY")
     
     # 读取自定义配置
     custom_config = read_config()

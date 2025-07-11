@@ -697,26 +697,31 @@ class DatabaseAdvancedOptimizer:
 # 全局实例
 _db_optimizer = None
 
-def get_database_optimizer() -> DatabaseAdvancedOptimizer:
+def get_database_optimizer() -> Optional[DatabaseAdvancedOptimizer]:
     """获取数据库优化器实例"""
+    # 只返回已经初始化的实例，不自动创建
+    # 这样可以避免在应用上下文外尝试初始化
     global _db_optimizer
-    if _db_optimizer is None:
-        _db_optimizer = DatabaseAdvancedOptimizer()
     return _db_optimizer
 
 def init_database_advanced_optimization(app, slow_query_threshold: float = 1.0):
     """初始化高级数据库优化"""
     try:
-        db_optimizer = get_database_optimizer()
-        db_optimizer.slow_query_analyzer.slow_threshold = slow_query_threshold
-        db_optimizer.init_app(app)
+        global _db_optimizer
         
-        logger.info("Advanced database optimization system initialized successfully")
-        return db_optimizer
-        
+        # 在应用上下文中创建实例
+        with app.app_context():
+            _db_optimizer = DatabaseAdvancedOptimizer()
+            _db_optimizer.slow_query_analyzer.slow_threshold = slow_query_threshold
+            _db_optimizer.init_app(app)
+            
+            logger.info("Advanced database optimization system initialized successfully")
+            return _db_optimizer
+            
     except Exception as e:
         logger.error(f"Failed to initialize advanced database optimization: {e}")
-        raise
+        # 捕获异常但不抛出，这样应用仍然可以继续启动
+        return None
 
 # 装饰器
 def cached_query(ttl: int = 300):
