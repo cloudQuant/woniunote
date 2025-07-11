@@ -281,7 +281,7 @@ def read_config(config_file=None):
 class ImageCode:
     """图片验证码生成器（优化版本）"""
     
-    def __init__(self, width=120, height=40):
+    def __init__(self, width=120, height=50):
         # 验证尺寸参数
         if not isinstance(width, int) or not isinstance(height, int):
             raise ValueError("Width and height must be integers")
@@ -293,10 +293,10 @@ class ImageCode:
         self.height = height
         self.img = Image.new('RGB', (width, height), color=(255, 255, 255))
         
-        # 使用系统字体
+        # 使用系统字体，增大字体尺寸到36px
         try:
             font_path = get_system_font_path()
-            self.font = ImageFont.truetype(font_path, 32)
+            self.font = ImageFont.truetype(font_path, 36)
         except Exception:
             logger.warning("Failed to load system font, using default")
             self.font = ImageFont.load_default()
@@ -309,12 +309,12 @@ class ImageCode:
         return red, green, blue
 
     def gen_text(self, length=4):
-        """生成随机字符串"""
+        """生成随机字符串，仅包含数字"""
         if not isinstance(length, int) or length < 3 or length > 8:
             length = 4
         
-        # 使用数字和大写字母，避免混淆的字符
-        chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
+        # 只使用数字，不使用字母和干扰字符
+        chars = '0123456789'
         return ''.join(random.choices(chars, k=length))
 
     def draw_lines(self, draw, num, width, height):
@@ -327,35 +327,38 @@ class ImageCode:
             draw.line(((x1, y1), (x2, y2)), fill='black', width=1)
 
     def draw_verify_code(self):
-        """绘制验证码图片"""
+        """绘制验证码图片，仅使用数字，更大字体，无干扰线"""
         try:
             code = self.gen_text()
             # 创建图片对象，并设定背景色为白色
             im = Image.new('RGB', (self.width, self.height), 'white')
             
-            # 使用默认字体
-            try:
-                font = ImageFont.load_default()
-            except Exception:
-                logger.warning("Failed to load default font")
-                font = None
+            # 优先使用之前设置的大字体，如果失败则尝试默认字体
+            font = self.font
+            if font is None:
+                try:
+                    font = ImageFont.load_default()
+                except Exception:
+                    logger.warning("Failed to load default font")
+                    font = None
             
             draw = ImageDraw.Draw(im)  # 新建ImageDraw对象
             
-            # 绘制字符串
+            # 绘制字符串，保持较大间隔，位置更居中
             char_width = self.width // len(code)
             for i, char in enumerate(code):
-                x = 5 + random.randint(-3, 3) + char_width * i
-                y = 5 + random.randint(-5, 5)
+                # 减少随机偏移，使数字更整齐
+                x = 10 + char_width * i
+                y = (self.height - 36) // 2  # 垂直居中
                 
                 # 确保坐标在图片范围内
                 x = max(0, min(x, self.width - 20))
-                y = max(0, min(y, self.height - 30))
+                y = max(0, min(y, self.height - 36))
                 
                 draw.text((x, y), text=char, fill=self.rand_color(), font=font)
             
-            # 绘制少量干扰线
-            self.draw_lines(draw, 2, self.width, self.height)
+            # 不添加干扰线
+            # self.draw_lines(draw, 2, self.width, self.height)
             
             return im, code
             
