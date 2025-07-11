@@ -12,6 +12,11 @@ ueditor = Blueprint("ueditor", __name__)
 # 初始化日志记录器
 ueditor_logger = get_simple_logger('ueditor')
 
+@ueditor.route('/ueditor-test')
+def ueditor_test():
+    """提供UEditor测试页面"""
+    return render_template('ueditor-test.html')
+
 # 生成唯一的跟踪ID
 def get_ueditor_trace_id():
     """

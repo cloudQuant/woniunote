@@ -44,10 +44,11 @@ pymysql.install_as_MySQLdb()
 # 安全配置常量
 SECURITY_HEADERS = {
     'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
+    'X-Frame-Options': 'SAMEORIGIN',  # 允许iframe加载，UEditor需要
     'X-XSS-Protection': '1; mode=block',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'",
+    # 修改CSP以允许UEditor所需功能
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:",
 }
 
 # 允许的文件扩展名

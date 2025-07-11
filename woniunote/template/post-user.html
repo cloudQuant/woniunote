@@ -1,14 +1,23 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<!-- 引入 UEditor 配置和脚本 -->
+<!-- 引入 UEditor 配置和脚本，增加错误处理 -->
+<script type="text/javascript">
+    // 添加脚本加载错误处理
+    window.onerror = function(msg, url, line, col, error) {
+        console.error('JS错误:', msg, 'at', url, 'line', line, 'col', col);
+        return false;
+    };
+</script>
 <script type="text/javascript" src="/resource/ueditor/ueditor.config.js"></script>
 <script type="text/javascript" src="/resource/ueditor/ueditor.all.js"></script>
-
-<!-- 初始化编辑器 -->
 <script type="text/javascript">
-    // 全局编辑器实例，只初始化一次
-    window.ue = null;
+    // 验证UEditor是否正确加载
+    if (typeof UE === 'undefined') {
+        console.error('UEditor未正确加载！');
+    } else {
+        console.log('UEditor框架已成功加载');
+    }
 </script>
 
 <!-- 页面布局 -->
@@ -197,14 +206,71 @@
 <script type="text/javascript">    
     // DOM加载完成后的初始化
     document.addEventListener('DOMContentLoaded', function() {
-        // 初始化编辑器
-        window.ue = UE.getEditor('content', {
-            initialFrameHeight: 400,
-            autoHeightEnabled: true,
-            serverUrl: '/uedit',
-            enableAutoSave: true,
-            saveInterval: 60000
-        });
+        try {
+            // 检查编辑器容器元素
+            var editorContainer = document.getElementById('content');
+            if (!editorContainer) {
+                console.error('找不到编辑器容器元素 #content!');
+                return;
+            }
+            
+            console.log('编辑器容器已找到:', editorContainer);
+            
+            // 检查UE对象
+            if (typeof UE === 'undefined') {
+                console.error('UE对象不存在! 尝试再次加载脚本...');
+                
+                // 尝试动态加载脚本
+                var configScript = document.createElement('script');
+                configScript.src = '/resource/ueditor/ueditor.config.js';
+                document.head.appendChild(configScript);
+                
+                var mainScript = document.createElement('script');
+                mainScript.src = '/resource/ueditor/ueditor.all.js';
+                mainScript.onload = function() {
+                    console.log('动态加载 UEditor 脚本成功，正在初始化...');
+                    initEditor();
+                };
+                document.head.appendChild(mainScript);
+            } else {
+                initEditor();
+            }
+            
+            function initEditor() {
+                try {
+                    console.log('开始初始化编辑器...', UE);
+                    window.ue = UE.getEditor('content', {
+                        initialFrameHeight: 400,
+                        autoHeightEnabled: true,
+                        serverUrl: '/uedit',
+                        enableAutoSave: true,
+                        saveInterval: 60000,
+                        toolbars: [[
+                            'fullscreen', 'source', '|', 'undo', 'redo', '|',
+                            'bold', 'italic', 'underline', 'strikethrough', '|', 
+                            'forecolor', 'backcolor', '|', 
+                            'insertorderedlist', 'insertunorderedlist', '|',
+                            'justifyleft', 'justifycenter', 'justifyright', '|',
+                            'link', 'unlink', '|', 'insertimage', 'emotion'
+                        ]]
+                    });
+                    
+                    if (!window.ue) {
+                        console.error('编辑器初始化失败，返回了空值!');
+                        return;
+                    }
+                    
+                    window.ue.ready(function() {
+                        console.log('编辑器准备就绪!');
+                        console.log('编辑器容器:', document.querySelector('.edui-editor'));
+                    });
+                } catch (e) {
+                    console.error('初始化编辑器时发生异常:', e);
+                }
+            }
+        } catch (e) {
+            console.error('初始化编辑器过程中发生错误:', e);
+        }
         
         // 获取选择器
         const mainTypeSelect = document.getElementById('main-type');
