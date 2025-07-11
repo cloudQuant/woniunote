@@ -9,7 +9,7 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from woniunote.common.database import SQLALCHEMY_DATABASE_URI
-from woniunote.common.create_database import Item, Category
+from woniunote.models.todo import Item, Category
 
 app = Flask(__name__,
             template_folder='template',

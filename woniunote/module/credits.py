@@ -3,7 +3,8 @@ from sqlalchemy import Table, Column, Integer, String, Text, DateTime, ForeignKe
 from sqlalchemy.orm import relationship
 from woniunote.common.database import dbconnect
 from woniunote.module.users import Users
-from woniunote.common.create_database import Credit
+# 从模型定义中导入 Credit 类
+from woniunote.common.create_database import Credit  # 暂时保留此导入以兼容现有代码
 import time
 import traceback
 import uuid

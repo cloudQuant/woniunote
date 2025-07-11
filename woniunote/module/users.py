@@ -6,7 +6,8 @@ from flask import session
 from sqlalchemy import Table, Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from woniunote.common.database import dbconnect
-from woniunote.common.create_database import User
+# 从模型定义中导入 User 类
+from woniunote.common.create_database import User  # 暂时保留此导入以兼容现有代码
 from woniunote.common.simple_logger import get_simple_logger
 
 dbsession, md, DBase = dbconnect()

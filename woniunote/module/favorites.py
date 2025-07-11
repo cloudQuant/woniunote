@@ -6,7 +6,8 @@ from sqlalchemy import Table, Column, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from woniunote.common.database import dbconnect
 from woniunote.module.articles import Article
-from woniunote.common.create_database import Favorite
+# 从模型定义中导入 Favorite 类
+from woniunote.common.create_database import Favorite  # 暂时保留此导入以兼容现有代码
 from woniunote.common.simple_logger import get_simple_logger
 
 dbsession, md, DBase = dbconnect()

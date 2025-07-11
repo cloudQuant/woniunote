@@ -2,7 +2,7 @@ import os
 from datetime import timedelta
 
 class Config:
-    SECRET_KEY = os.urandom(24)
+    SECRET_KEY = 'woniunote-secure-key-for-session-management'
     DEBUG = False
     TESTING = False
     

@@ -27,32 +27,8 @@ dbsession = db.session
 DBase = db.Model
 
 
-# need to design a class to define the card attr
-
-class Card(db.Model):
-    __tablename__ = "card"
-
-    id = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
-    type = db.Column(db.Integer, default=1)
-    headline = db.Column(db.Text(200), nullable=False)
-    content = db.Column(db.TEXT(16777216), default="")
-    createtime = db.Column(db.DateTime)
-    updatetime = db.Column(db.DateTime)
-    donetime = db.Column(db.DateTime)
-    usedtime = db.Column(db.Integer, default=0)
-    begintime = db.Column(db.DateTime)
-    endtime = db.Column(db.DateTime)
-    cardcategory_id = db.Column(
-        db.Integer, db.ForeignKey('cardcategory.id'), default=1)
-    # 创建一个外键，和django不一样。flask需要指定具体的字段创建外键，不能根据类名创建外键
-    # role_id = db.Column(db.Integer,db.ForeignKey("roles.id"))
-
-
-class CardCategory(db.Model):
-    __tablename__ = "cardcategory"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64))
-    cards = db.relationship('Card', backref='cardcategory')
+# 使用 models.card 中定义的模型
+from woniunote.models.card import Card, CardCategory
 
 
 if __name__ == '__main__':

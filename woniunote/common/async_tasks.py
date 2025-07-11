@@ -134,7 +134,7 @@ class TaskExecutor:
             worker.join(timeout=timeout / len(self.worker_threads))
         
         # 关闭线程池
-        self.executor.shutdown(wait=True, timeout=timeout)
+        self.executor.shutdown(wait=True)
         
         logger.info("Task executor stopped")
     
