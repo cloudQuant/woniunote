@@ -13,24 +13,24 @@
     // 资源文件根路径，如果你的页面不是放在根目录下，请注意修改这个路径
     // 通常情况下这个可以配置成静态资源CDN的地址
     var URL, CORS_URL;
-    if (window.UEDITOR_HOME_URL) {
+    // 直接设置为应用中的正确路径 
+    URL = '/resource/ueditor/';
+    // 备用方案
+    if (!URL && window.UEDITOR_HOME_URL) {
         URL = window.UEDITOR_HOME_URL;
-    } else if (window.__msCDN) {
-        URL = window.__msCDN + 'asset/vendor/ueditor/';
-    } else if (window.__msRoot) {
-        URL = window.__msRoot + 'asset/vendor/ueditor/';
-    } else {
+    } else if (!URL) {
         URL = getUEBasePath();
     }
     // 需要能跨域的静态资源请求，主要用户弹窗页面等静态资源
     // 通常情况下这个可以配置成静态资源CDN的地址
-    if (window.UEDITOR_CORS_URL) {
+    // 直接设置为应用中的正确路径
+    CORS_URL = '/resource/ueditor/';
+    // 备用方案
+    if (!CORS_URL && window.UEDITOR_CORS_URL) {
         CORS_URL = window.UEDITOR_CORS_URL;
-    } else if (window.__msRoot) {
-        CORS_URL = window.__msRoot + 'asset/vendor/ueditor/';
-    } else if (window.UEDITOR_HOME_URL) {
+    } else if (!CORS_URL && window.UEDITOR_HOME_URL) {
         CORS_URL = window.UEDITOR_HOME_URL;
-    } else {
+    } else if (!CORS_URL) {
         CORS_URL = getUEBasePath();
     }
 
@@ -47,8 +47,8 @@
         // 是否开启Debug模式
         debug: false,
 
-        // 服务器统一请求接口路径
-        serverUrl: "/ueditor-plus/_demo_server/handle.php",
+        // 服务器统一请求接口路径 - 修改为应用中配置的接口路径
+        serverUrl: "/uedit",
 
         // 从服务器获取配置
         loadConfigFromServer: true,
