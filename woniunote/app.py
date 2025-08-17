@@ -119,17 +119,38 @@ def create_app(config_name='production'):
     if custom_config is None:
         custom_config = {
             'database': {
-                'SQLALCHEMY_DATABASE_URI': 'sqlite:///test_database.db'
-            }
+                'SQLALCHEMY_DATABASE_URI': 'sqlite:///woniunote_dev.db'
+            },
+            'SECRET_KEY': 'dev-woniunote-secret-key-2025'
         }
     
+    # 从配置文件更新SECRET_KEY
+    if custom_config.get('SECRET_KEY'):
+        app.config['SECRET_KEY'] = custom_config['SECRET_KEY']
+        app_logger.info("已从配置文件更新SECRET_KEY")
+    
     # 配置数据库
-    app.config['SQLALCHEMY_DATABASE_URI'] = custom_config['database']['SQLALCHEMY_DATABASE_URI']
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_POOL_SIZE'] = 100
-    app.config['SQLALCHEMY_POOL_TIMEOUT'] = 20
-    app.config['SQLALCHEMY_POOL_RECYCLE'] = 3600
-    app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
+    if custom_config.get('database', {}).get('SQLALCHEMY_DATABASE_URI'):
+        app.config['SQLALCHEMY_DATABASE_URI'] = custom_config['database']['SQLALCHEMY_DATABASE_URI']
+        app_logger.info(f"数据库URI已配置: {custom_config['database']['SQLALCHEMY_DATABASE_URI']}")
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///woniunote_dev.db'
+        app_logger.warning("使用默认SQLite数据库配置")
+    
+    # 从配置文件更新其他数据库配置
+    if custom_config.get('database'):
+        db_config = custom_config['database']
+        for key, value in db_config.items():
+            if key.startswith('SQLALCHEMY_'):
+                app.config[key] = value
+                app_logger.info(f"数据库配置 {key}: {value}")
+    
+    # 设置默认数据库配置
+    app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', False)
+    app.config.setdefault('SQLALCHEMY_POOL_SIZE', 10)
+    app.config.setdefault('SQLALCHEMY_POOL_TIMEOUT', 30)
+    app.config.setdefault('SQLALCHEMY_POOL_RECYCLE', 1800)
+    app.config.setdefault('SQLALCHEMY_MAX_OVERFLOW', 20)
     
     # 添加请求大小限制
     app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
@@ -182,19 +203,38 @@ def create_app(config_name='production'):
     try:
         # 先初始化动态配置管理
         app_logger.info("初始化动态配置管理...")
-        config_files = [
-            os.path.join(get_package_path("woniunote"), "configs", "user_password_config.yaml")
+        
+        # 查找正确的配置文件路径
+        current_dir = os.getcwd()
+        config_paths = [
+            os.path.join(current_dir, "configs", "user_password_config.yaml"),
+            os.path.join(os.path.dirname(current_dir), "configs", "user_password_config.yaml"),
+            os.path.join(os.path.dirname(__file__), "..", "..", "configs", "user_password_config.yaml"),
         ]
-        init_config_management(app, config_files)
+        
+        # 找到存在的配置文件
+        existing_config_files = []
+        for config_path in config_paths:
+            abs_path = os.path.abspath(config_path)
+            if os.path.exists(abs_path):
+                existing_config_files.append(abs_path)
+                break
+        
+        # 如果没有找到配置文件，使用默认配置
+        if not existing_config_files:
+            app_logger.warning("未找到配置文件，将使用内置默认配置")
+            existing_config_files = []
+        
+        init_config_management(app, existing_config_files)
         config_manager = get_config_manager()
         
         # 初始化缓存系统
         cache_config = {
-            'default_ttl': config_manager.get('cache.default_ttl', 300),
-            'key_prefix': config_manager.get('cache.key_prefix', 'woniunote:'),
+            'default_ttl': config_manager.get('cache.default_ttl', 300) if config_manager else 300,
+            'key_prefix': config_manager.get('cache.key_prefix', 'woniunote:') if config_manager else 'woniunote:',
             'memory': {
-                'max_size': config_manager.get('cache.memory.max_size', 2000),
-                'default_ttl': config_manager.get('cache.memory.default_ttl', 300)
+                'max_size': config_manager.get('cache.memory.max_size', 2000) if config_manager else 2000,
+                'default_ttl': config_manager.get('cache.memory.default_ttl', 300) if config_manager else 300
             }
         }
         app_logger.info("初始化缓存系统...")
@@ -204,20 +244,20 @@ def create_app(config_name='production'):
         rate_limit_config = {
             'api': {
                 'type': 'token_bucket',
-                'capacity': config_manager.get('rate_limit.api.capacity', 100),
-                'refill_rate': config_manager.get('rate_limit.api.refill_rate', 20),
-                'refill_period': config_manager.get('rate_limit.api.refill_period', 1)
+                'capacity': config_manager.get('rate_limit.api.capacity', 100) if config_manager else 100,
+                'refill_rate': config_manager.get('rate_limit.api.refill_rate', 20) if config_manager else 20,
+                'refill_period': config_manager.get('rate_limit.api.refill_period', 1) if config_manager else 1
             },
             'upload': {
                 'type': 'token_bucket',
-                'capacity': config_manager.get('rate_limit.upload.capacity', 10),
-                'refill_rate': config_manager.get('rate_limit.upload.refill_rate', 2),
-                'refill_period': config_manager.get('rate_limit.upload.refill_period', 60)
+                'capacity': config_manager.get('rate_limit.upload.capacity', 10) if config_manager else 10,
+                'refill_rate': config_manager.get('rate_limit.upload.refill_rate', 2) if config_manager else 2,
+                'refill_period': config_manager.get('rate_limit.upload.refill_period', 60) if config_manager else 60
             },
             'strict': {
                 'type': 'sliding_window',
-                'max_requests': config_manager.get('rate_limit.strict.max_requests', 30),
-                'window_size': config_manager.get('rate_limit.strict.window_size', 60)
+                'max_requests': config_manager.get('rate_limit.strict.max_requests', 30) if config_manager else 30,
+                'window_size': config_manager.get('rate_limit.strict.window_size', 60) if config_manager else 60
             }
         }
         app_logger.info("初始化限流系统...")
@@ -226,14 +266,14 @@ def create_app(config_name='production'):
         # 初始化异步任务系统
         app_logger.info("初始化异步任务系统...")
         init_task_executor(
-            max_workers=config_manager.get('async_tasks.max_workers', 6), 
-            queue_size=config_manager.get('async_tasks.queue_size', 2000)
+            max_workers=config_manager.get('async_tasks.max_workers', 6) if config_manager else 6, 
+            queue_size=config_manager.get('async_tasks.queue_size', 2000) if config_manager else 2000
         )
         
         # 初始化监控系统
         monitoring_config = {
-            'system_monitoring': config_manager.get('monitoring.system_monitoring', True),
-            'collect_interval': config_manager.get('monitoring.collect_interval', 30)
+            'system_monitoring': config_manager.get('monitoring.system_monitoring', True) if config_manager else True,
+            'collect_interval': config_manager.get('monitoring.collect_interval', 30) if config_manager else 30
         }
         app_logger.info("初始化监控系统...")
         init_monitoring(monitoring_config)
@@ -1594,13 +1634,24 @@ def create_app(config_name='production'):
    
 
 # 创建应用实例
-app = create_app('development')
-
 if __name__ == '__main__':
-    # app = create_app(config_name='development')
+    # 创建应用实例
+    app = create_app('development')
+    
+    # 检查SSL证书文件是否存在
     path = get_package_path("woniunote")
-    app.run(host="127.0.0.1",
-            debug=True,
-            port=5000,
-            ssl_context=(path + "/configs/cert.pem", path + "/configs/key.pem"))
+    cert_file = os.path.join(path, "configs", "cert.pem")
+    key_file = os.path.join(path, "configs", "key.pem")
+    
+    if os.path.exists(cert_file) and os.path.exists(key_file):
+        # 如果SSL证书存在，使用HTTPS
+        app.run(host="127.0.0.1",
+                debug=True,
+                port=5000,
+                ssl_context=(cert_file, key_file))
+    else:
+        # 如果SSL证书不存在，使用HTTP
+        app.run(host="127.0.0.1",
+                debug=True,
+                port=5000)
         

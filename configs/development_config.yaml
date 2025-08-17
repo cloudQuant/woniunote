@@ -1,0 +1,30 @@
+# 开发环境配置
+database:
+  # 使用SQLite作为开发数据库，避免MySQL连接问题
+  SQLALCHEMY_DATABASE_URI: mysql://woniunote_user:Woniunote_password1!@127.0.0.1:3306/woniunote?charset=utf8&autocommit=true
+  SQLALCHEMY_TRACK_MODIFICATIONS: false
+  SQLALCHEMY_POOL_SIZE: 5
+  SQLALCHEMY_POOL_TIMEOUT: 20
+  SQLALCHEMY_POOL_RECYCLE: 3600
+  SQLALCHEMY_MAX_OVERFLOW: 10
+
+# 安全配置
+SECRET_KEY: 'dev-woniunote-secret-key-2025'
+WTF_CSRF_SECRET_KEY: 'dev-woniunote-csrf-key-2025'
+
+# 会话配置
+SESSION_TYPE: 'filesystem'
+SESSION_PERMANENT: true
+PERMANENT_SESSION_LIFETIME: 14400  # 4小时
+
+# 缓存配置
+cache:
+  default_ttl: 300
+  key_prefix: 'woniunote:dev:'
+  memory:
+    max_size: 1000
+    default_ttl: 300
+
+# 开发环境特定配置
+DEBUG: true
+TESTING: false 

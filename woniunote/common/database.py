@@ -10,9 +10,35 @@ db = SQLAlchemy()
 # 配置读取
 def load_config():
     """加载配置，如果配置文件不存在则使用测试默认值"""
+    import yaml
     try:
+        # 读取主配置文件
         config_result = read_config()
-        article_config_result = read_config("/configs/article_type_config.yaml")
+        
+        # 手动读取文章类型配置文件
+        article_config_result = None
+        current_dir = os.getcwd()
+        
+        # 查找文章类型配置文件的可能路径
+        article_config_paths = [
+            os.path.join(current_dir, "configs", "article_type_config.yaml"),
+            os.path.join(current_dir, "woniunote", "configs", "article_type_config.yaml"),
+            os.path.join(os.path.dirname(current_dir), "configs", "article_type_config.yaml"),
+            os.path.join(os.path.dirname(__file__), "..", "configs", "article_type_config.yaml"),
+        ]
+        
+        # 尝试读取文章类型配置文件
+        for path in article_config_paths:
+            abs_path = os.path.abspath(path)
+            if os.path.exists(abs_path):
+                try:
+                    with open(abs_path, 'r', encoding='utf-8') as f:
+                        article_config_result = yaml.safe_load(f)
+                    print(f"Successfully loaded article config from: {abs_path}")
+                    break
+                except Exception as e:
+                    print(f"Failed to load article config from {abs_path}: {e}")
+                    continue
         
         # 如果配置文件不存在或读取失败，使用测试默认值
         if config_result is None:
@@ -23,11 +49,20 @@ def load_config():
             }
             
         if article_config_result is None:
+            print("Using default article types configuration")
             article_config_result = {
                 'ARTICLE_TYPES': {
-                    1: {'name': '原创文章', 'color': '#007bff'},
-                    2: {'name': '转载文章', 'color': '#28a745'},
-                    3: {'name': '翻译文章', 'color': '#ffc107'}
+                    1: '交易策略',
+                    101: 'CTA策略',
+                    102: '统计套利',
+                    103: '高频交易',
+                    2: '量化框架',
+                    201: 'backtrader',
+                    202: 'wondertrader',
+                    3: '投资',
+                    301: '股票',
+                    302: '期货',
+                    303: '期权'
                 }
             }
 
@@ -40,9 +75,17 @@ def load_config():
         return {
             'SQLALCHEMY_DATABASE_URI': 'sqlite:///test_database.db',
             'ARTICLE_TYPES': {
-                1: {'name': '原创文章', 'color': '#007bff'},
-                2: {'name': '转载文章', 'color': '#28a745'},
-                3: {'name': '翻译文章', 'color': '#ffc107'}
+                1: '交易策略',
+                101: 'CTA策略',
+                102: '统计套利',
+                103: '高频交易',
+                2: '量化框架',
+                201: 'backtrader',
+                202: 'wondertrader',
+                3: '投资',
+                301: '股票',
+                302: '期货',
+                303: '期权'
             }
         }
 

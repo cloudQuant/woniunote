@@ -419,12 +419,11 @@ class AppFactory:
             
             return truncated + "..."
         
-        # 模板全局变量
+        # 模板全局变量已在app.py中设置，这里只添加其他变量
         @self.app.context_processor
         def inject_globals():
             """注入模板全局变量"""
             return {
-                'ARTICLE_TYPES': getattr(db, 'ARTICLE_TYPES', {}),
                 'app_version': '2.1.0',
                 'debug_mode': self.app.config.get('DEBUG', False)
             }

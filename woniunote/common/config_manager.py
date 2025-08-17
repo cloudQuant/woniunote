@@ -561,10 +561,14 @@ def init_config_management(app, config_files: List[str] = None):
         
         config_manager.add_change_callback(on_config_change)
         
-        # 验证配置
-        errors = config_manager.validate()
-        if errors:
-            logger.warning(f"Configuration validation errors: {errors}")
+        # 验证配置（非阻塞）
+        try:
+            errors = config_manager.validate()
+            if errors:
+                logger.warning(f"Configuration validation warnings: {errors}")
+                logger.info("Application will continue with default values for missing configurations")
+        except Exception as e:
+            logger.warning(f"Configuration validation failed, using defaults: {e}")
         
         # 将配置管理器添加到Flask应用
         app.config_manager = config_manager
