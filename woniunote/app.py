@@ -1594,7 +1594,7 @@ def create_app(config_name='production'):
    
 
 # 创建应用实例
-app = create_app()
+app = create_app('development')
 
 if __name__ == '__main__':
     # app = create_app(config_name='development')

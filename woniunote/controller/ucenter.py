@@ -123,7 +123,7 @@ def user_center():
         })
         
         # 渲染模板
-        content = render_template("user-center.html", result=result)
+        content = render_template("user-center.html", result=result, article_type=ARTICLE_TYPES)
         
         # 记录渲染成功
         ucenter_logger.info("用户中心页面渲染成功", {
@@ -209,7 +209,7 @@ def user_article():
         })
         
         # 渲染模板
-        content = render_template("user-center.html", result=result)
+        content = render_template("user-center.html", result=result, article_type=ARTICLE_TYPES)
         
         # 记录渲染成功
         ucenter_logger.info("用户文章列表页面渲染成功", {
@@ -330,7 +330,7 @@ def user_comment():
         })
         
         # 渲染模板
-        content = render_template("user-center.html", result=result)
+        content = render_template("user-center.html", result=result, article_type=ARTICLE_TYPES)
         
         # 记录渲染成功
         ucenter_logger.info("用户评论列表页面渲染成功", {
@@ -602,7 +602,7 @@ def user_draft():
         })
         
         # 渲染模板
-        content = render_template("user-center.html", result=result)
+        content = render_template("user-center.html", result=result, article_type=ARTICLE_TYPES)
         
         # 记录渲染成功
         ucenter_logger.info("用户草稿列表页面渲染成功", {

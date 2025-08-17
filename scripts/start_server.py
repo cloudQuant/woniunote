@@ -45,6 +45,10 @@ def main():
     print(f"[INFO] 使用{protocol}协议")
     
     # 启动 Flask 应用
+    if app is None:
+        print("[ERROR] 应用创建失败")
+        return 1
+        
     app.run(
         host=args.host,
         port=args.port,

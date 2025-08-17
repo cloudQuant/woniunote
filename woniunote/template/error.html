@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统错误 - {{ error.error_code if error and error.error_code else '500' }}</title>
+    <link rel="stylesheet" href="/css/bootstrap.css" type="text/css">
+    <link rel="stylesheet" href="/css/woniunote.css" type="text/css">
+    <style>
+        .error-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        .error-icon {
+            font-size: 64px;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        .error-title {
+            color: #dc3545;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        .error-message {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .error-trace {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 25px;
+        }
+        .severity-low { border-left: 4px solid #28a745; }
+        .severity-medium { border-left: 4px solid #ffc107; }
+        .severity-high { border-left: 4px solid #fd7e14; }
+        .severity-critical { border-left: 4px solid #dc3545; }
+        .home-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 15px;
+        }
+        .home-button:hover {
+            background-color: #0056b3;
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-container severity-{{ error.severity if error and error.severity else 'medium' }}">
+            <div class="error-icon">⚠️</div>
+            
+            <h1 class="error-title">
+                {% if error and error.severity == 'critical' %}
+                    系统异常
+                {% elif error and error.severity == 'high' %}
+                    服务错误
+                {% elif error and error.severity == 'medium' %}
+                    处理失败
+                {% elif error and error.severity == 'low' %}
+                    操作提醒
+                {% else %}
+                    系统错误
+                {% endif %}
+            </h1>
+            
+            <div class="error-message">
+                {{ error.message if error and error.message else (error_message if error_message else "发生了未知错误") }}
+            </div>
+            
+            {% if error and error.recoverable %}
+                <div class="alert alert-info">
+                    <small>此错误可能是临时的，请稍后重试</small>
+                </div>
+            {% endif %}
+            
+            <div class="error-trace">
+                错误追踪ID: {{ trace_id if trace_id else 'N/A' }}
+            </div>
+            
+            <div>
+                <a href="javascript:history.back()" class="btn btn-secondary">返回上页</a>
+                <a href="/" class="home-button">返回首页</a>
+            </div>
+            
+            {% if error and error.severity and error.severity in ['low', 'medium'] %}
+                <div class="mt-3">
+                    <small class="text-muted">
+                        如果问题持续存在，请联系管理员并提供错误追踪ID
+                    </small>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+        // 自动刷新功能（仅对可恢复的错误）
+        {% if error and error.recoverable and error.severity and error.severity in ['low', 'medium'] %}
+            setTimeout(function() {
+                var refreshLink = document.createElement('a');
+                refreshLink.href = 'javascript:location.reload()';
+                refreshLink.textContent = '重新加载页面';
+                refreshLink.className = 'btn btn-outline-primary btn-sm';
+                refreshLink.style.marginLeft = '10px';
+                
+                var buttonContainer = document.querySelector('.error-container > div:last-child');
+                buttonContainer.appendChild(refreshLink);
+            }, 3000);
+        {% endif %}
+    </script>
+</body>
+</html>
