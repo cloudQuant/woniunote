@@ -2,7 +2,7 @@ import time
 import uuid
 import os
 
-from flask import Blueprint, render_template, request, jsonify, session
+from flask import Blueprint, render_template, request, jsonify, session, send_from_directory, current_app
 import traceback
 from woniunote.common.utils import compress_image
 from woniunote.common.simple_logger import get_simple_logger
@@ -16,6 +16,33 @@ ueditor_logger = get_simple_logger('ueditor')
 def ueditor_test():
     """提供UEditor测试页面"""
     return render_template('ueditor-test.html')
+
+@ueditor.route('/test-editor')
+def test_editor():
+    """提供简单的UEditor测试页面"""
+    return render_template('test-editor.html')
+
+@ueditor.route('/resource/ueditor/<path:filename>')
+def ueditor_static(filename):
+    """提供UEditor静态文件"""
+    try:
+        # 获取当前应用的根目录
+        app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ueditor_path = os.path.join(app_root, 'resource', 'ueditor')
+        
+        ueditor_logger.info(f"UEditor静态文件请求: {filename}, 路径: {ueditor_path}")
+        
+        # 检查文件是否存在
+        file_path = os.path.join(ueditor_path, filename)
+        if os.path.exists(file_path):
+            return send_from_directory(ueditor_path, filename)
+        else:
+            ueditor_logger.error(f"UEditor文件不存在: {file_path}")
+            return "File not found", 404
+            
+    except Exception as e:
+        ueditor_logger.error(f"UEditor静态文件服务错误: {str(e)}")
+        return f"Error: {str(e)}", 500
 
 # 生成唯一的跟踪ID
 def get_ueditor_trace_id():

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, abort, url_for, redirect
+from flask import Blueprint, render_template, request, session, abort, url_for, redirect, jsonify
 from woniunote.module.articles import Articles
 from woniunote.module.users import Users
 from woniunote.common.session_util import get_current_user_id
@@ -454,6 +454,7 @@ def edit_article():
         return "edit-fail"
 
 
+@article.route('/article/post', methods=['POST'])
 @article.route('/article/add', methods=['POST'])
 @log_function(log_args=False, log_return=True, log_exception=True)
 def add_article():
@@ -464,14 +465,22 @@ def add_article():
             simple_logger.warning("未登录用户尝试添加文章", {
                 'trace_id': get_simple_trace_id()
             })
-            return 'not-login'
+            return jsonify({
+                'code': 401,
+                'msg': '用户未登录，请先登录',
+                'data': None
+            })
         
         userid = session.get('main_userid')
         if userid is None:
             simple_logger.warning("用户ID为空，无法添加文章", {
                 'trace_id': get_simple_trace_id()
             })
-            return 'not-login'
+            return jsonify({
+                'code': 401,
+                'msg': '用户未登录，请先登录',
+                'data': None
+            })
             
         user = Users().find_by_userid(userid)
         if user is None:
@@ -479,7 +488,11 @@ def add_article():
                 'trace_id': get_simple_trace_id(),
                 'user_id': userid
             })
-            return 'user-not-found'
+            return jsonify({
+                'code': 404,
+                'msg': '用户不存在',
+                'data': None
+            })
 
         # 获取表单数据
         headline = request.form.get('headline')
@@ -541,8 +554,14 @@ def add_article():
                     'article_type': article_type
                 })
                 
-                # 返回文章ID字符串，前端AJAX处理需要这种格式
-                return str(article_id)
+                # 返回标准JSON响应
+                return jsonify({
+                    'code': 0,
+                    'msg': '文章发布成功',
+                    'data': {
+                        'article_id': article_id
+                    }
+                })
             except Exception as e:
                 simple_logger.error("插入新文章失败", {
                     'trace_id': get_simple_trace_id(),
@@ -550,7 +569,11 @@ def add_article():
                     'error': str(e),
                     'traceback': traceback.format_exc()
                 })
-                return 'post-fail'
+                return jsonify({
+                    'code': 1,
+                    'msg': '文章发布失败，请稍后重试',
+                    'data': None
+                })
         else:
             # 更新现有文章
             try:
