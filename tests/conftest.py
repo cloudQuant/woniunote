@@ -36,9 +36,9 @@ def setup_test_environment():
     # Try to import the main module to ensure it's available
     try:
         import woniunote
-        print(f"✅ Successfully imported woniunote module from {woniunote.__file__}")
+        print(f"Successfully imported woniunote module from {woniunote.__file__}")
     except ImportError as e:
-        print(f"⚠️ Warning: Could not import woniunote module: {e}")
+        print(f"Warning: Could not import woniunote module: {e}")
     
     yield
     

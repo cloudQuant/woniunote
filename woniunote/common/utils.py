@@ -152,7 +152,19 @@ def parse_db_uri(db_uri):
         # 解析 URI
         parsed = urlparse(db_uri)
         
-        if not parsed.scheme or not parsed.hostname:
+        if not parsed.scheme:
+            raise ValueError("Invalid database URI format")
+        
+        # 对于SQLite，不需要hostname
+        if parsed.scheme.lower() == 'sqlite':
+            return {
+                'scheme': parsed.scheme,
+                'path': parsed.path,
+                'database': parsed.path
+            }
+        
+        # 对于其他数据库，需要hostname
+        if not parsed.hostname:
             raise ValueError("Invalid database URI format")
 
         # 提取用户名和密码
@@ -543,6 +555,11 @@ def model_list(result):
     try:
         if not result:
             return []
+        
+        # 检查result是否可迭代
+        if not hasattr(result, '__iter__'):
+            logger.warning("Result is not iterable, converting single object")
+            result = [result]
         
         m_list = []
         for row in result:
