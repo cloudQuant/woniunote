@@ -10,7 +10,7 @@
 import sys
 import os
 import argparse
-from woniunote.app import app
+from woniunote.app import create_app
 
 def parse_args():
     """解析命令行参数"""
@@ -44,7 +44,10 @@ def main():
     
     print(f"[INFO] 使用{protocol}协议")
     
-    # 启动 Flask 应用
+    # 创建 Flask 应用
+    config_name = 'testing' if args.test else 'development'
+    app = create_app(config_name)
+    
     if app is None:
         print("[ERROR] 应用创建失败")
         return 1

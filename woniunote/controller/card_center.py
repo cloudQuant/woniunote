@@ -1,4 +1,4 @@
-from flask import render_template, redirect, abort, jsonify, current_app
+from flask import render_template, redirect, abort, jsonify, current_app, Blueprint
 from woniunote.controller.user import *
 from woniunote.common.database import db
 from woniunote.models.card import Card, CardCategory
@@ -8,6 +8,7 @@ import datetime
 import time
 import uuid
 import traceback
+import threading
 
 card_center = Blueprint("card_center", __name__)
 
@@ -18,12 +19,12 @@ card_logger = get_simple_logger('card_controller')
 def generate_card_trace_id():
     return str(uuid.uuid4())
 
-# 获取当前跟踪ID
-_card_thread_local_trace_id = {}
+# 获取当前跟踪ID (线程安全版本)
+_card_thread_local_trace_id = threading.local()
 def get_card_trace_id():
-    if 'trace_id' not in _card_thread_local_trace_id:
-        _card_thread_local_trace_id['trace_id'] = generate_card_trace_id()
-    return _card_thread_local_trace_id['trace_id']
+    if not hasattr(_card_thread_local_trace_id, 'trace_id'):
+        _card_thread_local_trace_id.trace_id = generate_card_trace_id()
+    return _card_thread_local_trace_id.trace_id
 
 # Decorator for requiring login
 def login_required(f):
@@ -92,10 +93,10 @@ def cal_leave_day(target_date):
     """Calculate the number of days that have passed since the target_date.
     
     Args:
-        target_date (datetime): The reference date to calculate days from
+        target_date (datetime or str): The reference date to calculate days from
         
     Returns:
-        int: Number of days passed (non-negative). Returns 0 if target_date is None.
+        int: Number of days passed (non-negative). Returns 0 if target_date is None or invalid.
     """
     # 生成跟踪ID
     trace_id = get_card_trace_id()
@@ -109,6 +110,27 @@ def cal_leave_day(target_date):
             'result': 0
         })
         return 0
+    
+    # 处理字符串类型的日期
+    if isinstance(target_date, str):
+        try:
+            # 尝试解析日期字符串
+            if target_date.strip() == '':
+                return 0
+            target_date = datetime.datetime.strptime(target_date, '%Y-%m-%d')
+        except ValueError:
+            try:
+                # 尝试其他日期格式
+                target_date = datetime.datetime.strptime(target_date, '%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                # 记录解析失败
+                card_logger.debug("日期字符串解析失败", {
+                    'trace_id': trace_id,
+                    'target_date': target_date,
+                    'reason': 'invalid_date_format',
+                    'result': 0
+                })
+                return 0
     
     # 计算天数差异
     now_datetime = datetime.datetime.now()

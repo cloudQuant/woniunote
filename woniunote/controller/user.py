@@ -2,6 +2,8 @@ import hashlib
 import re
 import traceback
 import uuid
+import json
+import threading
 from flask import Blueprint, make_response, session, request, url_for, jsonify
 from woniunote.common.redisdb import redis_connect
 from woniunote.common.utils import ImageCode, gen_email_code, send_email
@@ -18,12 +20,12 @@ user_logger = get_simple_logger('user_controller')
 def generate_user_trace_id():
     return str(uuid.uuid4())
 
-# 获取当前跟踪ID
-_user_thread_local_trace_id = {}
+# 获取当前跟踪ID - 使用线程安全的threading.local()
+_user_thread_local_trace_id = threading.local()
 def get_user_trace_id():
-    if 'trace_id' not in _user_thread_local_trace_id:
-        _user_thread_local_trace_id['trace_id'] = generate_user_trace_id()
-    return _user_thread_local_trace_id['trace_id']
+    if not hasattr(_user_thread_local_trace_id, 'trace_id'):
+        _user_thread_local_trace_id.trace_id = generate_user_trace_id()
+    return _user_thread_local_trace_id.trace_id
 
 
 @user.route('/vcode')
@@ -439,18 +441,22 @@ def redis_code():
         
         code = gen_email_code()
         red = redis_connect()  # 连接到Redis服务器
-        red.set(username, code)
-        red.expire(username, 30)  # 设置username变量的有效期为30秒
-        
-        # 记录Redis操作成功
-        user_logger.info("Redis验证码设置成功", {
-            'trace_id': trace_id,
-            'username': username,
-            'expire_seconds': 30
-        })
-        
-        # 设置好缓存变量的过期时间后，发送邮件完成处理，此处代码略
-        return 'done'
+        try:
+            red.set(username, code)
+            red.expire(username, 30)  # 设置username变量的有效期为30秒
+            
+            # 记录Redis操作成功
+            user_logger.info("Redis验证码设置成功", {
+                'trace_id': trace_id,
+                'username': username,
+                'expire_seconds': 30
+            })
+            
+            # 设置好缓存变量的过期时间后，发送邮件完成处理，此处代码略
+            return 'done'
+        finally:
+            if hasattr(red, 'close'):
+                red.close()
     except Exception as e:
         # 记录Redis操作异常
         user_logger.error("Redis验证码设置异常", {
@@ -489,32 +495,36 @@ def redis_reg():
         
         try:
             red = redis_connect()  # 连接到Redis服务器
-            code = red.get(username).lower()
-            
-            # 记录Redis获取验证码成功
-            user_logger.info("Redis获取验证码成功", {
-                'trace_id': trace_id,
-                'username': username,
-                'code_match': code == ecode_
-            })
-            
-            if code == ecode_:
-                # 记录验证码正确
-                user_logger.info("Redis验证码验证成功", {
-                    'trace_id': trace_id,
-                    'username': username
-                })
-                return '验证码正确.'
-                # 开始进行注册，此处代码略
-            else:
-                # 记录验证码错误
-                user_logger.warning("Redis验证码错误", {
+            try:
+                code = red.get(username).lower()
+                
+                # 记录Redis获取验证码成功
+                user_logger.info("Redis获取验证码成功", {
                     'trace_id': trace_id,
                     'username': username,
-                    'input_code': ecode_,
-                    'stored_code': code
+                    'code_match': code == ecode_
                 })
-                return '验证码错误.'
+                
+                if code == ecode_:
+                    # 记录验证码正确
+                    user_logger.info("Redis验证码验证成功", {
+                        'trace_id': trace_id,
+                        'username': username
+                    })
+                    return '验证码正确.'
+                    # 开始进行注册，此处代码略
+                else:
+                    # 记录验证码错误
+                    user_logger.warning("Redis验证码错误", {
+                        'trace_id': trace_id,
+                        'username': username,
+                        'input_code': ecode_,
+                        'stored_code': code
+                    })
+                    return '验证码错误.'
+            finally:
+                if hasattr(red, 'close'):
+                    red.close()
         except Exception as e:
             # 记录Redis获取验证码异常
             user_logger.error("Redis获取验证码异常", {
@@ -579,7 +589,7 @@ def redis_login():
                 })
                 return '用户名不存在'
             
-            user_result = eval(result)
+            user_result = json.loads(result.replace("'", '"'))
             if password == user_result['password']:
                 # 记录登录成功
                 user_logger.info("Redis登录成功", {
@@ -603,6 +613,9 @@ def redis_login():
                 'traceback': traceback.format_exc()
             })
             return '用户名不存在'
+        finally:
+            if hasattr(red, 'close'):
+                red.close()
     except Exception as e:
         # 记录Redis登录异常
         user_logger.error("Redis登录异常", {

@@ -7,6 +7,7 @@ from woniunote.module.articles import Articles
 from woniunote.common.timer import can_use_minute
 from woniunote.common.redisdb import redis_connect
 from woniunote.common.simple_logger import SimpleLogger
+from woniunote.common.database import ARTICLE_TYPES
 
 index = Blueprint("index", __name__)
 
@@ -74,7 +75,8 @@ def home():
         html_file = 'index.html'
         content = render_template(html_file, result=result, page=1, total=total,
                                 can_use_minute=can_use_minute(),
-                                last_articles=last, most_articles=most, recommended_articles=recommended)
+                                last_articles=last, most_articles=most, recommended_articles=recommended,
+                                article_type=ARTICLE_TYPES)
         
         # 记录首页渲染成功
         index_logger.info("首页渲染成功", {
@@ -143,7 +145,8 @@ def get_home():
         html_file = 'index.html'
         content = render_template(html_file, result=result, page=1, total=total,
                                   can_use_minute=can_use_minute(),
-                                  last_articles=last, most_articles=most, recommended_articles=recommended)
+                                  last_articles=last, most_articles=most, recommended_articles=recommended,
+                                  article_type=ARTICLE_TYPES)
         
         # 记录首页渲染成功
         index_logger.info("备用首页渲染成功", {
@@ -223,7 +226,8 @@ def paginate(page):
         html_file = 'index.html'
         content = render_template(html_file, result=result, page=page, total=total,
                                   can_use_minute=can_use_minute(),
-                                  last_articles=last, most_articles=most, recommended_articles=recommended)
+                                  last_articles=last, most_articles=most, recommended_articles=recommended,
+                                  article_type=ARTICLE_TYPES)
         
         # 记录分页渲染成功
         index_logger.info("分页渲染成功", {
@@ -337,6 +341,8 @@ def classify(class_type, page):
         })
         # 返回错误页面
         return render_template('error.html', error_message=f"类型{class_type}第{page}页加载失败")
+
+@index.route('/search/<int:page>/<keyword>')
 def search(page, keyword):
     """文章搜索处理函数
     
@@ -722,7 +728,8 @@ def all_static():
             html_file = 'index.html'
             content = render_template(html_file, result=result, page=page, total=total,
                                       can_use_minute=can_use_minute(),
-                                      last_articles=last, most_articles=most, recommended_articles=recommended)
+                                      last_articles=last, most_articles=most, recommended_articles=recommended,
+                                      article_type=ARTICLE_TYPES)
             
             # 记录当前页渲染成功
             index_logger.info("静态化当前页渲染成功", {

@@ -1,0 +1,498 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- 页面布局 -->
+<div class="container" style="margin-top: 20px; background-color: white; padding: 20px;">
+    <div class="form-group row">
+        <label for="headline" class="col-2 col-form-label text-right">文章标题：</label>
+        <div class="col-10">
+            <input type="text" class="form-control" id="headline" placeholder="请输入文章标题" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="content" class="col-form-label">文章内容：</label>
+        <div style="border: 1px solid #ddd; min-height: 400px; padding: 5px;">
+            <script id="content" name="content" type="text/plain" style="width:100%; min-height:400px;"></script>
+        </div>
+    </div>
+
+    <!-- 类型、子类型、积分、提交按钮 -->
+    <div class="form-group row align-items-center">
+        <!-- 主类型 -->
+        <label for="main-type" class="col-2 col-form-label text-right">类型：</label>
+        <div class="col-2">
+            <select class="form-control" id="main-type">
+                {% for key, value in article_type.items() if key < 100 %}
+                    <option value="{{ key }}">{{ value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- 子类型 -->
+        <label for="sub-type" class="col-2 col-form-label text-right">子类型：</label>
+        <div class="col-2">
+            <select class="form-control" id="sub-type">
+                <!-- 子类型初始为空，动态加载 -->
+            </select>
+        </div>
+
+        <!-- 积分 -->
+        <label for="credit" class="col-2 col-form-label text-right">积分：</label>
+        <div class="col-2">
+            <select class="form-control" id="credit">
+                <option value="0">免费</option>
+                <option value="1">1分</option>
+                <option value="2">2分</option>
+                <option value="5">5分</option>
+                <option value="10">10分</option>
+                <option value="20">20分</option>
+                <option value="50">50分</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 提交按钮 -->
+    <div class="form-group row text-center">
+        <div class="col">
+            <button class="btn btn-secondary" onclick="doDraft()">保存草稿</button>
+            <button class="btn btn-primary" onclick="doPost()">发布文章</button>
+        </div>
+    </div>
+</div>
+
+<!-- 引入 UEditor CSS -->
+<link rel="stylesheet" type="text/css" href="/resource/ueditor/themes/default/css/ueditor.css"/>
+
+<script>
+    let ARTICLEID = 0;  // 全局变量保存文章 ID
+    let ue = null;      // 编辑器实例
+
+    // 文章发布逻辑
+    function doPost() {
+        console.log("=== 开始发表文章 === (版本: 2025-08-18-v2)");
+        console.log("ue对象状态:", ue);
+        console.log("ue是否就绪:", ue ? ue.isReady : "ue为null");
+        
+        let headline = $.trim($("#headline").val());
+        let contentPlain = "";
+        
+        // 检查编辑器状态 - UEditor的ready状态检查
+        if (ue && ue.getContentTxt) {
+            try {
+                contentPlain = ue.getContentTxt();
+                console.log("获取到的纯文本内容长度:", contentPlain.length);
+            } catch (e) {
+                console.error("获取编辑器内容失败:", e);
+                bootbox.alert({ title: "错误提示", message: "编辑器未完全加载，请稍后重试。请刷新页面重试。" });
+                return false;
+            }
+        } else {
+            console.error("编辑器未就绪，ue状态:", ue);
+            bootbox.alert({ title: "错误提示", message: "编辑器未完全加载，请稍后重试。请刷新页面重试。" });
+            return false;
+        }
+
+        if (headline.length < 5) {
+            bootbox.alert({ title: "错误提示", message: "标题不能少于5个字" });
+            return false;
+        } else if (contentPlain.length < 100) {
+            bootbox.alert({ title: "错误提示", message: "内容不能少于100个字" });
+            return false;
+        }
+
+        let mainType = $("#main-type").val();
+        let subType = $("#sub-type").val();
+        let credit = $("#credit").val();
+        let content = ue.getContent();
+        
+        console.log("准备发送发表文章请求，参数:", {
+            headline: headline,
+            type: mainType,
+            subtype: subType,
+            credit: credit,
+            drafted: 0,
+            checked: 1,
+            articleid: 0
+        });
+
+        $.ajax({
+            url: "/article/add",
+            type: "POST",
+            data: {
+                headline: headline,
+                content: content,
+                type: mainType,      // 修正参数名
+                subtype: subType,    // 修正参数名
+                credit: credit,
+                drafted: 0,  // 不是草稿
+                checked: 1,  // 需要审核 
+                articleid: 0 // 新文章
+            },
+            success: function(response) {
+                console.log("收到服务器响应:", response);
+                
+                if (response && response.code === 0) {
+                    bootbox.alert({ title: "成功", message: "文章发布成功！" });
+                    setTimeout(function() {
+                        if (response.data && response.data.article_id) {
+                            window.location.href = "/article/" + response.data.article_id;
+                        } else {
+                            window.location.href = "/";
+                        }
+                    }, 1500);
+                } else {
+                    var errorMsg = "发布失败";
+                    if (response && response.msg) {
+                        errorMsg = response.msg;
+                    } else if (typeof response === 'string') {
+                        errorMsg = response;
+                    }
+                    console.error("发布失败:", response);
+                    bootbox.alert({ title: "错误", message: errorMsg });
+                }
+            },
+            error: function() {
+                bootbox.alert({ title: "错误", message: "网络错误，请稍后重试" });
+            }
+        });
+    }
+
+    // 草稿保存逻辑
+    function doDraft() {
+        let headline = $.trim($("#headline").val());
+        let contentPlain = "";
+        
+        // 检查编辑器状态 - UEditor的ready状态检查
+        if (ue && ue.getContentTxt) {
+            try {
+                contentPlain = ue.getContentTxt();
+                console.log("草稿获取到的纯文本内容长度:", contentPlain.length);
+            } catch (e) {
+                console.error("获取编辑器内容失败:", e);
+                bootbox.alert({ title: "错误提示", message: "编辑器未完全加载，请稍后重试。请刷新页面重试。" });
+                return false;
+            }
+        } else {
+            console.error("编辑器未就绪，ue状态:", ue);
+            bootbox.alert({ title: "错误提示", message: "编辑器未完全加载，请稍后重试。请刷新页面重试。" });
+            return false;
+        }
+
+        if (headline.length < 5) {
+            bootbox.alert({ title: "错误提示", message: "标题不能少于5个字" });
+            return false;
+        } else if (contentPlain.length < 100) {
+            bootbox.alert({ title: "错误提示", message: "内容不能少于100个字" });
+            return false;
+        }
+
+        let mainType = $("#main-type").val();
+        let subType = $("#sub-type").val();
+        let credit = $("#credit").val();
+        let content = ue.getContent();
+
+        console.log("准备发送草稿保存请求，参数:", {
+            headline: headline,
+            type: mainType,
+            subtype: subType,
+            credit: credit,
+            drafted: 1,
+            checked: 0,
+            articleid: 0
+        });
+
+        $.ajax({
+            url: "/article/add",
+            type: "POST",
+            data: {
+                headline: headline,
+                content: content,
+                type: mainType,      // 修正参数名
+                subtype: subType,    // 修正参数名
+                credit: credit,
+                drafted: 1,  // 标记为草稿
+                checked: 0,  // 未审核
+                articleid: 0 // 新文章
+            },
+            success: function(response) {
+                console.log("收到草稿保存响应:", response);
+                
+                if (response && response.code === 0) {
+                    bootbox.alert({ title: "成功", message: "草稿保存成功！" });
+                    if (response.data && response.data.article_id) {
+                        ARTICLEID = response.data.article_id;
+                    }
+                } else {
+                    var errorMsg = "草稿保存失败";
+                    if (response && response.msg) {
+                        errorMsg = response.msg;
+                    } else if (typeof response === 'string') {
+                        errorMsg = response;
+                    }
+                    console.error("草稿保存失败:", response);
+                    bootbox.alert({ title: "错误", message: errorMsg });
+                }
+            },
+            error: function() {
+                bootbox.alert({ title: "错误", message: "网络错误，请稍后重试" });
+            }
+        });
+    }
+
+    // 初始化子类型数据
+    window.woniunoteData = {
+        subTypes: {}
+    };
+
+    // 使用模板变量传递数据，避免语法冲突
+    (function() {
+        try {
+            // 更安全的方式传递JSON数据
+            window.woniunoteData.subTypes = {{ subTypesData | tojson | safe }};
+            console.log("子类型数据加载成功:", window.woniunoteData.subTypes);
+        } catch(e) {
+            console.error("Failed to parse subTypesData", e);
+            window.woniunoteData.subTypes = {};
+        }
+    })();
+
+    // 初始化UEditor编辑器
+    function initEditor() {
+        console.log('=== 开始初始化UEditor ===');
+        
+        // 检查UE对象是否存在
+        if (typeof UE === 'undefined') {
+            console.error('UE对象未定义，等待脚本加载...');
+            setTimeout(initEditor, 500);
+            return;
+        }
+        
+        console.log('UE对象已加载，版本信息:', UE.version);
+        
+        // 检查容器元素
+        var container = document.getElementById('content');
+        if (!container) {
+            console.error('找不到编辑器容器元素 #content');
+            return;
+        }
+        
+        console.log('找到编辑器容器元素');
+        
+        // 销毁已存在的编辑器实例
+        if (ue) {
+            try {
+                console.log('销毁现有编辑器实例...');
+                ue.destroy();
+                ue = null;
+            } catch(e) {
+                console.log('销毁旧编辑器实例时出错:', e);
+            }
+        }
+        
+        try {
+            // 获取当前协议和主机信息
+            var protocol = window.location.protocol;
+            var host = window.location.host;
+            var serverUrl = protocol + '//' + host + '/uedit';
+            
+            console.log('编辑器配置:');
+            console.log('- serverUrl:', serverUrl);
+            console.log('- 容器ID: content');
+            
+            // 完整配置，确保contentimport按钮可用
+            var config = {
+                serverUrl: serverUrl,
+                initialFrameHeight: 400,
+                autoHeightEnabled: false,
+                focus: false,
+                maximumWords: 50000,
+                wordCount: true,
+                elementPathEnabled: false,
+                // 确保使用完整的工具栏配置，包含contentimport按钮
+                toolbars: [
+                    [
+                        "fullscreen", "source", "|",
+                        "undo", "redo", "|",
+                        "bold", "italic", "underline", "fontborder", "strikethrough", 
+                        "superscript", "subscript", "removeformat", "formatmatch", 
+                        "autotypeset", "blockquote", "pasteplain", "|",
+                        "forecolor", "backcolor", "insertorderedlist", "insertunorderedlist", 
+                        "selectall", "cleardoc", "|",
+                        "rowspacingtop", "rowspacingbottom", "lineheight", "|",
+                        "customstyle", "paragraph", "fontfamily", "fontsize", "|",
+                        "directionalityltr", "directionalityrtl", "indent", "|",
+                        "justifyleft", "justifycenter", "justifyright", "justifyjustify", "|",
+                        "touppercase", "tolowercase", "|",
+                        "link", "unlink", "anchor", "|",
+                        "imagenone", "imageleft", "imagecenter", "imageright", "|",
+                        "simpleupload", "insertimage", "emotion", "scrawl", 
+                        "insertvideo", "insertaudio", "attachment", "insertframe", 
+                        "insertcode", "pagebreak", "template", "background", "formula", "|",
+                        "horizontal", "date", "time", "spechars", "wordimage", "|",
+                        "inserttable", "deletetable", "insertparagraphbeforetable", 
+                        "insertrow", "deleterow", "insertcol", "deletecol", 
+                        "mergecells", "mergeright", "mergedown", "splittocells", 
+                        "splittorows", "splittocols", "|",
+                        "print", "preview", "searchreplace", "|",
+                        "contentimport", "help"
+                    ]
+                ]
+            };
+            
+            console.log('创建UEditor实例...');
+            
+            // 创建编辑器实例
+            ue = UE.getEditor('content', config);
+            
+            // 编辑器准备就绪回调
+            ue.ready(function() {
+                console.log('=== UEditor已准备就绪！ ===');
+                console.log('编辑器状态:', ue.isReady);
+                console.log('编辑器容器:', ue.container);
+                console.log('全局ue变量已设置:', window.ue);
+                
+                // 设置默认内容以验证编辑器工作
+                setTimeout(function() {
+                    try {
+                        ue.setContent('<p>编辑器已就绪，可以开始输入内容...</p>');
+                        console.log('默认内容设置成功');
+                    } catch(e) {
+                        console.error('设置默认内容失败:', e);
+                    }
+                }, 100);
+            });
+            
+            // 添加错误处理事件
+            ue.addListener('error', function(type, error) {
+                console.error('UEditor错误:', type, error);
+            });
+            
+            ue.addListener('contentChange', function() {
+                console.log('编辑器内容已更改');
+            });
+            
+        } catch (e) {
+            console.error('=== 创建编辑器时发生异常 ===', e);
+            console.error('错误堆栈:', e.stack);
+            
+            // 重试初始化
+            setTimeout(function() {
+                console.log('1秒后重试初始化编辑器...');
+                initEditor();
+            }, 1000);
+        }
+    }
+
+    // 页面加载完成后初始化
+    $(document).ready(function() {
+        console.log('=== 页面DOM已加载完成 ===');
+        
+        // 注意：UEditor初始化将通过window.load事件处理，这里只处理其他初始化
+        
+        // 初始化下拉框
+        const mainTypeSelect = document.getElementById('main-type');
+        const subTypeSelect = document.getElementById('sub-type');
+        
+        if (mainTypeSelect && subTypeSelect) {
+            // 设置主类型变化时的响应
+            mainTypeSelect.addEventListener('change', function() {
+                updateSubTypes(mainTypeSelect.value);
+            });
+            
+            // 更新子类型函数
+            function updateSubTypes(mainTypeId) {
+                // 清空子类型下拉框
+                subTypeSelect.innerHTML = '';
+                
+                // 获取子类型数据
+                const subTypes = window.woniunoteData.subTypes[mainTypeId];
+                
+                if (subTypes && Object.keys(subTypes).length > 0) {
+                    // 添加选项
+                    let firstOption = null;
+                    Object.entries(subTypes).forEach(([subId, subName]) => {
+                        const option = document.createElement('option');
+                        option.value = subId;
+                        option.textContent = subName;
+                        subTypeSelect.appendChild(option);
+                        
+                        if (!firstOption) {
+                            firstOption = subId;
+                        }
+                    });
+                    
+                    // 默认选中第一个
+                    if (firstOption) {
+                        subTypeSelect.value = firstOption;
+                    }
+                }
+            }
+            
+            // 首次加载时更新子类型
+            updateSubTypes(mainTypeSelect.value);
+        }
+    });
+</script>
+
+<!-- 引入 UEditor 脚本 - 放在页面最后确保jQuery已加载 -->
+<script type="text/javascript">
+    // 设置UEditor路径
+    window.UEDITOR_HOME_URL = '/resource/ueditor/';
+    console.log('=== 设置UEditor路径 ===', window.UEDITOR_HOME_URL);
+</script>
+<script type="text/javascript" src="/resource/ueditor/ueditor.config.js"></script>
+<script type="text/javascript" src="/resource/ueditor/ueditor.all.js"></script>
+<script type="text/javascript">
+    // 确保页面完全加载后再初始化编辑器
+    console.log('=== UEditor脚本加载完成 ===');
+    
+    // 确保initEditor函数可用，如果未定义则等待
+    var waitCount = 0;
+    function waitForInitEditor() {
+        waitCount++;
+        console.log('=== 检查initEditor函数 (第' + waitCount + '次) ===');
+        console.log('typeof initEditor:', typeof initEditor);
+        
+        if (typeof initEditor === 'function') {
+            console.log('=== initEditor函数已定义，开始初始化编辑器 ===');
+            initEditor();
+        } else if (waitCount > 50) {
+            console.error('=== 等待超时，initEditor函数仍未定义，强制创建 ===');
+            // 强制定义initEditor函数
+            window.initEditor = function() {
+                console.log('=== 强制创建的initEditor函数执行 ===');
+                // 这里直接调用编辑器初始化逻辑，跳过函数检查
+                if (typeof UE !== 'undefined') {
+                    console.log('直接初始化UEditor...');
+                    ue = UE.getEditor('content', {
+                        serverUrl: window.location.protocol + '//' + window.location.host + '/uedit',
+                        initialFrameHeight: 400,
+                        autoHeightEnabled: false
+                    });
+                    ue.ready(function() {
+                        console.log('UEditor强制初始化成功！');
+                        console.log('全局ue变量已设置:', window.ue);
+                    });
+                }
+            };
+            window.initEditor();
+        } else {
+            console.log('=== 等待initEditor函数定义... (尝试' + waitCount + '/50) ===');
+            setTimeout(waitForInitEditor, 200);
+        }
+    }
+    
+    // 等待所有资源加载完成
+    if (document.readyState === 'complete') {
+        console.log('=== 页面已完全加载 ===');
+        setTimeout(waitForInitEditor, 300);
+    } else {
+        window.addEventListener('load', function() {
+            console.log('=== 页面资源全部加载完成 ===');
+            setTimeout(waitForInitEditor, 300);
+        });
+    }
+</script>
+
+{% endblock %}

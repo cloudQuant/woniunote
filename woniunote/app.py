@@ -1,6 +1,6 @@
 import uuid, os, time, pymysql, json, hashlib, traceback
 from datetime import datetime, timedelta
-from flask import Flask, redirect, request, render_template, session, url_for, jsonify, g
+from flask import Flask, redirect, request, render_template, session, url_for, jsonify, g, make_response
 from flask_caching import Cache
 from flask_session import Session
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -41,14 +41,13 @@ from woniunote.controller.user import user
 from woniunote.module.users import Users
 pymysql.install_as_MySQLdb()
 
-# 安全配置常量
+# 安全配置常量（移除X-Frame-Options，单独处理）
 SECURITY_HEADERS = {
     'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'SAMEORIGIN',  # 允许iframe加载，UEditor需要
     'X-XSS-Protection': '1; mode=block',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    # 修改CSP以允许UEditor所需功能
-    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:",
+    # 更宽松的CSP以支持UEditor和跨域资源
+    'Content-Security-Policy': "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https: data:; font-src 'self' data: https:; img-src 'self' data: blob: https:; frame-src 'self'; connect-src 'self' https:",
 }
 
 # 允许的文件扩展名
@@ -131,11 +130,25 @@ def create_app(config_name='production'):
     
     # 配置数据库
     if custom_config.get('database', {}).get('SQLALCHEMY_DATABASE_URI'):
-        app.config['SQLALCHEMY_DATABASE_URI'] = custom_config['database']['SQLALCHEMY_DATABASE_URI']
-        app_logger.info(f"数据库URI已配置: {custom_config['database']['SQLALCHEMY_DATABASE_URI']}")
+        db_uri = custom_config['database']['SQLALCHEMY_DATABASE_URI']
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+        
+        # 判断数据库类型并输出详细信息
+        if db_uri.startswith('mysql://'):
+            app_logger.info("✅ 配置MySQL数据库连接")
+            app_logger.info(f"数据库URI: {db_uri}")
+            print(f"[INFO] ✅ 使用MySQL数据库: {db_uri.split('@')[1].split('/')[0]}/数据库名: {db_uri.split('/')[-1].split('?')[0]}")
+        elif db_uri.startswith('sqlite://'):
+            app_logger.info("配置SQLite数据库连接")
+            app_logger.info(f"数据库URI: {db_uri}")
+            print(f"[INFO] 使用SQLite数据库: {db_uri}")
+        else:
+            app_logger.info(f"数据库URI已配置: {db_uri}")
+            print(f"[INFO] 数据库已配置: {db_uri}")
     else:
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///woniunote_dev.db'
         app_logger.warning("使用默认SQLite数据库配置")
+        print("[WARNING] 使用默认SQLite数据库配置")
     
     # 从配置文件更新其他数据库配置
     if custom_config.get('database'):
@@ -317,14 +330,41 @@ def create_app(config_name='production'):
     # 添加安全头中间件
     @app.after_request
     def add_security_headers(response):
+        # 设置标准安全头（X-Frame-Options现在由security_enhanced.py处理）
         for header, value in SECURITY_HEADERS.items():
             response.headers[header] = value
+        
+        # 添加全面的CORS支持，允许跨域访问UEditor资源
+        if ('ueditor' in request.path.lower() or 
+            request.path.endswith('/uedit')):
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept, Origin'
+            response.headers['Access-Control-Expose-Headers'] = 'Content-Length, Content-Range, Content-Type'
+            response.headers['Access-Control-Allow-Credentials'] = 'false'
+            response.headers['Access-Control-Max-Age'] = '86400'  # 24小时
         
         # 添加请求ID用于调试
         if hasattr(g, 'request_id'):
             response.headers['X-Request-ID'] = g.request_id
         
         return response
+    
+    # 处理CORS预检请求
+    @app.before_request
+    def handle_preflight():
+        if request.method == "OPTIONS":
+            # 为UEditor资源和API端点处理预检请求
+            if ('ueditor' in request.path.lower() or 
+                request.path.endswith('/uedit')):
+                response = make_response()
+                response.headers['Access-Control-Allow-Origin'] = '*'
+                response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+                response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept, Origin'
+                response.headers['Access-Control-Expose-Headers'] = 'Content-Length, Content-Range, Content-Type'
+                response.headers['Access-Control-Allow-Credentials'] = 'false'
+                response.headers['Access-Control-Max-Age'] = '86400'
+                return response
     
     # 添加性能监控中间件
     @app.before_request
@@ -380,6 +420,20 @@ def create_app(config_name='production'):
             response.headers['X-Request-ID'] = g.request_id
         
         return response
+    
+    # 添加UEditor资源路径映射 - 直接服务文件而不是重定向
+    @app.route('/ueditor/<path:filename>')
+    def ueditor_resources(filename):
+        """将/ueditor/路径直接映射到resource文件夹"""
+        from flask import send_from_directory
+        import os
+        try:
+            resource_path = os.path.join(app.root_path, 'resource', 'ueditor')
+            return send_from_directory(resource_path, filename)
+        except:
+            # 如果文件不存在，返回404
+            from flask import abort
+            abort(404)
     
     # 注册蓝图
     app.register_blueprint(article)

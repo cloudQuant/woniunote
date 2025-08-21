@@ -26,47 +26,62 @@ def wrap_route_functions(app):
     for endpoint, view_func in app.view_functions.items():
         logger.info(f"正在包装路由函数: {endpoint}")
         
-        @wraps(view_func)
-        def wrapped_view(*args, **kwargs):
-            try:
-                logger.info(f"执行路由函数: {endpoint}")
-                result = view_func(*args, **kwargs)
-                logger.info(f"路由函数 {endpoint} 返回类型: {type(result)}")
-                
-                # 检查返回值类型
-                if isinstance(result, int):
-                    logger.error(f"路由函数 {endpoint} 返回了整数: {result}")
-                    # 将整数转换为有效的响应
-                    if result == 404:
-                        return render_template('error-404.html'), 404
-                    elif result == 200 or result == 0:
-                        # 假设这是一个“成功”的响应，我们尝试返回页面
-                        # 首先检查是否和某个类别或页面相关
-                        if 'category' in endpoint or 'todo' in endpoint:
-                            # Todo相关路由
-                            return redirect(url_for('tcenter.category', id=1))
-                        elif 'card' in endpoint:
-                            # Card相关路由
-                            return redirect(url_for('ccenter.card_index'))
+        def create_wrapped_view(endpoint_name, original_func):
+            @wraps(original_func)
+            def wrapped_view(*args, **kwargs):
+                try:
+                    logger.info(f"执行路由函数: {endpoint_name}")
+                    result = original_func(*args, **kwargs)
+                    logger.info(f"路由函数 {endpoint_name} 返回类型: {type(result)}")
+                    
+                    # 检查返回值类型
+                    if isinstance(result, int):
+                        logger.error(f"路由函数 {endpoint_name} 返回了整数: {result}")
+                        # 将整数转换为有效的响应
+                        if result == 404:
+                            return render_template('error-404.html'), 404
+                        elif result == 200 or result == 0:
+                            # 假设这是一个"成功"的响应，我们尝试返回页面
+                            # 首先检查是否和某个类别或页面相关
+                            if 'category' in endpoint_name or 'todo' in endpoint_name:
+                                # Todo相关路由
+                                try:
+                                    return redirect(url_for('tcenter.category', id=1))
+                                except:
+                                    return redirect(url_for('index.home'))
+                            elif 'card' in endpoint_name:
+                                # Card相关路由
+                                try:
+                                    return redirect(url_for('card_center.card_index'))
+                                except:
+                                    return redirect(url_for('index.home'))
+                            else:
+                                # 默认返回主页
+                                try:
+                                    return redirect(url_for('index.home'))
+                                except:
+                                    return redirect('/')
+                        elif result >= 400:
+                            # 错误应该返回错误页面
+                            return render_template('error-404.html'), result
                         else:
-                            # 默认返回主页
-                            return redirect(url_for('index'))
-                    elif result >= 400:
-                        # 错误应该返回错误页面
-                        return render_template('error-404.html'), result
-                    else:
-                        # 其他情况，尝试重定向到主页
-                        return redirect(url_for('index'))
-                
-                return result
-            except Exception as e:
-                logger.error(f"路由函数 {endpoint} 执行出错: {str(e)}")
-                logger.error(traceback.format_exc())
-                # 返回500错误响应
-                return render_template('error-500.html'), 500
+                            # 其他情况，尝试重定向到主页
+                            try:
+                                return redirect(url_for('index.home'))
+                            except:
+                                return redirect('/')
+                    
+                    return result
+                except Exception as e:
+                    logger.error(f"路由函数 {endpoint_name} 执行出错: {str(e)}")
+                    logger.error(traceback.format_exc())
+                    # 返回500错误响应
+                    return render_template('error-500.html'), 500
+            
+            return wrapped_view
         
         # 替换原始视图函数
-        app.view_functions[endpoint] = wrapped_view
+        app.view_functions[endpoint] = create_wrapped_view(endpoint, view_func)
     
     logger.info("所有路由函数已被包装")
     return app

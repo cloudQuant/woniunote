@@ -3,7 +3,6 @@
 <head>
     <title></title>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-    <script type="text/javascript" src="../internal.js?aea0c61c"></script>
     <style type="text/css">
         body {
             margin: 0;
@@ -200,7 +199,7 @@ function $(selector) {
 }
 
 // Markdown转换函数
-function convertMarkdownToHtml(markdown) {
+function convertMarkdown(markdown) {
     var html = markdown;
     
     // 保存代码块
@@ -312,7 +311,7 @@ function convertMarkdown() {
         return;
     }
     
-    var html = convertMarkdownToHtml(markdown);
+    var html = convertMarkdown(markdown);
     contentImport.data.result = html;
     
     $('.file-result').innerHTML = html;
@@ -352,26 +351,45 @@ document.getElementById('contentImport').addEventListener('change', function() {
     reader.readAsText(file, 'UTF-8');
 });
 
-// 与UEditor交互 - 使用internal.js提供的对象
-// internal.js已经为我们提供了dialog和editor对象
-
-// 设置确认按钮处理
-dialog.onok = function() {
-    if (!contentImport.data.result) {
-        alert('请先选择文件或粘贴Markdown内容并转换');
-        return false;
+// 与UEditor交互 - 等待页面加载完成
+window.onload = function() {
+    try {
+        // 获取父窗口的UEditor相关对象
+        var parent = window.parent;
+        
+        if (parent && parent.$EDITORUI && window.frameElement) {
+            var dialogId = window.frameElement.id.replace(/_iframe$/, '');
+            var dialog = parent.$EDITORUI[dialogId];
+            var editor = dialog ? dialog.editor : null;
+            
+            if (dialog) {
+                // 设置确认按钮处理
+                dialog.onok = function() {
+                    if (!contentImport.data.result) {
+                        alert('请先选择文件或粘贴Markdown内容并转换');
+                        return false;
+                    }
+                    
+                    // 插入HTML内容到编辑器
+                    if (editor) {
+                        editor.fireEvent('saveScene');
+                        editor.execCommand('inserthtml', contentImport.data.result);
+                        editor.fireEvent('saveScene');
+                    }
+                    return true;
+                };
+                
+                dialog.oncancel = function() {
+                    // 取消操作
+                    return true;
+                };
+                
+                console.log('UEditor对话框初始化成功');
+            }
+        }
+    } catch(e) {
+        console.log('UEditor对话框初始化失败:', e);
     }
-    
-    // 插入HTML内容到编辑器
-    editor.fireEvent('saveScene');
-    editor.execCommand('inserthtml', contentImport.data.result);
-    editor.fireEvent('saveScene');
-    return true;
-};
-
-dialog.oncancel = function() {
-    // 取消操作
-    return true;
 };
 </script>
 </body>

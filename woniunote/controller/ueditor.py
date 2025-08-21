@@ -26,11 +26,36 @@ def test_editor():
 def ueditor_static(filename):
     """提供UEditor静态文件"""
     try:
-        # 获取当前应用的根目录
-        app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # 确保filename是字符串类型，修复类型错误bug
+        if not isinstance(filename, str):
+            filename = str(filename)
+        
+        # 获取当前应用的根目录 - 使用当前工作目录以确保使用开发版本
+        # 首先尝试从当前工作目录获取
+        cwd = os.getcwd()
+        if 'woniunote' in cwd:
+            # 如果当前目录包含woniunote，找到woniunote目录
+            if cwd.endswith('woniunote'):
+                app_root = cwd
+            else:
+                # 找到woniunote目录
+                woniunote_index = cwd.find('woniunote')
+                if woniunote_index != -1:
+                    app_root = cwd[:woniunote_index + len('woniunote')]
+                else:
+                    app_root = os.path.join(cwd, 'woniunote')
+        else:
+            app_root = os.path.join(cwd, 'woniunote')
+        
         ueditor_path = os.path.join(app_root, 'resource', 'ueditor')
         
+        # 如果本地路径不存在，回退到原始方法
+        if not os.path.exists(ueditor_path):
+            app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            ueditor_path = os.path.join(app_root, 'resource', 'ueditor')
+        
         ueditor_logger.info(f"UEditor静态文件请求: {filename}, 路径: {ueditor_path}")
+        ueditor_logger.info(f"Debug - CWD: {cwd}, APP_ROOT: {app_root}, __file__: {__file__}")
         
         # 检查文件是否存在
         file_path = os.path.join(ueditor_path, filename)

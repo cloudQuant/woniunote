@@ -1,8 +1,6 @@
-from flask import render_template, redirect, abort, request, session
+from flask import render_template, redirect, abort, request, session, Blueprint
 import uuid
 from datetime import datetime, UTC
-
-from woniunote.controller.user import Blueprint
 from woniunote.common.database import db
 from woniunote.common.simple_logger import SimpleLogger
 

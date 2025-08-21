@@ -102,17 +102,43 @@ class StaticFileOptimizer:
     def compress_response(self, response):
         """压缩响应内容"""
         try:
-            if response.data:
-                compressed_data = gzip.compress(response.data)
+            # 检查response是否处于direct passthrough mode
+            if hasattr(response, 'direct_passthrough') and response.direct_passthrough:
+                # 跳过压缩，避免"passthrough mode"错误
+                return response
+                
+            # 获取响应数据
+            data = None
+            if hasattr(response, 'get_data'):
+                try:
+                    data = response.get_data(as_text=False)
+                except:
+                    # 如果获取数据失败，跳过压缩
+                    return response
+            elif hasattr(response, 'data'):
+                try:
+                    data = response.data
+                except:
+                    # 如果获取数据失败，跳过压缩
+                    return response
+            
+            if data and len(data) > self.gzip_threshold:
+                compressed_data = gzip.compress(data)
                 
                 # 只有压缩效果明显时才使用
-                if len(compressed_data) < len(response.data) * 0.9:
-                    response.data = compressed_data
+                if len(compressed_data) < len(data) * 0.9:
+                    # 使用set_data方法安全地设置数据
+                    if hasattr(response, 'set_data'):
+                        response.set_data(compressed_data)
+                    else:
+                        response.data = compressed_data
+                    
                     response.headers['Content-Encoding'] = 'gzip'
                     response.headers['Content-Length'] = str(len(compressed_data))
                     response.headers['Vary'] = 'Accept-Encoding'
         except Exception as e:
             logger.error(f"Compression error: {e}")
+            # 压缩失败时继续返回原响应
         
         return response
     

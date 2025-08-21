@@ -168,6 +168,34 @@ var frCommond = function (obj) {
 };
 switchTab("searchtab");
 
+// 添加对话框确认按钮处理
+dialog.onok = function() {
+    // 获取当前活跃的tab
+    var activeTab = $G('searchtab').className.indexOf('focus') > -1 ? 'search' : 'replace';
+    
+    if (activeTab === 'search') {
+        // 执行搜索
+        var findtxt = $G('findtxt').value;
+        if (findtxt) {
+            findIt();
+            return false; // 不关闭对话框，允许继续搜索
+        } else {
+            alert(lang.searchEmptyText);
+            return false;
+        }
+    } else {
+        // 执行替换
+        var findtxt = $G('findtxt1').value;
+        var replacetxt = $G('replacetxt').value;
+        if (findtxt) {
+            replaceIt();
+            return false; // 不关闭对话框，允许继续操作
+        } else {
+            alert(lang.searchEmptyText);
+            return false;
+        }
+    }
+};
 
 dialog.onclose = function () {
     editor.trigger('clearLastSearchResult')

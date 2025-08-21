@@ -519,15 +519,25 @@ class SecurityManager:
     
     def after_request_security_headers(self, response):
         """添加安全响应头"""
+        from flask import request
+        
+        # 基础安全头
         security_headers = {
             'X-Content-Type-Options': 'nosniff',
-            'X-Frame-Options': 'DENY',
             'X-XSS-Protection': '1; mode=block',
             'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
             'Content-Security-Policy': "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https: data:; font-src 'self' data: https:; img-src 'self' data: blob: https:; frame-src 'self'; connect-src 'self' https:",
             'Referrer-Policy': 'strict-origin-when-cross-origin',
             'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
         }
+        
+        # 根据请求路径设置X-Frame-Options
+        if ('ueditor' in request.path.lower() or 
+            request.path.endswith('/uedit') or
+            'dialogs' in request.path.lower()):
+            security_headers['X-Frame-Options'] = 'SAMEORIGIN'
+        else:
+            security_headers['X-Frame-Options'] = 'DENY'
         
         for header, value in security_headers.items():
             response.headers[header] = value

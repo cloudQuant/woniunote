@@ -44,8 +44,27 @@ def validate_email(email):
     if not email or len(email) > MAX_EMAIL_LENGTH:
         return False
     
-    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return bool(re.match(email_pattern, email))
+    # 检查连续的点号
+    if '..' in email:
+        return False
+    
+    # 检查开头和结尾的点号
+    if email.startswith('.') or email.endswith('.'):
+        return False
+    
+    # 更严格的邮箱格式验证
+    email_pattern = r'^[a-zA-Z0-9._+%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, email):
+        return False
+    
+    # 检查@符号前后不能是点号
+    at_index = email.find('@')
+    if at_index > 0 and email[at_index-1] == '.':
+        return False
+    if at_index < len(email) - 1 and email[at_index+1] == '.':
+        return False
+    
+    return True
 
 def validate_filename(filename):
     """验证文件名安全性"""
@@ -569,7 +588,8 @@ def model_list(result):
             
             m_dict = {}
             for k, v in row.__dict__.items():
-                if not k.startswith('_sa_instance_state'):
+                # 过滤私有字段：以下划线开头的字段都不包含
+                if not k.startswith('_'):
                     # 数据类型处理
                     if isinstance(v, datetime):
                         v = v.strftime('%Y-%m-%d %H:%M:%S')

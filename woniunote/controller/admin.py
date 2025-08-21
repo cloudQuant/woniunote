@@ -4,6 +4,7 @@ from woniunote.common.simple_logger import get_simple_logger
 import math
 import traceback
 import uuid
+import threading
 
 # 初始化日志记录器
 admin_logger = get_simple_logger('admin_controller')
@@ -12,12 +13,12 @@ admin_logger = get_simple_logger('admin_controller')
 def generate_trace_id():
     return str(uuid.uuid4())
 
-# 获取当前跟踪ID
-_thread_local_trace_id = {}
+# 获取当前跟踪ID (线程安全版本)
+_admin_thread_local_trace_id = threading.local()
 def get_admin_trace_id():
-    if 'trace_id' not in _thread_local_trace_id:
-        _thread_local_trace_id['trace_id'] = generate_trace_id()
-    return _thread_local_trace_id['trace_id']
+    if not hasattr(_admin_thread_local_trace_id, 'trace_id'):
+        _admin_thread_local_trace_id.trace_id = generate_trace_id()
+    return _admin_thread_local_trace_id.trace_id
 
 admin = Blueprint("admin", __name__)
 

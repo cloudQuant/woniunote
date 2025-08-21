@@ -14,6 +14,7 @@ import traceback
 import os
 import datetime
 import uuid
+import threading
 
 # 获取简单日志记录器
 simple_logger = get_simple_logger('article_controller')
@@ -22,12 +23,12 @@ simple_logger = get_simple_logger('article_controller')
 def generate_trace_id():
     return str(uuid.uuid4())
 
-# 获取当前跟踪ID
-_thread_local_trace_id = {}
+# 获取当前跟踪ID (线程安全版本)
+_article_thread_local_trace_id = threading.local()
 def get_simple_trace_id():
-    if 'trace_id' not in _thread_local_trace_id:
-        _thread_local_trace_id['trace_id'] = generate_trace_id()
-    return _thread_local_trace_id['trace_id']
+    if not hasattr(_article_thread_local_trace_id, 'trace_id'):
+        _article_thread_local_trace_id.trace_id = generate_trace_id()
+    return _article_thread_local_trace_id.trace_id
 
 article = Blueprint("article", __name__)
 
@@ -74,7 +75,7 @@ def read(articleid):
             'credit': article_instance.credit,
             'thumbnail': article_instance.thumbnail,
             'readcount': article_instance.readcount,
-            'commentcount': getattr(article, 'commentcount', 0),
+            'commentcount': getattr(article_instance, 'commentcount', 0),
             'drafted': article_instance.drafted,
             'checked': article_instance.checked,
             'createtime': article_instance.createtime,
@@ -142,6 +143,11 @@ def read(articleid):
                             current_userid=current_userid,
                             article_type=ARTICLE_TYPES)
     except Exception as e:
+        # 不捕获HTTP异常（如abort抛出的异常）
+        from werkzeug.exceptions import HTTPException
+        if isinstance(e, HTTPException):
+            raise  # 重新抛出HTTP异常，让Flask处理
+        
         simple_logger.error(f"读取文章 ID: {articleid} 时发生错误", {
             'trace_id': trace_id,
             'article_id': articleid,
@@ -465,22 +471,14 @@ def add_article():
             simple_logger.warning("未登录用户尝试添加文章", {
                 'trace_id': get_simple_trace_id()
             })
-            return jsonify({
-                'code': 401,
-                'msg': '用户未登录，请先登录',
-                'data': None
-            })
+            return 'not-login'
         
         userid = session.get('main_userid')
         if userid is None:
             simple_logger.warning("用户ID为空，无法添加文章", {
                 'trace_id': get_simple_trace_id()
             })
-            return jsonify({
-                'code': 401,
-                'msg': '用户未登录，请先登录',
-                'data': None
-            })
+            return 'not-login'
             
         user = Users().find_by_userid(userid)
         if user is None:
@@ -488,11 +486,7 @@ def add_article():
                 'trace_id': get_simple_trace_id(),
                 'user_id': userid
             })
-            return jsonify({
-                'code': 404,
-                'msg': '用户不存在',
-                'data': None
-            })
+            return 'user-not-found'
 
         # 获取表单数据
         headline = request.form.get('headline')
@@ -554,14 +548,8 @@ def add_article():
                     'article_type': article_type
                 })
                 
-                # 返回标准JSON响应
-                return jsonify({
-                    'code': 0,
-                    'msg': '文章发布成功',
-                    'data': {
-                        'article_id': article_id
-                    }
-                })
+                # 返回文章ID字符串（前端期待的格式）
+                return str(article_id)
             except Exception as e:
                 simple_logger.error("插入新文章失败", {
                     'trace_id': get_simple_trace_id(),
@@ -569,11 +557,7 @@ def add_article():
                     'error': str(e),
                     'traceback': traceback.format_exc()
                 })
-                return jsonify({
-                    'code': 1,
-                    'msg': '文章发布失败，请稍后重试',
-                    'data': None
-                })
+                return 'post-fail'
         else:
             # 更新现有文章
             try:
@@ -632,7 +616,7 @@ def add_article():
                 return 'post-fail'
     except Exception as e:
         # 装饰器已经处理了异常日志，这里只需要返回错误信息
-        return 'error'
+        return 'post-fail'
 
 
 if __name__ == "__main__":
