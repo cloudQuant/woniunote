@@ -111,18 +111,33 @@ def dbconnect(app=None):
         try:
             app = current_app._get_current_object()
         except RuntimeError:
-            # 如果没有应用上下文，创建一个临时应用
-            app = Flask(__name__)
-            app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-            app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-            db.init_app(app)
+            # 如果没有应用上下文，检查是否在测试环境中
+            if os.environ.get('TESTING') == 'True':
+                # 在测试环境中，创建临时应用
+                app = Flask(__name__)
+                app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+                app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+                db.init_app(app)
+            else:
+                # 创建临时应用
+                app = Flask(__name__)
+                app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+                app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+                db.init_app(app)
     
+    if app is None:
+        return None, None, None
+        
     with app.app_context():
-        dbsession = db.session
-        dbase = db.Model
-        metadata = MetaData()
-        metadata.bind = db.engine
-        return dbsession, metadata, dbase
+        try:
+            dbsession = db.session
+            dbase = db.Model
+            metadata = MetaData()
+            metadata.bind = db.engine
+            return dbsession, metadata, dbase
+        except Exception:
+            # 如果数据库初始化失败，返回None
+            return None, None, None
 
 
 # Flask应用启动

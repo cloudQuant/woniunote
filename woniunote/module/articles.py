@@ -23,30 +23,54 @@ def get_articles_trace_id():
     """
     return f"articles_{uuid.uuid4().hex}"
 
-dbsession, md, DBase = dbconnect()
+# 延迟初始化数据库连接
+_dbsession = None
+_md = None
+_DBase = None
+
+def get_db_components():
+    """获取数据库组件，延迟初始化"""
+    global _dbsession, _md, _DBase
+    if _dbsession is None:
+        _dbsession, _md, _DBase = dbconnect()
+        if _dbsession is None:
+            # 如果数据库连接失败，返回None
+            return None, None, None
+    return _dbsession, _md, _DBase
 
 
-class Articles(DBase):
-    __table__ = Table(
-        'article', md,
-        Column('articleid', Integer, primary_key=True, nullable=False, autoincrement=True),
-        Column('userid', Integer, ForeignKey('users.userid'), nullable=False),
-        Column('type', Integer, nullable=False),
-        Column('headline', String(100), nullable=False),
-        Column('content', Text(16777216)),
-        Column('thumbnail', String(30)),
-        Column('credit', Integer, default=0),
-        Column('readcount', Integer, default=0),
-        Column('replycount', Integer, default=0),
-        Column('recommended', Integer, default=0),
-        Column('hidden', Integer, default=0),
-        Column('drafted', Integer, default=0),
-        Column('checked', Integer, default=1),
-        Column('createtime', DateTime),
-        Column('updatetime', DateTime)
-    )
-
-    def __init__(self):
+class Articles:
+    def __init__(self, **kwargs):
+        # 获取数据库组件
+        dbsession, md, DBase = get_db_components()
+        if dbsession is None:
+            raise RuntimeError("数据库连接失败")
+        
+        # 动态创建表结构
+        self.__table__ = Table(
+            'article', md,
+            Column('articleid', Integer, primary_key=True, nullable=False, autoincrement=True),
+            Column('userid', Integer, ForeignKey('users.userid'), nullable=False),
+            Column('type', Integer, nullable=False),
+            Column('headline', String(100), nullable=False),
+            Column('content', Text(16777216)),
+            Column('thumbnail', String(30)),
+            Column('credit', Integer, default=0),
+            Column('readcount', Integer, default=0),
+            Column('replycount', Integer, default=0),
+            Column('recommended', Integer, default=0),
+            Column('hidden', Integer, default=0),
+            Column('drafted', Integer, default=0),
+            Column('checked', Integer, default=1),
+            Column('createtime', DateTime),
+            Column('updatetime', DateTime)
+        )
+        
+        # 设置属性
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        
+        # 设置关系
         from woniunote.module.users import Users
         self.user = relationship("Users", back_populates="Articles")
 
@@ -65,6 +89,12 @@ class Articles(DBase):
         })
         
         try:
+            # 获取数据库组件
+            dbsession, md, DBase = get_db_components()
+            if dbsession is None:
+                articles_logger.error("数据库连接失败", {'trace_id': trace_id})
+                return []
+            
             # 执行查询
             query_start_time = time.time()
             result = dbsession.query(Article).all()

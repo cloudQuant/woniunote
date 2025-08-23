@@ -18,20 +18,23 @@ if project_root not in sys.path:
 
 def load_module_with_mocks(module_name, file_path, mock_modules=None):
     """Load module with optional mocks for dependencies"""
-    if mock_modules is None:
-        mock_modules = {}
-    
-    if not os.path.exists(file_path):
-        pytest.skip(f"Module file not found: {file_path}")
-    
-    with patch.dict('sys.modules', mock_modules):
-        try:
-            spec = importlib.util.spec_from_file_location(module_name, file_path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            return module
-        except Exception as e:
-            pytest.skip(f"Could not load module {module_name}: {e}")
+    try:
+        # 首先尝试直接导入
+        module = importlib.import_module(f'woniunote.module.{module_name}')
+        return module
+    except ImportError:
+        # 如果直接导入失败，使用文件路径加载
+        if not os.path.exists(file_path):
+            pytest.skip(f"Module file not found: {file_path}")
+        
+        with patch.dict('sys.modules', mock_modules or {}):
+            try:
+                spec = importlib.util.spec_from_file_location(module_name, file_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                return module
+            except Exception as e:
+                pytest.skip(f"Could not load module {module_name}: {e}")
 
 class TestArticlesModule:
     """Test articles business logic module"""
@@ -54,16 +57,16 @@ class TestArticlesModule:
     def test_article_functions_exist(self):
         """Test that key article functions exist"""
         expected_functions = [
-            'get_article_by_id',
-            'get_articles_list', 
-            'create_article',
+            'find_by_id',
+            'find_all', 
+            'insert_article',
             'update_article',
-            'delete_article',
-            'search_articles',
-            'get_article_count',
-            'get_articles_by_category',
-            'get_recent_articles',
-            'increase_article_views'
+            'find_by_headline',
+            'find_by_type',
+            'get_total_count',
+            'find_last_9',
+            'find_most_9',
+            'update_read_count'
         ]
         
         for func_name in expected_functions:
@@ -93,16 +96,10 @@ class TestUsersModule:
     def test_user_functions_exist(self):
         """Test that key user functions exist"""
         expected_functions = [
-            'get_user_by_id',
-            'get_user_by_username',
-            'get_user_by_email',
-            'create_user',
-            'update_user',
-            'delete_user',
-            'authenticate_user',
-            'change_password',
-            'get_user_count',
-            'update_last_login'
+            'find_by_userid',
+            'find_by_username',
+            'do_register',
+            'update_credit',
         ]
         
         for func_name in expected_functions:
@@ -131,15 +128,16 @@ class TestCommentsModule:
     def test_comment_functions_exist(self):
         """Test that key comment functions exist"""
         expected_functions = [
-            'get_comment_by_id',
-            'get_comments_by_article',
-            'create_comment',
-            'update_comment',
-            'delete_comment',
-            'approve_comment',
-            'get_comment_count',
-            'get_recent_comments',
-            'get_user_comments'
+            'find_by_id',
+            'find_by_articleid',
+            'insert_comment',
+            'find_by_userid',
+            'find_limit_with_user',
+            'get_count_by_article',
+            'find_by_article',
+            'insert_reply',
+            'find_reply_with_user',
+            'last_reply'
         ]
         
         for func_name in expected_functions:
@@ -167,12 +165,9 @@ class TestCreditsModule:
     def test_credit_functions_exist(self):
         """Test that key credit functions exist"""
         expected_functions = [
-            'get_user_credits',
-            'add_credits',
-            'deduct_credits',
-            'transfer_credits',
-            'get_credit_history',
-            'get_credit_transactions'
+            'insert_detail',
+            'check_payed_article',
+            'find_by_userid'
         ]
         
         for func_name in expected_functions:
@@ -200,12 +195,12 @@ class TestFavoritesModule:
     def test_favorite_functions_exist(self):
         """Test that key favorite functions exist"""
         expected_functions = [
-            'add_favorite',
-            'remove_favorite',
-            'get_user_favorites',
-            'is_favorited',
-            'get_favorite_count',
-            'get_most_favorited'
+            'insert_favorite',
+            'cancel_favorite',
+            'check_favorite',
+            'find_by_userid',
+            'find_my_favorite',
+            'switch_favorite'
         ]
         
         for func_name in expected_functions:
@@ -385,28 +380,38 @@ class TestErrorHandling:
     
     def test_error_handler_module(self):
         """Test error handler module"""
-        mocks = {
-            'flask': Mock(),
-            'woniunote.common.simple_logger': Mock()
-        }
-        
-        error_path = os.path.join(project_root, 'woniunote', 'common', 'error_handler.py')
-        error_module = load_module_with_mocks("error_handler", error_path, mocks)
-        
-        assert error_module is not None
-        
-        expected_functions = [
-            'handle_404',
-            'handle_500',
-            'handle_403',
-            'handle_400',
-            'register_error_handlers'
-        ]
-        
-        for func_name in expected_functions:
-            if hasattr(error_module, func_name):
-                func = getattr(error_module, func_name)
-                assert callable(func)
+        try:
+            # 首先尝试直接导入
+            from woniunote.common.error_handler import WoniuNoteException, ErrorLevel, ErrorCategory
+            assert WoniuNoteException is not None
+            assert ErrorLevel is not None
+            assert ErrorCategory is not None
+            
+            # 测试异常类的基本功能
+            exception = WoniuNoteException("Test error")
+            assert exception.message == "Test error"
+            assert exception.level == ErrorLevel.MEDIUM
+            assert exception.category == ErrorCategory.SYSTEM
+            
+        except ImportError:
+            # 如果直接导入失败，使用Mock策略
+            mocks = {
+                'flask': Mock(),
+                'woniunote.common.simple_logger': Mock()
+            }
+            
+            error_path = os.path.join(project_root, 'woniunote', 'common', 'error_handler.py')
+            error_module = load_module_with_mocks("error_handler", error_path, mocks)
+            
+            if error_module is not None:
+                # 检查模块是否有预期的类
+                expected_classes = ['WoniuNoteException', 'ErrorLevel', 'ErrorCategory']
+                for class_name in expected_classes:
+                    if hasattr(error_module, class_name):
+                        cls = getattr(error_module, class_name)
+                        assert cls is not None
+            else:
+                pytest.skip("Error handler module could not be loaded")
 
 class TestPerformanceOptimizations:
     """Test performance optimization modules"""

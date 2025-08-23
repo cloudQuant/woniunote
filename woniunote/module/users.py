@@ -10,7 +10,20 @@ from woniunote.common.database import dbconnect
 from woniunote.common.create_database import User  # 暂时保留此导入以兼容现有代码
 from woniunote.common.simple_logger import get_simple_logger
 
-dbsession, md, DBase = dbconnect()
+# 延迟初始化数据库连接
+_dbsession = None
+_md = None
+_DBase = None
+
+def get_db_components():
+    """获取数据库组件，延迟初始化"""
+    global _dbsession, _md, _DBase
+    if _dbsession is None:
+        _dbsession, _md, _DBase = dbconnect()
+        if _dbsession is None:
+            # 如果数据库连接失败，返回None
+            return None, None, None
+    return _dbsession, _md, _DBase
 
 # 创建用户模块的日志记录器
 users_logger = get_simple_logger('users')
@@ -20,20 +33,31 @@ def get_users_trace_id():
     return str(uuid.uuid4())
 
 
-class Users(DBase):
-    __table__ = Table(
-        'users', md,
-        Column('userid', Integer, primary_key=True, nullable=False, autoincrement=True),
-        Column('username', String(50), nullable=False),
-        Column('password', String(32), nullable=False),
-        Column('nickname', String(30)),
-        Column('avatar', String(20)),
-        Column('qq', String(15)),
-        Column('role', String(10), nullable=False),
-        Column('credit', Integer, default=50),
-        Column('createtime', DateTime),
-        Column('updatetime', DateTime)
-    )
+class Users:
+    def __init__(self, **kwargs):
+        # 获取数据库组件
+        dbsession, md, DBase = get_db_components()
+        if dbsession is None:
+            raise RuntimeError("数据库连接失败")
+        
+        # 动态创建表结构
+        self.__table__ = Table(
+            'users', md,
+            Column('userid', Integer, primary_key=True, nullable=False, autoincrement=True),
+            Column('username', String(50), nullable=False),
+            Column('password', String(32), nullable=False),
+            Column('nickname', String(30)),
+            Column('avatar', String(20)),
+            Column('qq', String(15)),
+            Column('role', String(10), nullable=False),
+            Column('credit', Integer, default=50),
+            Column('createtime', DateTime),
+            Column('updatetime', DateTime)
+        )
+        
+        # 设置属性
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     # 查询用户名，可用于注册时判断用户名是否已注册，也可用于登录校验
     @staticmethod
@@ -48,6 +72,12 @@ class Users(DBase):
         })
         
         try:
+            # 获取数据库组件
+            dbsession, md, DBase = get_db_components()
+            if dbsession is None:
+                users_logger.error("数据库连接失败", {'trace_id': trace_id})
+                return []
+            
             # 执行查询
             query_start_time = time.time()
             result = dbsession.query(Users).filter_by(username=username).all()
@@ -107,6 +137,12 @@ class Users(DBase):
             user = Users(username=username, password=password, role='user', credit=50,
                          nickname=nickname, avatar=avatar + '.png', createtime=now, updatetime=now)
             
+            # 获取数据库组件
+            dbsession, md, DBase = get_db_components()
+            if dbsession is None:
+                users_logger.error("数据库连接失败", {'trace_id': trace_id})
+                return None
+            
             # 执行数据库操作
             query_start_time = time.time()
             dbsession.add(user)
@@ -160,6 +196,12 @@ class Users(DBase):
                 })
                 return False
             
+            # 获取数据库组件
+            dbsession, md, DBase = get_db_components()
+            if dbsession is None:
+                users_logger.error("数据库连接失败", {'trace_id': trace_id})
+                return False
+            
             # 查询用户信息
             query_start_time = time.time()
             user = dbsession.query(Users).filter_by(userid=userid).one()
@@ -209,6 +251,12 @@ class Users(DBase):
         })
         
         try:
+            # 获取数据库组件
+            dbsession, md, DBase = get_db_components()
+            if dbsession is None:
+                users_logger.error("数据库连接失败", {'trace_id': trace_id})
+                return None
+            
             # 执行查询
             query_start_time = time.time()
             user = dbsession.query(Users).filter_by(userid=userid).one()

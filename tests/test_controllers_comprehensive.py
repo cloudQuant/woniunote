@@ -22,36 +22,44 @@ def load_controller_with_mocks(controller_name, mock_modules=None):
     if mock_modules is None:
         mock_modules = {}
     
-    controller_path = os.path.join(project_root, 'woniunote', 'controller', f'{controller_name}.py')
-    
-    if not os.path.exists(controller_path):
-        pytest.skip(f"Controller file not found: {controller_path}")
-    
-    # Default mocks for all controllers
-    default_mocks = {
-        'flask': Mock(),
-        'woniunote.common.database': Mock(),
-        'woniunote.common.simple_logger': Mock(),
-        'woniunote.common.utils': Mock(),
-        'woniunote.common.session_util': Mock(),
-        'woniunote.module.articles': Mock(),
-        'woniunote.module.users': Mock(),
-        'woniunote.module.comments': Mock(),
-        'woniunote.module.credits': Mock(),
-        'woniunote.module.favorites': Mock(),
-    }
-    
-    # Merge with provided mocks
-    all_mocks = {**default_mocks, **mock_modules}
-    
-    with patch.dict('sys.modules', all_mocks):
-        try:
-            spec = importlib.util.spec_from_file_location(controller_name, controller_path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            return module
-        except Exception as e:
-            pytest.skip(f"Could not load controller {controller_name}: {e}")
+    # 使用更简单的导入方法
+    try:
+        # 直接导入控制器模块
+        module_name = f'woniunote.controller.{controller_name}'
+        module = importlib.import_module(module_name)
+        return module
+    except ImportError:
+        # 如果导入失败，尝试从文件路径加载
+        controller_path = os.path.join(project_root, 'woniunote', 'controller', f'{controller_name}.py')
+        
+        if not os.path.exists(controller_path):
+            pytest.skip(f"Controller file not found: {controller_path}")
+        
+        # Default mocks for all controllers
+        default_mocks = {
+            'flask': Mock(),
+            'woniunote.common.database': Mock(),
+            'woniunote.common.simple_logger': Mock(),
+            'woniunote.common.utils': Mock(),
+            'woniunote.common.session_util': Mock(),
+            'woniunote.module.articles': Mock(),
+            'woniunote.module.users': Mock(),
+            'woniunote.module.comments': Mock(),
+            'woniunote.module.credits': Mock(),
+            'woniunote.module.favorites': Mock(),
+        }
+        
+        # Merge with provided mocks
+        all_mocks = {**default_mocks, **mock_modules}
+        
+        with patch.dict('sys.modules', all_mocks):
+            try:
+                spec = importlib.util.spec_from_file_location(controller_name, controller_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                return module
+            except Exception as e:
+                pytest.skip(f"Could not load controller {controller_name}: {e}")
 
 class TestIndexController:
     """Comprehensive tests for index controller"""

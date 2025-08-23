@@ -146,67 +146,87 @@ class TestCreateDatabaseModule:
     
     def test_user_model_exists(self):
         """Test User model exists"""
-        # Mock dependencies
-        with patch.dict('sys.modules', {
-            'woniunote.common.database': Mock(),
-            'woniunote.common.simple_logger': Mock()
-        }):
-            create_db_path = os.path.join(project_root, 'woniunote', 'common', 'create_database.py')
-            try:
-                spec = importlib.util.spec_from_file_location("create_database", create_db_path)
-                create_db = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(create_db)
-                
-                if hasattr(create_db, 'User'):
-                    User = create_db.User
-                    assert User is not None
-                    assert hasattr(User, '__tablename__')
-                else:
-                    pytest.skip("User model not found in create_database")
-            except Exception as e:
-                pytest.skip(f"Create database module has dependencies: {e}")
+        try:
+            # 首先尝试直接导入
+            from woniunote.common.create_database import User
+            assert User is not None
+            assert hasattr(User, '__tablename__')
+        except ImportError:
+            # 如果直接导入失败，使用Mock策略
+            with patch.dict('sys.modules', {
+                'woniunote.common.database': Mock(),
+                'woniunote.common.simple_logger': Mock()
+            }):
+                create_db_path = os.path.join(project_root, 'woniunote', 'common', 'create_database.py')
+                try:
+                    spec = importlib.util.spec_from_file_location("create_database", create_db_path)
+                    create_db = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(create_db)
+                    
+                    if hasattr(create_db, 'User'):
+                        User = create_db.User
+                        assert User is not None
+                        assert hasattr(User, '__tablename__')
+                    else:
+                        pytest.skip("User model not found in create_database")
+                except Exception as e:
+                    pytest.skip(f"Create database module has dependencies: {e}")
     
     def test_article_model_exists(self):
         """Test Article model exists"""
-        with patch.dict('sys.modules', {
-            'woniunote.common.database': Mock(),
-            'woniunote.common.simple_logger': Mock()
-        }):
-            create_db_path = os.path.join(project_root, 'woniunote', 'common', 'create_database.py')
-            try:
-                spec = importlib.util.spec_from_file_location("create_database", create_db_path)
-                create_db = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(create_db)
-                
-                if hasattr(create_db, 'Article'):
-                    Article = create_db.Article
-                    assert Article is not None
-                    assert hasattr(Article, '__tablename__')
-                else:
-                    pytest.skip("Article model not found")
-            except Exception as e:
-                pytest.skip(f"Create database module has dependencies: {e}")
+        try:
+            # 首先尝试直接导入
+            from woniunote.common.create_database import Article
+            assert Article is not None
+            assert hasattr(Article, '__tablename__')
+        except ImportError:
+            # 如果直接导入失败，使用Mock策略
+            with patch.dict('sys.modules', {
+                'woniunote.common.database': Mock(),
+                'woniunote.common.simple_logger': Mock()
+            }):
+                create_db_path = os.path.join(project_root, 'woniunote', 'common', 'create_database.py')
+                try:
+                    spec = importlib.util.spec_from_file_location("create_database", create_db_path)
+                    create_db = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(create_db)
+                    
+                    if hasattr(create_db, 'Article'):
+                        Article = create_db.Article
+                        assert Article is not None
+                        assert hasattr(Article, '__tablename__')
+                    else:
+                        pytest.skip("Article model not found")
+                except Exception as e:
+                    pytest.skip(f"Create database module has dependencies: {e}")
     
     def test_comment_model_exists(self):
         """Test Comment model exists"""
-        with patch.dict('sys.modules', {
-            'woniunote.common.database': Mock(), 
-            'woniunote.common.simple_logger': Mock()
-        }):
-            create_db_path = os.path.join(project_root, 'woniunote', 'common', 'create_database.py')
-            try:
-                spec = importlib.util.spec_from_file_location("create_database", create_db_path)
-                create_db = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(create_db)
-                
-                if hasattr(create_db, 'Comment'):
-                    Comment = create_db.Comment
-                    assert Comment is not None
-                    assert hasattr(Comment, '__tablename__')
-                else:
-                    pytest.skip("Comment model not found")
-            except Exception as e:
-                pytest.skip(f"Create database module has dependencies: {e}")
+        try:
+            # 首先尝试直接导入
+            from woniunote.common.create_database import Comment
+            assert Comment is not None
+            assert hasattr(Comment, '__tablename__')
+        except ImportError:
+            # 如果直接导入失败，使用Mock策略
+            with patch.dict('sys.modules', {
+                'woniunote.common.database': Mock(), 
+                'woniunote.common.simple_logger': Mock()
+            }):
+                create_db_path = os.path.join(project_root, 'woniunote', 'common', 'create_database.py')
+                try:
+                    spec = importlib.util.spec_from_file_location("create_database", create_db_path)
+                    create_db = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(create_db)
+                    
+                    if hasattr(create_db, 'Comment'):
+                        Comment = create_db.Comment
+                        assert Comment is not None
+                        assert hasattr(Comment, '__tablename__')
+                    else:
+                        pytest.skip("Comment model not found")
+                except Exception as e:
+                    pytest.skip(f"Create database module has dependencies: {e}")
 
 class TestCardModel:
     """Test card model"""

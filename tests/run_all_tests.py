@@ -41,7 +41,7 @@ VERBOSE_MODE = '-v' in sys.argv or '--verbose' in sys.argv
 COVERAGE_REPORT = not ('--no-coverage' in sys.argv)
 DEBUG_MODE = '--debug' in sys.argv
 PARALLEL_MODE = '--parallel' in sys.argv and not DEBUG_MODE
-MAX_WORKERS = 3 if PARALLEL_MODE else 1
+MAX_WORKERS = 8 if PARALLEL_MODE else 1
 SKIP_SLOW_TESTS = '--skip-slow' in sys.argv or FAST_MODE
 
 # 智能超时配置
