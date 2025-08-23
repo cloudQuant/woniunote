@@ -568,4 +568,8 @@ def preload_critical_resources(app: Flask, critical_css: List[str] = None,
             logger.info(f"Critical resources preload setup: {len(preload_links)} resources")
             
         except Exception as e:
-            logger.error(f"Critical resources preload error: {e}") 
+            logger.error(f"Critical resources preload error: {e}")
+
+
+# 为了兼容性，提供StaticOptimizer别名
+StaticOptimizer = StaticFileOptimizer 

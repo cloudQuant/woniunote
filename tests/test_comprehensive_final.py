@@ -34,20 +34,23 @@ from woniunote.common.utils import validate_email
 # Test valid emails based on actual function behavior
 assert validate_email("test@example.com") == True
 assert validate_email("user@domain.org") == True
-assert validate_email("user..name@domain.com") == True  # Double dots allowed
-assert validate_email("user@domain..com") == True  # Double dots in domain allowed
 assert validate_email("user+tag@domain.com") == True  # Plus addressing
 assert validate_email("user_name@domain.com") == True  # Underscore allowed
 assert validate_email("user-name@domain.com") == True  # Hyphen allowed
+assert validate_email("user.name@domain.com") == True  # Single dots allowed
 
 # Test invalid emails
 assert validate_email("invalid_email") == False
+assert validate_email("user..name@domain.com") == False  # Double dots rejected
+assert validate_email("user@domain..com") == False  # Double dots in domain rejected
 assert validate_email("email@123.123.123.123") == False  # IP addresses rejected
 assert validate_email("user name@domain.com") == False  # Spaces rejected
 assert validate_email("") == False
 assert validate_email(None) == False
 assert validate_email("@domain.com") == False
 assert validate_email("user@") == False
+assert validate_email(".user@domain.com") == False  # Starting with dot
+assert validate_email("user.@domain.com") == False  # Ending with dot before @
 
 print("EMAIL_VALIDATION_SUCCESS")
 '''

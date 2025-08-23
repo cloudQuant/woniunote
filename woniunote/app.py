@@ -104,7 +104,17 @@ def create_app(config_name='production'):
                 static_url_path='/', static_folder='resource')
     
     # 加载配置
-    app.config.from_object(config[config_name])
+    config_class = config[config_name]
+    
+    # 如果是生产环境，验证必需的环境变量
+    if config_name == 'production':
+        try:
+            config_class.validate_environment()
+        except ValueError as e:
+            app_logger.error(f"生产环境配置验证失败: {e}")
+            raise
+    
+    app.config.from_object(config_class)
     app_logger.info("应用程序配置已加载")
     
     # 确保始终有静态的SECRET_KEY

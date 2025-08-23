@@ -84,7 +84,17 @@ class AppFactory:
     def _load_configurations(self, config_name):
         """加载应用配置"""
         # 加载基础配置
-        self.app.config.from_object(config[config_name])
+        config_class = config[config_name]
+        
+        # 如果是生产环境，验证必需的环境变量
+        if config_name == 'production':
+            try:
+                config_class.validate_environment()
+            except ValueError as e:
+                app_logger.error(f"生产环境配置验证失败: {e}")
+                raise
+        
+        self.app.config.from_object(config_class)
         
         # 确保始终有静态的SECRET_KEY
         self.app.config['SECRET_KEY'] = config[config_name].SECRET_KEY

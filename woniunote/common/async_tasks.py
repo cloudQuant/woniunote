@@ -457,4 +457,42 @@ def shutdown_task_executor():
     if _global_task_executor:
         _global_task_executor.stop()
         _global_task_executor = None
+
+
+class TaskManager:
+    """任务管理器 - TaskExecutor的简化接口，用于兼容性"""
+    
+    def __init__(self, max_workers=None):
+        """初始化任务管理器"""
+        self.executor = TaskExecutor(max_workers=max_workers or 4)
+        self.tasks = {}
+    
+    def submit_task(self, func, *args, **kwargs):
+        """提交任务"""
+        task = self.executor.submit_task(func, *args, **kwargs)
+        if task:
+            self.tasks[task.task_id] = task
+        return task
+    
+    def get_task_status(self, task_id):
+        """获取任务状态"""
+        task = self.tasks.get(task_id)
+        return task.status if task else None
+    
+    def cancel_task(self, task_id):
+        """取消任务"""
+        task = self.tasks.get(task_id)
+        if task:
+            return self.executor.cancel_task(task_id)
+        return False
+    
+    def get_active_tasks(self):
+        """获取活跃任务列表"""
+        return [task for task in self.tasks.values() 
+                if task.status in [TaskStatus.PENDING, TaskStatus.RUNNING]]
+    
+    def stop(self):
+        """停止任务管理器"""
+        self.executor.stop()
+        self.tasks.clear()
         logger.info("Task executor shutdown completed") 

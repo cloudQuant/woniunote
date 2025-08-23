@@ -93,6 +93,31 @@ def redis_article_zsort():
         red.zadd('article', {str(row): row['articleid']})
 
 
+# 为了兼容性，添加RedisManager类
+class RedisManager:
+    """Redis管理器"""
+    
+    def __init__(self, host='127.0.0.1', port=6379, db=0):
+        self.pool = redis.ConnectionPool(host=host, port=port, decode_responses=True, db=db)
+        self.redis = redis.Redis(connection_pool=self.pool)
+    
+    def get(self, key):
+        """获取值"""
+        return self.redis.get(key)
+    
+    def set(self, key, value, ex=None):
+        """设置值"""
+        return self.redis.set(key, value, ex=ex)
+    
+    def delete(self, key):
+        """删除键"""
+        return self.redis.delete(key)
+    
+    def connect(self):
+        """连接Redis（兼容性方法）"""
+        return self.redis
+
+
 if __name__ == '__main__':
     # redis_mysql_hash()
     redis_article_zsort()

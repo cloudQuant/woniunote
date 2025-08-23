@@ -122,9 +122,15 @@ class TokenBucketLimiter:
 class RateLimiter:
     """统一限流管理器"""
     
-    def __init__(self, default_limiter=None):
+    def __init__(self, default_limiter=None, max_calls=None, period=None):
         self.limiters: Dict[str, any] = {}
-        self.default_limiter = default_limiter or SlidingWindowLimiter(100, 60)
+        
+        # 如果提供了max_calls和period，创建一个简单的限流器
+        if max_calls is not None and period is not None:
+            self.default_limiter = SlidingWindowLimiter(max_calls, period)
+        else:
+            self.default_limiter = default_limiter or SlidingWindowLimiter(100, 60)
+            
         self.global_limiter = SlidingWindowLimiter(1000, 60)  # 全局限流
     
     def add_limiter(self, name: str, limiter) -> None:
@@ -143,6 +149,13 @@ class RateLimiter:
     def check_global_limit(self, key: str) -> Tuple[bool, Dict[str, any]]:
         """检查全局限流"""
         return self.global_limiter.is_allowed(key)
+    
+    def is_allowed(self, key: str) -> bool:
+        """检查是否允许请求（兼容性方法）"""
+        result = self.default_limiter.is_allowed(key)
+        if isinstance(result, tuple):
+            return result[0]  # 返回布尔值部分
+        return result
 
 
 def get_client_key(request) -> str:

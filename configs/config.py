@@ -106,14 +106,17 @@ class ProductionConfig(Config):
     SECRET_KEY = os.environ.get('SECRET_KEY')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     
-    if not SECRET_KEY:
-        raise ValueError("生产环境必须设置SECRET_KEY环境变量")
-    
-    if not SQLALCHEMY_DATABASE_URI:
-        raise ValueError("生产环境必须设置DATABASE_URL环境变量")
-    
     # 生产环境日志级别
     LOG_LEVEL = 'WARNING'
+    
+    @classmethod
+    def validate_environment(cls):
+        """验证生产环境必需的环境变量"""
+        if not cls.SECRET_KEY:
+            raise ValueError("生产环境必须设置SECRET_KEY环境变量")
+        
+        if not cls.SQLALCHEMY_DATABASE_URI:
+            raise ValueError("生产环境必须设置DATABASE_URL环境变量")
     
     @classmethod
     def init_app(cls, app):

@@ -567,6 +567,58 @@ class Comments(DBase):
             traceback.print_exc()
             return 0
 
+    # 根据文章ID查询评论列表
+    @staticmethod
+    def find_by_article(articleid, start, count):
+        """根据文章ID查询评论列表"""
+        try:
+            # 获取总评论数
+            total_count = dbsession.query(Comment).filter_by(
+                articleid=articleid, 
+                hidden=0, 
+                replyid=0
+            ).count()
+            
+            # 获取分页评论列表
+            comments = dbsession.query(Comment).filter_by(
+                articleid=articleid, 
+                hidden=0, 
+                replyid=0
+            ).order_by(Comment.createtime.desc()).offset(start).limit(count).all()
+            
+            # 计算页数
+            page_count = (total_count + count - 1) // count if count > 0 else 0
+            
+            return (comments, total_count, page_count)
+        except Exception as e:
+            comments_logger.error(f"查询文章评论失败: {e}")
+            return ([], 0, 0)
+
+    # 根据评论ID查询评论
+    @staticmethod
+    def find_by_id(commentid):
+        """根据评论ID查询评论"""
+        try:
+            comment = dbsession.query(Comment).filter_by(commentid=commentid, hidden=0).first()
+            return comment
+        except Exception as e:
+            comments_logger.error(f"查询评论失败: {e}")
+            return None
+
+    # 获取最后回复
+    @staticmethod
+    def last_reply(articleid):
+        """获取文章的最后回复"""
+        try:
+            comment = dbsession.query(Comment).filter_by(
+                articleid=articleid, 
+                hidden=0
+            ).order_by(Comment.createtime.desc()).first()
+            return comment
+        except Exception as e:
+            comments_logger.error(f"查询最后回复失败: {e}")
+            return None
+
 
 if __name__ == '__main__':
     comment_instance = Comment()

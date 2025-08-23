@@ -25,8 +25,8 @@ class TestFinalVerification:
         # 检查核心测试文件是否存在
         test_files = [
             'tests/test_simple_working.py',
-            'tests/test_master_comprehensive.py', 
-            'tests/test_enhanced_coverage.py'
+            'tests/test_comprehensive_final.py',
+            'tests/test_comprehensive_working.py'
         ]
         
         existing_files = 0

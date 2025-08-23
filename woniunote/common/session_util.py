@@ -36,3 +36,14 @@ def get_current_nickname():
 def get_current_role():
     """Get the current user's role"""
     return get_session_value('role')
+
+
+# 为了兼容性，添加别名函数
+def get_session_data(key):
+    """获取会话数据（别名）"""
+    return get_session_value(key)
+
+def set_session_data(key, value):
+    """设置会话数据（别名）"""
+    from flask import session
+    session[key] = value

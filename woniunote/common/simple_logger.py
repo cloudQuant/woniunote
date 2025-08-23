@@ -81,6 +81,10 @@ class SimpleLogger:
         # 将处理器添加到logger
         self.logger.addHandler(file_handler)
         
+        # 为了兼容性，添加handlers属性和方法
+        self.handlers = self.logger.handlers
+        self.level = self.logger.level
+        
         # 打印日志文件路径
         print(f"简单日志记录器初始化: {self.log_file}")
     
@@ -212,6 +216,11 @@ class SimpleLogger:
     def critical(self, message, extra=None):
         """记录CRITICAL级别日志"""
         return self._write_log('CRITICAL', message, extra)
+    
+    def setLevel(self, level):
+        """设置日志级别（兼容性方法）"""
+        self.logger.setLevel(level)
+        self.level = level
 
 # 日志实例缓存，避免重复创建
 _logger_cache = {}

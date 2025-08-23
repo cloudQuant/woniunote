@@ -81,6 +81,13 @@ def validate_filename(filename):
 
 def sanitize_input(input_string, max_length=1000):
     """清理输入字符串"""
+    if input_string is None:
+        return ""
+    
+    # 转换为字符串
+    if not isinstance(input_string, str):
+        input_string = str(input_string)
+    
     if not input_string:
         return ""
     
@@ -371,7 +378,7 @@ def read_config(config_file=None):
 class ImageCode:
     """图片验证码生成器（优化版本）"""
     
-    def __init__(self, width=120, height=50):
+    def __init__(self, width=120, height=40):
         # 验证尺寸参数
         if not isinstance(width, int) or not isinstance(height, int):
             raise ValueError("Width and height must be integers")
@@ -557,8 +564,12 @@ def gen_email_code(length=6):
     :param length: 验证码长度
     :return: 验证码字符串
     """
-    if not isinstance(length, int) or length < 4 or length > 10:
+    if not isinstance(length, int) or length < 1:
         length = 6
+    
+    # 限制最大长度为100，防止内存问题
+    if length > 100:
+        length = 100
     
     # 使用数字和大写字母，避免混淆的字符
     chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'

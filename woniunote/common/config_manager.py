@@ -578,4 +578,8 @@ def init_config_management(app, config_files: List[str] = None):
         
     except Exception as e:
         logger.error(f"Failed to initialize configuration management: {e}")
-        raise 
+        raise
+
+
+# 为了兼容性，提供ConfigManager别名
+ConfigManager = DynamicConfigManager 

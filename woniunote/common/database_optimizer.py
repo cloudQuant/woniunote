@@ -425,4 +425,8 @@ def get_database_health() -> Dict[str, Any]:
             'status': 'error',
             'error': str(e),
             'timestamp': datetime.now().isoformat()
-        } 
+        }
+
+
+# 为了兼容性，提供DatabaseOptimizer别名
+DatabaseOptimizer = QueryOptimizer 
