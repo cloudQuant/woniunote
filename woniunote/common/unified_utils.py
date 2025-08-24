@@ -490,3 +490,12 @@ init_trace_id_manager = init_unified_utils
 get_trace_id_manager_legacy = get_trace_id_manager
 init_cleanup_manager = init_unified_utils
 get_cleanup_manager_legacy = get_cleanup_manager
+
+# 向后兼容的函数
+def can_use_minute():
+    """检查是否可以使用分钟级别的计时（向后兼容）"""
+    timer_mgr = get_timer_manager()
+    if timer_mgr:
+        return timer_mgr.get_timer_stats().get('total_timers', 0)
+    # 如果没有初始化，返回一个默认值
+    return 1

@@ -382,7 +382,7 @@ class TestErrorHandling:
         """Test error handler module"""
         try:
             # 首先尝试直接导入
-            from woniunote.common.error_handler import WoniuNoteException, ErrorLevel, ErrorCategory
+            from woniunote.common.unified_error_handler import WoniuNoteException, ErrorLevel, ErrorCategory
             assert WoniuNoteException is not None
             assert ErrorLevel is not None
             assert ErrorCategory is not None

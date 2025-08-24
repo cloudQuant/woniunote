@@ -287,7 +287,7 @@ total_tests = 0
 # 测试增强输入验证器
 total_tests += 1
 try:
-    from woniunote.common.enhanced_input_validator import validate_input_enhanced
+    from woniunote.common.unified_validator import validate_input_enhanced
     
     # 测试基本输入验证
     test_cases = [
@@ -318,7 +318,7 @@ except Exception as e:
 # 测试文件上传验证器
 total_tests += 1
 try:
-    from woniunote.common.file_upload_validator import validate_file_upload
+    from woniunote.common.unified_validator import validate_file_upload
     
     # 测试文件验证功能存在
     assert callable(validate_file_upload), "validate_file_upload should be callable"
@@ -402,7 +402,7 @@ total_tests = 0
 # 测试API安全模块
 total_tests += 1
 try:
-    from woniunote.common.api_security import rate_limit, check_api_key
+    from woniunote.common.unified_security import rate_limit, check_api_key
     
     # 验证装饰器函数存在
     assert callable(rate_limit), "rate_limit decorator should be callable"
@@ -419,7 +419,7 @@ except Exception as e:
 # 测试API安全增强器
 total_tests += 1
 try:
-    from woniunote.common.api_security_enhancer import enhance_api_security
+    from woniunote.common.unified_security import enhance_api_security
     
     # 验证增强器函数存在
     assert callable(enhance_api_security), "enhance_api_security should be callable"

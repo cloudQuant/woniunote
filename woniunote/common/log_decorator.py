@@ -3,7 +3,7 @@ import time
 import traceback
 import uuid
 from flask import request, session
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 # 线程本地存储，用于跟踪ID
 _thread_local_trace_id = {}

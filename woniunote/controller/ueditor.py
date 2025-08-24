@@ -5,7 +5,7 @@ import os
 from flask import Blueprint, render_template, request, jsonify, session, send_from_directory, current_app
 import traceback
 from woniunote.common.utils import compress_image
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 ueditor = Blueprint("ueditor", __name__)
 

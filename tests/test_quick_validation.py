@@ -119,7 +119,7 @@ class TestQuickValidation:
     def test_simple_logger(self):
         """测试简单日志器"""
         try:
-            from woniunote.common.simple_logger import get_simple_logger
+            from woniunote.common.unified_logging import get_simple_logger
             
             logger = get_simple_logger("test")
             assert logger is not None

@@ -9,8 +9,8 @@ from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import desc, asc, and_, or_
 from woniunote.common.database import dbconnect
 from woniunote.common.create_database import Article, User
-from woniunote.common.cache_utils import cached
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_cache import cached
+from woniunote.common.unified_logging import get_simple_logger
 
 # 获取数据库连接
 dbsession, md, DBase = dbconnect()

@@ -31,7 +31,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from woniunote.common.simple_logger import get_simple_logger
+    from woniunote.common.unified_logging import get_simple_logger
 except ImportError:
     # Fallback for test environment
     import logging

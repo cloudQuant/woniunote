@@ -29,7 +29,7 @@ class TestSimpleLogger:
     
     def test_logger_creation(self):
         """测试日志记录器创建"""
-        from woniunote.common.simple_logger import get_simple_logger
+        from woniunote.common.unified_logging import get_simple_logger
         
         logger = get_simple_logger('test_module')
         assert logger is not None
@@ -37,7 +37,7 @@ class TestSimpleLogger:
     
     def test_logger_singleton(self):
         """测试日志记录器单例模式"""
-        from woniunote.common.simple_logger import get_simple_logger
+        from woniunote.common.unified_logging import get_simple_logger
         
         logger1 = get_simple_logger('test_module')
         logger2 = get_simple_logger('test_module')
@@ -45,7 +45,7 @@ class TestSimpleLogger:
     
     def test_logger_configuration(self):
         """测试日志记录器配置"""
-        from woniunote.common.simple_logger import get_simple_logger
+        from woniunote.common.unified_logging import get_simple_logger
         
         logger = get_simple_logger('test_config')
         
@@ -55,7 +55,7 @@ class TestSimpleLogger:
     
     def test_logger_methods(self):
         """测试日志记录器方法"""
-        from woniunote.common.simple_logger import get_simple_logger
+        from woniunote.common.unified_logging import get_simple_logger
         
         logger = get_simple_logger('test_methods')
         
@@ -71,14 +71,14 @@ class TestTimer:
     
     def test_timer_import(self):
         """测试计时器导入"""
-        from woniunote.common.timer import can_use_minute
+        from woniunote.common.unified_utils import can_use_minute
         
         # 测试函数存在
         assert callable(can_use_minute)
     
     def test_timer_functionality(self):
         """测试计时器功能"""
-        from woniunote.common.timer import can_use_minute
+        from woniunote.common.unified_utils import can_use_minute
         
         # 测试函数调用
         result = can_use_minute()
@@ -154,20 +154,20 @@ class TestCacheUtils:
     
     def test_cache_utils_import(self):
         """测试缓存工具导入"""
-        from woniunote.common.cache_utils import CacheManager
+        from woniunote.common.unified_cache import CacheManager
         
         assert CacheManager is not None
     
     def test_cache_manager_init(self, mock_redis):
         """测试缓存管理器初始化"""
-        from woniunote.common.cache_utils import CacheManager
+        from woniunote.common.unified_cache import CacheManager
         
         cache_manager = CacheManager()
         assert cache_manager is not None
     
     def test_cache_manager_operations(self, mock_redis):
         """测试缓存管理器操作"""
-        from woniunote.common.cache_utils import CacheManager
+        from woniunote.common.unified_cache import CacheManager
         
         cache_manager = CacheManager()
         
@@ -185,7 +185,7 @@ class TestCacheUtils:
     def test_cache_decorator(self):
         """测试缓存装饰器"""
         try:
-            from woniunote.common.cache_utils import cached
+            from woniunote.common.unified_cache import cached
             
             call_count = 0
             
@@ -330,20 +330,20 @@ class TestMonitoring:
     
     def test_monitoring_import(self):
         """测试监控工具导入"""
-        from woniunote.common.monitoring import PerformanceMonitor
+        from woniunote.common.unified_monitoring import PerformanceMonitor
         
         assert PerformanceMonitor is not None
     
     def test_performance_monitor_init(self):
         """测试性能监控器初始化"""
-        from woniunote.common.monitoring import PerformanceMonitor
+        from woniunote.common.unified_monitoring import PerformanceMonitor
         
         monitor = PerformanceMonitor()
         assert monitor is not None
     
     def test_performance_monitor_methods(self):
         """测试性能监控器方法"""
-        from woniunote.common.monitoring import PerformanceMonitor
+        from woniunote.common.unified_monitoring import PerformanceMonitor
         
         monitor = PerformanceMonitor()
         
@@ -356,7 +356,7 @@ class TestMonitoring:
     def test_monitor_performance_decorator(self):
         """测试性能监控装饰器"""
         try:
-            from woniunote.common.monitoring import monitor_performance
+            from woniunote.common.unified_monitoring import monitor_performance
             
             @monitor_performance
             def monitored_function():
@@ -410,13 +410,13 @@ class TestConfigManager:
     
     def test_config_manager_import(self):
         """测试配置管理器导入"""
-        from woniunote.common.config_manager import ConfigManager
+        from woniunote.common.unified_config import ConfigManager
         
         assert ConfigManager is not None
     
     def test_config_manager_init(self):
         """测试配置管理器初始化"""
-        from woniunote.common.config_manager import ConfigManager
+        from woniunote.common.unified_config import ConfigManager
         
         manager = ConfigManager()
         assert manager is not None
@@ -424,7 +424,7 @@ class TestConfigManager:
     def test_config_loading(self, temp_config_file):
         """测试配置加载"""
         try:
-            from woniunote.common.config_manager import load_config
+            from woniunote.common.unified_config import load_config
             
             config = load_config(temp_config_file)
             assert config is not None
@@ -454,7 +454,7 @@ class TestConfigManager:
     
     def test_config_get_nested(self, temp_config_file):
         """测试嵌套配置获取"""
-        from woniunote.common.config_manager import ConfigManager
+        from woniunote.common.unified_config import ConfigManager
         
         manager = ConfigManager()
         
@@ -466,7 +466,7 @@ class TestConfigManager:
     
     def test_config_environment_override(self):
         """测试环境变量覆盖"""
-        from woniunote.common.config_manager import ConfigManager
+        from woniunote.common.unified_config import ConfigManager
         
         manager = ConfigManager()
         
@@ -487,13 +487,13 @@ class TestDatabaseOptimizer:
     
     def test_database_optimizer_import(self):
         """测试数据库优化器导入"""
-        from woniunote.common.database_optimizer import DatabaseOptimizer
+        from woniunote.common.unified_database_optimizer import DatabaseOptimizer
         
         assert DatabaseOptimizer is not None
     
     def test_database_optimizer_init(self):
         """测试数据库优化器初始化"""
-        from woniunote.common.database_optimizer import DatabaseOptimizer
+        from woniunote.common.unified_database_optimizer import DatabaseOptimizer
         
         optimizer = DatabaseOptimizer()
         assert optimizer is not None
@@ -501,7 +501,7 @@ class TestDatabaseOptimizer:
     def test_query_optimization(self):
         """测试查询优化"""
         try:
-            from woniunote.common.database_optimizer import optimize_query
+            from woniunote.common.unified_database_optimizer import optimize_query
             
             test_query = "SELECT * FROM users WHERE id = 1"
             result = optimize_query(test_query)
@@ -520,7 +520,7 @@ class TestDatabaseOptimizer:
     def test_performance_analysis(self):
         """测试性能分析"""
         try:
-            from woniunote.common.database_optimizer import analyze_performance
+            from woniunote.common.unified_database_optimizer import analyze_performance
             
             test_query = "SELECT * FROM users"
             result = analyze_performance(test_query)
@@ -672,7 +672,7 @@ class TestSessionUtil:
     
     def test_session_util_import(self):
         """测试会话工具导入"""
-        from woniunote.common.session_util import get_session_data, set_session_data
+        from woniunote.common.unified_session import get_session_data, set_session_data
         
         assert get_session_data is not None
         assert set_session_data is not None
@@ -680,7 +680,7 @@ class TestSessionUtil:
     def test_session_operations(self):
         """测试会话操作"""
         try:
-            from woniunote.common.session_util import get_session_data, set_session_data
+            from woniunote.common.unified_session import get_session_data, set_session_data
             
             # 由于需要Flask上下文，这里只测试函数存在
             assert callable(get_session_data)
@@ -832,8 +832,8 @@ class TestCommonIntegration:
     
     def test_logger_cache_integration(self):
         """测试日志记录器和缓存集成"""
-        from woniunote.common.simple_logger import get_simple_logger
-        from woniunote.common.cache_utils import CacheManager
+        from woniunote.common.unified_logging import get_simple_logger
+        from woniunote.common.unified_cache import CacheManager
         
         logger = get_simple_logger('integration_test')
         cache_manager = CacheManager()
@@ -843,8 +843,8 @@ class TestCommonIntegration:
     
     def test_config_monitoring_integration(self):
         """测试配置管理器和监控集成"""
-        from woniunote.common.config_manager import ConfigManager
-        from woniunote.common.monitoring import PerformanceMonitor
+        from woniunote.common.unified_config import ConfigManager
+        from woniunote.common.unified_monitoring import PerformanceMonitor
         
         config_manager = ConfigManager()
         monitor = PerformanceMonitor()
@@ -854,8 +854,8 @@ class TestCommonIntegration:
     
     def test_database_cache_integration(self):
         """测试数据库优化器和缓存集成"""
-        from woniunote.common.database_optimizer import DatabaseOptimizer
-        from woniunote.common.cache_utils import CacheManager
+        from woniunote.common.unified_database_optimizer import DatabaseOptimizer
+        from woniunote.common.unified_cache import CacheManager
         
         optimizer = DatabaseOptimizer()
         cache_manager = CacheManager()

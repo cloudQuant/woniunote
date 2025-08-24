@@ -8,7 +8,7 @@ from woniunote.common.create_database import Credit  # 暂时保留此导入以�
 import time
 import traceback
 import uuid
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 dbsession, md, DBase = dbconnect()
 

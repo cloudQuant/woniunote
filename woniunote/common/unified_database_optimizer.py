@@ -23,10 +23,10 @@ from sqlalchemy.pool import QueuePool
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
-from .simple_logger import get_simple_logger
+from .unified_logging import get_logger
 from .unified_error_handler import DatabaseException
 
-logger = get_simple_logger('unified_database_optimizer')
+logger = get_logger('unified_database_optimizer')
 
 # ==================== 数据类定义 ====================
 
@@ -662,7 +662,7 @@ class UnifiedDatabaseOptimizer:
     def __init__(self, engine: Engine, config: Dict[str, Any] = None):
         self.engine = engine
         self.config = config or {}
-        self.logger = get_simple_logger('database_optimizer')
+        self.logger = get_logger('database_optimizer')
         
         # 初始化各个组件
         self.query_cache = QueryCache(
@@ -876,4 +876,23 @@ def get_database_optimizer() -> Optional[UnifiedDatabaseOptimizer]:
 # 为了向后兼容，保留旧的函数名
 init_database_advanced_optimization = init_unified_database_optimizer
 get_database_optimizer_legacy = get_database_optimizer
+
+# 向后兼容的函数
+def init_database_monitoring(engine: Engine, config: Dict[str, Any] = None):
+    """初始化数据库监控（向后兼容）"""
+    return init_unified_database_optimizer(engine, config)
+
+def get_database_health():
+    """获取数据库健康状态（向后兼容）"""
+    optimizer = get_database_optimizer()
+    if optimizer:
+        return optimizer.get_performance_report()
+    return {'error': '数据库优化器未初始化'}
+
+def get_query_optimizer():
+    """获取查询优化器（向后兼容）"""
+    optimizer = get_database_optimizer()
+    if optimizer:
+        return optimizer
+    return None
 

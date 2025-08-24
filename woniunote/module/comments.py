@@ -9,7 +9,7 @@ from woniunote.common.database import dbconnect
 from woniunote.module.users import Users
 # 从模型定义中导入 Comment 类和 Article 类
 from woniunote.common.create_database import Comment, Article  # 修复缺失的Article导入
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 dbsession, md, DBase = dbconnect()
 

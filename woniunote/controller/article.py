@@ -1,14 +1,14 @@
 from flask import Blueprint, render_template, request, session, abort, url_for, redirect, jsonify
 from woniunote.module.articles import Articles
 from woniunote.module.users import Users
-from woniunote.common.session_util import get_current_user_id
+from woniunote.common.unified_session import get_current_user_id
 from woniunote.module.comments import Comments
 from woniunote.module.credits import Credits
 from woniunote.module.favorites import Favorites
-from woniunote.common.timer import can_use_minute
+from woniunote.common.unified_utils import can_use_minute
 from woniunote.common.database import ARTICLE_TYPES
 from woniunote.common.log_decorator import log_function
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 import math
 import traceback
 import os

@@ -72,7 +72,7 @@ def test_simple_logger_via_subprocess():
         '''
 import sys
 sys.path.insert(0, ".")
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 logger = get_simple_logger("test")
 assert logger is not None
 logger.info("Test message")
@@ -91,7 +91,7 @@ def test_timer_via_subprocess():
         '''
 import sys
 sys.path.insert(0, ".")
-from woniunote.common.timer import can_use_minute
+from woniunote.common.unified_utils import can_use_minute
 result = can_use_minute()
 assert isinstance(result, int)
 assert result > 0

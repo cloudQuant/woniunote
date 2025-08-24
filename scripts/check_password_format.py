@@ -14,7 +14,7 @@ os.environ['WONIUNOTE_ENV'] = 'dev'
 
 from woniunote.common.db_connection_manager import get_db_session
 from woniunote.models.user import Users
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 logger = get_simple_logger('check_password_format')
 

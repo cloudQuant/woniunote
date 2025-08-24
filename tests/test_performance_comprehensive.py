@@ -159,7 +159,7 @@ except:
     pass
 
 try:
-    from woniunote.common.performance_monitor import PerformanceMonitor
+    from woniunote.common.unified_monitoring import PerformanceMonitor
     
     # 测试性能监控器类
     monitor = PerformanceMonitor()
@@ -267,7 +267,7 @@ except Exception as e:
 # 测试缓存工具
 total_tests += 1
 try:
-    from woniunote.common.cache_utils import MemoryCache, CacheManager
+    from woniunote.common.unified_cache import MemoryCache, CacheManager
     
     # 测试内存缓存
     cache = MemoryCache(max_size=100, default_ttl=300)
@@ -338,7 +338,7 @@ except:
     pass
 
 try:
-    from woniunote.common.database_performance_optimizer import DatabasePerformanceOptimizer
+    from woniunote.common.unified_database_optimizer import DatabasePerformanceOptimizer
     
     # 测试数据库优化器实例化
     optimizer = DatabasePerformanceOptimizer()

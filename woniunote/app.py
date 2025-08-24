@@ -10,24 +10,24 @@ from woniunote.configs.config import config
 from woniunote.common.utils import read_config, get_package_path, get_db_connection, parse_db_uri
 from woniunote.common.database import db, ARTICLE_TYPES
 # 使用相对导入方式
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 # 新增的优化模块导入
-from woniunote.common.cache_utils import init_cache, get_cache_manager, cached
+from woniunote.common.unified_cache import init_cache, get_cache_manager, cached
 from woniunote.common.rate_limiter import init_rate_limiter, get_rate_limiter, rate_limit, bypass_rate_limit_if_whitelisted
 from woniunote.common.async_tasks import init_task_executor, get_task_executor, async_send_email, async_compress_image
-from woniunote.common.monitoring import init_monitoring, get_performance_monitor, get_metrics_collector, monitor_function
+from woniunote.common.unified_monitoring import init_monitoring, get_performance_monitor, get_metrics_collector, monitor_function
 # 新增Phase 4优化模块
-from woniunote.common.database_optimizer import init_database_monitoring, get_database_health, get_query_optimizer
+from woniunote.common.unified_database_optimizer import init_database_monitoring, get_database_health, get_query_optimizer
 from woniunote.common.static_optimizer import init_static_optimization, get_static_optimizer
-from woniunote.common.config_manager import init_config_management, get_config_manager
+from woniunote.common.unified_config import init_config_management, get_config_manager
 # Phase 5增强优化模块
-from woniunote.common.security_enhanced import init_security, get_security_manager, require_jwt_auth, require_csrf_token, admin_required
+from woniunote.common.unified_security import init_security, get_security_manager, require_jwt_auth, require_csrf_token, admin_required
 from woniunote.common.performance_enhanced import init_performance_enhancement, get_performance_manager, smart_cache, async_task, monitor_performance
 from woniunote.common.user_experience_optimizer import init_user_experience_optimization, get_ux_optimizer, track_user_action, UserActionType, NotificationType
 # Phase 6 深度优化模块
-from woniunote.common.database_advanced_optimizer import init_database_advanced_optimization, get_database_optimizer, cached_query
-from woniunote.common.api_security_enhancer import init_api_security_enhancement, get_api_security_enhancer, require_api_key, require_signature
-from woniunote.common.intelligent_ops_manager import init_intelligent_ops_management, get_ops_manager, monitor_function_health
+from woniunote.common.unified_database_optimizer import init_database_advanced_optimization, get_database_optimizer, cached_query
+from woniunote.common.unified_security import init_api_security_enhancement, get_api_security_enhancer, require_api_key, require_signature
+from woniunote.common.unified_monitoring import init_intelligent_ops_management, get_ops_manager, monitor_function_health
 from woniunote.controller.admin import admin
 from woniunote.controller.article import article
 from woniunote.controller.card_center import card_center
@@ -1298,7 +1298,7 @@ def create_app(config_name='production'):
             hours = request.args.get('hours', 24, type=int)
             severity = request.args.get('severity')
             
-            from woniunote.common.security_enhanced import SecurityLevel
+            from woniunote.common.unified_security import SecurityLevel
             severity_filter = None
             if severity and hasattr(SecurityLevel, severity.upper()):
                 severity_filter = getattr(SecurityLevel, severity.upper())

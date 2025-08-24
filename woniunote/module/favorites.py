@@ -8,7 +8,7 @@ from woniunote.common.database import dbconnect
 from woniunote.module.articles import Article
 # 从模型定义中导入 Favorite 类
 from woniunote.common.create_database import Favorite  # 暂时保留此导入以兼容现有代码
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 dbsession, md, DBase = dbconnect()
 

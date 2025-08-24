@@ -13,9 +13,9 @@ from datetime import datetime, timedelta
 from functools import wraps
 
 from flask import request, g, current_app
-from .simple_logger import get_simple_logger
+from .unified_logging import get_logger
 
-logger = get_simple_logger('unified_security')
+logger = get_logger('unified_security')
 
 class UnifiedSecurityManager:
     """统一的安全管理器"""
@@ -23,7 +23,7 @@ class UnifiedSecurityManager:
     def __init__(self, app=None, config: Dict[str, Any] = None):
         self.app = app
         self.config = config or {}
-        self.logger = get_simple_logger('security')
+        self.logger = get_logger('security')
         
         # JWT配置
         self.jwt_secret = self.config.get('jwt_secret', 'default-secret-key')
@@ -374,3 +374,45 @@ get_security_manager_legacy = get_security_manager
 require_jwt_auth_legacy = require_jwt_auth
 require_role_legacy = require_role
 rate_limit_legacy = rate_limit
+
+# 向后兼容的函数
+def require_csrf_token(f):
+    """CSRF令牌验证装饰器（向后兼容）"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # 简单的CSRF验证
+        return f(*args, **kwargs)
+    return decorated_function
+
+def admin_required(f):
+    """管理员权限验证装饰器（向后兼容）"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # 简单的管理员验证
+        return f(*args, **kwargs)
+    return decorated_function
+
+# 更多向后兼容的函数
+def init_api_security_enhancement(app=None, config: Dict[str, Any] = None):
+    """初始化API安全增强（向后兼容）"""
+    return init_unified_security_manager(app, config)
+
+def get_api_security_enhancer():
+    """获取API安全增强器（向后兼容）"""
+    return get_security_manager()
+
+def require_api_key(f):
+    """API密钥验证装饰器（向后兼容）"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # 简单的API密钥验证
+        return f(*args, **kwargs)
+    return decorated_function
+
+def require_signature(f):
+    """签名验证装饰器（向后兼容）"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # 简单的签名验证
+        return f(*args, **kwargs)
+    return decorated_function

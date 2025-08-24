@@ -8,7 +8,7 @@ from woniunote.module.favorites import Favorites
 from woniunote.module.users import Users
 from woniunote.module.credits import Credits
 from woniunote.common.database import ARTICLE_TYPES
-from woniunote.common.simple_logger import SimpleLogger
+from woniunote.common.unified_logging import SimpleLogger
 
 ucenter = Blueprint("ucenter", __name__)
 

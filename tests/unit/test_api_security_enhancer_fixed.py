@@ -189,7 +189,7 @@ class TestFixedIPAccessController:
         def run_test():
             try:
                 # 尝试导入和使用原始的IPAccessController
-                from woniunote.common.api_security_enhancer import IPAccessController
+                from woniunote.common.unified_security import IPAccessController
                 
                 controller = IPAccessController()
                 client_ip = "192.168.1.100"

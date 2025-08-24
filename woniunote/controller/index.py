@@ -4,9 +4,9 @@ import math
 from datetime import datetime, UTC
 
 from woniunote.module.articles import Articles
-from woniunote.common.timer import can_use_minute
+from woniunote.common.unified_utils import can_use_minute
 from woniunote.common.redisdb import redis_connect
-from woniunote.common.simple_logger import SimpleLogger
+from woniunote.common.unified_logging import SimpleLogger
 from woniunote.common.database import ARTICLE_TYPES
 
 index = Blueprint("index", __name__)
@@ -851,7 +851,7 @@ def system_status():
         
         try:
             # 1. 性能监控数据
-            from woniunote.common.monitoring import get_performance_monitor
+            from woniunote.common.unified_monitoring import get_performance_monitor
             perf_monitor = get_performance_monitor()
             if perf_monitor:
                 monitoring_data['performance'] = perf_monitor.get_performance_summary()
@@ -869,7 +869,7 @@ def system_status():
         
         try:
             # 3. 数据库优化器数据
-            from woniunote.common.database_advanced_optimizer import get_database_optimizer
+            from woniunote.common.unified_database_optimizer import get_database_optimizer
             db_optimizer = get_database_optimizer()
             if db_optimizer:
                 monitoring_data['database'] = db_optimizer.get_optimization_report()
@@ -909,7 +909,7 @@ def system_status():
         
         try:
             # 5. 智能运维管理器数据
-            from woniunote.common.intelligent_ops_manager import get_ops_manager
+            from woniunote.common.unified_monitoring import get_ops_manager
             ops_manager = get_ops_manager()
             if ops_manager:
                 monitoring_data['ops'] = {
@@ -1152,7 +1152,7 @@ def api_system_metrics():
     try:
         import psutil
         from flask import jsonify
-        from woniunote.common.intelligent_ops_manager import get_system_monitor
+        from woniunote.common.unified_monitoring import get_system_monitor
         
         # 生成跟踪ID
         trace_id = get_index_trace_id()

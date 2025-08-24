@@ -10,17 +10,18 @@ import psutil
 from typing import Dict, Any, List, Optional
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
+from functools import wraps
 
-from .simple_logger import get_simple_logger
+from .unified_logging import get_logger
 
-logger = get_simple_logger('unified_monitoring')
+logger = get_logger('unified_monitoring')
 
 class UnifiedMonitoringSystem:
     """统一的监控系统"""
     
     def __init__(self, config: Dict[str, Any] = None):
         self.config = config or {}
-        self.logger = get_simple_logger('monitoring')
+        self.logger = get_logger('monitoring')
         
         # 监控配置
         self.collect_interval = self.config.get('collect_interval', 30)
@@ -327,3 +328,58 @@ def get_metrics_collector():
 init_monitoring = init_unified_monitoring_system
 get_performance_monitor_legacy = get_performance_monitor
 get_metrics_collector_legacy = get_metrics_collector
+
+# 向后兼容的函数
+def monitor_function(func=None, **kwargs):
+    """监控函数装饰器"""
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            # 简单的函数监控
+            start_time = time.time()
+            try:
+                result = f(*args, **kwargs)
+                execution_time = time.time() - start_time
+                logger.debug(f"函数 {f.__name__} 执行时间: {execution_time:.3f}s")
+                return result
+            except Exception as e:
+                execution_time = time.time() - start_time
+                logger.error(f"函数 {f.__name__} 执行失败，耗时: {execution_time:.3f}s 错误: {e}")
+                raise
+        return wrapper
+    
+    if func:
+        return decorator(func)
+    return decorator
+
+# 更多向后兼容的函数
+def init_intelligent_ops_management(config: Dict[str, Any] = None):
+    """初始化智能运维管理（向后兼容）"""
+    return init_unified_monitoring_system(config)
+
+def monitor_function_health(func=None, **kwargs):
+    """监控函数健康状态（向后兼容）"""
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            # 简单的函数健康监控
+            start_time = time.time()
+            try:
+                result = f(*args, **kwargs)
+                execution_time = time.time() - start_time
+                logger.debug(f"函数 {f.__name__} 健康执行，耗时: {execution_time:.3f}s")
+                return result
+            except Exception as e:
+                execution_time = time.time() - start_time
+                logger.error(f"函数 {f.__name__} 健康检查失败，耗时: {execution_time:.3f}s 错误: {e}")
+                raise
+        return wrapper
+    
+    if func:
+        return decorator(func)
+    return decorator
+
+# 更多向后兼容的函数
+def get_ops_manager():
+    """获取运维管理器（向后兼容）"""
+    return get_monitoring_system()

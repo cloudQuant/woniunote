@@ -2,7 +2,7 @@ from flask import render_template, redirect, abort, request, session, Blueprint
 import uuid
 from datetime import datetime, UTC
 from woniunote.common.database import db
-from woniunote.common.simple_logger import SimpleLogger
+from woniunote.common.unified_logging import SimpleLogger
 
 # 从模型文件导入数据库模型
 from woniunote.models.todo import Item, Category

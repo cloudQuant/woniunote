@@ -96,7 +96,7 @@ print("CORE_UTILS_100_PERCENT_SUCCESS")
             '''
 import sys
 sys.path.insert(0, ".")
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 # Test logger creation and functionality (100% coverage)
 logger = get_simple_logger("comprehensive_test")
@@ -131,8 +131,8 @@ print("LOGGING_100_PERCENT_SUCCESS")
             '''
 import sys
 sys.path.insert(0, ".")
-from woniunote.common.cache_utils import CacheManager
-from woniunote.common.timer import can_use_minute
+from woniunote.common.unified_cache import CacheManager
+from woniunote.common.unified_utils import can_use_minute
 
 # Test cache manager (100% coverage)
 cache_manager = CacheManager()
@@ -306,7 +306,7 @@ print("MODULE_COMPONENTS_100_PERCENT_SUCCESS")
 import sys
 sys.path.insert(0, ".")
 from woniunote.common.utils import validate_email, gen_email_code, sanitize_input
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 # Test edge cases (100% coverage)
 # Email validation edge cases
@@ -357,10 +357,10 @@ print("EDGE_CASES_100_PERCENT_SUCCESS")
             '''
 import sys
 sys.path.insert(0, ".")
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 from woniunote.common.utils import validate_email, gen_email_code, sanitize_input
-from woniunote.common.cache_utils import CacheManager
-from woniunote.common.timer import can_use_minute
+from woniunote.common.unified_cache import CacheManager
+from woniunote.common.unified_utils import can_use_minute
 
 # Complete integration workflow (100% coverage)
 logger = get_simple_logger('integration_workflow')

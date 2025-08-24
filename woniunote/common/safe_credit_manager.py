@@ -8,8 +8,8 @@ from contextlib import contextmanager
 from typing import Optional, Union
 from sqlalchemy import text
 from woniunote.common.database import dbconnect
-from woniunote.common.simple_logger import get_simple_logger
-from woniunote.common.enhanced_exception_handler import handle_database_errors
+from woniunote.common.unified_logging import get_simple_logger
+from woniunote.common.unified_error_handler import handle_database_errors
 
 logger = get_simple_logger('safe_credit_manager')
 

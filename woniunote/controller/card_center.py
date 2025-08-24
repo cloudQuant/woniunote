@@ -2,7 +2,7 @@ from flask import render_template, redirect, abort, jsonify, current_app, Bluepr
 from woniunote.controller.user import *
 from woniunote.common.database import db
 from woniunote.models.card import Card, CardCategory
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 from functools import wraps
 import datetime
 import time

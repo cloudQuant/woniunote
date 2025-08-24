@@ -197,7 +197,7 @@ def main():
     
     # 验证跟踪ID生成
     try:
-        from woniunote.common.trace_id_manager import TraceIdManager
+        from woniunote.common.unified_utils import TraceIdManager
         trace_id = TraceIdManager.generate_trace_id('test')
         if trace_id and isinstance(trace_id, str) and len(trace_id) > 0:
             verifier.log_success("✅ 跟踪ID生成功能正常")
@@ -230,7 +230,7 @@ def main():
     
     # 验证CSRF保护
     try:
-        from woniunote.common.csrf_protection import generate_csrf_token
+        from woniunote.common.unified_security import generate_csrf_token
         token = generate_csrf_token()
         if token and isinstance(token, str):
             verifier.log_success("✅ CSRF保护功能正常")
@@ -241,7 +241,7 @@ def main():
     
     # 验证输入验证
     try:
-        from woniunote.common.input_validator import InputValidator
+        from woniunote.common.unified_validator import InputValidator
         validator = InputValidator()
         test_result = validator.validate_string("test", max_length=10)
         if test_result == "test":

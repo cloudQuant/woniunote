@@ -5,7 +5,7 @@
 from flask import session, request, jsonify, abort
 from functools import wraps
 from typing import Optional, Dict, Any
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 logger = get_simple_logger('auth_utils')
 

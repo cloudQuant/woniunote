@@ -20,11 +20,11 @@ from flask import Flask, session, request, g
 from sqlalchemy.orm import Session as SQLAlchemySession
 from sqlalchemy.exc import SQLAlchemyError
 
-from .simple_logger import get_simple_logger
-from .trace_id_manager import TraceIdManager
+from .unified_logging import get_logger
+from .unified_utils import TraceIdManager
 from .unified_error_handler import DatabaseException
 
-logger = get_simple_logger('unified_session')
+logger = get_logger('unified_session')
 
 class UnifiedSessionManager:
     """
@@ -603,6 +603,12 @@ def get_current_user():
     """便捷函数：获取当前用户信息"""
     manager = get_session_manager()
     return manager.get_current_user()
+
+def get_current_user_id():
+    """便捷函数：获取当前用户ID"""
+    manager = get_session_manager()
+    user_info = manager.get_current_user()
+    return user_info.get('user_id') if user_info else None
 
 def clear_user_session(reason="用户登出"):
     """便捷函数：清除用户会话"""

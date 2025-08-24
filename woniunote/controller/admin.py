@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, session, request
 from woniunote.module.articles import Articles
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 import math
 import traceback
 import uuid

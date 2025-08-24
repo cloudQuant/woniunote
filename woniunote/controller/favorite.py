@@ -3,7 +3,7 @@ import uuid
 import datetime
 
 from woniunote.module.favorites import Favorites
-from woniunote.common.simple_logger import SimpleLogger
+from woniunote.common.unified_logging import SimpleLogger
 
 favorite = Blueprint('favorite', __name__)
 

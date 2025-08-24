@@ -574,3 +574,8 @@ init_config_manager = init_unified_config_manager
 get_config_manager_legacy = get_config_manager
 init_secure_config = init_unified_config_manager
 get_secure_config = get_config_manager
+
+# 向后兼容的函数
+def init_config_management(config_dir: str = "configs"):
+    """初始化配置管理（向后兼容）"""
+    return init_unified_config_manager(config_dir)

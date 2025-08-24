@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 from woniunote.common.database import dbconnect
 # 从模型定义中导入 User 类
 from woniunote.common.create_database import User  # 暂时保留此导入以兼容现有代码
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 # global dbsession, md, DBase
 dbsession, md, DBase = dbconnect()

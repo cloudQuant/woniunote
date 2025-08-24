@@ -12,7 +12,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from woniunote.common.db_connection_manager import get_db_session
 from woniunote.common.secure_password import verify_password_with_migration, hash_password
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 logger = get_simple_logger('atomic_password_migration')
 

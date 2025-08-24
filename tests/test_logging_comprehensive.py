@@ -71,7 +71,7 @@ except:
     pass
 
 import logging
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 # 测试基本日志器创建
 logger = get_simple_logger("test_module")
@@ -159,7 +159,7 @@ try:
 except:
     pass
 
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 import logging
 
 # 测试不同模块的日志器
@@ -231,7 +231,7 @@ try:
 except:
     pass
 
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 # 测试日志记录性能
 logger = get_simple_logger("performance_test")
@@ -322,7 +322,7 @@ try:
 except:
     pass
 
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 # 模拟应用程序使用场景
 auth_logger = get_simple_logger("auth")
@@ -450,7 +450,7 @@ except:
 # 测试定时器模块（如果存在）
 timer_available = False
 try:
-    from woniunote.common.timer import can_use_minute
+    from woniunote.common.unified_utils import can_use_minute
     timer_available = True
     print("✓ Timer module imported successfully")
 except ImportError:

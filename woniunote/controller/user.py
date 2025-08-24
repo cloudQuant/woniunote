@@ -9,7 +9,7 @@ from woniunote.common.redisdb import redis_connect
 from woniunote.common.utils import ImageCode, gen_email_code, send_email
 from woniunote.module.credits import Credits
 from woniunote.module.users import Users
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 user = Blueprint('user', __name__)
 

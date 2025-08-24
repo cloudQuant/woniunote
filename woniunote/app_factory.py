@@ -8,11 +8,11 @@ import logging
 from flask import Flask, request, session, g
 from woniunote.configs.config import config
 from woniunote.common.utils import read_config
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 from woniunote.common.database import db
-from woniunote.common.csrf_protection import csrf
-from woniunote.common.session_utils import migrate_legacy_session
-from woniunote.common.secure_config import secure_config
+from woniunote.common.unified_security import csrf
+from woniunote.common.unified_session import migrate_legacy_session
+from woniunote.common.unified_config import secure_config
 
 # 应用日志记录器
 app_logger = get_simple_logger('app_factory')
@@ -30,7 +30,7 @@ class AppFactory:
         
         # 环境验证
         try:
-            from woniunote.common.environment_validator import validate_environment
+            from woniunote.common.unified_config import validate_environment
             if not validate_environment():
                 app_logger.error("环境验证失败")
                 # 在开发环境可以选择继续启动，生产环境应该中止
@@ -122,7 +122,7 @@ class AppFactory:
     def _initialize_config_management(self):
         """初始化配置管理"""
         try:
-            from woniunote.common.config_manager import init_config_management
+            from woniunote.common.unified_config import init_config_management
             
             # 配置文件列表
             config_files = [
@@ -160,7 +160,7 @@ class AppFactory:
         
         # 使用优化器获取最佳连接池配置
         try:
-            from woniunote.common.database_pool_optimizer import pool_optimizer
+            from woniunote.common.unified_database_optimizer import pool_optimizer
             optimized_options = pool_optimizer.get_optimized_engine_options(database_uri)
             self.app.config['SQLALCHEMY_ENGINE_OPTIONS'] = optimized_options
             app_logger.info("使用优化的数据库连接池配置")
@@ -202,7 +202,7 @@ class AppFactory:
                 
                 # 初始化数据库连接池优化
                 try:
-                    from woniunote.common.database_pool_optimizer import init_database_pool_optimization
+                    from woniunote.common.unified_database_optimizer import init_database_pool_optimization
                     pool_optimizer = init_database_pool_optimization(self.app, db.engine)
                     if pool_optimizer:
                         app_logger.info("数据库连接池优化初始化成功")
@@ -328,7 +328,7 @@ class AppFactory:
             return
         
         # 检查会话状态
-        from woniunote.common.session_utils import is_user_logged_in
+        from woniunote.common.unified_session import is_user_logged_in
         if not is_user_logged_in():
             # 尝试从 Cookie 自动登录
             self._attempt_cookie_login()
@@ -342,7 +342,7 @@ class AppFactory:
             try:
                 from woniunote.module.users import Users
                 from woniunote.common.password_utils import verify_password
-                from woniunote.common.session_utils import create_user_session
+                from woniunote.common.unified_session import create_user_session
                 
                 user_ = Users()
                 result = user_.find_by_username(username)
@@ -372,7 +372,7 @@ class AppFactory:
         """初始化优化系统"""
         try:
             # 初始化缓存系统（不传递app参数，使用默认配置）
-            from woniunote.common.cache_utils import init_cache
+            from woniunote.common.unified_cache import init_cache
             init_cache()
             
             # 初始化限流系统（不传递app参数，使用默认配置）
@@ -380,12 +380,12 @@ class AppFactory:
             init_rate_limiter()
             
             # 初始化性能监控（不传递app参数，使用默认配置）
-            from woniunote.common.monitoring import init_monitoring
+            from woniunote.common.unified_monitoring import init_monitoring
             init_monitoring()
             
             # 初始化增强性能监控
             try:
-                from woniunote.common.performance_monitor import init_performance_monitoring
+                from woniunote.common.unified_monitoring import init_performance_monitoring
                 perf_monitor = init_performance_monitoring(self.app)
                 if perf_monitor:
                     app_logger.info("增强性能监控初始化成功")
@@ -394,7 +394,7 @@ class AppFactory:
             
             # 初始化静态资源缓存优化
             try:
-                from woniunote.common.static_cache_optimizer import init_static_cache_optimization
+                from woniunote.common.unified_cache import init_static_cache_optimization
                 cache_optimizer = init_static_cache_optimization(self.app)
                 if cache_optimizer:
                     app_logger.info("静态资源缓存优化初始化成功")
@@ -444,7 +444,7 @@ class AppFactory:
         """设置错误处理器"""
         try:
             # 初始化增强错误处理系统
-            from woniunote.common.enhanced_error_handler import init_error_handling
+            from woniunote.common.unified_error_handler import init_error_handling
             error_handler = init_error_handling(self.app)
             
             # 注册一些常用的错误恢复处理器
@@ -553,7 +553,7 @@ class AppFactory:
                 
                 # 清理缓存
                 try:
-                    from woniunote.common.unified_cache_strategy import cache_manager
+                    from woniunote.common.unified_cache import cache_manager
                     cache_manager.invalidate_cache('default')
                     app_logger.info("缓存已清理")
                 except:

@@ -11,9 +11,9 @@ from typing import Dict, Any, Optional, Callable, Type, Union
 from functools import wraps
 from datetime import datetime
 
-from .simple_logger import get_simple_logger
+from .unified_logging import get_logger
 
-logger = get_simple_logger('unified_error_handler')
+logger = get_logger('unified_error_handler')
 
 # ==================== 统一异常基类 ====================
 
@@ -167,7 +167,7 @@ class UnifiedErrorHandler:
             'recovery_successes': 0
         }
         
-        self.logger = get_simple_logger('error_handler')
+        self.logger = get_logger('error_handler')
     
     def handle_exception(self, exception: Exception, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """

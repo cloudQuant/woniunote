@@ -87,7 +87,7 @@ def start_server(host='0.0.0.0', port=5001, debug=True, optimized=False):
             
             # 启动清理管理器和监控系统
             try:
-                from woniunote.common.cleanup_manager import start_cleanup_manager
+                from woniunote.common.unified_utils import start_cleanup_manager
                 start_cleanup_manager()
                 print("✓ 清理管理器已启动")
             except Exception as e:

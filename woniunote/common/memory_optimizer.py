@@ -13,7 +13,7 @@ from typing import Dict, Any, Optional, List, Callable
 from functools import wraps
 from weakref import WeakSet
 from collections import defaultdict
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 logger = get_simple_logger('memory_optimizer')
 

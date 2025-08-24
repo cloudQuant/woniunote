@@ -16,9 +16,9 @@ from enum import Enum
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-from .simple_logger import get_simple_logger
+from .unified_logging import get_logger
 
-logger = get_simple_logger('unified_cache')
+logger = get_logger('unified_cache')
 
 # ==================== 枚举定义 ====================
 
@@ -341,7 +341,7 @@ class UnifiedCacheManager:
     
     def __init__(self, config: CacheConfig = None, redis_client=None):
         self.config = config or CacheConfig()
-        self.logger = get_simple_logger('unified_cache')
+        self.logger = get_logger('unified_cache')
         
         # 初始化各个缓存层
         self.memory_cache = MemoryCache(
@@ -574,3 +574,4 @@ def get_cache_manager() -> Optional[UnifiedCacheManager]:
 # 为了向后兼容，保留旧的函数名
 init_advanced_cache = init_unified_cache_manager
 get_advanced_cache = get_cache_manager
+init_cache = init_unified_cache_manager

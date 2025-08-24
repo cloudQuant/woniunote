@@ -7,9 +7,9 @@
 import time
 from typing import Dict, Any, List, Optional, Callable, Union
 from functools import wraps
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 from woniunote.common.unified_response import success_response, error_response
-from woniunote.common.unified_exception_handler import exception_handler
+from woniunote.common.unified_error_handler import exception_handler
 
 logger = get_simple_logger('code_refactor_helper')
 

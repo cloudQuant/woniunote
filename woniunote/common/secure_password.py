@@ -5,7 +5,7 @@
 import bcrypt
 import hashlib
 import time
-from woniunote.common.simple_logger import get_simple_logger
+from woniunote.common.unified_logging import get_simple_logger
 
 logger = get_simple_logger('secure_password')
 

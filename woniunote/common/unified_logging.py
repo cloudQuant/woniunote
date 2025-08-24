@@ -450,3 +450,25 @@ init_simple_logger = init_unified_logging
 get_simple_logger = get_logger
 init_enhanced_logger = init_unified_logging
 get_enhanced_logger = get_logger
+
+# 向后兼容的SimpleLogger类
+class SimpleLogger:
+    """向后兼容的SimpleLogger类"""
+    
+    def __init__(self, name: str):
+        self.logger = get_logger(name)
+    
+    def debug(self, message: str):
+        self.logger.debug(message)
+    
+    def info(self, message: str):
+        self.logger.info(message)
+    
+    def warning(self, message: str):
+        self.logger.warning(message)
+    
+    def error(self, message: str):
+        self.logger.error(message)
+    
+    def critical(self, message: str):
+        self.logger.critical(message)

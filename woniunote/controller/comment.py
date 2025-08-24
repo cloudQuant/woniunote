@@ -6,7 +6,7 @@ from woniunote.module.articles import Articles
 from woniunote.module.comments import Comments
 from woniunote.module.credits import Credits
 from woniunote.module.users import Users
-from woniunote.common.simple_logger import SimpleLogger
+from woniunote.common.unified_logging import SimpleLogger
 
 comment = Blueprint('comment', __name__)
 
