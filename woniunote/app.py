@@ -384,11 +384,15 @@ def create_app(config_name='production'):
         performance_monitor = get_performance_monitor()
         metrics_collector = get_metrics_collector()
         
-        # 记录基本请求信息
-        metrics_collector.record_counter('app.requests.started', 1, {
-            'method': request.method,
-            'endpoint': request.endpoint or 'unknown'
-        })
+        # 记录基本请求信息（添加空值检查）
+        if metrics_collector:
+            try:
+                metrics_collector.record_counter('app.requests.started', 1, {
+                    'method': request.method,
+                    'endpoint': request.endpoint or 'unknown'
+                })
+            except Exception as e:
+                app_logger.warning(f"Failed to record metrics: {e}")
         
         app_logger.info(f"Request {g.request_id}: {request.method} {request.path} from {request.remote_addr}")
         
@@ -406,22 +410,30 @@ def create_app(config_name='production'):
             performance_monitor = get_performance_monitor()
             metrics_collector = get_metrics_collector()
             
-            # 记录请求指标
-            performance_monitor.record_request(
-                endpoint=request.endpoint or request.path,
-                method=request.method,
-                status_code=response.status_code,
-                duration=duration,
-                user_id=session.get('userid')
-            )
+            # 记录请求指标（添加空值检查）
+            if performance_monitor:
+                try:
+                    performance_monitor.record_request(
+                        endpoint=request.endpoint or request.path,
+                        method=request.method,
+                        status_code=response.status_code,
+                        duration=duration,
+                        user_id=session.get('userid')
+                    )
+                except Exception as e:
+                    app_logger.warning(f"Failed to record performance metrics: {e}")
             
-            # 记录性能指标
-            metrics_collector.record_timer('app.request.duration', duration)
-            metrics_collector.record_counter('app.requests.completed', 1)
-            
-            if duration > 1.0:  # 记录慢请求
-                app_logger.warning(f"Slow request {g.request_id}: {duration:.2f}s")
-                metrics_collector.record_counter('app.requests.slow', 1)
+            # 记录性能指标（添加空值检查）
+            if metrics_collector:
+                try:
+                    metrics_collector.record_timer('app.request.duration', duration)
+                    metrics_collector.record_counter('app.requests.completed', 1)
+                    
+                    if duration > 1.0:  # 记录慢请求
+                        app_logger.warning(f"Slow request {g.request_id}: {duration:.2f}s")
+                        metrics_collector.record_counter('app.requests.slow', 1)
+                except Exception as e:
+                    app_logger.warning(f"Failed to record metrics: {e}")
             
             # 添加性能头信息
             response.headers['X-Response-Time'] = f"{duration:.3f}s"
@@ -530,10 +542,20 @@ def create_app(config_name='production'):
                         app_logger.info(f"Auto-login successful for user: {username}")
                         
                         # 记录登录指标
-                        get_metrics_collector().record_counter('app.auto_login.success', 1)
+                        metrics_collector = get_metrics_collector()
+                        if metrics_collector:
+                            try:
+                                metrics_collector.record_counter('app.auto_login.success', 1)
+                            except Exception as e:
+                                app_logger.warning(f"Failed to record auto_login success metric: {e}")
                 except Exception as e:
                     app_logger.error(f"Auto-login error: {str(e)}")
-                    get_metrics_collector().record_counter('app.auto_login.error', 1)
+                    metrics_collector = get_metrics_collector()
+                    if metrics_collector:
+                        try:
+                            metrics_collector.record_counter('app.auto_login.error', 1)
+                        except Exception as e2:
+                            app_logger.warning(f"Failed to record auto_login error metric: {e2}")
                 return
 
     # 通过自定义过滤器来重构truncate原生过滤器
@@ -643,19 +665,34 @@ def create_app(config_name='production'):
         try:
             data = request.get_json()
             if not data:
-                get_metrics_collector().record_counter('math_train.login.invalid_request', 1)
+                metrics_collector = get_metrics_collector()
+                if metrics_collector:
+                    try:
+                        metrics_collector.record_counter('math_train.login.invalid_request', 1)
+                    except Exception as e:
+                        app_logger.warning(f"Failed to record invalid_request metric: {e}")
                 return jsonify({'success': False, 'message': 'Invalid request'}), 400
             
             username = validate_input(data.get('username', ''), 50)
             password = data.get('password', '')
             
             if not username or not password:
-                get_metrics_collector().record_counter('math_train.login.missing_credentials', 1)
+                metrics_collector = get_metrics_collector()
+                if metrics_collector:
+                    try:
+                        metrics_collector.record_counter('math_train.login.missing_credentials', 1)
+                    except Exception as e:
+                        app_logger.warning(f"Failed to record missing_credentials metric: {e}")
                 return jsonify({'success': False, 'message': 'Username and password required'}), 400
             
             # 密码长度检查
             if len(password) < 6 or len(password) > 128:
-                get_metrics_collector().record_counter('math_train.login.invalid_password', 1)
+                metrics_collector = get_metrics_collector()
+                if metrics_collector:
+                    try:
+                        metrics_collector.record_counter('math_train.login.invalid_password', 1)
+                    except Exception as e:
+                        app_logger.warning(f"Failed to record invalid_password metric: {e}")
                 return jsonify({'success': False, 'message': 'Invalid password length'}), 400
             
             # 生成session ID
@@ -668,7 +705,12 @@ def create_app(config_name='production'):
             session['session_id'] = session_id
             session.modified = True
             
-            get_metrics_collector().record_counter('math_train.login.success', 1)
+            metrics_collector = get_metrics_collector()
+            if metrics_collector:
+                try:
+                    metrics_collector.record_counter('math_train.login.success', 1)
+                except Exception as e:
+                    app_logger.warning(f"Failed to record success metric: {e}")
             app_logger.info(f"Math train login successful: {username}")
             
             return jsonify({
@@ -679,7 +721,12 @@ def create_app(config_name='production'):
             })
             
         except Exception as e:
-            get_metrics_collector().record_counter('math_train.login.error', 1)
+            metrics_collector = get_metrics_collector()
+            if metrics_collector:
+                try:
+                    metrics_collector.record_counter('math_train.login.error', 1)
+                except Exception as e2:
+                    app_logger.warning(f"Failed to record error metric: {e2}")
             app_logger.error(f"Math train login error: {str(e)}")
             return jsonify({'success': False, 'message': 'Login failed'}), 500
 
@@ -1085,7 +1132,12 @@ def create_app(config_name='production'):
                 health_data['checks']['session_storage'] = 'session directory missing'
             
             # 记录健康检查指标
-            get_metrics_collector().record_counter('health_check.requests', 1)
+            metrics_collector = get_metrics_collector()
+            if metrics_collector:
+                try:
+                    metrics_collector.record_counter('health_check.requests', 1)
+                except Exception as e:
+                    app_logger.warning(f"Failed to record health_check metric: {e}")
             
             # 确定HTTP状态码
             status_code = 200
@@ -1138,10 +1190,20 @@ def create_app(config_name='production'):
             metrics_collector = get_metrics_collector()
             
             # 获取性能摘要
-            performance_summary = performance_monitor.get_performance_summary()
+            performance_summary = {}
+            if performance_monitor:
+                try:
+                    performance_summary = performance_monitor.get_performance_summary()
+                except Exception as e:
+                    app_logger.warning(f"Failed to get performance summary: {e}")
             
             # 获取最近的指标
-            recent_metrics = metrics_collector.get_metrics(since=time.time() - 3600)  # 最近1小时
+            recent_metrics = {}
+            if metrics_collector:
+                try:
+                    recent_metrics = metrics_collector.get_metrics(since=time.time() - 3600)  # 最近1小时
+                except Exception as e:
+                    app_logger.warning(f"Failed to get recent metrics: {e}")
             
             # 获取异步任务统计
             task_executor = get_task_executor()
