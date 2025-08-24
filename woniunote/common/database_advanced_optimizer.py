@@ -594,18 +594,32 @@ class DatabaseAdvancedOptimizer:
         """初始化Flask应用"""
         self.app = app
         
-        # 获取数据库引擎
-        from flask_sqlalchemy import SQLAlchemy
-        db = SQLAlchemy()
-        engine = db.get_engine()
-        
-        # 初始化连接池管理器
-        self.connection_pool_manager = ConnectionPoolManager(engine)
-        
-        # 设置查询监控
-        self._setup_query_monitoring(engine)
-        
-        logger.info("Advanced database optimizer initialized")
+        try:
+            # 修复：使用应用程序中已配置的数据库实例，而不是创建新的
+            from woniunote.common.database import db
+            
+            # 检查数据库是否已初始化
+            if hasattr(db, 'engine') and db.engine:
+                engine = db.engine
+            elif hasattr(db, 'get_engine'):
+                engine = db.get_engine()
+            else:
+                # 如果数据库未初始化，记录警告并跳过
+                logger.warning("Database not initialized, skipping advanced optimization setup")
+                return
+            
+            # 初始化连接池管理器
+            self.connection_pool_manager = ConnectionPoolManager(engine)
+            
+            # 设置查询监控
+            self._setup_query_monitoring(engine)
+            
+            logger.info("Advanced database optimizer initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize advanced database optimizer: {e}")
+            # 不抛出异常，允许应用继续运行
+            pass
     
     def _setup_query_monitoring(self, engine):
         """设置查询监控"""
@@ -709,6 +723,11 @@ def init_database_advanced_optimization(app, slow_query_threshold: float = 1.0):
     try:
         global _db_optimizer
         
+        # 检查应用是否已配置数据库
+        if not hasattr(app, 'extensions') or 'sqlalchemy' not in app.extensions:
+            logger.warning("Flask-SQLAlchemy not configured, skipping advanced database optimization")
+            return None
+        
         # 在应用上下文中创建实例
         with app.app_context():
             _db_optimizer = DatabaseAdvancedOptimizer()
@@ -721,6 +740,9 @@ def init_database_advanced_optimization(app, slow_query_threshold: float = 1.0):
     except Exception as e:
         logger.error(f"Failed to initialize advanced database optimization: {e}")
         # 捕获异常但不抛出，这样应用仍然可以继续启动
+        # 记录详细的错误信息以便调试
+        import traceback
+        logger.error(f"Detailed error: {traceback.format_exc()}")
         return None
 
 # 装饰器

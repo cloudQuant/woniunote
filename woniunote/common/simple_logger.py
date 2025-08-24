@@ -25,13 +25,16 @@ class SimpleLogger:
         
         Args:
             name: 日志记录器名称
-            log_dir: 日志目录，默认为当前工作目录下的 simple_logs 目录
+            log_dir: 日志目录，默认为项目根目录下的 simple_logs 目录
         """
         self.name = name
         
-        # 确定日志目录
+        # 确定日志目录 - 修复：始终使用项目根目录
         if log_dir is None:
-            self.log_dir = os.path.join(os.getcwd(), 'simple_logs')
+            # 获取项目根目录（woniunote包的父目录）
+            current_file = os.path.abspath(__file__)
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
+            self.log_dir = os.path.join(project_root, 'simple_logs')
         else:
             self.log_dir = log_dir
             
@@ -101,16 +104,6 @@ class SimpleLogger:
                         pass
             
             # 重新创建文件处理器
-            today = datetime.datetime.now()
-            year_month_dir = os.path.join(self.log_dir, f"{today.year:04d}-{today.month:02d}")
-            try:
-                os.makedirs(year_month_dir, exist_ok=True)
-            except:
-                pass
-            
-            self.log_file_base = os.path.join(year_month_dir, f"{self.name}")
-            self.log_file = f"{self.log_file_base}.log"
-            
             file_handler = TimedRotatingFileHandler(
                 self.log_file,
                 when='midnight',
@@ -126,20 +119,26 @@ class SimpleLogger:
             file_handler.setFormatter(formatter)
             
             self.logger.addHandler(file_handler)
+            self.handlers = self.logger.handlers
+            
         except Exception as e:
-            # 如果设置失败，只能输出到stderr
-            import sys
-            print(f"Logger setup failed: {e}", file=sys.stderr)
+            print(f"重新设置logger失败: {str(e)}")
     
-    def _format_log_content(self, level, message, extra=None):
-        """格式化日志内容"""
-        # 获取当前时间
-        now = datetime.datetime.now()
-        now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+    def _format_log_content(self, level: str, message: str, extra: dict = None) -> str:
+        """
+        格式化日志内容为JSON格式
         
-        # 构建日志内容
+        Args:
+            level: 日志级别
+            message: 日志消息
+            extra: 额外信息
+            
+        Returns:
+            str: 格式化后的JSON字符串
+        """
+        # 基础日志信息
         log_data = {
-            'time': now_str,
+            'time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'level': level,
             'module': self.name,
             'message': message

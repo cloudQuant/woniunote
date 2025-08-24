@@ -145,6 +145,11 @@
           <li><a href="/user/comment"><span class="oi oi-task" aria-hidden="true"></span>&nbsp;&nbsp;我的评论</a></li>
           <li><a href="/user/info"><span class="oi oi-person" aria-hidden="true"></span>&nbsp;&nbsp;个人资料</a></li>
           <li><a href="/user/credit"><span class="oi oi-account-login" aria-hidden="true"></span>&nbsp;&nbsp;我的积分</a></li>
+          {% if session.get('main_islogin') == 'true' %}
+          <li><a href="/system/status" target="_blank"><span class="oi oi-monitor" aria-hidden="true"></span>&nbsp;&nbsp;系统状态</a></li>
+          {% else %}
+          <li><a href="javascript:void(0)" onclick="showLoginRequired()" style="color: #6c757d; cursor: pointer;"><span class="oi oi-monitor" aria-hidden="true"></span>&nbsp;&nbsp;系统状态 <small style="color: #dc3545;">(需登录)</small></a></li>
+          {% endif %}
           {% if not session.get('math_train_islogin') %}
           <li><button class="navbar-btn logged-out" id="showRegisterModalBtn">训练注册</button></li>
           {% endif %}
@@ -214,6 +219,24 @@
           title: "错误提示",
           message: "操作失败，请重试"
         });
+      }
+    });
+  }
+
+  // 显示登录提示弹窗
+  function showLoginRequired() {
+    bootbox.alert({
+      title: "🔒 需要登录",
+      message: "系统状态页面需要登录后才能访问。<br><br>请先登录您的账户，然后再次尝试访问系统状态页面。",
+      buttons: {
+        ok: {
+          label: "去登录",
+          className: "btn-primary"
+        }
+      },
+      callback: function() {
+        // 跳转到登录页面
+        window.location.href = "/user/login";
       }
     });
   }
