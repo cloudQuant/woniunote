@@ -188,8 +188,8 @@ class AppFactory:
                 
                 # 初始化数据库连接池优化
                 try:
-                    from woniunote.common.unified_database_optimizer import init_database_pool_optimization
-                    pool_optimizer = init_database_pool_optimization(self.app, db.engine)
+                    from woniunote.common.unified_database_optimizer import init_database_monitoring
+                    pool_optimizer = init_database_monitoring(db.engine)
                     if pool_optimizer:
                         app_logger.info("数据库连接池优化初始化成功")
                 except ImportError:

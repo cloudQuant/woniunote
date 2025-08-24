@@ -254,42 +254,100 @@ def create_app(config_name='production'):
         
         # 初始化缓存系统
         from woniunote.common.unified_cache import CacheConfig
-        cache_config = CacheConfig(
-            ttl=config_manager.get('cache.default_ttl', 300) if config_manager else 300,
-            max_size=config_manager.get('cache.memory.max_size', 2000) if config_manager else 2000
-        )
-        app_logger.info("初始化缓存系统...")
-        init_cache(config=cache_config)
+        try:
+            ttl = config_manager.get('cache.default_ttl', 300) if config_manager else 300
+            max_size = config_manager.get('cache.memory.max_size', 2000) if config_manager else 2000
+            
+            # 确保参数是有效的整数值
+            if ttl is None or not isinstance(ttl, int) or ttl <= 0:
+                ttl = 300
+            if max_size is None or not isinstance(max_size, int) or max_size <= 0:
+                max_size = 2000
+                
+            cache_config = CacheConfig(ttl=ttl, max_size=max_size)
+            app_logger.info("初始化缓存系统...")
+            init_cache(config=cache_config)
+        except Exception as e:
+            app_logger.warning(f"缓存系统初始化失败，使用默认配置: {e}")
+            # 使用默认配置重试
+            try:
+                cache_config = CacheConfig(ttl=300, max_size=2000)
+                init_cache(config=cache_config)
+            except Exception as e2:
+                app_logger.error(f"缓存系统初始化完全失败: {e2}")
         
         # 初始化限流系统
-        rate_limit_config = {
-            'api': {
-                'type': 'token_bucket',
-                'capacity': config_manager.get('rate_limit.api.capacity', 100) if config_manager else 100,
-                'refill_rate': config_manager.get('rate_limit.api.refill_rate', 20) if config_manager else 20,
-                'refill_period': config_manager.get('rate_limit.api.refill_period', 1) if config_manager else 1
-            },
-            'upload': {
-                'type': 'token_bucket',
-                'capacity': config_manager.get('rate_limit.upload.capacity', 10) if config_manager else 10,
-                'refill_rate': config_manager.get('rate_limit.upload.refill_rate', 2) if config_manager else 2,
-                'refill_period': config_manager.get('rate_limit.upload.refill_period', 60) if config_manager else 60
-            },
-            'strict': {
-                'type': 'sliding_window',
-                'max_requests': config_manager.get('rate_limit.strict.max_requests', 30) if config_manager else 30,
-                'window_size': config_manager.get('rate_limit.strict.window_size', 60) if config_manager else 60
+        try:
+            rate_limit_config = {
+                'api': {
+                    'type': 'token_bucket',
+                    'capacity': config_manager.get('rate_limit.api.capacity', 100) if config_manager else 100,
+                    'refill_rate': config_manager.get('rate_limit.api.refill_rate', 20) if config_manager else 20,
+                    'refill_period': config_manager.get('rate_limit.api.refill_period', 1) if config_manager else 1
+                },
+                'upload': {
+                    'type': 'token_bucket',
+                    'capacity': config_manager.get('rate_limit.upload.capacity', 10) if config_manager else 10,
+                    'refill_rate': config_manager.get('rate_limit.upload.refill_rate', 2) if config_manager else 2,
+                    'refill_period': config_manager.get('rate_limit.upload.refill_period', 60) if config_manager else 60
+                },
+                'strict': {
+                    'type': 'sliding_window',
+                    'max_requests': config_manager.get('rate_limit.strict.max_requests', 30) if config_manager else 30,
+                    'window_size': config_manager.get('rate_limit.strict.window_size', 60) if config_manager else 60
+                }
             }
-        }
-        app_logger.info("初始化限流系统...")
-        init_rate_limiter(rate_limit_config)
+            
+            # 验证所有配置值都是有效的整数
+            for limiter_name, limiter_config in rate_limit_config.items():
+                for key, value in limiter_config.items():
+                    if key in ['capacity', 'refill_rate', 'refill_period', 'max_requests', 'window_size']:
+                        if value is None or not isinstance(value, int) or value <= 0:
+                            app_logger.warning(f"限流配置 {limiter_name}.{key} 无效，使用默认值")
+                            if key in ['capacity', 'max_requests']:
+                                rate_limit_config[limiter_name][key] = 100 if limiter_name == 'api' else 30
+                            elif key == 'refill_rate':
+                                rate_limit_config[limiter_name][key] = 20 if limiter_name == 'api' else 2
+                            elif key == 'refill_period':
+                                rate_limit_config[limiter_name][key] = 1 if limiter_name == 'api' else 60
+                            elif key == 'window_size':
+                                rate_limit_config[limiter_name][key] = 60
+            
+            app_logger.info("初始化限流系统...")
+            init_rate_limiter(rate_limit_config)
+        except Exception as e:
+            app_logger.warning(f"限流系统初始化失败，使用默认配置: {e}")
+            # 使用默认配置重试
+            try:
+                default_rate_limit_config = {
+                    'api': {'type': 'token_bucket', 'capacity': 100, 'refill_rate': 20, 'refill_period': 1},
+                    'upload': {'type': 'token_bucket', 'capacity': 10, 'refill_rate': 2, 'refill_period': 60},
+                    'strict': {'type': 'sliding_window', 'max_requests': 30, 'window_size': 60}
+                }
+                init_rate_limiter(default_rate_limit_config)
+            except Exception as e2:
+                app_logger.error(f"限流系统初始化完全失败: {e2}")
         
         # 初始化异步任务系统
         app_logger.info("初始化异步任务系统...")
-        init_task_executor(
-            max_workers=config_manager.get('async_tasks.max_workers', 6) if config_manager else 6, 
-            queue_size=config_manager.get('async_tasks.queue_size', 2000) if config_manager else 2000
-        )
+        try:
+            max_workers = config_manager.get('async_tasks.max_workers', 6) if config_manager else 6
+            queue_size = config_manager.get('async_tasks.queue_size', 2000) if config_manager else 2000
+            
+            # 确保参数是有效的整数值
+            if max_workers is None or not isinstance(max_workers, int) or max_workers <= 0:
+                max_workers = 6
+            if queue_size is None or not isinstance(queue_size, int) or queue_size <= 0:
+                queue_size = 2000
+                
+            init_task_executor(max_workers=max_workers, queue_size=queue_size)
+        except Exception as e:
+            app_logger.warning(f"异步任务系统初始化失败，使用默认配置: {e}")
+            # 使用默认配置重试
+            try:
+                init_task_executor(max_workers=6, queue_size=2000)
+            except Exception as e2:
+                app_logger.error(f"异步任务系统初始化完全失败: {e2}")
         
         # 初始化监控系统
         monitoring_config = {
@@ -301,7 +359,14 @@ def create_app(config_name='production'):
         
         # 初始化数据库监控 (Phase 4新增)
         app_logger.info("初始化数据库监控系统...")
-        init_database_monitoring(app)
+        try:
+            # 获取数据库引擎
+            if 'db' in globals() and hasattr(db, 'engine'):
+                init_database_monitoring(db.engine)
+            else:
+                app_logger.warning("数据库引擎不可用，跳过数据库监控初始化")
+        except Exception as e:
+            app_logger.warning(f"数据库监控系统初始化失败: {e}")
         
         # 初始化静态资源优化 (Phase 4新增)
         app_logger.info("初始化静态资源优化...")
@@ -321,18 +386,35 @@ def create_app(config_name='production'):
         
         # Phase 6 深度优化模块初始化
         app_logger.info("初始化高级数据库优化模块...")
-        init_database_advanced_optimization(app, slow_query_threshold=1.0)
+        try:
+            # 获取数据库引擎
+            if 'db' in globals() and hasattr(db, 'engine'):
+                init_database_advanced_optimization(db.engine, slow_query_threshold=1.0)
+            else:
+                app_logger.warning("数据库引擎不可用，跳过数据库优化初始化")
+        except Exception as e:
+            app_logger.warning(f"高级数据库优化模块初始化失败: {e}")
         
         app_logger.info("初始化API安全增强模块...")
         init_api_security_enhancement(app)
         
         app_logger.info("初始化智能运维管理模块...")
-        init_intelligent_ops_management(app)
+        try:
+            # 传入正确的配置参数
+            monitoring_config = {
+                'system_monitoring': True,
+                'collect_interval': 30
+            }
+            init_intelligent_ops_management(monitoring_config)
+        except Exception as e:
+            app_logger.warning(f"智能运维管理模块初始化失败: {e}")
         
         app_logger.info("所有优化系统初始化完成")
         
     except Exception as e:
+        import traceback
         app_logger.error(f"优化系统初始化失败: {str(e)}")
+        app_logger.error(f"错误详情: {traceback.format_exc()}")
         # 不阻止应用启动，但记录错误
     
     # 添加安全头中间件
