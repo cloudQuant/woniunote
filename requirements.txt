@@ -4,6 +4,7 @@ flask_login
 flask_mysqldb
 flask_sslify
 flask_session
+
 Flask-Caching>=2.0.2
 Flask-WTF>=1.1.1
 flask_socketio
