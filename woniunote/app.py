@@ -248,18 +248,16 @@ def create_app(config_name='production'):
             app_logger.warning("未找到配置文件，将使用内置默认配置")
             existing_config_files = []
         
-        init_config_management(app, existing_config_files)
+        # 初始化配置管理，只传入配置目录
+        init_config_management("configs")
         config_manager = get_config_manager()
         
         # 初始化缓存系统
-        cache_config = {
-            'default_ttl': config_manager.get('cache.default_ttl', 300) if config_manager else 300,
-            'key_prefix': config_manager.get('cache.key_prefix', 'woniunote:') if config_manager else 'woniunote:',
-            'memory': {
-                'max_size': config_manager.get('cache.memory.max_size', 2000) if config_manager else 2000,
-                'default_ttl': config_manager.get('cache.memory.default_ttl', 300) if config_manager else 300
-            }
-        }
+        from woniunote.common.unified_cache import CacheConfig
+        cache_config = CacheConfig(
+            ttl=config_manager.get('cache.default_ttl', 300) if config_manager else 300,
+            max_size=config_manager.get('cache.memory.max_size', 2000) if config_manager else 2000
+        )
         app_logger.info("初始化缓存系统...")
         init_cache(config=cache_config)
         
@@ -1680,7 +1678,7 @@ def create_app(config_name='production'):
     
     # API示例端点 - 展示API安全功能
     @app.route('/api/secure/test')
-    @require_api_key(['read'])
+    @require_api_key
     @rate_limit('api')
     def secure_api_test():
         """安全API测试端点"""

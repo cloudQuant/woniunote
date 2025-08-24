@@ -124,22 +124,8 @@ class AppFactory:
         try:
             from woniunote.common.unified_config import init_config_management
             
-            # 配置文件列表
-            config_files = [
-                'configs/config.py',
-                'configs/user_password_config.yaml',
-                'configs/article_type_config.yaml'
-            ]
-            
-            # 过滤存在的配置文件
-            existing_files = []
-            for config_file in config_files:
-                file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), config_file)
-                if os.path.exists(file_path):
-                    existing_files.append(file_path)
-            
             # 初始化配置管理
-            config_manager = init_config_management(self.app, existing_files)
+            config_manager = init_config_management("configs")
             
             if config_manager:
                 app_logger.info("动态配置管理初始化成功")

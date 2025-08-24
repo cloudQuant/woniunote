@@ -348,9 +348,18 @@ def monitor_function(func=None, **kwargs):
                 raise
         return wrapper
     
-    if func:
+    # 处理带参数的装饰器调用
+    if func is None:
+        # @monitor_function() 或 @monitor_function
+        return decorator
+    elif callable(func):
+        # @monitor_function 直接装饰函数
         return decorator(func)
-    return decorator
+    else:
+        # @monitor_function('upload.file') 带参数的装饰器
+        def param_decorator(f):
+            return decorator(f)
+        return param_decorator
 
 # 更多向后兼容的函数
 def init_intelligent_ops_management(config: Dict[str, Any] = None):
