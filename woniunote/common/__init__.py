@@ -1,7 +1,7 @@
+#!/usr/bin/env python3
 """
-WoniuNote Common Utilities Package
-
-This package contains common utilities and shared functionality for the WoniuNote application.
+WoniuNote Common Package
+提供各种通用功能和工具
 """
 
 # Import key modules to make them available at package level
@@ -18,6 +18,13 @@ try:
     from . import unified_database_optimizer
     from . import unified_monitoring
     from . import unified_security
+    
+    # 统一模块（第二阶段整合）
+    from . import unified_cache
+    from . import unified_logging
+    from . import unified_config
+    from . import unified_validator
+    from . import unified_utils
     
     # 保留的现有模块（向后兼容）
     from . import cache_utils
@@ -36,6 +43,19 @@ try:
     from . import database_optimizer
     from . import security_enhanced
     
+    # 第二阶段已整合的模块（标记为废弃）
+    from . import advanced_cache
+    from . import unified_cache_strategy
+    from . import static_cache_optimizer
+    from . import enhanced_logger
+    from . import log_level_manager
+    from . import secure_config
+    from . import environment_validator
+    from . import input_validator
+    from . import enhanced_input_validator
+    from . import file_upload_validator
+    from . import permission_validator
+    
 except ImportError as e:
     # Handle import errors gracefully during development
     import warnings
@@ -48,12 +68,19 @@ __all__ = [
     'utils',
     'database',
     
-    # 统一模块（推荐使用）
+    # 统一模块（第一阶段整合，推荐使用）
     'unified_session',
     'unified_error_handler', 
     'unified_database_optimizer',
     'unified_monitoring',
     'unified_security',
+    
+    # 统一模块（第二阶段整合，推荐使用）
+    'unified_cache',
+    'unified_logging',
+    'unified_config',
+    'unified_validator',
+    'unified_utils',
     
     # 保留的现有模块
     'cache_utils',
@@ -70,5 +97,18 @@ __all__ = [
     'session_util',
     'monitoring',
     'database_optimizer', 
-    'security_enhanced'
+    'security_enhanced',
+    
+    # 第二阶段已整合的模块（向后兼容，但建议迁移到统一模块）
+    'advanced_cache',
+    'unified_cache_strategy',
+    'static_cache_optimizer',
+    'enhanced_logger',
+    'log_level_manager',
+    'secure_config',
+    'environment_validator',
+    'input_validator',
+    'enhanced_input_validator',
+    'file_upload_validator',
+    'permission_validator'
 ]
