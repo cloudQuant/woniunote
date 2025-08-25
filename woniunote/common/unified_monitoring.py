@@ -23,8 +23,8 @@ class UnifiedMonitoringSystem:
         self.config = config or {}
         self.logger = get_logger('monitoring')
         
-        # 监控配置
-        self.collect_interval = self.config.get('collect_interval', 30)
+        # 监控配置 - 改为5秒间隔
+        self.collect_interval = self.config.get('collect_interval', 5)
         self.alert_thresholds = self.config.get('alert_thresholds', {
             'cpu': 80.0,
             'memory': 80.0,
@@ -44,7 +44,7 @@ class UnifiedMonitoringSystem:
         # 启动监控
         self.start_monitoring()
         
-        logger.info("统一监控系统初始化完成")
+        logger.info("统一监控系统初始化完成，收集间隔: 5秒")
     
     def start_monitoring(self):
         """启动监控"""
@@ -456,24 +456,36 @@ class UnifiedMonitoringSystem:
         except Exception as e:
             logger.error(f"记录计时器指标失败: {e}")
     
-    def record_request(self, method: str, endpoint: str, status_code: int, duration: float):
+    def record_request(self, method: str, endpoint: str, status_code: int, duration: float, **kwargs):
         """记录请求指标"""
         try:
             current_time = time.time()
             
-            # 记录请求计数
-            self.record_counter('requests.total', 1, {
+            # 提取额外参数
+            user_id = kwargs.get('user_id')
+            ip_address = kwargs.get('ip_address')
+            user_agent = kwargs.get('user_agent')
+            
+            # 构建标签
+            tags = {
                 'method': method,
                 'endpoint': endpoint,
                 'status_code': str(status_code)
-            })
+            }
+            
+            # 添加可选标签
+            if user_id:
+                tags['user_id'] = str(user_id)
+            if ip_address:
+                tags['ip_address'] = str(ip_address)
+            if user_agent:
+                tags['user_agent'] = str(user_agent)[:100]  # 限制长度
+            
+            # 记录请求计数
+            self.record_counter('requests.total', 1, tags)
             
             # 记录请求时长
-            self.record_timer('requests.duration', duration, {
-                'method': method,
-                'endpoint': endpoint,
-                'status_code': str(status_code)
-            })
+            self.record_timer('requests.duration', duration, tags)
             
             # 记录状态码分布
             self.record_counter(f'requests.status.{status_code}', 1, {
@@ -481,7 +493,15 @@ class UnifiedMonitoringSystem:
                 'endpoint': endpoint
             })
             
-            logger.debug(f"记录请求指标: {method} {endpoint} {status_code} {duration:.3f}s")
+            # 如果有用户ID，记录用户相关指标
+            if user_id:
+                self.record_counter('requests.by_user', 1, {
+                    'user_id': str(user_id),
+                    'method': method,
+                    'endpoint': endpoint
+                })
+            
+            logger.debug(f"记录请求指标: {method} {endpoint} {status_code} {duration:.3f}s user_id:{user_id}")
             
         except Exception as e:
             logger.error(f"记录请求指标失败: {e}")

@@ -496,8 +496,8 @@ def create_app(config_name='production'):
             if performance_monitor:
                 try:
                     performance_monitor.record_request(
-                        endpoint=request.endpoint or request.path,
                         method=request.method,
+                        endpoint=request.endpoint or request.path,
                         status_code=response.status_code,
                         duration=duration,
                         user_id=session.get('userid')
