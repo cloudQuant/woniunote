@@ -211,43 +211,141 @@ class UnifiedMonitoringSystem:
             logger.error(f"获取性能摘要失败: {e}")
             return {}
     
+    def get_system_overview(self) -> Dict[str, Any]:
+        """获取系统概览"""
+        try:
+            # 获取当前系统状态
+            current_time = time.time()
+            
+            # CPU使用率
+            cpu_percent = psutil.cpu_percent(interval=1)
+            
+            # 内存使用率
+            memory = psutil.virtual_memory()
+            memory_percent = memory.percent
+            
+            # 磁盘使用率
+            disk = psutil.disk_usage('/')
+            disk_percent = disk.percent
+            
+            # 网络使用情况
+            network = psutil.net_io_counters()
+            
+            # 系统负载
+            try:
+                load_avg = psutil.getloadavg()
+            except AttributeError:
+                load_avg = (0, 0, 0)
+            
+            return {
+                'timestamp': current_time,
+                'cpu': {
+                    'usage_percent': cpu_percent,
+                    'status': 'normal' if cpu_percent < 80 else 'warning' if cpu_percent < 95 else 'critical'
+                },
+                'memory': {
+                    'usage_percent': memory_percent,
+                    'total_gb': memory.total / (1024**3),
+                    'available_gb': memory.available / (1024**3),
+                    'status': 'normal' if memory_percent < 80 else 'warning' if memory_percent < 95 else 'critical'
+                },
+                'disk': {
+                    'usage_percent': disk_percent,
+                    'total_gb': disk.total / (1024**3),
+                    'free_gb': disk.free / (1024**3),
+                    'status': 'normal' if disk_percent < 85 else 'warning' if disk_percent < 95 else 'critical'
+                },
+                'network': {
+                    'bytes_sent': network.bytes_sent,
+                    'bytes_recv': network.bytes_recv,
+                    'packets_sent': network.packets_sent,
+                    'packets_recv': network.packets_recv
+                },
+                'load_average': {
+                    '1min': load_avg[0],
+                    '5min': load_avg[1],
+                    '15min': load_avg[2]
+                },
+                'alerts_count': len(self.alerts),
+                'system_status': 'healthy' if len(self.alerts) == 0 else 'warning' if len(self.alerts) < 3 else 'critical'
+            }
+            
+        except Exception as e:
+            logger.error(f"获取系统概览失败: {e}")
+            return {
+                'error': str(e),
+                'timestamp': time.time(),
+                'system_status': 'error'
+            }
+    
     def run_capacity_analysis(self) -> Dict[str, Any]:
         """运行容量分析"""
         try:
-            analysis = {
-                'timestamp': datetime.now().isoformat(),
-                'recommendations': [],
-                'warnings': []
+            current_time = time.time()
+            
+            # 分析CPU容量
+            cpu_history = list(self.metrics_history['cpu'])
+            if cpu_history:
+                cpu_avg = sum(item['value'] for item in cpu_history[-10:]) / len(cpu_history[-10:])
+                cpu_trend = 'stable'
+                if len(cpu_history) >= 20:
+                    recent_avg = sum(item['value'] for item in cpu_history[-10:]) / 10
+                    older_avg = sum(item['value'] for item in cpu_history[-20:-10]) / 10
+                    if recent_avg > older_avg * 1.2:
+                        cpu_trend = 'increasing'
+                    elif recent_avg < older_avg * 0.8:
+                        cpu_trend = 'decreasing'
+            else:
+                cpu_avg = 0
+                cpu_trend = 'unknown'
+            
+            # 分析内存容量
+            memory = psutil.virtual_memory()
+            memory_usage = memory.percent
+            memory_trend = 'stable'  # 简化版本，实际可以基于历史数据计算
+            
+            # 分析磁盘容量
+            disk = psutil.disk_usage('/')
+            disk_usage = disk.percent
+            disk_trend = 'stable'  # 简化版本，实际可以基于历史数据计算
+            
+            # 容量建议
+            recommendations = []
+            if cpu_avg > 80:
+                recommendations.append("CPU使用率较高，建议优化计算密集型任务或增加CPU资源")
+            if memory_usage > 85:
+                recommendations.append("内存使用率较高，建议检查内存泄漏或增加内存资源")
+            if disk_usage > 90:
+                recommendations.append("磁盘使用率较高，建议清理临时文件或增加存储空间")
+            
+            return {
+                'timestamp': current_time,
+                'cpu_analysis': {
+                    'current_usage': cpu_avg,
+                    'trend': cpu_trend,
+                    'capacity_status': 'adequate' if cpu_avg < 70 else 'limited' if cpu_avg < 90 else 'critical'
+                },
+                'memory_analysis': {
+                    'current_usage': memory_usage,
+                    'trend': memory_trend,
+                    'capacity_status': 'adequate' if memory_usage < 70 else 'limited' if memory_usage < 90 else 'critical'
+                },
+                'disk_analysis': {
+                    'current_usage': disk_usage,
+                    'trend': disk_trend,
+                    'capacity_status': 'adequate' if disk_usage < 80 else 'limited' if disk_usage < 95 else 'critical'
+                },
+                'recommendations': recommendations,
+                'overall_capacity': 'adequate' if len(recommendations) == 0 else 'limited' if len(recommendations) < 2 else 'critical'
             }
-            
-            current_metrics = self.system_status
-            
-            # CPU分析
-            cpu_percent = current_metrics.get('cpu_percent', 0)
-            if cpu_percent > 90:
-                analysis['warnings'].append("CPU使用率极高，建议检查进程或增加资源")
-            elif cpu_percent > 70:
-                analysis['recommendations'].append("CPU使用率较高，建议优化代码或增加资源")
-            
-            # 内存分析
-            memory_percent = current_metrics.get('memory_percent', 0)
-            if memory_percent > 90:
-                analysis['warnings'].append("内存使用率极高，建议检查内存泄漏或增加内存")
-            elif memory_percent > 80:
-                analysis['recommendations'].append("内存使用率较高，建议优化内存使用或增加内存")
-            
-            # 磁盘分析
-            disk_percent = current_metrics.get('disk_percent', 0)
-            if disk_percent > 95:
-                analysis['warnings'].append("磁盘空间严重不足，建议立即清理或扩容")
-            elif disk_percent > 85:
-                analysis['recommendations'].append("磁盘空间不足，建议定期清理或考虑扩容")
-            
-            return analysis
             
         except Exception as e:
             logger.error(f"容量分析失败: {e}")
-            return {'error': str(e)}
+            return {
+                'error': str(e),
+                'timestamp': time.time(),
+                'overall_capacity': 'error'
+            }
     
     def get_health_score(self) -> Dict[str, Any]:
         """获取健康评分"""

@@ -36,8 +36,8 @@ except ImportError:
     
     psutil = MockPsutil()
 
-from .simple_logger import get_simple_logger
-from .trace_id_manager import TraceIdManager
+from .unified_logging import get_logger
+from .unified_utils import TraceIdManager
 
 @dataclass
 class MemorySnapshot:
@@ -54,7 +54,7 @@ class MemoryLeakDetector:
     """内存泄露检测器"""
     
     def __init__(self, check_interval: int = 60, history_size: int = 100):
-        self.logger = get_simple_logger('memory_leak_detector')
+        self.logger = get_logger('memory_leak_detector')
         self.check_interval = check_interval
         self.history_size = history_size
         
@@ -340,7 +340,7 @@ class MemoryProfiler:
     
     def __init__(self, detector: MemoryLeakDetector):
         self.detector = detector
-        self.logger = get_simple_logger('memory_profiler')
+        self.logger = get_logger('memory_profiler')
     
     def profile_function(self, func: Callable, *args, **kwargs) -> Tuple[Any, Dict[str, Any]]:
         """分析函数的内存使用"""
@@ -376,7 +376,7 @@ def memory_profile(func):
         result, profile_data = profiler.profile_function(func, *args, **kwargs)
         
         # 记录分析结果
-        logger = get_simple_logger('memory_profile')
+        logger = get_logger('memory_profile')
         logger.info(f"函数 {func.__name__} 内存分析", {
             'function': func.__name__,
             **profile_data,
