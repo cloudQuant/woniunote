@@ -360,13 +360,27 @@ def create_app(config_name='production'):
         # 初始化数据库监控 (Phase 4新增)
         app_logger.info("初始化数据库监控系统...")
         try:
-            # 获取数据库引擎
-            if 'db' in globals() and hasattr(db, 'engine'):
-                init_database_monitoring(db.engine)
-            else:
-                app_logger.warning("数据库引擎不可用，跳过数据库监控初始化")
+            # 延迟初始化，等待应用上下文建立
+            def init_database_monitoring_delayed():
+                try:
+                    # 获取数据库引擎
+                    if 'db' in globals() and hasattr(db, 'engine'):
+                        init_database_monitoring(db.engine)
+                        app_logger.info("数据库监控系统初始化完成")
+                    else:
+                        app_logger.warning("数据库引擎不可用，跳过数据库监控初始化")
+                except Exception as e:
+                    app_logger.warning(f"数据库监控系统初始化失败: {e}")
+            
+            # 使用替代方案，在第一个请求时初始化
+            @app.before_request
+            def check_and_init_database_monitoring():
+                if not hasattr(app, '_database_monitoring_initialized'):
+                    init_database_monitoring_delayed()
+                    app._database_monitoring_initialized = True
+                    
         except Exception as e:
-            app_logger.warning(f"数据库监控系统初始化失败: {e}")
+            app_logger.warning(f"数据库监控系统初始化设置失败: {e}")
         
         # 初始化静态资源优化 (Phase 4新增)
         app_logger.info("初始化静态资源优化...")
@@ -387,13 +401,27 @@ def create_app(config_name='production'):
         # Phase 6 深度优化模块初始化
         app_logger.info("初始化高级数据库优化模块...")
         try:
-            # 获取数据库引擎
-            if 'db' in globals() and hasattr(db, 'engine'):
-                init_database_advanced_optimization(db.engine, slow_query_threshold=1.0)
-            else:
-                app_logger.warning("数据库引擎不可用，跳过数据库优化初始化")
+            # 延迟初始化，等待应用上下文建立
+            def init_database_advanced_optimization_delayed():
+                try:
+                    # 获取数据库引擎
+                    if 'db' in globals() and hasattr(db, 'engine'):
+                        init_database_advanced_optimization(db.engine, slow_query_threshold=1.0)
+                        app_logger.info("高级数据库优化模块初始化完成")
+                    else:
+                        app_logger.warning("数据库引擎不可用，跳过高级数据库优化初始化")
+                except Exception as e:
+                    app_logger.warning(f"高级数据库优化模块初始化失败: {e}")
+            
+            # 使用替代方案，在第一个请求时初始化
+            @app.before_request
+            def check_and_init_database_advanced_optimization():
+                if not hasattr(app, '_database_advanced_optimization_initialized'):
+                    init_database_advanced_optimization_delayed()
+                    app._database_advanced_optimization_initialized = True
+                    
         except Exception as e:
-            app_logger.warning(f"高级数据库优化模块初始化失败: {e}")
+            app_logger.warning(f"高级数据库优化模块初始化设置失败: {e}")
         
         app_logger.info("初始化API安全增强模块...")
         init_api_security_enhancement(app)

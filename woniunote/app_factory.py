@@ -192,8 +192,9 @@ class AppFactory:
                     pool_optimizer = init_database_monitoring(db.engine)
                     if pool_optimizer:
                         app_logger.info("数据库连接池优化初始化成功")
-                except ImportError:
-                    app_logger.warning("数据库连接池优化器不可用")
+                except Exception as e:
+                    app_logger.warning(f"数据库连接池优化初始化失败: {e}")
+                    # 不阻止应用启动，但记录错误
                     
             except Exception as e:
                 app_logger.error(f"数据库表创建失败: {str(e)}")
