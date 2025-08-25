@@ -73,11 +73,18 @@ class UnifiedMonitoringSystem:
                 # 检查告警
                 self._check_alerts()
                 
+                # 确保collect_interval是有效的整数值
+                interval = self.collect_interval
+                if interval is None or not isinstance(interval, (int, float)) or interval <= 0:
+                    interval = 30  # 默认30秒
+                    logger.warning(f"无效的收集间隔，使用默认值: {interval}秒")
+                
                 # 等待下次收集
-                time.sleep(self.collect_interval)
+                time.sleep(interval)
                 
             except Exception as e:
                 logger.error(f"监控循环异常: {e}")
+                # 使用安全的默认间隔
                 time.sleep(5)
     
     def _collect_system_metrics(self):
@@ -139,20 +146,36 @@ class UnifiedMonitoringSystem:
         try:
             current_metrics = self.system_status
             
+            # 确保告警阈值是有效的数值
+            cpu_threshold = self.alert_thresholds.get('cpu', 80.0)
+            memory_threshold = self.alert_thresholds.get('memory', 80.0)
+            disk_threshold = self.alert_thresholds.get('disk', 85.0)
+            
+            # 验证阈值类型
+            if not isinstance(cpu_threshold, (int, float)) or cpu_threshold <= 0:
+                cpu_threshold = 80.0
+            if not isinstance(memory_threshold, (int, float)) or memory_threshold <= 0:
+                memory_threshold = 80.0
+            if not isinstance(disk_threshold, (int, float)) or disk_threshold <= 0:
+                disk_threshold = 85.0
+            
             # CPU告警
-            if current_metrics.get('cpu_percent', 0) > self.alert_thresholds['cpu']:
+            cpu_percent = current_metrics.get('cpu_percent', 0)
+            if isinstance(cpu_percent, (int, float)) and cpu_percent > cpu_threshold:
                 self._create_alert('CPU', 'high', 
-                                 f"CPU使用率过高: {current_metrics['cpu_percent']:.1f}%")
+                                 f"CPU使用率过高: {cpu_percent:.1f}%")
             
             # 内存告警
-            if current_metrics.get('memory_percent', 0) > self.alert_thresholds['memory']:
+            memory_percent = current_metrics.get('memory_percent', 0)
+            if isinstance(memory_percent, (int, float)) and memory_percent > memory_threshold:
                 self._create_alert('Memory', 'high',
-                                 f"内存使用率过高: {current_metrics['memory_percent']:.1f}%")
+                                 f"内存使用率过高: {memory_percent:.1f}%")
             
             # 磁盘告警
-            if current_metrics.get('disk_percent', 0) > self.alert_thresholds['disk']:
+            disk_percent = current_metrics.get('disk_percent', 0)
+            if isinstance(disk_percent, (int, float)) and disk_percent > disk_threshold:
                 self._create_alert('Disk', 'high',
-                                 f"磁盘使用率过高: {current_metrics['disk_percent']:.1f}%")
+                                 f"磁盘使用率过高: {disk_percent:.1f}%")
             
         except Exception as e:
             logger.error(f"检查告警失败: {e}")
@@ -389,6 +412,108 @@ class UnifiedMonitoringSystem:
             
         except Exception as e:
             logger.error(f"计算健康评分失败: {e}")
+            return {'error': str(e)}
+
+    def record_counter(self, metric_name: str, value: int = 1, tags: Dict[str, str] = None):
+        """记录计数器指标"""
+        try:
+            current_time = time.time()
+            metric_key = f"{metric_name}_{hash(str(tags)) if tags else 'default'}"
+            
+            if metric_key not in self.metrics_history:
+                self.metrics_history[metric_key] = deque(maxlen=1000)
+            
+            self.metrics_history[metric_key].append({
+                'timestamp': current_time,
+                'value': value,
+                'tags': tags or {},
+                'type': 'counter'
+            })
+            
+            logger.debug(f"记录计数器指标: {metric_name} = {value}")
+            
+        except Exception as e:
+            logger.error(f"记录计数器指标失败: {e}")
+    
+    def record_timer(self, metric_name: str, duration: float, tags: Dict[str, str] = None):
+        """记录计时器指标"""
+        try:
+            current_time = time.time()
+            metric_key = f"{metric_name}_{hash(str(tags)) if tags else 'default'}"
+            
+            if metric_key not in self.metrics_history:
+                self.metrics_history[metric_key] = deque(maxlen=1000)
+            
+            self.metrics_history[metric_key].append({
+                'timestamp': current_time,
+                'value': duration,
+                'tags': tags or {},
+                'type': 'timer'
+            })
+            
+            logger.debug(f"记录计时器指标: {metric_name} = {duration:.3f}s")
+            
+        except Exception as e:
+            logger.error(f"记录计时器指标失败: {e}")
+    
+    def record_request(self, method: str, endpoint: str, status_code: int, duration: float):
+        """记录请求指标"""
+        try:
+            current_time = time.time()
+            
+            # 记录请求计数
+            self.record_counter('requests.total', 1, {
+                'method': method,
+                'endpoint': endpoint,
+                'status_code': str(status_code)
+            })
+            
+            # 记录请求时长
+            self.record_timer('requests.duration', duration, {
+                'method': method,
+                'endpoint': endpoint,
+                'status_code': str(status_code)
+            })
+            
+            # 记录状态码分布
+            self.record_counter(f'requests.status.{status_code}', 1, {
+                'method': method,
+                'endpoint': endpoint
+            })
+            
+            logger.debug(f"记录请求指标: {method} {endpoint} {status_code} {duration:.3f}s")
+            
+        except Exception as e:
+            logger.error(f"记录请求指标失败: {e}")
+    
+    def get_metrics_summary(self) -> Dict[str, Any]:
+        """获取指标摘要"""
+        try:
+            summary = {
+                'timestamp': time.time(),
+                'total_metrics': len(self.metrics_history),
+                'metrics_by_type': defaultdict(int),
+                'recent_metrics': {}
+            }
+            
+            for metric_key, history in self.metrics_history.items():
+                if history:
+                    latest = history[-1]
+                    metric_type = latest.get('type', 'unknown')
+                    summary['metrics_by_type'][metric_type] += 1
+                    
+                    # 记录最近的指标值
+                    if len(summary['recent_metrics']) < 10:  # 限制数量
+                        summary['recent_metrics'][metric_key] = {
+                            'value': latest['value'],
+                            'timestamp': latest['timestamp'],
+                            'type': metric_type
+                        }
+            
+            return summary
+            
+        except Exception as e:
+            logger.error(f"获取指标摘要失败: {e}")
             return {'error': str(e)}
 
 # ==================== 全局实例和工厂函数 ====================
