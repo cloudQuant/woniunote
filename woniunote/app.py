@@ -406,7 +406,9 @@ def create_app(config_name='production'):
                 try:
                     # 获取数据库引擎
                     if 'db' in globals() and hasattr(db, 'engine'):
-                        init_database_advanced_optimization(db.engine, slow_query_threshold=1.0)
+                        # 将slow_query_threshold作为配置传递
+                        config = {'slow_query_threshold': 1.0}
+                        init_database_advanced_optimization(db.engine, config)
                         app_logger.info("高级数据库优化模块初始化完成")
                     else:
                         app_logger.warning("数据库引擎不可用，跳过高级数据库优化初始化")
