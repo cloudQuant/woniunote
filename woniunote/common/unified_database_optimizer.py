@@ -723,6 +723,97 @@ class UnifiedDatabaseOptimizer:
             'performance': self.performance_monitor.get_performance_report()
         }
     
+    def get_optimization_report(self) -> Dict[str, Any]:
+        """获取优化报告（向后兼容）"""
+        try:
+            # 获取基础性能报告
+            performance_report = self.get_performance_report()
+            
+            # 添加优化建议
+            optimization_suggestions = []
+            
+            # 连接池优化建议
+            pool_status = performance_report.get('connection_pool', {})
+            if isinstance(pool_status, ConnectionPoolStats):
+                # 如果是ConnectionPoolStats对象，直接访问属性
+                usage_rate = pool_status.usage_rate
+                if usage_rate > 0.8:
+                    optimization_suggestions.append({
+                        'type': 'connection_pool',
+                        'priority': 'high',
+                        'message': '连接池使用率过高，建议增加连接池大小或优化连接管理',
+                        'current_value': f"{usage_rate:.1%}",
+                        'recommended_action': '调整SQLALCHEMY_POOL_SIZE配置'
+                    })
+            elif isinstance(pool_status, dict):
+                # 如果是字典，使用get方法
+                usage_rate = pool_status.get('usage_rate', 0)
+                if usage_rate > 0.8:
+                    optimization_suggestions.append({
+                        'type': 'connection_pool',
+                        'priority': 'high',
+                        'message': '连接池使用率过高，建议增加连接池大小或优化连接管理',
+                        'current_value': f"{usage_rate:.1%}",
+                        'recommended_action': '调整SQLALCHEMY_POOL_SIZE配置'
+                    })
+            
+            # 查询缓存优化建议
+            cache_stats = performance_report.get('query_cache', {})
+            hit_rate = cache_stats.get('hit_rate', 0) if isinstance(cache_stats, dict) else 0
+            if hit_rate < 0.5:
+                optimization_suggestions.append({
+                    'type': 'query_cache',
+                    'priority': 'medium',
+                    'message': '查询缓存命中率较低，建议优化缓存策略',
+                    'current_value': f"{hit_rate:.1%}",
+                    'recommended_action': '检查缓存配置和查询模式'
+                })
+            
+            # 慢查询优化建议
+            slow_queries = performance_report.get('slow_queries', {})
+            if isinstance(slow_queries, dict):
+                total_count = slow_queries.get('total_count', 0)
+                if total_count > 10:
+                    optimization_suggestions.append({
+                        'type': 'slow_queries',
+                        'priority': 'high',
+                        'message': '慢查询数量较多，建议优化查询语句和索引',
+                        'current_value': total_count,
+                        'recommended_action': '分析慢查询日志，优化相关SQL语句'
+                    })
+            
+            # 索引优化建议
+            try:
+                # 获取一些表的索引分析
+                index_suggestions = []
+                # 这里可以添加具体的索引分析逻辑
+                # 暂时提供通用建议
+                index_suggestions.append({
+                    'type': 'index',
+                    'priority': 'medium',
+                    'message': '定期检查表索引使用情况',
+                    'recommended_action': '使用ANALYZE TABLE命令分析表统计信息'
+                })
+            except Exception as e:
+                index_suggestions = [{'error': f'索引分析失败: {str(e)}'}]
+            
+            return {
+                'timestamp': datetime.now().isoformat(),
+                'performance_summary': performance_report,
+                'optimization_suggestions': optimization_suggestions,
+                'index_suggestions': index_suggestions,
+                'overall_health': 'good' if len(optimization_suggestions) == 0 else 'needs_attention',
+                'priority_actions': [s for s in optimization_suggestions if s.get('priority') == 'high']
+            }
+            
+        except Exception as e:
+            logger.error(f"获取优化报告失败: {e}")
+            return {
+                'error': str(e),
+                'timestamp': datetime.now().isoformat(),
+                'overall_health': 'error'
+            }
+    
     def optimize_connection_pool(self) -> Dict[str, Any]:
         """优化连接池"""
         return self.connection_pool.optimize_pool()
