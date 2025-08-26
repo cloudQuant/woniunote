@@ -11,6 +11,7 @@ from typing import Dict, Any, List, Optional
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
 from functools import wraps
+import os # Added for path validation
 
 from .unified_logging import get_logger
 
@@ -20,31 +21,43 @@ class UnifiedMonitoringSystem:
     """统一的监控系统"""
     
     def __init__(self, config: Dict[str, Any] = None):
+        """初始化统一监控系统"""
+        self.logger = get_logger('unified_monitoring')
         self.config = config or {}
-        self.logger = get_logger('monitoring')
         
-        # 监控配置 - 改为5秒间隔
-        self.collect_interval = self.config.get('collect_interval', 5)
-        self.alert_thresholds = self.config.get('alert_thresholds', {
-            'cpu': 80.0,
-            'memory': 80.0,
-            'disk': 85.0,
-            'network': 1000000  # 1MB/s
-        })
+        # 检测操作系统
+        import platform
+        self.os_type = platform.system().lower()
+        self.logger.info(f"检测到操作系统: {self.os_type}")
         
-        # 数据存储
+        # 根据操作系统调整告警阈值
+        if self.os_type == 'darwin':  # macOS
+            self.alert_thresholds = {
+                'cpu': self.config.get('cpu_threshold', 85.0),      # macOS CPU 阈值稍高
+                'memory': self.config.get('memory_threshold', 90.0), # macOS 内存阈值更高，因为会积极使用内存
+                'disk': self.config.get('disk_threshold', 85.0),     # 磁盘阈值保持不变
+                'network': self.config.get('network_threshold', 80.0)
+            }
+        else:  # Linux/Windows
+            self.alert_thresholds = {
+                'cpu': self.config.get('cpu_threshold', 80.0),
+                'memory': self.config.get('memory_threshold', 80.0),
+                'disk': self.config.get('disk_threshold', 85.0),
+                'network': self.config.get('network_threshold', 80.0)
+            }
+        
+        # 监控配置
+        self.collect_interval = self.config.get('collect_interval', 5) # Changed from 30 to 5
         self.metrics_history = defaultdict(lambda: deque(maxlen=1000))
         self.alerts = deque(maxlen=100)
         self.system_status = {}
         
-        # 监控线程
-        self._monitoring_thread = None
-        self._stop_monitoring = False
+        # 启动监控线程
+        self._monitoring_enabled = True
+        self._monitor_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
+        self._monitor_thread.start()
         
-        # 启动监控
-        self.start_monitoring()
-        
-        logger.info("统一监控系统初始化完成，收集间隔: 5秒")
+        self.logger.info("统一监控系统初始化完成，收集间隔: 5秒")
     
     def start_monitoring(self):
         """启动监控"""
@@ -64,28 +77,22 @@ class UnifiedMonitoringSystem:
         logger.info("监控系统已停止")
     
     def _monitoring_loop(self):
-        """监控主循环"""
-        while not self._stop_monitoring:
+        """监控循环"""
+        while self._monitoring_enabled:
             try:
-                # 收集系统指标
                 self._collect_system_metrics()
-                
-                # 检查告警
                 self._check_alerts()
                 
-                # 确保collect_interval是有效的整数值
+                # 确保收集间隔是有效的整数值
                 interval = self.collect_interval
                 if interval is None or not isinstance(interval, (int, float)) or interval <= 0:
                     interval = 30  # 默认30秒
                     logger.warning(f"无效的收集间隔，使用默认值: {interval}秒")
-                
-                # 等待下次收集
                 time.sleep(interval)
                 
             except Exception as e:
                 logger.error(f"监控循环异常: {e}")
-                # 使用安全的默认间隔
-                time.sleep(5)
+                time.sleep(5)  # 出错时等待5秒再继续
     
     def _collect_system_metrics(self):
         """收集系统指标"""
@@ -93,7 +100,7 @@ class UnifiedMonitoringSystem:
             current_time = time.time()
             
             # CPU使用率
-            cpu_percent = psutil.cpu_percent(interval=1)
+            cpu_percent = psutil.cpu_percent(interval=0.1)
             self.metrics_history['cpu'].append({
                 'timestamp': current_time,
                 'value': cpu_percent
@@ -109,14 +116,43 @@ class UnifiedMonitoringSystem:
                 'total': memory.total
             })
             
-            # 磁盘使用率
-            disk = psutil.disk_usage('/')
-            disk_percent = (disk.total - disk.free) / disk.total * 100
+            # 磁盘使用率 - 修复路径问题
+            disk_percent = 0
+            disk_total = 0
+            disk_free = 0
+            
+            # 尝试多个可能的磁盘路径
+            disk_paths = ['/', '/System/Volumes/Data', '/Users']
+            for path in disk_paths:
+                try:
+                    if os.path.exists(path):
+                        disk = psutil.disk_usage(path)
+                        # 优先使用根目录，除非其他路径使用率明显更高且合理
+                        if path == '/' or (disk.percent > disk_percent and disk.percent < 95):
+                            disk_percent = disk.percent
+                            disk_total = disk.total
+                            disk_free = disk.free
+                            break
+                except Exception as e:
+                    continue
+            
+            # 如果没有找到有效的磁盘路径，使用根目录
+            if disk_percent == 0:
+                try:
+                    disk = psutil.disk_usage('/')
+                    disk_percent = disk.percent
+                    disk_total = disk.total
+                    disk_free = disk.free
+                except Exception as e:
+                    disk_percent = 0
+                    disk_total = 0
+                    disk_free = 0
+            
             self.metrics_history['disk'].append({
                 'timestamp': current_time,
                 'value': disk_percent,
-                'free': disk.free,
-                'total': disk.total
+                'free': disk_free,
+                'total': disk_total
             })
             
             # 网络使用率
@@ -248,8 +284,36 @@ class UnifiedMonitoringSystem:
             memory_percent = memory.percent
             
             # 磁盘使用率
-            disk = psutil.disk_usage('/')
-            disk_percent = disk.percent
+            disk_percent = 0
+            disk_total = 0
+            disk_free = 0
+            
+            # 尝试多个可能的磁盘路径
+            disk_paths = ['/', '/System/Volumes/Data', '/Users']
+            for path in disk_paths:
+                try:
+                    if os.path.exists(path):
+                        disk = psutil.disk_usage(path)
+                        # 优先使用根目录，除非其他路径使用率明显更高且合理
+                        if path == '/' or (disk.percent > disk_percent and disk.percent < 95):
+                            disk_percent = disk.percent
+                            disk_total = disk.total
+                            disk_free = disk.free
+                            break
+                except Exception as e:
+                    continue
+            
+            # 如果没有找到有效的磁盘路径，使用根目录
+            if disk_percent == 0:
+                try:
+                    disk = psutil.disk_usage('/')
+                    disk_percent = disk.percent
+                    disk_total = disk.total
+                    disk_free = disk.free
+                except Exception as e:
+                    disk_percent = 0
+                    disk_total = 0
+                    disk_free = 0
             
             # 网络使用情况
             network = psutil.net_io_counters()
