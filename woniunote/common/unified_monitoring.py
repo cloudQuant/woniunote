@@ -106,14 +106,66 @@ class UnifiedMonitoringSystem:
                 'value': cpu_percent
             })
             
-            # 内存使用率
+            # 内存使用率 - 根据操作系统使用不同的计算方式
             memory = psutil.virtual_memory()
-            memory_percent = memory.percent
+            if self.os_type == 'darwin':  # macOS
+                # macOS 上，使用更准确的计算方式，类似 htop 的显示
+                # 计算实际被应用程序使用的内存（不包括缓存）
+                try:
+                    # 使用 vm_stat 命令获取更详细的内存信息
+                    import subprocess
+                    result = subprocess.run(['vm_stat'], capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        vm_stats = {}
+                        for line in result.stdout.split('\n'):
+                            if ':' in line:
+                                key, value = line.split(':', 1)
+                                key = key.strip()
+                                value = value.strip().rstrip('.')
+                                if value.isdigit():
+                                    vm_stats[key] = int(value)
+                        
+                        if 'Pages active' in vm_stats and 'Pages wired down' in vm_stats:
+                            # 计算实际使用的内存（活动页面 + 固定页面）
+                            page_size = 16384  # 16KB
+                            active_pages = vm_stats.get('Pages active', 0)
+                            wired_pages = vm_stats.get('Pages wired down', 0)
+                            used_memory = (active_pages + wired_pages) * page_size
+                            memory_percent = (used_memory / memory.total) * 100
+                        else:
+                            # 回退到 available 计算
+                            memory_percent = (memory.total - memory.available) / memory.total * 100
+                    else:
+                        # 回退到 available 计算
+                        memory_percent = (memory.total - memory.available) / memory.total * 100
+                        
+                except Exception as e:
+                    # 回退到 available 计算
+                    memory_percent = (memory.total - memory.available) / memory.total * 100
+                
+                memory_used_gb = (memory.total - memory.available) / (1024**3)
+                memory_available_gb = memory.available / (1024**3)
+                memory_total_gb = memory.total / (1024**3)
+                
+                # 记录详细的内存信息用于调试
+                self.logger.debug(f"macOS 内存计算: 总内存={memory_total_gb:.1f}GB, 已用={memory_used_gb:.1f}GB, 可用={memory_available_gb:.1f}GB, 使用率={memory_percent:.1f}%")
+                
+            else:  # Linux/Windows
+                # 其他系统使用标准的 percent 计算
+                memory_percent = memory.percent
+                memory_used_gb = memory.used / (1024**3)
+                memory_available_gb = memory.available / (1024**3)
+                memory_total_gb = memory.total / (1024**3)
+            
             self.metrics_history['memory'].append({
                 'timestamp': current_time,
                 'value': memory_percent,
                 'available': memory.available,
-                'total': memory.total
+                'total': memory.total,
+                'used_gb': memory_used_gb,
+                'available_gb': memory_available_gb,
+                'total_gb': memory_total_gb,
+                'os_type': self.os_type
             })
             
             # 磁盘使用率 - 修复路径问题
@@ -281,7 +333,50 @@ class UnifiedMonitoringSystem:
             
             # 内存使用率
             memory = psutil.virtual_memory()
-            memory_percent = memory.percent
+            if self.os_type == 'darwin':  # macOS
+                # macOS 上，使用更准确的计算方式，类似 htop 的显示
+                # 计算实际被应用程序使用的内存（不包括缓存）
+                try:
+                    # 使用 vm_stat 命令获取更详细的内存信息
+                    import subprocess
+                    result = subprocess.run(['vm_stat'], capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        vm_stats = {}
+                        for line in result.stdout.split('\n'):
+                            if ':' in line:
+                                key, value = line.split(':', 1)
+                                key = key.strip()
+                                value = value.strip().rstrip('.')
+                                if value.isdigit():
+                                    vm_stats[key] = int(value)
+                        
+                        if 'Pages active' in vm_stats and 'Pages wired down' in vm_stats:
+                            # 计算实际使用的内存（活动页面 + 固定页面）
+                            page_size = 16384  # 16KB
+                            active_pages = vm_stats.get('Pages active', 0)
+                            wired_pages = vm_stats.get('Pages wired down', 0)
+                            used_memory = (active_pages + wired_pages) * page_size
+                            memory_percent = (used_memory / memory.total) * 100
+                        else:
+                            # 回退到 available 计算
+                            memory_percent = (memory.total - memory.available) / memory.total * 100
+                    else:
+                        # 回退到 available 计算
+                        memory_percent = (memory.total - memory.available) / memory.total * 100
+                        
+                except Exception as e:
+                    # 回退到 available 计算
+                    memory_percent = (memory.total - memory.available) / memory.total * 100
+                
+                memory_used_gb = (memory.total - memory.available) / (1024**3)
+                memory_available_gb = memory.available / (1024**3)
+                memory_total_gb = memory.total / (1024**3)
+            else:  # Linux/Windows
+                # 其他系统使用标准的 percent 计算
+                memory_percent = memory.percent
+                memory_used_gb = memory.used / (1024**3)
+                memory_available_gb = memory.available / (1024**3)
+                memory_total_gb = memory.total / (1024**3)
             
             # 磁盘使用率
             disk_percent = 0
@@ -332,14 +427,14 @@ class UnifiedMonitoringSystem:
                 },
                 'memory': {
                     'usage_percent': memory_percent,
-                    'total_gb': memory.total / (1024**3),
-                    'available_gb': memory.available / (1024**3),
+                    'total_gb': memory_total_gb,
+                    'available_gb': memory_available_gb,
                     'status': 'normal' if memory_percent < 80 else 'warning' if memory_percent < 95 else 'critical'
                 },
                 'disk': {
                     'usage_percent': disk_percent,
-                    'total_gb': disk.total / (1024**3),
-                    'free_gb': disk.free / (1024**3),
+                    'total_gb': disk_total / (1024**3),
+                    'free_gb': disk_free / (1024**3),
                     'status': 'normal' if disk_percent < 85 else 'warning' if disk_percent < 95 else 'critical'
                 },
                 'network': {
