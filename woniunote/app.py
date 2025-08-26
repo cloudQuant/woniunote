@@ -1122,9 +1122,24 @@ def create_app(config_name='production'):
     def favicon():
         """Favicon请求处理"""
         try:
-            return app.send_static_file('favicon.ico')
+            # 尝试从多个可能的静态目录获取favicon
+            import os
+            static_paths = [
+                os.path.join(app.static_folder, 'favicon.ico'),  # resource/favicon.ico
+                os.path.join('woniunote', 'static', 'favicon.ico'),  # woniunote/static/favicon.ico
+                os.path.join('static', 'favicon.ico')  # static/favicon.ico
+            ]
+            
+            for path in static_paths:
+                if os.path.exists(path):
+                    return app.send_file(path, mimetype='image/x-icon')
+            
+            # 如果文件不存在，返回空的204响应
+            app_logger.warning("Favicon文件不存在，返回空响应")
+            return '', 204
+            
         except Exception as e:
-            app_logger.warning(f"Favicon not found: {str(e)}")
+            app_logger.warning(f"Favicon处理失败: {str(e)}")
             return '', 204
 
     @app.route('/health')

@@ -764,7 +764,7 @@ def all_static():
 
 @index.route('/system/status')
 def system_status():
-    """系统状态监控页面 - 增强版：集成所有监控模块数据，需要用户登录"""
+    """系统状态监控页面 - 优化版：减少加载时间，添加超时控制"""
     # 检查用户是否已登录 - 使用正确的session键
     if not session.get('main_islogin') or session.get('main_islogin') != 'true':
         return '''
@@ -802,225 +802,109 @@ def system_status():
     
     try:
         import psutil
-        import subprocess
+        import time
+        start_time = time.time()
+        
+        # 基础系统信息 - 快速获取
         memory = psutil.virtual_memory()
-        cpu_percent = psutil.cpu_percent(interval=1)
+        cpu_percent = psutil.cpu_percent(interval=0.1)  # 减少等待时间
         
-        # 修复：使用更准确的磁盘使用率计算
+        # 优化的磁盘使用率计算
         disk_percent = 0
-        disk_method = "unknown"
-        
-        # 方法1：尝试使用 df 命令获取根目录分区的使用率
         try:
-            result = subprocess.run(['df', '-h', '/'], capture_output=True, text=True)
-            if result.returncode == 0:
-                lines = result.stdout.strip().split('\n')
-                if len(lines) >= 2:
-                    parts = lines[1].split()
-                    if len(parts) >= 5:
-                        capacity_str = parts[4].rstrip('%')
-                        try:
-                            disk_percent = float(capacity_str)
-                            disk_method = "df_command"
-                        except ValueError:
-                            pass
-        except Exception as e:
-            pass
+            disk = psutil.disk_usage('/')
+            disk_percent = disk.percent
+        except Exception:
+            disk_percent = 0
         
-        # 方法2：如果 df 命令失败，使用 psutil 但进行保守估计
-        if disk_method == "unknown":
-            try:
-                disk = psutil.disk_usage('/')
-                original_percent = ((disk.total - disk.free) / disk.total) * 100
-                
-                # 如果使用率过高（>80%），可能是整个磁盘而不是分区
-                if original_percent > 80:
-                    # 假设根目录分区使用率约为整个磁盘的1/6（基于典型macOS分区）
-                    estimated_root_percent = original_percent / 6
-                    disk_percent = min(estimated_root_percent, 50)  # 最大不超过50%
-                    disk_method = "psutil_conservative"
-                else:
-                    disk_percent = original_percent
-                    disk_method = "psutil_direct"
-            except Exception as e:
-                disk_percent = 0
-                disk_method = "failed"
-        
-        # 尝试获取各种监控模块的数据
+        # 简化的监控数据获取 - 只获取核心数据
         monitoring_data = {}
         
+        # 1. 统一监控系统数据 - 核心数据
         try:
-            # 1. 性能监控数据
-            from woniunote.common.unified_monitoring import get_performance_monitor
-            perf_monitor = get_performance_monitor()
-            if perf_monitor:
-                monitoring_data['performance'] = perf_monitor.get_performance_summary()
+            from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+            monitor = UnifiedMonitoringSystem()
+            overview = monitor.get_system_overview()
+            monitoring_data['system_overview'] = overview
+            
+            # 检查是否超时
+            if time.time() - start_time > 1.0:  # 1秒超时
+                monitoring_data['note'] = '部分数据因超时未加载'
+                return render_template('system_status.html', 
+                                     monitoring_data=monitoring_data,
+                                     cpu_percent=cpu_percent,
+                                     memory_percent=memory.percent,
+                                     disk_percent=disk_percent)
         except Exception as e:
-            monitoring_data['performance'] = {'error': str(e)}
+            monitoring_data['system_overview'] = {'error': str(e)}
         
+        # 2. 内存监控数据 - 简化版本
         try:
-            # 2. 性能增强管理器数据
-            from woniunote.common.performance_enhanced import get_performance_manager
-            perf_manager = get_performance_manager()
-            if perf_manager:
-                monitoring_data['performance_enhanced'] = perf_manager.get_comprehensive_report()
-        except Exception as e:
-            monitoring_data['performance_enhanced'] = {'error': str(e)}
-        
-        try:
-            # 3. 数据库优化器数据
-            from woniunote.common.unified_database_optimizer import get_database_optimizer
-            db_optimizer = get_database_optimizer()
-            if db_optimizer:
-                monitoring_data['database'] = db_optimizer.get_optimization_report()
-        except Exception as e:
-            monitoring_data['database'] = {'error': str(e)}
-        
-        try:
-            # 4. 内存监控数据
             from woniunote.common.memory_monitor import get_memory_detector
             memory_detector = get_memory_detector()
             if memory_detector:
-                # 尝试获取内存报告，如果失败则获取基本信息
-                try:
-                    memory_report = memory_detector.get_memory_report()
-                    monitoring_data['memory'] = memory_report
-                except Exception as e:
-                    # 如果获取报告失败，至少提供一些基本信息
-                    import gc
-                    import psutil
-                    try:
-                        process = psutil.Process()
-                        memory_info = process.memory_info()
-                        monitoring_data['memory'] = {
-                            'current_memory': {
-                                'process_memory_mb': memory_info.rss / (1024 * 1024),
-                                'python_objects': len(gc.get_objects()),
-                                'timestamp': datetime.now().isoformat()
-                            },
-                            'note': '使用备用内存信息'
-                        }
-                    except Exception:
-                        monitoring_data['memory'] = {'error': '无法获取内存信息'}
+                memory_report = memory_detector.get_memory_report()
+                monitoring_data['memory'] = memory_report
             else:
                 monitoring_data['memory'] = {'error': '内存检测器未初始化'}
         except Exception as e:
             monitoring_data['memory'] = {'error': str(e)}
         
+        # 3. 数据库优化数据 - 简化版本
         try:
-            # 5. 智能运维管理器数据
-            from woniunote.common.unified_monitoring import get_ops_manager
-            ops_manager = get_ops_manager()
-            if ops_manager:
-                monitoring_data['ops'] = {
-                    'system_overview': ops_manager.get_system_overview(),
-                    'capacity_analysis': ops_manager.run_capacity_analysis()
+            from woniunote.common.unified_database_optimizer import get_database_optimizer
+            db_optimizer = get_database_optimizer()
+            if db_optimizer:
+                # 只获取基本报告，不获取详细分析
+                basic_report = {
+                    'timestamp': datetime.now().isoformat(),
+                    'status': 'available'
                 }
+                monitoring_data['database'] = basic_report
+            else:
+                monitoring_data['database'] = {'error': '数据库优化器未初始化'}
         except Exception as e:
-            monitoring_data['ops'] = {'error': str(e)}
+            monitoring_data['database'] = {'error': str(e)}
         
-        # 生成HTML报告
-        html_content = f'''
+        # 检查总耗时
+        total_time = time.time() - start_time
+        if total_time > 2.0:  # 2秒总超时
+            monitoring_data['performance_warning'] = f'页面加载时间: {total_time:.2f}秒'
+        
+        return render_template('system_status.html', 
+                             monitoring_data=monitoring_data,
+                             cpu_percent=cpu_percent,
+                             memory_percent=memory.percent,
+                             disk_percent=disk_percent)
+                             
+    except Exception as e:
+        # 返回简化的错误页面
+        return f'''
         <!DOCTYPE html>
         <html>
         <head>
-            <title>系统状态监控 - 增强版</title>
+            <title>系统状态</title>
             <style>
-                body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }}
-                .container {{ max-width: 1200px; margin: 0 auto; }}
-                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }}
-                .metric-card {{ background: white; border-radius: 8px; padding: 20px; margin: 10px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-                .metric-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0; }}
-                .metric-value {{ font-size: 2em; font-weight: bold; color: #667eea; }}
-                .metric-label {{ color: #666; margin-bottom: 10px; }}
-                .status-good {{ color: #28a745; }}
-                .status-warning {{ color: #ffc107; }}
-                .status-error {{ color: #dc3545; }}
-                .section-title {{ color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; margin: 20px 0; }}
-                .data-table {{ width: 100%; border-collapse: collapse; margin: 10px 0; }}
-                .data-table th, .data-table td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-                .data-table th {{ background-color: #f8f9fa; }}
-                .refresh-btn {{ background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 10px 0; }}
-                .refresh-btn:hover {{ background: #5a6fd8; }}
-                .error-msg {{ color: #dc3545; background: #f8d7da; padding: 10px; border-radius: 5px; margin: 10px 0; }}
+                body {{ font-family: Arial, sans-serif; text-align: center; margin-top: 100px; background: #f8f9fa; }}
+                .error-container {{ background: #fff; border: 1px solid #e9ecef; border-radius: 10px; padding: 30px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+                .error-title {{ color: #dc3545; font-size: 24px; margin-bottom: 20px; font-weight: bold; }}
+                .error-message {{ color: #6c757d; margin-bottom: 30px; font-size: 16px; line-height: 1.5; }}
+                .back-btn {{ background: #6c757d; color: white; padding: 12px 30px; border: none; border-radius: 25px; text-decoration: none; display: inline-block; font-size: 16px; font-weight: 500; transition: all 0.3s ease; }}
+                .back-btn:hover {{ background: #5a6268; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); color: white; }}
             </style>
         </head>
         <body>
-            <div class="container">
-                <div class="header">
-                    <h1>🚀 系统状态监控 - 增强版</h1>
-                    <p>实时系统性能监控和优化状态</p>
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <button class="refresh-btn" onclick="location.reload()">🔄 刷新数据</button>
-                        <a href="/ucenter" class="refresh-btn" style="text-decoration: none; display: inline-block; text-align: center; line-height: 38px;">🏠 返回用户中心</a>
-                    </div>
-                    <div style="margin-top: 10px; font-size: 14px; opacity: 0.9;">
-                        👤 当前用户: {session.get('main_username', '未知')} | 🏷️ 角色: {session.get('main_role', '未知')}
-                    </div>
+            <div class="error-container">
+                <div class="error-title">⚠️ 系统状态加载失败</div>
+                <div class="error-message">
+                    无法加载系统状态信息<br>
+                    错误: {str(e)[:100]}
                 </div>
-                
-                <!-- 基础系统指标 -->
-                <div class="metric-grid">
-                    <div class="metric-card">
-                        <div class="metric-label">CPU 使用率</div>
-                        <div class="metric-value {get_status_class(cpu_percent, 80, 95)}">{cpu_percent:.1f}%</div>
-                        <small>实时监控，每秒采样</small>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-label">内存使用率</div>
-                        <div class="metric-value {get_status_class((memory.used / memory.total) * 100, 85, 95)}">{(memory.used / memory.total) * 100:.1f}%</div>
-                        <small>总内存: {memory.total / (1024**3):.1f} GB</small>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-label">磁盘使用率</div>
-                        <div class="metric-value {get_status_class(disk_percent, 85, 95)}">{disk_percent:.1f}%</div>
-                        <small>方法: {disk_method} | 已修复</small>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-label">系统时间</div>
-                        <div class="metric-value">{datetime.now().strftime('%H:%M:%S')}</div>
-                        <small>{datetime.now().strftime('%Y-%m-%d')}</small>
-                    </div>
-                </div>
-                
-                <!-- 智能运维管理 -->
-                {generate_ops_section(monitoring_data.get('ops', {}))}
-                
-                <!-- 性能监控 -->
-                {generate_performance_section(monitoring_data.get('performance', {}))}
-                
-                <!-- 性能增强 -->
-                {generate_performance_enhanced_section(monitoring_data.get('performance_enhanced', {}))}
-                
-                <!-- 数据库优化 -->
-                {generate_database_section(monitoring_data.get('database', {}))}
-                
-                <!-- 内存监控 -->
-                {generate_memory_section(monitoring_data.get('memory', {}))}
-                
-                <div class="metric-card">
-                    <h3 class="section-title">📊 监控说明</h3>
-                    <ul>
-                        <li><strong>用户权限</strong>: 仅限已登录用户访问，确保系统安全</li>
-                        <li><strong>磁盘使用率</strong>: 已修复计算错误，使用 df 命令获取准确的分区使用率</li>
-                        <li><strong>采样频率</strong>: 每秒采样一次，每5秒计算平均值</li>
-                        <li><strong>智能告警</strong>: 基于5秒平均值，减少误报</li>
-                        <li><strong>多模块集成</strong>: 集成性能监控、数据库优化、内存监控等模块</li>
-                        <li><strong>访问方式</strong>: 通过用户中心侧边栏的"系统状态"按钮进入</li>
-                    </ul>
-                </div>
+                <a href="/" class="back-btn">🏠 返回首页</a>
             </div>
         </body>
         </html>
-        '''
-        
-        return html_content
-        
-    except Exception as e:
-        return f'系统状态获取失败: {str(e)}'
+        ''', 500
 
 def get_status_class(value, warning_threshold, critical_threshold):
     """根据阈值返回状态CSS类"""
