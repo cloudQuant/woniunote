@@ -1,0 +1,245 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WoniuNote 测试报告</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #212529;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .status-passed { background: #d4edda; color: #155724; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+        .status-warning { background: #fff3cd; color: #856404; }
+
+        .progress-bar {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+        }
+
+        .test-results {
+            margin-top: 30px;
+        }
+
+        .test-type {
+            margin-bottom: 20px;
+        }
+
+        .test-type h4 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .recommendations {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .recommendations h3 {
+            color: #004085;
+            margin-bottom: 15px;
+        }
+
+        .recommendations ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .recommendations li {
+            padding: 8px 0;
+            border-bottom: 1px solid #b3d9ff;
+        }
+
+        .recommendations li:last-child {
+            border-bottom: none;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 WoniuNote 测试报告</h1>
+            <div class="subtitle">生成时间: 2025-09-03 13:16:03</div>
+        </div>
+
+        <div class="summary-grid">
+            <!-- 测试概览 -->
+            <div class="card">
+                <h3>📊 测试概览</h3>
+                <div class="metric">
+                    <span>总测试数</span>
+                    <span class="metric-value">0</span>
+                </div>
+                <div class="metric">
+                    <span>通过测试</span>
+                    <span class="metric-value" style="color: #28a745;">0</span>
+                </div>
+                <div class="metric">
+                    <span>失败测试</span>
+                    <span class="metric-value" style="color: #dc3545;">0</span>
+                </div>
+                <div class="metric">
+                    <span>成功率</span>
+                    <span class="metric-value">0.0%</span>
+                </div>
+                <div class="status-badge status-warning">
+                    NO_TESTS
+                </div>
+            </div>
+
+            <!-- 覆盖率 -->
+            <div class="card">
+                <h3>🎯 代码覆盖率</h3>
+                <div class="metric">
+                    <span>总体覆盖率</span>
+                    <span class="metric-value">0.0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0.0%"></div>
+                </div>
+                <div class="metric">
+                    <span>覆盖行数</span>
+                    <span>0/0</span>
+                </div>
+            </div>
+
+            <!-- 质量检查 -->
+            <div class="card">
+                <h3>🔍 代码质量</h3>
+                <div class="metric">
+                    <span>整体状态</span>
+                    <div class="status-badge status-warning">
+                        UNKNOWN
+                    </div>
+                </div>
+                <div class="metric">
+                    <span>安全问题</span>
+                    <span>0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试结果详情 -->
+        <div class="test-results">
+            <h2>📋 测试结果详情</h2>
+
+            <div class="recommendations">
+                <h3>💡 改进建议</h3>
+                <ul>
+                    <li>🟡 Improve test coverage: Current 0.0%, target >80%</li>
+
+                </ul>
+            </div>
+
+        <div class="footer">
+            <p>Generated by WoniuNote Test Suite - Version 1.0.0</p>
+            <p>Report generated at 2025-09-03 13:16:03</p>
+        </div>
+    </div>
+</body>
+</html>

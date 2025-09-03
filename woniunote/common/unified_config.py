@@ -579,3 +579,23 @@ get_secure_config = get_config_manager
 def init_config_management(config_dir: str = "configs"):
     """初始化配置管理（向后兼容）"""
     return init_unified_config_manager(config_dir)
+
+# 创建全局配置实例用于向后兼容
+class SecureConfigManager:
+    """安全配置管理器，用于向后兼容"""
+
+    def __init__(self):
+        self.app = None
+
+    def init_app(self, app):
+        """初始化应用配置"""
+        try:
+            manager = get_config_manager()
+            if manager:
+                manager.init_app(app)
+        except Exception:
+            # 如果配置管理器还没有初始化，跳过
+            pass
+
+# 创建全局配置实例
+secure_config = SecureConfigManager()

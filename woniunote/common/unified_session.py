@@ -615,8 +615,18 @@ def clear_user_session(reason="用户登出"):
     manager = get_session_manager()
     return manager.clear_user_session(reason)
 
+def migrate_legacy_session():
+    """便捷函数：迁移旧版本会话数据"""
+    try:
+        manager = get_session_manager()
+        return manager.migrate_legacy_session()
+    except RuntimeError:
+        # 如果会话管理器还没有初始化，跳过迁移
+        return None
+
 # 向后兼容的别名
 create_user_session_legacy = create_user_session
 is_user_logged_in_legacy = is_user_logged_in
 get_current_user_legacy = get_current_user
 clear_user_session_legacy = clear_user_session
+migrate_legacy_session_legacy = migrate_legacy_session

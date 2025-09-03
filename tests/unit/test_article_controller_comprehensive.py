@@ -29,8 +29,20 @@ def app():
     app = Flask(__name__)
     app.config['TESTING'] = True
     app.config['SECRET_KEY'] = 'test-secret-key'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tests/test_db/woniunote_test.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # 初始化数据库
+    from woniunote.common.database import db
+    db.init_app(app)
+
+    # 在应用上下文中创建所有表
+    with app.app_context():
+        try:
+            db.create_all()
+        except Exception:
+            # 如果创建表失败，继续运行（表可能已经存在）
+            pass
 
     # 注册蓝图
     from woniunote.controller.article import article

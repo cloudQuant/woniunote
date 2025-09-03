@@ -1,0 +1,155 @@
+{
+  "phase_7_1": {
+    "name": "Phase 7.1: 核心控制器测试扩展",
+    "files": [
+      "woniunote/controller/index.py",
+      "woniunote/controller/ueditor.py",
+      "woniunote/controller/card_center.py",
+      "woniunote/controller/favorite.py",
+      "woniunote/controller/todo_center.py",
+      "woniunote/controller/ucenter.py"
+    ],
+    "priority": "high",
+    "estimated_effort": "medium",
+    "test_files_to_create": [
+      "tests/unit/test_index_controller_comprehensive.py",
+      "tests/unit/test_ueditor_controller_comprehensive.py",
+      "tests/unit/test_card_center_controller_comprehensive.py",
+      "tests/unit/test_favorite_controller_comprehensive.py",
+      "tests/unit/test_todo_center_controller_comprehensive.py",
+      "tests/unit/test_ucenter_controller_comprehensive.py"
+    ]
+  },
+  "phase_7_2": {
+    "name": "Phase 7.2: 业务模块测试",
+    "files": [
+      "woniunote/module/users.py",
+      "woniunote/module/favorites.py",
+      "woniunote/module/articles.py",
+      "woniunote/module/credits.py",
+      "woniunote/module/comments.py"
+    ],
+    "priority": "high",
+    "estimated_effort": "high",
+    "test_files_to_create": [
+      "tests/unit/test_users_module_comprehensive.py",
+      "tests/unit/test_favorites_module_comprehensive.py",
+      "tests/unit/test_articles_module_comprehensive.py",
+      "tests/unit/test_credits_module_comprehensive.py",
+      "tests/unit/test_comments_module_comprehensive.py"
+    ]
+  },
+  "phase_7_3": {
+    "name": "Phase 7.3: 公共工具测试",
+    "files": [
+      "woniunote/common/unified_utils.py",
+      "woniunote/common/create_database.py",
+      "woniunote/common/unified_error_handler.py",
+      "woniunote/common/unified_session.py",
+      "woniunote/common/redisdb.py",
+      "woniunote/common/unified_validator.py",
+      "woniunote/common/unified_database_optimizer.py",
+      "woniunote/common/unified_security.py",
+      "woniunote/common/database.py",
+      "woniunote/common/unified_logging.py",
+      "woniunote/common/resource_manager.py",
+      "woniunote/common/auth_utils.py",
+      "woniunote/common/rate_limiter.py",
+      "woniunote/common/todo_database.py",
+      "woniunote/common/code_refactor_helper.py",
+      "woniunote/common/static_optimizer.py",
+      "woniunote/common/user_experience_optimizer.py",
+      "woniunote/common/unified_response.py",
+      "woniunote/common/base_model.py",
+      "woniunote/common/db_connection_manager.py",
+      "woniunote/common/async_tasks.py",
+      "woniunote/common/safe_credit_manager.py",
+      "woniunote/common/secure_password.py",
+      "woniunote/common/password_utils.py",
+      "woniunote/common/authorization.py",
+      "woniunote/common/utils.py",
+      "woniunote/common/unified_monitoring.py",
+      "woniunote/common/performance_enhanced.py",
+      "woniunote/common/memory_optimizer.py",
+      "woniunote/common/atomic_password_migration.py",
+      "woniunote/common/log_decorator.py",
+      "woniunote/common/card_database.py",
+      "woniunote/common/memory_monitor.py",
+      "woniunote/common/secure_redis_manager.py",
+      "woniunote/common/unified_config.py",
+      "woniunote/common/unified_cache.py"
+    ],
+    "priority": "medium",
+    "estimated_effort": "high",
+    "test_files_to_create": [
+      "tests/unit/test_unified_utils_comprehensive.py",
+      "tests/unit/test_create_database_comprehensive.py",
+      "tests/unit/test_unified_error_handler_comprehensive.py",
+      "tests/unit/test_unified_session_comprehensive.py",
+      "tests/unit/test_redisdb_comprehensive.py",
+      "tests/unit/test_unified_validator_comprehensive.py",
+      "tests/unit/test_unified_database_optimizer_comprehensive.py",
+      "tests/unit/test_unified_security_comprehensive.py",
+      "tests/unit/test_database_comprehensive.py",
+      "tests/unit/test_unified_logging_comprehensive.py",
+      "tests/unit/test_resource_manager_comprehensive.py",
+      "tests/unit/test_auth_utils_comprehensive.py",
+      "tests/unit/test_rate_limiter_comprehensive.py",
+      "tests/unit/test_todo_database_comprehensive.py",
+      "tests/unit/test_code_refactor_helper_comprehensive.py",
+      "tests/unit/test_static_optimizer_comprehensive.py",
+      "tests/unit/test_user_experience_optimizer_comprehensive.py",
+      "tests/unit/test_unified_response_comprehensive.py",
+      "tests/unit/test_base_model_comprehensive.py",
+      "tests/unit/test_db_connection_manager_comprehensive.py",
+      "tests/unit/test_async_tasks_comprehensive.py",
+      "tests/unit/test_safe_credit_manager_comprehensive.py",
+      "tests/unit/test_secure_password_comprehensive.py",
+      "tests/unit/test_password_utils_comprehensive.py",
+      "tests/unit/test_authorization_comprehensive.py",
+      "tests/unit/test_utils_comprehensive.py",
+      "tests/unit/test_unified_monitoring_comprehensive.py",
+      "tests/unit/test_performance_enhanced_comprehensive.py",
+      "tests/unit/test_memory_optimizer_comprehensive.py",
+      "tests/unit/test_atomic_password_migration_comprehensive.py",
+      "tests/unit/test_log_decorator_comprehensive.py",
+      "tests/unit/test_card_database_comprehensive.py",
+      "tests/unit/test_memory_monitor_comprehensive.py",
+      "tests/unit/test_secure_redis_manager_comprehensive.py",
+      "tests/unit/test_unified_config_comprehensive.py",
+      "tests/unit/test_unified_cache_comprehensive.py"
+    ]
+  },
+  "phase_7_4": {
+    "name": "Phase 7.4: 应用核心测试",
+    "files": [
+      "woniunote/app_factory.py",
+      "woniunote/app.py",
+      "woniunote/error_handlers.py"
+    ],
+    "priority": "medium",
+    "estimated_effort": "medium",
+    "test_files_to_create": [
+      "tests/unit/test_app_factory_comprehensive.py",
+      "tests/unit/test_app_comprehensive.py",
+      "tests/unit/test_error_handlers_comprehensive.py"
+    ]
+  },
+  "phase_7_5": {
+    "name": "Phase 7.5: 其他组件测试",
+    "files": [
+      "woniunote/fix_todo.py",
+      "woniunote/find_invalid_routes.py",
+      "woniunote/route_monitor.py",
+      "woniunote/configs/config.py"
+    ],
+    "priority": "low",
+    "estimated_effort": "low",
+    "test_files_to_create": [
+      "tests/unit/test_fix_todo_comprehensive.py",
+      "tests/unit/test_find_invalid_routes_comprehensive.py",
+      "tests/unit/test_route_monitor_comprehensive.py",
+      "tests/unit/test_config_comprehensive.py"
+    ]
+  }
+}

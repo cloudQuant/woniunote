@@ -152,7 +152,7 @@ class TestArticleModuleAdvanced:
     def test_articles_class_instantiation(self):
         """测试Articles类实例化"""
         with patch('woniunote.common.database.db') as mock_db, \
-             patch('woniunote.common.simple_logger.get_simple_logger') as mock_logger:
+             patch('woniunote.common.unified_logging.get_simple_logger') as mock_logger:
             
             mock_db.session = Mock()
             mock_logger.return_value = Mock()
@@ -187,7 +187,7 @@ class TestArticleModuleAdvanced:
     def test_article_crud_operations_mocked(self):
         """测试文章CRUD操作（模拟）"""
         with patch('woniunote.common.database.db') as mock_db, \
-             patch('woniunote.common.simple_logger.get_simple_logger') as mock_logger:
+             patch('woniunote.common.unified_logging.get_simple_logger') as mock_logger:
             
             # Setup mocks
             mock_session = Mock()
@@ -236,7 +236,7 @@ class TestUserModuleAdvanced:
     def test_user_authentication_flow(self):
         """测试用户认证流程"""
         with patch('woniunote.common.database.db') as mock_db, \
-             patch('woniunote.common.simple_logger.get_simple_logger') as mock_logger, \
+             patch('woniunote.common.unified_logging.get_simple_logger') as mock_logger, \
              patch('werkzeug.security.check_password_hash') as mock_check_pass:
             
             mock_db.session = Mock()
@@ -307,7 +307,7 @@ class TestCommentSystemAdvanced:
     def test_comment_moderation_functions(self):
         """测试评论审核功能"""
         with patch('woniunote.common.database.db') as mock_db, \
-             patch('woniunote.common.simple_logger.get_simple_logger') as mock_logger:
+             patch('woniunote.common.unified_logging.get_simple_logger') as mock_logger:
             
             mock_db.session = Mock()
             mock_logger.return_value = Mock()

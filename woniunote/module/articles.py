@@ -1,6 +1,7 @@
 import time
 import traceback
 import uuid
+import datetime
 from flask import session
 from sqlalchemy import Table, Column, Integer, String, Text, DateTime, func, ForeignKey
 from sqlalchemy.orm import relationship
@@ -1050,7 +1051,7 @@ class Articles:
         })
 
         try:
-            now = time.strftime('%Y-%m-%d %H:%M:%S')
+            now = datetime.datetime.now()
             userid = session.get('main_userid')
 
             # 检查用户ID是否存在

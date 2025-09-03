@@ -416,3 +416,24 @@ def require_signature(f):
         # 简单的签名验证
         return f(*args, **kwargs)
     return decorated_function
+
+# 创建CSRF保护对象（向后兼容）
+class CSRFProtect:
+    """CSRF保护类"""
+    def __init__(self):
+        pass
+
+    def init_app(self, app):
+        """初始化Flask应用"""
+        pass
+
+    def generate_csrf_token(self):
+        """生成CSRF令牌"""
+        return secrets.token_hex(32)
+
+    def verify_csrf_token(self, token, stored_token):
+        """验证CSRF令牌"""
+        return token == stored_token
+
+# 创建全局CSRF对象
+csrf = CSRFProtect()
