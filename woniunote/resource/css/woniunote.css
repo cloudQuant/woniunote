@@ -241,6 +241,40 @@ body {
     color: white !important;
 }
 
+/* 分页省略号样式 */
+.paginate .pagination-ellipsis {
+    padding: 0.6rem 0.5rem;
+    color: #666;
+    font-weight: bold;
+    user-select: none;
+    cursor: default;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* 当前页码高亮 */
+.paginate a.current-page {
+    background: var(--primary-color) !important;
+    color: white !important;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+/* 禁用状态 */
+.paginate a.disabled {
+    background: #f5f5f5 !important;
+    color: #999 !important;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* 分页链接基础样式 */
+.paginate .page-link {
+    display: inline-block;
+    text-decoration: none;
+    color: var(--text-color);
+}
+
 /* 侧边栏 */
 .side .tip {
     background: var(--gradient-primary);

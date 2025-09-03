@@ -47,7 +47,15 @@ class UnifiedMonitoringSystem:
             }
         
         # 监控配置
-        self.collect_interval = self.config.get('collect_interval', 5) # Changed from 30 to 5
+        collect_interval = self.config.get('collect_interval', 30)
+        # 确保collect_interval是有效的整数
+        try:
+            self.collect_interval = int(collect_interval)
+            if self.collect_interval <= 0:
+                self.collect_interval = 30
+        except (ValueError, TypeError):
+            self.collect_interval = 30
+
         self.metrics_history = defaultdict(lambda: deque(maxlen=1000))
         self.alerts = deque(maxlen=100)
         self.system_status = {}
@@ -83,12 +91,8 @@ class UnifiedMonitoringSystem:
                 self._collect_system_metrics()
                 self._check_alerts()
                 
-                # 确保收集间隔是有效的整数值
-                interval = self.collect_interval
-                if interval is None or not isinstance(interval, (int, float)) or interval <= 0:
-                    interval = 30  # 默认30秒
-                    logger.warning(f"无效的收集间隔，使用默认值: {interval}秒")
-                time.sleep(interval)
+                # 使用已验证的收集间隔
+                time.sleep(self.collect_interval)
                 
             except Exception as e:
                 logger.error(f"监控循环异常: {e}")

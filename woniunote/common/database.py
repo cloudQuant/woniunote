@@ -140,6 +140,46 @@ def dbconnect(app=None):
             return None, None, None
 
 
+# 数据库会话管理
+_db_session = None
+
+def get_db():
+    """获取数据库会话"""
+    global _db_session
+    if _db_session is None:
+        # 创建数据库会话
+        try:
+            from flask import Flask
+            app = Flask(__name__)
+            app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+            app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+            db.init_app(app)
+
+            with app.app_context():
+                _db_session = db.session
+        except Exception as e:
+            print(f"数据库初始化失败: {e}")
+            return None
+
+    return _db_session
+
+def init_db():
+    """初始化数据库"""
+    try:
+        from flask import Flask
+        app = Flask(__name__)
+        app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+        app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        db.init_app(app)
+
+        with app.app_context():
+            # 创建所有表
+            db.create_all()
+            print("数据库表创建成功")
+
+    except Exception as e:
+        print(f"数据库初始化失败: {e}")
+
 # Flask应用启动
 if __name__ == '__main__':
     dbconnect()  # 初始化数据库连接

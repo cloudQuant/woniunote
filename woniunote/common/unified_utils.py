@@ -499,3 +499,133 @@ def can_use_minute():
         return timer_mgr.get_timer_stats().get('total_timers', 0)
     # 如果没有初始化，返回一个默认值
     return 1
+
+
+# ==================== 分页工具函数 ====================
+
+def generate_pagination_links(current_page: int, total_pages: int, max_display: int = 7) -> dict:
+    """
+    生成现代化的分页链接列表
+
+    Args:
+        current_page: 当前页码
+        total_pages: 总页数
+        max_display: 最大显示页码数量
+
+    Returns:
+        dict: 包含分页信息的字典
+    """
+    if total_pages <= 1:
+        return {
+            'pages': [],
+            'has_previous': False,
+            'has_next': False,
+            'previous_page': None,
+            'next_page': None,
+            'show_first': False,
+            'show_last': False,
+            'first_ellipsis': False,
+            'last_ellipsis': False
+        }
+
+    # 计算显示范围
+    half_display = max_display // 2
+    start_page = max(1, current_page - half_display)
+    end_page = min(total_pages, current_page + half_display)
+
+    # 调整范围以确保显示足够的页码
+    if end_page - start_page + 1 < max_display:
+        if start_page == 1:
+            end_page = min(total_pages, start_page + max_display - 1)
+        elif end_page == total_pages:
+            start_page = max(1, end_page - max_display + 1)
+
+    # 生成页码列表
+    pages = []
+    for page in range(start_page, end_page + 1):
+        pages.append({
+            'number': page,
+            'is_current': page == current_page,
+            'url': f'/page/{page}'
+        })
+
+    return {
+        'pages': pages,
+        'has_previous': current_page > 1,
+        'has_next': current_page < total_pages,
+        'previous_page': current_page - 1 if current_page > 1 else None,
+        'next_page': current_page + 1 if current_page < total_pages else None,
+        'show_first': start_page > 1,
+        'show_last': end_page < total_pages,
+        'first_ellipsis': start_page > 2,
+        'last_ellipsis': end_page < total_pages - 1,
+        'first_page': 1,
+        'last_page': total_pages,
+        'current_page': current_page,
+        'total_pages': total_pages
+    }
+
+
+def generate_type_pagination_links(current_page: int, total_pages: int, article_type: str, max_display: int = 7) -> dict:
+    """
+    生成文章类型页面的分页链接列表
+
+    Args:
+        current_page: 当前页码
+        total_pages: 总页数
+        article_type: 文章类型
+        max_display: 最大显示页码数量
+
+    Returns:
+        dict: 包含分页信息的字典
+    """
+    if total_pages <= 1:
+        return {
+            'pages': [],
+            'has_previous': False,
+            'has_next': False,
+            'previous_page': None,
+            'next_page': None,
+            'show_first': False,
+            'show_last': False,
+            'first_ellipsis': False,
+            'last_ellipsis': False
+        }
+
+    # 计算显示范围
+    half_display = max_display // 2
+    start_page = max(1, current_page - half_display)
+    end_page = min(total_pages, current_page + half_display)
+
+    # 调整范围以确保显示足够的页码
+    if end_page - start_page + 1 < max_display:
+        if start_page == 1:
+            end_page = min(total_pages, start_page + max_display - 1)
+        elif end_page == total_pages:
+            start_page = max(1, end_page - max_display + 1)
+
+    # 生成页码列表
+    pages = []
+    for page in range(start_page, end_page + 1):
+        pages.append({
+            'number': page,
+            'is_current': page == current_page,
+            'url': f'/type/{article_type}/{page}'
+        })
+
+    return {
+        'pages': pages,
+        'has_previous': current_page > 1,
+        'has_next': current_page < total_pages,
+        'previous_page': current_page - 1 if current_page > 1 else None,
+        'next_page': current_page + 1 if current_page < total_pages else None,
+        'show_first': start_page > 1,
+        'show_last': end_page < total_pages,
+        'first_ellipsis': start_page > 2,
+        'last_ellipsis': end_page < total_pages - 1,
+        'first_page': 1,
+        'last_page': total_pages,
+        'current_page': current_page,
+        'total_pages': total_pages,
+        'article_type': article_type
+    }

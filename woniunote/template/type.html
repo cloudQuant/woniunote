@@ -76,31 +76,45 @@
                 <a href="/type/{{ type }}/{{ page - 1 }}">上一页</a>&nbsp;&nbsp;
             {% endif %}
 
-            <!-- 页码范围 -->
-            {% set start_page = [1, page - 5] | max %}  {# 确保起始页码不小于 1 #}
-            {% set end_page = [total, page + 5] | min %}  {# 确保结束页码不大于总页数 #}
+            {% if total > 1 %}
+                <!-- 现代化的分页显示，最多显示7个页码 -->
+                {% set half_range = 3 %}
+                {% set start_page = [1, page - half_range] | max %}
+                {% set end_page = [total, page + half_range] | min %}
 
-            {% if start_page > 1 %}
-                <a href="/type/{{ type }}/1">1</a>&nbsp;&nbsp;
-                {% if start_page > 2 %}
-                    <span>...</span>&nbsp;&nbsp;  {# 显示省略号 #}
+                <!-- 调整范围以确保显示足够的页码 -->
+                {% if end_page - start_page + 1 < 7 %}
+                    {% if start_page == 1 %}
+                        {% set end_page = [total, start_page + 6] | min %}
+                    {% elif end_page == total %}
+                        {% set start_page = [1, end_page - 6] | max %}
+                    {% endif %}
                 {% endif %}
-            {% endif %}
 
-            {% for i in range(start_page, end_page + 1) %}
-                {% if i == page %}
-                    <!-- 当前页高亮显示 -->
-                    <a href="/type/{{ type }}/{{ i }}" class="current-page" style="color: red; font-weight: bold;">{{ i }}</a>&nbsp;&nbsp;
-                {% else %}
-                    <a href="/type/{{ type }}/{{ i }}">{{ i }}</a>&nbsp;&nbsp;
+                <!-- 显示第一页和省略号 -->
+                {% if start_page > 1 %}
+                    <a href="/type/{{ type }}/1">1</a>&nbsp;&nbsp;
+                    {% if start_page > 2 %}
+                        <span class="pagination-ellipsis">...</span>&nbsp;&nbsp;
+                    {% endif %}
                 {% endif %}
-            {% endfor %}
 
-            {% if end_page < total %}
-                {% if end_page < total - 1 %}
-                    <span>...</span>&nbsp;&nbsp;  {# 显示省略号 #}
+                <!-- 显示页码范围 -->
+                {% for i in range(start_page, end_page + 1) %}
+                    {% if i == page %}
+                        <a href="/type/{{ type }}/{{ i }}" class="current-page" style="color: red; font-weight: bold;">{{ i }}</a>&nbsp;&nbsp;
+                    {% else %}
+                        <a href="/type/{{ type }}/{{ i }}">{{ i }}</a>&nbsp;&nbsp;
+                    {% endif %}
+                {% endfor %}
+
+                <!-- 显示最后一页和省略号 -->
+                {% if end_page < total %}
+                    {% if end_page < total - 1 %}
+                        <span class="pagination-ellipsis">...</span>&nbsp;&nbsp;
+                    {% endif %}
+                    <a href="/type/{{ type }}/{{ total }}">{{ total }}</a>&nbsp;&nbsp;
                 {% endif %}
-                <a href="/type/{{ type }}/{{ total }}">{{ total }}</a>&nbsp;&nbsp;
             {% endif %}
 
             <!-- 下一页 -->

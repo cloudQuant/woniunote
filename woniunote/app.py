@@ -281,20 +281,30 @@ def create_app(config_name='production'):
             rate_limit_config = {
                 'api': {
                     'type': 'token_bucket',
-                    'capacity': config_manager.get('rate_limit.api.capacity', 100) if config_manager else 100,
-                    'refill_rate': config_manager.get('rate_limit.api.refill_rate', 20) if config_manager else 20,
+                    'capacity': config_manager.get('rate_limit.api.capacity', 500) if config_manager else 500,  # 增加10倍
+                    'refill_rate': config_manager.get('rate_limit.api.refill_rate', 100) if config_manager else 100,  # 增加10倍
                     'refill_period': config_manager.get('rate_limit.api.refill_period', 1) if config_manager else 1
                 },
                 'upload': {
                     'type': 'token_bucket',
-                    'capacity': config_manager.get('rate_limit.upload.capacity', 10) if config_manager else 10,
-                    'refill_rate': config_manager.get('rate_limit.upload.refill_rate', 2) if config_manager else 2,
-                    'refill_period': config_manager.get('rate_limit.upload.refill_period', 60) if config_manager else 60
+                    'capacity': config_manager.get('rate_limit.upload.capacity', 50) if config_manager else 50,  # 增加10倍
+                    'refill_rate': config_manager.get('rate_limit.upload.refill_rate', 10) if config_manager else 10,  # 增加10倍
+                    'refill_period': config_manager.get('rate_limit.upload.refill_period', 10) if config_manager else 10
                 },
                 'strict': {
                     'type': 'sliding_window',
-                    'max_requests': config_manager.get('rate_limit.strict.max_requests', 30) if config_manager else 30,
+                    'max_requests': config_manager.get('rate_limit.strict.max_requests', 200) if config_manager else 200,  # 增加10倍
                     'window_size': config_manager.get('rate_limit.strict.window_size', 60) if config_manager else 60
+                },
+                'moderate': {
+                    'type': 'sliding_window',
+                    'max_requests': config_manager.get('rate_limit.moderate.max_requests', 600) if config_manager else 600,  # 增加10倍
+                    'window_size': config_manager.get('rate_limit.moderate.window_size', 60) if config_manager else 60
+                },
+                'lenient': {
+                    'type': 'sliding_window',
+                    'max_requests': config_manager.get('rate_limit.lenient.max_requests', 2000) if config_manager else 2000,  # 增加10倍
+                    'window_size': config_manager.get('rate_limit.lenient.window_size', 60) if config_manager else 60
                 }
             }
             
@@ -305,11 +315,27 @@ def create_app(config_name='production'):
                         if value is None or not isinstance(value, int) or value <= 0:
                             app_logger.warning(f"限流配置 {limiter_name}.{key} 无效，使用默认值")
                             if key in ['capacity', 'max_requests']:
-                                rate_limit_config[limiter_name][key] = 100 if limiter_name == 'api' else 30
+                                if limiter_name == 'api':
+                                    rate_limit_config[limiter_name][key] = 500  # 增加10倍
+                                elif limiter_name == 'upload':
+                                    rate_limit_config[limiter_name][key] = 50  # 增加10倍
+                                elif limiter_name == 'strict':
+                                    rate_limit_config[limiter_name][key] = 200  # 增加10倍
+                                elif limiter_name == 'moderate':
+                                    rate_limit_config[limiter_name][key] = 600  # 增加10倍
+                                elif limiter_name == 'lenient':
+                                    rate_limit_config[limiter_name][key] = 2000  # 增加10倍
+                                else:
+                                    rate_limit_config[limiter_name][key] = 100
                             elif key == 'refill_rate':
-                                rate_limit_config[limiter_name][key] = 20 if limiter_name == 'api' else 2
+                                if limiter_name == 'api':
+                                    rate_limit_config[limiter_name][key] = 100  # 增加10倍
+                                elif limiter_name == 'upload':
+                                    rate_limit_config[limiter_name][key] = 10  # 增加10倍
+                                else:
+                                    rate_limit_config[limiter_name][key] = 20
                             elif key == 'refill_period':
-                                rate_limit_config[limiter_name][key] = 1 if limiter_name == 'api' else 60
+                                rate_limit_config[limiter_name][key] = 1 if limiter_name == 'api' else 10 if limiter_name == 'upload' else 60
                             elif key == 'window_size':
                                 rate_limit_config[limiter_name][key] = 60
             
@@ -317,12 +343,14 @@ def create_app(config_name='production'):
             init_rate_limiter(rate_limit_config)
         except Exception as e:
             app_logger.warning(f"限流系统初始化失败，使用默认配置: {e}")
-            # 使用默认配置重试
+            # 使用默认配置重试 (已增加10倍容量)
             try:
                 default_rate_limit_config = {
-                    'api': {'type': 'token_bucket', 'capacity': 100, 'refill_rate': 20, 'refill_period': 1},
-                    'upload': {'type': 'token_bucket', 'capacity': 10, 'refill_rate': 2, 'refill_period': 60},
-                    'strict': {'type': 'sliding_window', 'max_requests': 30, 'window_size': 60}
+                    'api': {'type': 'token_bucket', 'capacity': 500, 'refill_rate': 100, 'refill_period': 1},  # 增加10倍
+                    'upload': {'type': 'token_bucket', 'capacity': 50, 'refill_rate': 10, 'refill_period': 10},  # 增加10倍
+                    'strict': {'type': 'sliding_window', 'max_requests': 200, 'window_size': 60},  # 增加10倍
+                    'moderate': {'type': 'sliding_window', 'max_requests': 600, 'window_size': 60},  # 增加10倍
+                    'lenient': {'type': 'sliding_window', 'max_requests': 2000, 'window_size': 60}  # 增加10倍
                 }
                 init_rate_limiter(default_rate_limit_config)
             except Exception as e2:
@@ -564,6 +592,82 @@ def create_app(config_name='production'):
             return send_from_directory(resource_path, filename)
         except:
             # 如果文件不存在，返回404
+            from flask import abort
+            abort(404)
+
+    # 添加Thumb缩略图路径映射 - 处理文章类型缩略图
+    @app.route('/thumb/<path:filename>')
+    def thumb_resources(filename):
+        """处理缩略图文件请求，支持缺失文件的降级处理"""
+        from flask import send_from_directory, send_file
+        import os
+        try:
+            thumb_path = os.path.join(app.root_path, 'resource', 'thumb')
+            file_path = os.path.join(thumb_path, filename)
+
+            # 如果文件存在，直接返回
+            if os.path.exists(file_path):
+                return send_from_directory(thumb_path, filename)
+
+            # 如果文件不存在，尝试降级处理
+            app_logger.warning(f"缩略图文件不存在: {filename}")
+
+            # 尝试找到最相似的现有缩略图
+            try:
+                # 提取文件名的数字部分
+                if filename.endswith('.png'):
+                    base_name = filename[:-4]  # 移除.png扩展名
+                    try:
+                        type_id = int(base_name)
+
+                        # 根据类型ID找到最合适的现有缩略图
+                        existing_files = []
+                        for f in os.listdir(thumb_path):
+                            if f.endswith('.png') and f != filename:
+                                try:
+                                    f_id = int(f[:-4])
+                                    existing_files.append((f_id, f))
+                                except ValueError:
+                                    continue
+
+                        if existing_files:
+                            # 按ID排序
+                            existing_files.sort(key=lambda x: x[0])
+
+                            # 找到最接近的现有文件
+                            closest_file = None
+                            min_diff = float('inf')
+
+                            for f_id, f_name in existing_files:
+                                diff = abs(f_id - type_id)
+                                if diff < min_diff:
+                                    min_diff = diff
+                                    closest_file = f_name
+
+                            if closest_file:
+                                closest_path = os.path.join(thumb_path, closest_file)
+                                app_logger.info(f"使用最接近的缩略图: {filename} -> {closest_file}")
+                                return send_file(closest_path, mimetype='image/png')
+
+                    except ValueError:
+                        pass
+
+            except Exception as e:
+                app_logger.warning(f"查找相似缩略图失败: {e}")
+
+            # 如果找不到相似文件，使用默认缩略图（1.png作为默认）
+            default_thumb = os.path.join(thumb_path, '1.png')
+            if os.path.exists(default_thumb):
+                app_logger.info(f"使用默认缩略图替代缺失文件: {filename} -> 1.png")
+                return send_file(default_thumb, mimetype='image/png')
+
+            # 如果连默认文件都不存在，返回404
+            app_logger.error(f"缩略图文件和默认文件都不存在: {filename}")
+            from flask import abort
+            abort(404)
+
+        except Exception as e:
+            app_logger.error(f"缩略图文件服务错误: {filename} - {str(e)}")
             from flask import abort
             abort(404)
     

@@ -206,12 +206,12 @@ def get_rate_limiter() -> RateLimiter:
     if _global_rate_limiter is None:
         _global_rate_limiter = RateLimiter()
         
-        # 配置不同类型的限流器
-        _global_rate_limiter.add_limiter('strict', SlidingWindowLimiter(20, 60))  # 严格限流
-        _global_rate_limiter.add_limiter('moderate', SlidingWindowLimiter(60, 60))  # 中等限流
-        _global_rate_limiter.add_limiter('lenient', SlidingWindowLimiter(200, 60))  # 宽松限流
-        _global_rate_limiter.add_limiter('api', TokenBucketLimiter(50, 10, 1))  # API限流
-        _global_rate_limiter.add_limiter('upload', TokenBucketLimiter(5, 1, 10))  # 上传限流
+        # 配置不同类型的限流器 (已增加10倍容量)
+        _global_rate_limiter.add_limiter('strict', SlidingWindowLimiter(200, 60))  # 严格限流: 200次/分钟
+        _global_rate_limiter.add_limiter('moderate', SlidingWindowLimiter(600, 60))  # 中等限流: 600次/分钟
+        _global_rate_limiter.add_limiter('lenient', SlidingWindowLimiter(2000, 60))  # 宽松限流: 2000次/分钟
+        _global_rate_limiter.add_limiter('api', TokenBucketLimiter(500, 100, 1))  # API限流: 500容量，100令牌/秒
+        _global_rate_limiter.add_limiter('upload', TokenBucketLimiter(50, 10, 10))  # 上传限流: 50容量，10令牌/10秒
         
     return _global_rate_limiter
 

@@ -29,11 +29,13 @@ def app():
     app = Flask(__name__)
     app.config['TESTING'] = True
     app.config['SECRET_KEY'] = 'test-secret-key'
-    
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tests/test_db/woniunote_test.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
     # 注册蓝图
     from woniunote.controller.article import article
     app.register_blueprint(article)
-    
+
     return app
 
 
@@ -75,11 +77,11 @@ class TestArticleTraceId:
     
     def test_get_simple_trace_id_thread_local(self):
         """测试线程本地跟踪ID"""
-        from woniunote.controller.article import get_simple_trace_id, _thread_local_trace_id
-        
+        from woniunote.controller.article import get_simple_trace_id, thread_local_trace_id
+
         # 清除任何现有的跟踪ID
-        _thread_local_trace_id.clear()
-        
+        thread_local_trace_id.__dict__.clear()
+
         # 第一次调用应该生成新的跟踪ID
         trace_id1 = get_simple_trace_id()
         assert isinstance(trace_id1, str)
@@ -90,7 +92,7 @@ class TestArticleTraceId:
         assert trace_id1 == trace_id2
         
         # 清除后应该生成新的跟踪ID
-        _thread_local_trace_id.clear()
+        thread_local_trace_id.__dict__.clear()
         trace_id3 = get_simple_trace_id()
         assert trace_id3 != trace_id1
 
@@ -943,21 +945,21 @@ class TestArticleControllerIntegration:
     
     def test_thread_local_storage_integration(self):
         """测试线程本地存储集成"""
-        from woniunote.controller.article import _thread_local_trace_id, get_simple_trace_id
-        
+        from woniunote.controller.article import thread_local_trace_id, get_simple_trace_id
+
         # 清除现有数据
-        _thread_local_trace_id.clear()
-        
+        thread_local_trace_id.__dict__.clear()
+
         # 测试线程本地存储工作正常
         trace_id1 = get_simple_trace_id()
         trace_id2 = get_simple_trace_id()
-        
+
         # 同一线程应返回相同的跟踪ID
         assert trace_id1 == trace_id2
-        
+
         # 验证存储在线程本地字典中
-        assert 'trace_id' in _thread_local_trace_id
-        assert _thread_local_trace_id['trace_id'] == trace_id1
+        assert hasattr(thread_local_trace_id, 'trace_id')
+        assert thread_local_trace_id.trace_id == trace_id1
 
 
 if __name__ == '__main__':

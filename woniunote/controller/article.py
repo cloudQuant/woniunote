@@ -30,6 +30,9 @@ def get_simple_trace_id():
         _article_thread_local_trace_id.trace_id = generate_trace_id()
     return _article_thread_local_trace_id.trace_id
 
+# 向后兼容的变量名
+thread_local_trace_id = _article_thread_local_trace_id
+
 article = Blueprint("article", __name__)
 
 @article.route('/article/<int:articleid>')
