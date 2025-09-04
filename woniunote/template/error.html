@@ -76,7 +76,7 @@
             </h1>
             
             <div class="error-message">
-                {{ error.message if error and error.message else (error_message if error_message else "发生了未知错误") }}
+                {{ error.message if error and error.message else error_message if error_message else "发生了未知错误" }}
             </div>
             
             {% if error and error.recoverable %}

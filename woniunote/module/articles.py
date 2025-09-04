@@ -1330,22 +1330,29 @@ class Articles:
 
     # 按照标题模糊查询（不含草稿，不分页）
     @staticmethod
-    def find_by_headline_except_draft(headline):
+    def find_by_headline_except_draft(self, headline, start=0, count=50):
         # 生成跟踪ID
         trace_id = get_articles_trace_id()
 
         # 记录查询开始
         articles_logger.info("开始按标题模糊查询非草稿文章", {
             'trace_id': trace_id,
-            'headline': headline
+            'headline': headline,
+            'start': start,
+            'count': count
         })
 
         try:
             # 执行查询
             query_start_time = time.time()
+            # 先获取总数
+            total = dbsession.query(Article).filter(Article.drafted == 0,
+                                                   Article.headline.like('%' + headline + '%')).count()
+
+            # 再获取分页结果
             result = dbsession.query(Article).filter(Article.drafted == 0,
                                                      Article.headline.like('%' + headline + '%')) \
-                .order_by(Article.articleid.desc()).all()
+                .order_by(Article.articleid.desc()).offset(start).limit(count).all()
             query_end_time = time.time()
 
             # 记录查询结果
@@ -1356,7 +1363,7 @@ class Articles:
                 'query_time_ms': round((query_end_time - query_start_time) * 1000, 2)
             })
 
-            return result
+            return result, total
         except Exception as e:
             # 记录异常
             articles_logger.error("按标题模糊查询非草稿文章异常", {
@@ -1366,7 +1373,7 @@ class Articles:
                 'error_type': type(e).__name__
             })
             traceback.print_exc()
-            return []
+            return [], 0
 
     # 切换文章的隐藏状态：1表示隐藏，0表示显示
     @staticmethod

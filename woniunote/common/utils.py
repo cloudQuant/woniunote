@@ -242,13 +242,25 @@ def get_package_path(package_name="woniunote"):
         if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', package_name):
             raise ValueError("Package name contains invalid characters")
         
-        importlib.import_module(package_name)
-        package = sys.modules[package_name]
+        try:
+            importlib.import_module(package_name)
+            package = sys.modules[package_name]
+        except ModuleNotFoundError:
+            logger.warning(f"Package {package_name} not found")
+            return None
         
         if package.__file__ is not None:
             path = os.path.dirname(package.__file__)
+        elif hasattr(package, '__path__') and package.__path__:
+            # 对于有__path__的包（如命名空间包）
+            if isinstance(package.__path__, list):
+                path = package.__path__[0]
+            else:
+                path = str(package.__path__)
         else:
-            path = package.__path__.__dict__["_path"][0]
+            # 对于内置模块，返回None
+            logger.warning(f"Package {package_name} has no accessible path")
+            return None
         
         # 验证路径安全性
         if not os.path.exists(path):
@@ -366,6 +378,9 @@ def read_config(config_file=None):
             'database': {'SQLALCHEMY_DATABASE_URI': 'sqlite:///woniunote_dev.db'},
             'SECRET_KEY': 'dev-woniunote-secret-key-2025'
         }
+    except ValueError as e:
+        # 重新抛出ValueError，让调用者处理
+        raise
     except Exception as e:
         logger.error(f"Error reading config file: {str(e)}")
         # 返回默认配置而不是抛出异常

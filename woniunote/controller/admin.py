@@ -145,7 +145,7 @@ def admin_article(page):
 
 # 按照文章进行分类搜索的后台接口
 @admin.route('/admin/type/<int:type>-<int:page>')
-def admin_search_type(admin_type, page):
+def admin_search_type(type, page):
     # 生成跟踪ID
     trace_id = get_admin_trace_id()
     
@@ -153,22 +153,22 @@ def admin_search_type(admin_type, page):
         # 记录按类型搜索请求
         admin_logger.info("管理员按类型搜索文章", {
             'trace_id': trace_id,
-            'article_type': admin_type,
+            'article_type': type,
             'page': page,
             'remote_addr': request.remote_addr,
             'user_id': session.get('userid')
         })
-        
+
         pagesize = 50
         start = (page - 1) * pagesize
-        result, total = Articles().find_by_type_except_draft(start, pagesize, admin_type)
+        result, total = Articles().find_by_type_except_draft(start, pagesize, type)
         total = math.ceil(total / pagesize)
         html_file = 'system-admin.html'
-        
+
         # 记录数据查询结果
         admin_logger.info("管理员按类型搜索结果", {
             'trace_id': trace_id,
-            'article_type': admin_type,
+            'article_type': type,
             'page': page,
             'pagesize': pagesize,
             'start_index': start,
@@ -181,7 +181,7 @@ def admin_search_type(admin_type, page):
         # 记录异常
         admin_logger.error("管理员按类型搜索异常", {
             'trace_id': trace_id,
-            'article_type': admin_type,
+            'article_type': type,
             'page': page,
             'error': str(e),
             'traceback': traceback.format_exc()
@@ -204,7 +204,10 @@ def admin_search_headline(keyword):
             'user_id': session.get('userid')
         })
         
-        result = Articles().find_by_headline_except_draft(keyword)
+        pagesize = 50
+        start = 0  # 搜索功能默认从第一页开始
+        result, total = Articles().find_by_headline_except_draft(keyword, start, pagesize)
+        total = math.ceil(total / pagesize) if total else 1
         html_file = 'system-admin.html'
         
         # 记录搜索结果

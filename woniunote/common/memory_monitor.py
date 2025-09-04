@@ -36,8 +36,16 @@ except ImportError:
     
     psutil = MockPsutil()
 
-from .unified_logging import get_logger
-from .unified_utils import TraceIdManager
+from .unified_logging import get_simple_logger as get_logger
+try:
+    from .unified_utils import TraceIdManager
+except ImportError:
+    # 如果unified_utils不存在，创建一个简单的替代
+    class TraceIdManager:
+        @staticmethod
+        def generate_simple_trace_id():
+            import uuid
+            return str(uuid.uuid4())[:8]
 
 @dataclass
 class MemorySnapshot:

@@ -15,8 +15,18 @@ from contextlib import contextmanager, ExitStack
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
 
-from .simple_logger import get_simple_logger
-from .trace_id_manager import TraceIdManager
+from .unified_logging import get_simple_logger
+from .unified_logging import get_simple_logger as get_logger
+
+try:
+    from .trace_id_manager import TraceIdManager
+except ImportError:
+    # 如果trace_id_manager不存在，创建一个简单的替代
+    class TraceIdManager:
+        @staticmethod
+        def generate_simple_trace_id():
+            import uuid
+            return str(uuid.uuid4())[:8]
 
 class ResourceTracker:
     """资源跟踪器 - 跟踪和管理各种资源的生命周期"""
