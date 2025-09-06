@@ -170,15 +170,17 @@ def pytest_runtest_makereport(item, call):
         if hasattr(call.excinfo.value, 'msg'):
             print(f"Error: {call.excinfo.value.msg}")
 
-# Skip tests that require unavailable dependencies
+# Handle tests that require unavailable dependencies
 def pytest_runtest_setup(item):
-    """Skip tests based on markers and availability"""
-    # Skip integration tests if database is not available
+    """Handle tests based on markers and availability"""
+    # Integration tests can run with available database
     if "integration" in item.keywords:
         try:
             # Try to connect to database
             database_url = os.environ.get('DATABASE_URL')
             if not database_url or 'sqlite' not in database_url.lower():
-                pytest.skip("Integration tests require database connection")
+                # Instead of skipping, just log and continue
+                print(f"Note: Integration test {item.nodeid} may require database connection")
         except Exception:
-            pytest.skip("Integration tests require database connection")
+            # Instead of skipping, just log and continue
+            print(f"Note: Integration test {item.nodeid} may require database connection")
