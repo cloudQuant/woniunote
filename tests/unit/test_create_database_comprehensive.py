@@ -1,3 +1,9 @@
+# === 测试文件整合说明 ===
+# 此文件整合了以下测试文件的内容:
+# - test_create_database_comprehensive.py (主文件)
+# 备份文件保存在相同目录下，以 .backup 扩展名
+# =========================================
+
 import pytest
 from unittest.mock import MagicMock, patch
 

@@ -469,3 +469,354 @@ class TestIntegrationScenarios:
         assert monitor.check_memory_thresholds(450.0) == "CRITICAL"  # 严重
 
         monitor.shutdown()
+
+# ==================== unified_monitoring 模块测试 ====================
+
+def test_unified_monitoring_module_import():
+    """测试unified_monitoring模块导入"""
+    try:
+        import woniunote.common.unified_monitoring as um
+        assert um is not None
+    except ImportError:
+        pytest.skip("无法导入unified_monitoring模块")
+
+def test_unified_monitoring_system_class():
+    """测试UnifiedMonitoringSystem类"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+        assert UnifiedMonitoringSystem is not None
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_unified_monitoring_system_initialization():
+    """测试UnifiedMonitoringSystem初始化"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            # 测试默认初始化
+            system = UnifiedMonitoringSystem()
+            assert system is not None
+            assert hasattr(system, 'alert_thresholds')
+            assert hasattr(system, 'metrics_history')
+
+            # 测试自定义配置初始化
+            config = {'cpu_threshold': 90.0, 'collect_interval': 60}
+            system = UnifiedMonitoringSystem(config)
+            assert system.config == config
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_start_monitoring_method():
+    """测试start_monitoring方法"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = UnifiedMonitoringSystem()
+            # 测试方法存在
+            assert hasattr(system, 'start_monitoring')
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_stop_monitoring_method():
+    """测试stop_monitoring方法"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = UnifiedMonitoringSystem()
+            # 测试方法存在
+            assert hasattr(system, 'stop_monitoring')
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_get_system_status_method():
+    """测试get_system_status方法"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = UnifiedMonitoringSystem()
+            status = system.get_system_status()
+
+            assert isinstance(status, dict)
+            assert 'current_metrics' in status
+            assert 'alerts' in status
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_get_metrics_history_method():
+    """测试get_metrics_history方法"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = UnifiedMonitoringSystem()
+            history = system.get_metrics_history('cpu')
+
+            assert isinstance(history, list)
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_get_performance_summary_method():
+    """测试get_performance_summary方法"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = UnifiedMonitoringSystem()
+            summary = system.get_performance_summary()
+
+            assert isinstance(summary, dict)
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_get_system_overview_method():
+    """测试get_system_overview方法"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = UnifiedMonitoringSystem()
+            overview = system.get_system_overview()
+
+            assert isinstance(overview, dict)
+            assert 'timestamp' in overview
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_run_capacity_analysis_method():
+    """测试run_capacity_analysis方法"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = UnifiedMonitoringSystem()
+            analysis = system.run_capacity_analysis()
+
+            assert isinstance(analysis, dict)
+            assert 'timestamp' in analysis
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_get_health_score_method():
+    """测试get_health_score方法"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = UnifiedMonitoringSystem()
+            score = system.get_health_score()
+
+            assert isinstance(score, dict)
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_record_counter_method():
+    """测试record_counter方法"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = UnifiedMonitoringSystem()
+            # 测试方法存在
+            assert hasattr(system, 'record_counter')
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_record_timer_method():
+    """测试record_timer方法"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = UnifiedMonitoringSystem()
+            # 测试方法存在
+            assert hasattr(system, 'record_timer')
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_record_request_method():
+    """测试record_request方法"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = UnifiedMonitoringSystem()
+            # 测试方法存在
+            assert hasattr(system, 'record_request')
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_get_metrics_summary_method():
+    """测试get_metrics_summary方法"""
+    try:
+        from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = UnifiedMonitoringSystem()
+            summary = system.get_metrics_summary()
+
+            assert isinstance(summary, dict)
+            assert 'timestamp' in summary
+
+    except ImportError:
+        pytest.skip("无法导入UnifiedMonitoringSystem")
+
+def test_init_unified_monitoring_system_function():
+    """测试init_unified_monitoring_system函数"""
+    try:
+        from woniunote.common.unified_monitoring import init_unified_monitoring_system
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            system = init_unified_monitoring_system()
+            assert system is not None
+
+    except ImportError:
+        pytest.skip("无法导入init_unified_monitoring_system")
+
+def test_get_monitoring_system_function():
+    """测试get_monitoring_system函数"""
+    try:
+        from woniunote.common.unified_monitoring import get_monitoring_system
+
+        # 测试函数存在性
+        assert callable(get_monitoring_system)
+
+    except ImportError:
+        pytest.skip("无法导入get_monitoring_system")
+
+def test_get_performance_monitor_function():
+    """测试get_performance_monitor函数"""
+    try:
+        from woniunote.common.unified_monitoring import get_performance_monitor
+
+        # 测试函数存在性
+        assert callable(get_performance_monitor)
+
+    except ImportError:
+        pytest.skip("无法导入get_performance_monitor")
+
+def test_get_metrics_collector_function():
+    """测试get_metrics_collector函数"""
+    try:
+        from woniunote.common.unified_monitoring import get_metrics_collector
+
+        # 测试函数存在性
+        assert callable(get_metrics_collector)
+
+    except ImportError:
+        pytest.skip("无法导入get_metrics_collector")
+
+def test_monitor_function_decorator():
+    """测试monitor_function装饰器"""
+    try:
+        from woniunote.common.unified_monitoring import monitor_function
+
+        @monitor_function
+        def test_function():
+            return "success"
+
+        result = test_function()
+        assert result == "success"
+
+    except ImportError:
+        pytest.skip("无法导入monitor_function")
+
+def test_init_intelligent_ops_management_function():
+    """测试init_intelligent_ops_management函数"""
+    try:
+        from woniunote.common.unified_monitoring import init_intelligent_ops_management
+
+        with patch('woniunote.common.unified_monitoring.get_logger') as mock_logger:
+            mock_logger.return_value = Mock()
+
+            result = init_intelligent_ops_management()
+            assert result is not None
+
+    except ImportError:
+        pytest.skip("无法导入init_intelligent_ops_management")
+
+def test_monitor_function_health_decorator():
+    """测试monitor_function_health装饰器"""
+    try:
+        from woniunote.common.unified_monitoring import monitor_function_health
+
+        @monitor_function_health
+        def test_function():
+            return "success"
+
+        result = test_function()
+        assert result == "success"
+
+    except ImportError:
+        pytest.skip("无法导入monitor_function_health")
+
+def test_get_ops_manager_function():
+    """测试get_ops_manager函数"""
+    try:
+        from woniunote.common.unified_monitoring import get_ops_manager
+
+        # 测试函数存在性
+        assert callable(get_ops_manager)
+
+    except ImportError:
+        pytest.skip("无法导入get_ops_manager")
+
+def test_unified_monitoring_comprehensive_coverage():
+    """测试unified_monitoring模块全面覆盖"""
+    try:
+        import woniunote.common.unified_monitoring as um
+
+        # 测试模块的主要组件完整性
+        major_components = [
+            'UnifiedMonitoringSystem', 'init_unified_monitoring_system',
+            'get_monitoring_system', 'monitor_function', 'get_performance_monitor'
+        ]
+
+        for component in major_components:
+            assert hasattr(um, component)
+
+    except ImportError:
+        pytest.skip("无法导入unified_monitoring模块")

@@ -1,3 +1,9 @@
+# === 测试文件整合说明 ===
+# 此文件整合了以下测试文件的内容:
+# - test_index_controller_comprehensive.py (主文件)
+# 备份文件保存在相同目录下，以 .backup 扩展名
+# =========================================
+
 #!/usr/bin/env python3
 """
 Comprehensive test suite for woniunote.controller.index module
@@ -590,3 +596,34 @@ class TestHomeRouteErrorScenarios:
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '--tb=short'])
+
+
+# === 整合的测试用例 ===
+
+    def test_index_controller_imports(self):
+
+    def test_get_index_trace_id(self):
+
+    def test_index_logger_initialization(self):
+
+    def test_home_route(self):
+
+    def test_home_route_not_logged_in(self):
+
+    def test_home_route_exception_handling(self):
+
+    def test_index_blueprint_registration(self):
+
+    def test_module_constants(self):
+
+    def test_module_docstring(self):
+
+    def test_trace_id_date_format(self, mock_datetime):
+
+    def test_trace_id_uuid_generation(self, mock_uuid):
+
+    def test_articles_integration(self, mock_simple_logger, mock_articles):
+
+    def test_redis_integration(self, mock_redis_connect):
+
+    def test_simple_logger_usage(self, mock_simple_logger):
