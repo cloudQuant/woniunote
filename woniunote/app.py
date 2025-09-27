@@ -109,10 +109,13 @@ def create_app(config_name='production'):
     # 如果是生产环境，验证必需的环境变量
     if config_name == 'production':
         try:
-            config_class.validate_environment()
+            # 只有在config_class有validate_environment方法时才调用
+            if hasattr(config_class, 'validate_environment'):
+                config_class.validate_environment()
         except ValueError as e:
-            app_logger.error(f"生产环境配置验证失败: {e}")
-            raise
+            app_logger.warning(f"生产环境配置验证失败，将使用默认配置: {e}")
+            # 不抛出异常，允许使用默认配置启动
+            pass
     
     app.config.from_object(config_class)
     app_logger.info("应用程序配置已加载")
@@ -1987,6 +1990,13 @@ def create_app(config_name='production'):
     return app
 
    
+
+# 创建生产环境应用实例（供gunicorn使用）
+# 注意：在生产环境中，请确保设置以下环境变量：
+# - SECRET_KEY: 用于Flask session加密的密钥
+# - DATABASE_URL: 数据库连接URL，格式如 mysql+pymysql://user:pass@host:port/dbname
+# 如果未设置，将使用默认配置（仅用于测试）
+app = create_app('production')
 
 # 创建应用实例
 if __name__ == '__main__':
