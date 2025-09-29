@@ -655,6 +655,7 @@ def create_app(config_name='production'):
                             if closest_file:
                                 closest_path = os.path.join(thumb_path, closest_file)
                                 app_logger.info(f"使用最接近的缩略图: {filename} -> {closest_file}")
+                                from flask import send_file
                                 return send_file(closest_path, mimetype='image/png')
 
                     except ValueError:
@@ -667,6 +668,7 @@ def create_app(config_name='production'):
             default_thumb = os.path.join(thumb_path, '1.png')
             if os.path.exists(default_thumb):
                 app_logger.info(f"使用默认缩略图替代缺失文件: {filename} -> 1.png")
+                from flask import send_file
                 return send_file(default_thumb, mimetype='image/png')
 
             # 如果连默认文件都不存在，返回404
@@ -1234,24 +1236,21 @@ def create_app(config_name='production'):
     def favicon():
         """Favicon请求处理"""
         try:
-            # 尝试从多个可能的静态目录获取favicon
-            import os
-            static_paths = [
-                os.path.join(app.static_folder, 'favicon.ico'),  # resource/favicon.ico
-                os.path.join('woniunote', 'static', 'favicon.ico'),  # woniunote/static/favicon.ico
-                os.path.join('static', 'favicon.ico')  # static/favicon.ico
-            ]
+            # 直接使用Flask的静态文件系统
+            from flask import send_from_directory
             
-            for path in static_paths:
-                if os.path.exists(path):
-                    return app.send_file(path, mimetype='image/x-icon')
-            
-            # 如果文件不存在，返回空的204响应
-            app_logger.warning("Favicon文件不存在，返回空响应")
-            return '', 204
+            # 尝试从静态文件目录提供favicon
+            try:
+                return send_from_directory(os.path.join(app.root_path, 'resource', 'static'), 'favicon.ico')
+            except FileNotFoundError:
+                try:
+                    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico')
+                except FileNotFoundError:
+                    # 如果都找不到，返回204
+                    return '', 204
             
         except Exception as e:
-            app_logger.warning(f"Favicon处理失败: {str(e)}")
+            app_logger.debug(f"Favicon处理: {str(e)}")  # 改为debug级别，减少日志噪音
             return '', 204
 
     @app.route('/health')

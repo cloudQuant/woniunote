@@ -184,18 +184,14 @@ class MemoryLeakDetector:
             return snapshot
             
         except Exception as e:
-            self.logger.error(f"获取内存快照失败: {e}")
-            # 尝试创建备用快照
-            try:
-                fallback = self._create_fallback_snapshot()
-                if fallback:
-                    return fallback
-            except Exception as fallback_error:
-                self.logger.error(f"备用快照创建也失败: {fallback_error}")
-            
-            # 如果所有方法都失败，创建一个最基本的快照
-            try:
-                basic_snapshot = MemorySnapshot(
+            self.logger.debug(f"内存快照创建跳过: {e}")  # 改为debug级别，减少日志噪音
+            # 静默返回None，不影响应用正常运行
+            return None
+
+    def _create_fallback_snapshot(self) -> MemorySnapshot:
+        """创建备用快照"""
+        try:
+            basic_snapshot = MemorySnapshot(
                     timestamp=datetime.now(),
                     total_memory_mb=8192.0,
                     process_memory_mb=100.0,
