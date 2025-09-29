@@ -70,8 +70,8 @@ class UnifiedSecurityManager:
             response.headers['X-XSS-Protection'] = '1; mode=block'
             response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
             
-            # CSP策略
-            csp_policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+            # CSP策略 - 支持UEditor和外部资源
+            csp_policy = "default-src 'self' data: blob: https: http:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http: *.googletagmanager.com *.jquery.com *.jsdelivr.net code.jquery.com www.googletagmanager.com; style-src 'self' 'unsafe-inline' https: http: fonts.googleapis.com *.jsdelivr.net cdn.jsdelivr.net; font-src 'self' data: https: http: fonts.gstatic.com *.gstatic.com; img-src 'self' data: blob: https: http:; frame-src 'self' https: http:; connect-src 'self' https: http:; object-src 'none'; media-src 'self' data: blob: https: http:;"
             response.headers['Content-Security-Policy'] = csp_policy
             
             return response

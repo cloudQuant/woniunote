@@ -22,6 +22,11 @@ def test_editor():
     """提供简单的UEditor测试页面"""
     return render_template('test-editor.html')
 
+@ueditor.route('/debug-editor')
+def debug_editor():
+    """提供UEditor调试页面"""
+    return render_template('ueditor-debug.html')
+
 @ueditor.route('/resource/ueditor/<path:filename>')
 def ueditor_static(filename):
     """提供UEditor静态文件"""
@@ -67,6 +72,44 @@ def ueditor_static(filename):
             
     except Exception as e:
         ueditor_logger.error(f"UEditor静态文件服务错误: {str(e)}")
+        return f"Error: {str(e)}", 500
+
+@ueditor.route('/ueditor/<path:filename>')
+def ueditor_legacy_static(filename):
+    """为兼容性提供UEditor静态文件的旧路径 /ueditor/"""
+    try:
+        # 确保filename是字符串类型
+        if not isinstance(filename, str):
+            filename = str(filename)
+        
+        # 获取当前应用的根目录
+        cwd = os.getcwd()
+        if 'woniunote' in cwd:
+            if cwd.endswith('woniunote'):
+                app_root = cwd
+            else:
+                woniunote_index = cwd.find('woniunote')
+                if woniunote_index != -1:
+                    app_root = cwd[:woniunote_index + len('woniunote')]
+                else:
+                    app_root = os.path.join(cwd, 'woniunote')
+        else:
+            app_root = os.path.join(cwd, 'woniunote')
+        
+        ueditor_path = os.path.join(app_root, 'resource', 'ueditor')
+        
+        ueditor_logger.info(f"UEditor旧路径文件请求: {filename}, 路径: {ueditor_path}")
+        
+        # 检查文件是否存在
+        file_path = os.path.join(ueditor_path, filename)
+        if os.path.exists(file_path):
+            return send_from_directory(ueditor_path, filename)
+        else:
+            ueditor_logger.error(f"UEditor文件不存在: {file_path}")
+            return "File not found", 404
+            
+    except Exception as e:
+        ueditor_logger.error(f"UEditor旧路径静态文件服务错误: {str(e)}")
         return f"Error: {str(e)}", 500
 
 # 生成唯一的跟踪ID

@@ -46,8 +46,8 @@ SECURITY_HEADERS = {
     'X-Content-Type-Options': 'nosniff',
     'X-XSS-Protection': '1; mode=block',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    # 更宽松的CSP以支持UEditor和跨域资源
-    'Content-Security-Policy': "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https: data:; font-src 'self' data: https:; img-src 'self' data: blob: https:; frame-src 'self'; connect-src 'self' https:",
+    # 完全宽松的CSP以支持UEditor和所有外部资源
+    'Content-Security-Policy': "default-src 'self' data: blob: https: http:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http: *.googletagmanager.com *.jquery.com *.jsdelivr.net code.jquery.com www.googletagmanager.com; style-src 'self' 'unsafe-inline' https: http: fonts.googleapis.com *.jsdelivr.net cdn.jsdelivr.net; font-src 'self' data: https: http: fonts.gstatic.com *.gstatic.com; img-src 'self' data: blob: https: http:; frame-src 'self' https: http:; connect-src 'self' https: http:; object-src 'none'; media-src 'self' data: blob: https: http:;",
 }
 
 # 允许的文件扩展名

@@ -209,6 +209,30 @@ def read_all():
         return ''
 
 
+@article.route('/article/test-post')
+@log_function(log_args=False, log_return=False, log_exception=True)
+def test_post():
+    """测试文章发布页面（无需登录）"""
+    try:
+        # 准备子类型数据
+        subtypes_data = {}
+        for key, value in ARTICLE_TYPES.items():
+            if key >= 100:
+                main_id = key // 100
+                if main_id not in subtypes_data:
+                    subtypes_data[main_id] = {}
+                subtypes_data[main_id][key] = value
+        
+        # 返回模板
+        return render_template('post-user.html', article_type=ARTICLE_TYPES, subTypesData=subtypes_data)
+    except Exception as e:
+        simple_logger.error("访问测试文章发布页面异常", {
+            'trace_id': get_simple_trace_id(),
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+        abort(500)
+
 @article.route('/article/pre-post')
 @log_function(log_args=False, log_return=False, log_exception=True)
 def pre_post():

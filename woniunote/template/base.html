@@ -23,8 +23,13 @@
     <link rel="stylesheet" href="/icon/font/css/open-iconic-bootstrap.css" type="text/css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script defer src="/js/jquery-3.4.1.min.js"></script>
+    <script src="/js/jquery-3.4.1.min.js"></script>
+    <script>
+        // 确保jQuery已加载的备用方案
+        if (typeof $ === 'undefined') {
+            document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+        }
+    </script>
     <script defer src="/js/bootstrap.js"></script>
     <script defer src="/js/bootbox.min.js"></script>
     <script defer src="/js/woniunote.js"></script>
