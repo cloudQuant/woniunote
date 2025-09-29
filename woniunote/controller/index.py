@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, abort, request, session
 import uuid
 import math
+import psutil
+import time
 from datetime import datetime, UTC
 
 from woniunote.module.articles import Articles
@@ -50,7 +52,7 @@ def home():
     
     try:
         # 查询文章列表
-        result = Articles.find_limit_with_users(-10, 10)
+        result = Articles.find_limit_with_users(0, 10)
         total = math.ceil(Articles.get_total_count() / 10)
         
         # 记录文章列表查询结果
@@ -120,7 +122,7 @@ def get_home():
     
     try:
         # 查询文章列表
-        result = Articles.find_limit_with_users(-10, 10)
+        result = Articles.find_limit_with_users(0, 10)
         total = math.ceil(Articles.get_total_count() / 10)
         
         # 记录文章列表查询结果
@@ -801,8 +803,6 @@ def system_status():
         ''', 403
     
     try:
-        import psutil
-        import time
         start_time = time.time()
         
         # 基础系统信息 - 快速获取
@@ -871,40 +871,51 @@ def system_status():
         if total_time > 2.0:  # 2秒总超时
             monitoring_data['performance_warning'] = f'页面加载时间: {total_time:.2f}秒'
         
-        return render_template('system_status.html', 
+        # 构建system_info数据结构
+        system_info = {
+            'cpu': {
+                'usage_percent': cpu_percent,
+                'core_count': psutil.cpu_count() or 1,
+                'status': 'normal' if cpu_percent < 70 else 'warning' if cpu_percent < 90 else 'critical'
+            },
+            'memory': {
+                'usage_percent': memory.percent,
+                'total_gb': round(memory.total / (1024**3), 2),
+                'used_gb': round(memory.used / (1024**3), 2),
+                'available_gb': round(memory.available / (1024**3), 2),
+                'status': 'normal' if memory.percent < 70 else 'warning' if memory.percent < 90 else 'critical'
+            },
+            'disk': {
+                'usage_percent': disk_percent,
+                'total_gb': round(disk.total / (1024**3), 2) if 'disk' in locals() else 0,
+                'used_gb': round(disk.used / (1024**3), 2) if 'disk' in locals() else 0,
+                'free_gb': round(disk.free / (1024**3), 2) if 'disk' in locals() else 0,
+                'status': 'normal' if disk_percent < 70 else 'warning' if disk_percent < 90 else 'critical'
+            }
+        }
+
+        return render_template('system_status.html',
                              monitoring_data=monitoring_data,
                              cpu_percent=cpu_percent,
                              memory_percent=memory.percent,
-                             disk_percent=disk_percent)
+                             disk_percent=disk_percent,
+                             system_info=system_info)
                              
     except Exception as e:
         # 返回简化的错误页面
-        return f'''
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>系统状态</title>
-            <style>
-                body {{ font-family: Arial, sans-serif; text-align: center; margin-top: 100px; background: #f8f9fa; }}
-                .error-container {{ background: #fff; border: 1px solid #e9ecef; border-radius: 10px; padding: 30px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
-                .error-title {{ color: #dc3545; font-size: 24px; margin-bottom: 20px; font-weight: bold; }}
-                .error-message {{ color: #6c757d; margin-bottom: 30px; font-size: 16px; line-height: 1.5; }}
-                .back-btn {{ background: #6c757d; color: white; padding: 12px 30px; border: none; border-radius: 25px; text-decoration: none; display: inline-block; font-size: 16px; font-weight: 500; transition: all 0.3s ease; }}
-                .back-btn:hover {{ background: #5a6268; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); color: white; }}
-            </style>
-        </head>
-        <body>
-            <div class="error-container">
-                <div class="error-title">⚠️ 系统状态加载失败</div>
-                <div class="error-message">
-                    无法加载系统状态信息<br>
-                    错误: {str(e)[:100]}
-                </div>
-                <a href="/" class="back-btn">🏠 返回首页</a>
-            </div>
-        </body>
-        </html>
-        ''', 500
+        # 构建基本的system_info用于错误页面
+        basic_system_info = {
+            'cpu': {'usage_percent': 0, 'core_count': 1, 'status': 'unknown'},
+            'memory': {'usage_percent': 0, 'total_gb': 0, 'used_gb': 0, 'available_gb': 0, 'status': 'unknown'},
+            'disk': {'usage_percent': 0, 'total_gb': 0, 'used_gb': 0, 'free_gb': 0, 'status': 'unknown'}
+        }
+
+        return render_template('system_status.html',
+                             monitoring_data={'error': str(e)},
+                             cpu_percent=0,
+                             memory_percent=0,
+                             disk_percent=0,
+                             system_info=basic_system_info), 500
 
 def get_status_class(value, warning_threshold, critical_threshold):
     """根据阈值返回状态CSS类"""

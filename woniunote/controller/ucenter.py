@@ -78,7 +78,7 @@ def user_center():
         })
         
         # 获取用户收藏
-        favorites = Favorites().find_by_userid(userid)
+        favorites = Favorites.find_by_userid(userid)
         
         if favorites:
             # 记录收藏查询结果
@@ -281,7 +281,7 @@ def user_comment():
         })
         
         # 获取用户评论
-        comments = Comments().find_by_userid(userid)
+        comments = Comments.find_by_userid(userid)
         
         if comments:
             # 记录评论查询结果
@@ -402,7 +402,7 @@ def user_info():
         })
         
         # 获取用户信息
-        user = Users().find_by_userid(userid)
+        user = Users.find_by_userid(userid)
         
         # 检查用户是否存在
         if not user:
@@ -494,7 +494,7 @@ def user_credit():
         })
         
         # 获取用户积分记录
-        credits = Credits().find_by_userid(userid)
+        credits = Credits.find_by_userid(userid)
         
         # 记录积分查询结果
         ucenter_logger.info("用户积分查询结果", {

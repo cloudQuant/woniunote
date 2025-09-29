@@ -100,7 +100,7 @@ def create_app(config_name='production'):
     app_logger = get_simple_logger('app')
     app_logger.info("正在初始化应用程序...")
     
-    app = Flask(__name__, template_folder='template',
+    app = Flask(__name__, template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template'),
                 static_url_path='/', static_folder='resource')
     
     # 加载配置
@@ -224,6 +224,11 @@ def create_app(config_name='production'):
     
     # 初始化Flask-Session
     Session(app)
+
+    # 确保session在模板中可用
+    @app.context_processor
+    def inject_session():
+        return dict(session=session)
     
     # 初始化优化系统
     try:
@@ -319,24 +324,24 @@ def create_app(config_name='production'):
                             app_logger.warning(f"限流配置 {limiter_name}.{key} 无效，使用默认值")
                             if key in ['capacity', 'max_requests']:
                                 if limiter_name == 'api':
-                                    rate_limit_config[limiter_name][key] = 500  # 增加10倍
+                                    rate_limit_config[limiter_name][key] = 1000000  # 增加100倍
                                 elif limiter_name == 'upload':
-                                    rate_limit_config[limiter_name][key] = 50  # 增加10倍
+                                    rate_limit_config[limiter_name][key] = 100000  # 增加100倍
                                 elif limiter_name == 'strict':
-                                    rate_limit_config[limiter_name][key] = 200  # 增加10倍
+                                    rate_limit_config[limiter_name][key] = 500000  # 增加100倍
                                 elif limiter_name == 'moderate':
-                                    rate_limit_config[limiter_name][key] = 600  # 增加10倍
+                                    rate_limit_config[limiter_name][key] = 1500000  # 增加100倍
                                 elif limiter_name == 'lenient':
-                                    rate_limit_config[limiter_name][key] = 2000  # 增加10倍
+                                    rate_limit_config[limiter_name][key] = 5000000  # 增加100倍
                                 else:
-                                    rate_limit_config[limiter_name][key] = 100
+                                    rate_limit_config[limiter_name][key] = 100000
                             elif key == 'refill_rate':
                                 if limiter_name == 'api':
-                                    rate_limit_config[limiter_name][key] = 100  # 增加10倍
+                                    rate_limit_config[limiter_name][key] = 200000  # 增加100倍
                                 elif limiter_name == 'upload':
-                                    rate_limit_config[limiter_name][key] = 10  # 增加10倍
+                                    rate_limit_config[limiter_name][key] = 20000  # 增加100倍
                                 else:
-                                    rate_limit_config[limiter_name][key] = 20
+                                    rate_limit_config[limiter_name][key] = 20000
                             elif key == 'refill_period':
                                 rate_limit_config[limiter_name][key] = 1 if limiter_name == 'api' else 10 if limiter_name == 'upload' else 60
                             elif key == 'window_size':
@@ -349,11 +354,11 @@ def create_app(config_name='production'):
             # 使用默认配置重试 (已增加10倍容量)
             try:
                 default_rate_limit_config = {
-                    'api': {'type': 'token_bucket', 'capacity': 500, 'refill_rate': 100, 'refill_period': 1},  # 增加10倍
-                    'upload': {'type': 'token_bucket', 'capacity': 50, 'refill_rate': 10, 'refill_period': 10},  # 增加10倍
-                    'strict': {'type': 'sliding_window', 'max_requests': 200, 'window_size': 60},  # 增加10倍
-                    'moderate': {'type': 'sliding_window', 'max_requests': 600, 'window_size': 60},  # 增加10倍
-                    'lenient': {'type': 'sliding_window', 'max_requests': 2000, 'window_size': 60}  # 增加10倍
+                    'api': {'type': 'token_bucket', 'capacity': 1000000, 'refill_rate': 200000, 'refill_period': 1},  # 增加100倍容量
+                    'upload': {'type': 'token_bucket', 'capacity': 100000, 'refill_rate': 20000, 'refill_period': 10},  # 增加100倍容量
+                    'strict': {'type': 'sliding_window', 'max_requests': 500000, 'window_size': 60},  # 增加100倍容量
+                    'moderate': {'type': 'sliding_window', 'max_requests': 1500000, 'window_size': 60},  # 增加100倍容量
+                    'lenient': {'type': 'sliding_window', 'max_requests': 5000000, 'window_size': 60}  # 增加100倍容量
                 }
                 init_rate_limiter(default_rate_limit_config)
             except Exception as e2:
@@ -1996,7 +2001,14 @@ def create_app(config_name='production'):
 # - SECRET_KEY: 用于Flask session加密的密钥
 # - DATABASE_URL: 数据库连接URL，格式如 mysql+pymysql://user:pass@host:port/dbname
 # 如果未设置，将使用默认配置（仅用于测试）
-app = create_app('production')
+
+# 根据环境变量选择配置，如果是开发/测试环境使用development配置
+import os
+config_name = os.environ.get('FLASK_ENV', 'production')
+if config_name in ['development', 'testing'] or __name__ != '__main__':
+    config_name = 'development'
+
+app = create_app(config_name)
 
 # 创建应用实例
 if __name__ == '__main__':

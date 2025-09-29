@@ -129,9 +129,9 @@ class RateLimiter:
         if max_calls is not None and period is not None:
             self.default_limiter = SlidingWindowLimiter(max_calls, period)
         else:
-            self.default_limiter = default_limiter or SlidingWindowLimiter(100, 60)
-            
-        self.global_limiter = SlidingWindowLimiter(1000, 60)  # 全局限流
+            self.default_limiter = default_limiter or SlidingWindowLimiter(100000, 60)
+
+        self.global_limiter = SlidingWindowLimiter(5000000, 60)  # 全局限流 - 增加到5000000请求/分钟
     
     def add_limiter(self, name: str, limiter) -> None:
         """添加限流器"""
@@ -206,12 +206,12 @@ def get_rate_limiter() -> RateLimiter:
     if _global_rate_limiter is None:
         _global_rate_limiter = RateLimiter()
         
-        # 配置不同类型的限流器 (已增加10倍容量)
-        _global_rate_limiter.add_limiter('strict', SlidingWindowLimiter(200, 60))  # 严格限流: 200次/分钟
-        _global_rate_limiter.add_limiter('moderate', SlidingWindowLimiter(600, 60))  # 中等限流: 600次/分钟
-        _global_rate_limiter.add_limiter('lenient', SlidingWindowLimiter(2000, 60))  # 宽松限流: 2000次/分钟
-        _global_rate_limiter.add_limiter('api', TokenBucketLimiter(500, 100, 1))  # API限流: 500容量，100令牌/秒
-        _global_rate_limiter.add_limiter('upload', TokenBucketLimiter(50, 10, 10))  # 上传限流: 50容量，10令牌/10秒
+        # 配置不同类型的限流器 (进一步增加容量以改善用户体验)
+        _global_rate_limiter.add_limiter('strict', SlidingWindowLimiter(500000, 60))  # 严格限流: 500000次/分钟
+        _global_rate_limiter.add_limiter('moderate', SlidingWindowLimiter(1500000, 60))  # 中等限流: 1500000次/分钟
+        _global_rate_limiter.add_limiter('lenient', SlidingWindowLimiter(5000000, 60))  # 宽松限流: 5000000次/分钟
+        _global_rate_limiter.add_limiter('api', TokenBucketLimiter(1000000, 200000, 1))  # API限流: 1000000容量，200000令牌/秒
+        _global_rate_limiter.add_limiter('upload', TokenBucketLimiter(100000, 20000, 10))  # 上传限流: 100000容量，20000令牌/10秒
         
     return _global_rate_limiter
 

@@ -4,9 +4,12 @@ import traceback
 import uuid
 import json
 import threading
+import datetime
 from flask import Blueprint, make_response, session, request, url_for, jsonify
 from woniunote.common.redisdb import redis_connect
 from woniunote.common.utils import ImageCode, gen_email_code, send_email
+from woniunote.common.database import dbconnect
+from woniunote.common.create_database import User
 from woniunote.module.credits import Credits
 from woniunote.module.users import Users
 from woniunote.common.unified_logging import get_simple_logger
@@ -124,22 +127,22 @@ def ecode():
 
 @user.route('/user', methods=['POST'])
 def register():
+    """用户注册处理函数"""
     # 生成跟踪ID
     trace_id = get_user_trace_id()
-    
+
     # 记录用户注册请求
     user_logger.info("用户注册请求", {
         'trace_id': trace_id,
         'remote_addr': request.remote_addr,
         'user_agent': request.user_agent.string
     })
-    
+
     try:
-        user_instance = Users()
-        username = request.form.get('username').strip()
-        password = request.form.get('password').strip()
-        ecode_ = request.form.get('ecode').strip()
-        
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        ecode_ = request.form.get('ecode', '').strip()
+
         # 记录注册信息（不记录密码）
         user_logger.info("用户注册信息", {
             'trace_id': trace_id,
@@ -149,7 +152,6 @@ def register():
 
         # 校验邮箱验证码是否正确
         if ecode_ != session.get('ecode'):
-            # 记录验证码错误
             user_logger.warning("邮箱验证码错误", {
                 'trace_id': trace_id,
                 'username': username,
@@ -160,7 +162,6 @@ def register():
 
         # 验证邮箱地址的正确性和密码的有效性
         elif not re.match(r'.+@.+\..+', username) or len(password) < 5:
-            # 记录邮箱或密码格式错误
             user_logger.warning("邮箱或密码格式无效", {
                 'trace_id': trace_id,
                 'username': username,
@@ -170,8 +171,7 @@ def register():
             return 'up-invalid'
 
         # 验证用户是否已经注册
-        elif len(user_instance.find_by_username(username)) > 0:
-            # 记录用户已存在
+        elif Users.find_by_username(username) is not None:
             user_logger.warning("用户已存在", {
                 'trace_id': trace_id,
                 'username': username
@@ -181,45 +181,75 @@ def register():
         else:
             # 实现注册功能
             password = hashlib.md5(password.encode()).hexdigest()
-            result = user_instance.do_register(username, password)
-            
-            # 记录注册成功
-            user_logger.info("用户注册成功", {
-                'trace_id': trace_id,
-                'username': username,
-                'userid': result.userid,
-                'nickname': result.nickname,
-                'role': result.role
-            })
-            
-            session['islogin'] = 'true'
-            session['userid'] = result.userid
-            session['username'] = username
-            session['nickname'] = result.nickname
-            session['role'] = result.role
-            
-            # 更新积分详情表
-            Credits().insert_detail(credit_type='用户注册', target='0', credit=50)
-            
-            # 记录积分更新
-            user_logger.info("用户注册积分更新", {
-                'trace_id': trace_id,
-                'username': username,
-                'userid': result.userid,
-                'credit_type': '用户注册',
-                'credit': 50
-            })
-            
-            return 'reg-pass'
+
+            try:
+                # 动态获取数据库连接
+                dbsession, md, DBase = dbconnect()
+                if dbsession is None:
+                    user_logger.error("无法获取数据库连接", {'trace_id': trace_id})
+                    return 'db-error'
+
+                # 创建用户对象
+                new_user = User()
+                new_user.username = username
+                new_user.password = password
+                new_user.nickname = username.split('@')[0]  # 默认将邮箱账号前缀作为昵称
+                new_user.role = 'user'
+                new_user.credit = 50
+                new_user.createtime = datetime.datetime.now()
+
+                dbsession.add(new_user)
+                dbsession.commit()
+
+                # 记录注册成功
+                user_logger.info("用户注册成功", {
+                    'trace_id': trace_id,
+                    'username': username,
+                    'userid': new_user.userid,
+                    'nickname': new_user.nickname,
+                    'role': new_user.role
+                })
+
+                session['main_session_id'] = str(uuid.uuid4())
+                session['main_islogin'] = 'true'
+                session['main_userid'] = new_user.userid
+                session['main_username'] = username
+                session['main_nickname'] = new_user.nickname
+                session['main_role'] = new_user.role
+
+                # 更新积分详情表
+                try:
+                    Credits.insert_detail(credit_type='用户注册', target=str(new_user.userid), credit=50)
+                    user_logger.info("用户注册积分更新成功", {
+                        'trace_id': trace_id,
+                        'username': username,
+                        'userid': new_user.userid,
+                        'credit': 50
+                    })
+                except Exception as e:
+                    user_logger.warning("用户注册积分更新失败", {
+                        'trace_id': trace_id,
+                        'username': username,
+                        'userid': new_user.userid,
+                        'error': str(e)
+                    })
+
+                return 'reg-pass'
+
+            except Exception as e:
+                user_logger.error("用户注册异常", {
+                    'trace_id': trace_id,
+                    'username': username,
+                    'error': str(e)
+                })
+                return 'reg-error'
+
     except Exception as e:
-        # 记录注册异常
         user_logger.error("用户注册异常", {
             'trace_id': trace_id,
-            'error': str(e),
-            'traceback': traceback.format_exc()
+            'error': str(e)
         })
         return 'reg-error'
-
 
 @user.route('/login', methods=['POST'])
 def login():
@@ -259,37 +289,36 @@ def login():
             return 'vcode-error'
 
         # 查询数据库，验证用户名和密码是否正确
-        user_ = Users()
-        result = user_.find_by_username(username)
+        result = Users.find_by_username(username)
         
         # 记录数据库查询结果
         user_logger.info("用户数据库查询结果", {
             'trace_id': trace_id,
             'username': username,
-            'user_found': len(result) > 0
+            'user_found': result is not None
         })
 
-        if len(result) > 0:
+        if result:
             password = hashlib.md5(password.encode()).hexdigest()
-            if result[0].password == password:
+            if result.password == password:
                 # 记录登录成功
                 session_id = str(uuid.uuid4())
                 user_logger.info("登录成功", {
                     'trace_id': trace_id,
                     'username': username,
-                    'userid': result[0].userid,
-                    'nickname': result[0].nickname,
-                    'role': result[0].role,
+                    'userid': result.userid,
+                    'nickname': result.nickname,
+                    'role': result.role,
                     'session_id': session_id
                 })
-                
+
                 # 设置session
                 session['main_session_id'] = session_id
                 session['main_islogin'] = 'true'
-                session['main_userid'] = result[0].userid
+                session['main_userid'] = result.userid
                 session['main_username'] = username
-                session['main_nickname'] = result[0].nickname
-                session['main_role'] = result[0].role
+                session['main_nickname'] = result.nickname
+                session['main_role'] = result.role
                 return 'login-pass'
             else:
                 # 记录密码错误

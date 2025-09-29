@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+.credit-info {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-top: 20px;
+}
+
+.credit-info h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #eee;
+}
+
+.credit-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.credit-table th,
+.credit-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.credit-table th {
+  background: #f8f9fa;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.credit-table tr:hover {
+  background: #f8f9fa;
+}
+
+.credit-value {
+  font-weight: bold;
+}
+
+.credit-positive {
+  color: #27ae60;
+}
+
+.credit-negative {
+  color: #e74c3c;
+}
+
+.no-credits {
+  text-align: center;
+  color: #7f8c8d;
+  padding: 40px 0;
+}
+</style>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-10 offset-md-1">
+      <div class="credit-info">
+        <h2>积分明细</h2>
+        {% if credits %}
+        <table class="credit-table">
+          <thead>
+            <tr>
+              <th>时间</th>
+              <th>类型</th>
+              <th>目标ID</th>
+              <th>积分变动</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for credit in credits %}
+            <tr>
+              <td>{{ credit.createtime }}</td>
+              <td>{{ credit.category }}</td>
+              <td>{{ credit.target }}</td>
+              <td class="credit-value {% if credit.credit > 0 %}credit-positive{% else %}credit-negative{% endif %}">
+                {{ credit.credit }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="no-credits">
+          暂无积分记录
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

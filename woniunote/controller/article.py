@@ -1,12 +1,12 @@
-from flask import Blueprint, render_template, request, session, abort, url_for, redirect, jsonify
+from flask import Blueprint, render_template, request, session, abort, url_for, redirect, jsonify, current_app
 from woniunote.module.articles import Articles
 from woniunote.module.users import Users
-from woniunote.common.unified_session import get_current_user_id
+from woniunote.common.unified_session import get_current_user_id, init_unified_session_manager
 from woniunote.module.comments import Comments
 from woniunote.module.credits import Credits
 from woniunote.module.favorites import Favorites
 from woniunote.common.unified_utils import can_use_minute
-from woniunote.common.database import ARTICLE_TYPES
+from woniunote.common.database import ARTICLE_TYPES, db
 from woniunote.common.log_decorator import log_function
 from woniunote.common.unified_logging import get_simple_logger
 import math
@@ -41,7 +41,7 @@ def read(articleid):
     """读取文章详情"""
     # 生成跟踪ID
     trace_id = get_simple_trace_id()
-    
+
     # 使用简单日志记录器记录日志
     simple_logger.info(f"访问文章", {
         'trace_id': trace_id,
@@ -51,7 +51,7 @@ def read(articleid):
     
     try:
         # 查找文章
-        article_instance = Articles().find_by_id(articleid)
+        article_instance = Articles.find_by_id(articleid)
         if not article_instance:
             # 记录警告日志
             simple_logger.warning(f"文章不存在", {
@@ -90,7 +90,7 @@ def read(articleid):
         article_dict['nickname'] = user.nickname if user else "Unknown"
 
         # 如果已经消耗积分，则不再截取文章内容
-        payed = Credits().check_payed_article(articleid)
+        payed = Credits.check_payed_article(articleid)
 
         position = 0
         if article_instance.credit > 0 and not payed:
@@ -98,10 +98,10 @@ def read(articleid):
             article_dict['content'] = article_dict['content'][:position]
 
         # 获取当前用户ID
-        current_userid = get_current_user_id()
+        current_userid = session.get('userid')
         
         # 检查是否已收藏
-        is_favorited = Favorites().check_favorite(articleid)
+        is_favorited = Favorites.check_favorite(articleid)
 
         Articles.update_read_count(articleid)  # 阅读次数+1
 
@@ -183,13 +183,14 @@ def read_all():
         content = result.content[position:]
         
         # 检查是否已支付积分
-        payed = Credits().check_payed_article(articleid)
-        
+        payed = Credits.check_payed_article(articleid)
+
         # 如果未支付，扣除积分
         if not payed and result.credit > 0:
-            current_userid = get_current_user_id()
-            Credits().insert_detail(credit_type='阅读文章', target=articleid, credit=-1 * result.credit)
-            Users().update_credit(credit=-1 * result.credit)
+            current_userid = session.get('userid')  # 直接从session获取
+            Credits.insert_detail(credit_type='阅读文章', target=articleid, credit=-1 * result.credit)
+            # 暂时注释掉用户积分更新，因为Users模块没有这个方法
+            # Users.update_credit(credit=-1 * result.credit)
             
             simple_logger.info("文章积分消费", {
                 'trace_id': get_simple_trace_id(),
@@ -231,7 +232,7 @@ def pre_post():
             return redirect('/login')
             
         # 查找用户
-        user = Users().find_by_userid(userid)
+        user = Users.find_by_userid(userid)
         if user is None:
             simple_logger.warning("用户不存在", {
                 'trace_id': get_simple_trace_id(),
@@ -293,7 +294,7 @@ def go_edit(articleid):
             return redirect('/login')
             
         # 查找用户
-        user = Users().find_by_userid(userid)
+        user = Users.find_by_userid(userid)
         if user is None:
             simple_logger.warning("用户不存在", {
                 'trace_id': get_simple_trace_id(),
@@ -482,8 +483,8 @@ def add_article():
                 'trace_id': get_simple_trace_id()
             })
             return 'not-login'
-            
-        user = Users().find_by_userid(userid)
+
+        user = Users.find_by_userid(userid)
         if user is None:
             simple_logger.error("用户不存在", {
                 'trace_id': get_simple_trace_id(),

@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- 引入 UEditor 配置和脚本 -->
+<script type="text/javascript" src="/ueditor/ueditor.config.js"></script>
+<script type="text/javascript" src="/ueditor/ueditor.all.js"></script>
+<script type="text/javascript">
+    let ue = UE.getEditor('content', {
+        initialFrameHeight: 400,
+        autoHeightEnabled: true,
+        serverUrl: '/uedit',
+    });
+</script>
+
+<!-- 页面布局 -->
+<div class="container" style="margin-top: 20px; background-color: white; padding: 20px;">
+    <div class="form-group row">
+        <label for="headline" class="col-2 col-form-label text-right">文章标题：</label>
+        <div class="col-10">
+            <input type="text" class="form-control" id="headline" placeholder="请输入文章标题" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <script id="content" name="content" type="text/plain"></script>
+    </div>
+
+    <!-- 类型、子类型、积分、提交按钮 -->
+    <div class="form-group row align-items-center">
+        <!-- 主类型 -->
+        <label for="main-type" class="col-2 col-form-label text-right">类型：</label>
+        <div class="col-2">
+            <select class="form-control" id="main-type">
+                {% for key, value in article_type.items() if key < 100 %}
+                    <option value="{{ key }}">{{ value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- 子类型 -->
+        <label for="sub-type" class="col-2 col-form-label text-right">子类型：</label>
+        <div class="col-2">
+            <select class="form-control" id="sub-type">
+                <!-- 子类型初始为空，动态加载 -->
+            </select>
+        </div>
+
+        <!-- 积分 -->
+        <label for="credit" class="col-2 col-form-label text-right">积分：</label>
+        <div class="col-2">
+            <select class="form-control" id="credit">
+                <option value="0">免费</option>
+                <option value="1">1分</option>
+                <option value="2">2分</option>
+                <option value="5">5分</option>
+                <option value="10">10分</option>
+                <option value="20">20分</option>
+                <option value="50">50分</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 提交按钮 -->
+    <div class="form-group row text-center">
+        <div class="col">
+            <button class="btn btn-secondary" onclick="doDraft()">保存草稿</button>
+            <button class="btn btn-primary" onclick="doPost()">发布文章</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let ARTICLEID = 0;  // 全局变量保存文章 ID
+
+    // 文章发布逻辑
+    function doPost() {
+        let headline = $.trim($("#headline").val());
+        let contentPlain = UE.getEditor("content").getContentTxt();
+
+        if (headline.length < 5) {
+            bootbox.alert({ title: "错误提示", message: "标题不能少于5个字" });
+            return false;
+        } else if (contentPlain.length < 100) {
+            bootbox.alert({ title: "错误提示", message: "内容不能低于100个字" });
+            return false;
+        }
+
+        let param = {
+            headline: headline,
+            content: UE.getEditor("content").getContent(),
+            type: $("#main-type").val(),
+            subtype: $("#sub-type").val(),
+            credit: $("#credit").val(),
+            drafted: 0,
+            checked: 1,
+            articleid: ARTICLEID,
+        };
+
+        $.post('/article/add', param, function (data) {
+            handlePostResponse(data, param);
+        });
+    }
+
+    // 保存草稿逻辑
+    function doDraft() {
+        let headline = $.trim($("#headline").val());
+        let contentPlain = UE.getEditor("content").getContentTxt();
+
+        if (headline.length < 5) {
+            bootbox.alert({ title: "错误提示", message: "草稿标题不能少于5个字" });
+            return false;
+        } else if (contentPlain.length < 10) {
+            bootbox.alert({ title: "错误提示", message: "草稿内容不能低于10个字" });
+            return false;
+        }
+
+        let param = {
+            headline: headline,
+            content: UE.getEditor("content").getContent(),
+            type: $("#main-type").val(),
+            subtype: $("#sub-type").val(),
+            credit: $("#credit").val(),
+            drafted: 1,
+            checked: 1,
+            articleid: ARTICLEID,
+        };
+
+        $.post('/article/add', param, function (data) {
+            handlePostResponse(data, param);
+        });
+    }
+
+    // 处理发布和保存草稿的响应
+    function handlePostResponse(data, param) {
+        if (data === 'perm-denied') {
+            bootbox.alert({ title: "错误提示", message: "权限不足，无法操作。" });
+        } else if (data === 'post-fail') {
+            bootbox.alert({ title: "错误提示", message: "操作失败，请联系管理员。" });
+        } else if (data === 'not-login') {
+            bootbox.alert({ title: "错误提示", message: "您尚未登录或登录已过期，请重新登录。" });
+            setTimeout(() => { location.href = '/login'; }, 1500);
+        } else if (data === 'user-not-found') {
+            bootbox.alert({ title: "错误提示", message: "用户信息不存在，请重新登录。" });
+        } else if (/^\d+$/.test(data)) {
+            bootbox.alert({ title: "信息提示", message: "操作成功！" });
+            ARTICLEID = parseInt(data);
+            if (!param.drafted) {
+                setTimeout(() => { location.href = '/article/' + data; }, 1000);
+            }
+        } else {
+            handleUnknownResponse(data);
+        }
+    }
+
+    // 处理未处理的响应
+    function handleUnknownResponse(data) {
+        console.error("未处理的响应:", data);
+        bootbox.alert({ title: "错误提示", message: "操作失败，可能没有权限或系统错误。" });
+    }
+</script>
+
+<!-- 使用单独的脚本块来初始化后端数据 -->
+<script type="text/javascript">
+    // 使用后端传递的子类型数据
+    var subTypeMapping = {{ subTypesData | tojson | safe }};
+</script>
+
+<script type="text/javascript">
+    // 主类型与子类型联动
+    const mainTypeSelect = document.getElementById('main-type');
+    const subTypeSelect = document.getElementById('sub-type');
+
+    // 主类型变化时更新子类型
+    mainTypeSelect.addEventListener('change', function() {
+        const selectedMainType = parseInt(this.value);
+        const subTypes = subTypeMapping[selectedMainType];
+
+        // 清空子类型选项
+        subTypeSelect.innerHTML = '';
+
+        // 添加新的子类型选项
+        if (subTypes) {
+            let firstOption = null;
+            Object.entries(subTypes).forEach(([subId, subName]) => {
+                const option = document.createElement('option');
+                option.value = subId;
+                option.textContent = subName;
+                subTypeSelect.appendChild(option);
+                
+                if (!firstOption) {
+                    firstOption = subId;
+                }
+            });
+            
+            // 默认选中第一个子类型
+            if (firstOption) {
+                subTypeSelect.value = firstOption;
+            }
+        }
+    });
+
+    // 页面加载完成后初始化子类型
+    document.addEventListener('DOMContentLoaded', function() {
+        // 触发主类型的change事件来初始化子类型
+        mainTypeSelect.dispatchEvent(new Event('change'));
+    });
+</script>
+
+{% endblock %}
