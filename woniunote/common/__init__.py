@@ -5,56 +5,75 @@ WoniuNote Common Package
 """
 
 # Import key modules to make them available at package level
-try:
-    # 统一模块（第一阶段整合）
-    from . import unified_session
-    from . import unified_error_handler
-    from . import unified_database_optimizer
-    from . import unified_monitoring
-    from . import unified_security
-    
-    # 统一模块（第二阶段整合）
-    from . import unified_cache
-    from . import unified_logging
-    from . import unified_config
-    from . import unified_validator
-    from . import unified_utils
-    
-    # 保留的现有模块（向后兼容）
-    from . import rate_limiter
-    from . import async_tasks
-    from . import static_optimizer
-    from . import redisdb
-    from . import todo_database
-    from . import card_database
-    from . import log_decorator
-    
-except ImportError as e:
-    # Handle import errors gracefully during development
-    import warnings
-    warnings.warn(f"Some common modules could not be imported: {e}")
+# Only import modules that actually exist and don't have circular dependencies
 
-__all__ = [
-    # 统一模块（第一阶段整合，推荐使用）
+# First, import basic utility modules
+try:
+    from . import utils
+    from . import database
+except ImportError as e:
+    import warnings
+    warnings.warn(f"Basic modules import failed: {e}")
+
+# Then import other modules individually with error handling
+modules_to_import = [
+    'utils',
+    'database',
     'unified_session',
     'unified_error_handler', 
     'unified_database_optimizer',
     'unified_monitoring',
     'unified_security',
-    
-    # 统一模块（第二阶段整合，推荐使用）
     'unified_cache',
     'unified_logging',
     'unified_config',
     'unified_validator',
     'unified_utils',
-    
-    # 保留的现有模块
     'rate_limiter',
     'async_tasks',
     'static_optimizer',
     'redisdb',
     'todo_database',
     'card_database',
-    'log_decorator'
+    'log_decorator',
+    'memory_optimizer',
+    'memory_monitor',
+    'password_utils',
+    'performance_enhanced',
+    'user_experience_optimizer',
+    'resource_manager',
+    'auth_utils',
+    'atomic_password_migration',
+    'authorization',
+    'base_model',
+    'code_refactor_helper',
+    'create_database',
+    'db_connection_manager',
+    'safe_credit_manager',
+    'secure_password',
+    'secure_redis_manager'
 ]
+
+successfully_imported = []
+failed_imports = []
+
+for module_name in modules_to_import:
+    try:
+        module = __import__(f'woniunote.common.{module_name}', fromlist=[module_name])
+        globals()[module_name] = module
+        successfully_imported.append(module_name)
+    except ImportError as e:
+        failed_imports.append(f"{module_name}: {str(e)}")
+    except Exception as e:
+        failed_imports.append(f"{module_name}: {str(e)}")
+
+# Log import results (only in development)
+import os
+if os.environ.get('FLASK_ENV') == 'development':
+    if successfully_imported:
+        print(f"Common modules imported: {len(successfully_imported)}")
+    if failed_imports:
+        print(f"Failed imports: {len(failed_imports)}")
+
+# 动态生成__all__基于成功导入的模块
+__all__ = successfully_imported.copy()

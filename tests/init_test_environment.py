@@ -30,7 +30,7 @@ def setup_test_directories():
 
     for dir_path in test_dirs:
         Path(dir_path).mkdir(parents=True, exist_ok=True)
-        print(f"  ✅ {dir_path}")
+        print(f"  [SUCCESS] {dir_path}")
 
 def setup_test_database():
     """设置测试数据库"""
@@ -47,7 +47,7 @@ def setup_test_database():
     conn = sqlite3.connect(str(test_db_path))
     conn.close()
 
-    print(f"  ✅ SQLite测试数据库创建完成: {test_db_path}")
+    print(f"  [SUCCESS] SQLite测试数据库创建完成: {test_db_path}")
 
     # 设置环境变量
     os.environ['DATABASE_URL'] = f'sqlite:///{test_db_path}'
@@ -99,12 +99,12 @@ def create_test_data():
 
         db.commit()
 
-        print(f"  ✅ 创建了 {len(test_cards)} 个测试卡片")
-        print(f"  ✅ 创建了 {len(test_todos)} 个测试待办事项")
+        print(f"  [SUCCESS] 创建了 {len(test_cards)} 个测试卡片")
+        print(f"  [SUCCESS] 创建了 {len(test_todos)} 个测试待办事项")
 
     except Exception as e:
-        print(f"  ⚠️ 创建测试数据失败: {e}")
-        print("  💡 这不会影响测试运行")
+        print(f"  [WARN]️ 创建测试数据失败: {e}")
+        print("  [TIP] 这不会影响测试运行")
 
 def setup_test_config():
     """设置测试配置文件"""
@@ -120,13 +120,13 @@ def setup_test_config():
         if Path(src).exists():
             Path(dst).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dst)
-            print(f"  ✅ 复制配置文件: {src} -> {dst}")
+            print(f"  [SUCCESS] 复制配置文件: {src} -> {dst}")
         else:
-            print(f"  ⚠️ 源配置文件不存在: {src}")
+            print(f"  [WARN]️ 源配置文件不存在: {src}")
 
 def validate_test_environment():
     """验证测试环境"""
-    print("\n🔍 验证测试环境...")
+    print("\n[SEARCH] 验证测试环境...")
 
     # 检查关键模块导入
     critical_modules = [
@@ -143,23 +143,23 @@ def validate_test_environment():
     for module in critical_modules:
         try:
             __import__(module)
-            print(f"  ✅ {module}")
+            print(f"  [SUCCESS] {module}")
             success_count += 1
         except ImportError as e:
-            print(f"  ❌ {module}: {e}")
+            print(f"  [ERROR] {module}: {e}")
 
     success_rate = (success_count / len(critical_modules)) * 100
-    print(f"  📈 模块导入成功率: {success_rate:.1f}%")
+    print(f"  [REPORT] 模块导入成功率: {success_rate:.1f}%")
     if success_rate >= 80:
-        print("  🎉 测试环境验证通过！")
+        print("  [GREAT] 测试环境验证通过！")
         return True
     else:
-        print("  ⚠️ 部分模块导入失败，请检查依赖安装")
+        print("  [WARN]️ 部分模块导入失败，请检查依赖安装")
         return False
 
 def collect_test_statistics():
     """收集测试统计信息"""
-    print("\n📊 收集测试统计信息...")
+    print("\n[STATS] 收集测试统计信息...")
 
     # 统计测试文件数量
     test_files = list(Path('tests').rglob('test_*.py'))
@@ -167,7 +167,7 @@ def collect_test_statistics():
     integration_tests = [f for f in test_files if 'integration' in str(f).lower() or 'comprehensive' in str(f).lower()]
 
     print(f"  📁 总测试文件数: {len(test_files)}")
-    print(f"  🔧 单元测试文件: {len(unit_tests)}")
+    print(f"  [FIX] 单元测试文件: {len(unit_tests)}")
     print(f"  🔗 集成测试文件: {len(integration_tests)}")
 
     # 尝试收集测试用例数量
@@ -182,11 +182,11 @@ def collect_test_statistics():
             collected_count = sum(1 for line in lines if '::' in line and ('test_' in line or 'Test' in line))
             print(f"  📋 收集到的测试用例: {collected_count}")
     except Exception as e:
-        print(f"  ⚠️ 无法收集测试用例统计: {e}")
+        print(f"  [WARN]️ 无法收集测试用例统计: {e}")
 
 def main():
     """主函数"""
-    print("🚀 WoniuNote 测试环境初始化开始")
+    print("[START] WoniuNote 测试环境初始化开始")
     print("=" * 60)
 
     try:
@@ -201,7 +201,7 @@ def main():
             collect_test_statistics()
 
             print("\n" + "=" * 60)
-            print("🎉 测试环境初始化完成！")
+            print("[GREAT] 测试环境初始化完成！")
             print("\n📋 现在可以运行以下命令：")
             print("  • python -m pytest tests/ -v                    # 运行所有测试")
             print("  • python -m pytest --cov=woniunote              # 覆盖率测试")
@@ -214,11 +214,11 @@ def main():
             print("  • 测试配置: tests/configs/")
             return True
         else:
-            print("\n❌ 测试环境初始化失败，请检查错误信息")
+            print("\n[ERROR] 测试环境初始化失败，请检查错误信息")
             return False
 
     except Exception as e:
-        print(f"\n❌ 初始化过程中发生错误: {e}")
+        print(f"\n[ERROR] 初始化过程中发生错误: {e}")
         import traceback
         traceback.print_exc()
         return False

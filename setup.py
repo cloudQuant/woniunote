@@ -8,12 +8,18 @@ extensions = [
 setup(
     name='woniunote',  # 项目的名称
     version='0.1.5',  # 版本号
-    packages=find_packages(exclude=['demos', "docs", "tests", "scripts"]),
+    packages=find_packages(include=['woniunote', 'woniunote.*']),
+    include_package_data=True,
     package_data={
         'woniunote': [
                     'configs/**/*',
                     'template/**/*',
-                    'resource/**/*']
+                    'resource/**/*',
+                    'common/**/*',
+                    'controller/**/*',
+                    'models/**/*',
+                    'module/**/*',
+                    'services/**/*']
     },
     author='cloudQuant',  # 作者名字
     author_email='yunjinqi@gmail.com',  # 作者邮箱

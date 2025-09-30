@@ -19,10 +19,10 @@ def load_test_config():
             config = yaml.safe_load(f)
             return config
     except FileNotFoundError:
-        print(f"❌ 配置文件不存在: {config_file}")
+        print(f"[ERROR] 配置文件不存在: {config_file}")
         return None
     except Exception as e:
-        print(f"❌ 读取配置文件失败: {e}")
+        print(f"[ERROR] 读取配置文件失败: {e}")
         return None
 
 def parse_mysql_url(database_url):
@@ -42,29 +42,29 @@ def parse_mysql_url(database_url):
             'admin_url': f"mysql+pymysql://{parsed.username}:{parsed.password}@{parsed.hostname}:{parsed.port}/"
         }
     except Exception as e:
-        print(f"❌ 解析数据库URL失败: {e}")
+        print(f"[ERROR] 解析数据库URL失败: {e}")
         return None
 
 def test_mysql_connection(db_info):
     """测试MySQL连接"""
     try:
-        print(f"🔍 测试MySQL连接 {db_info['host']}:{db_info['port']}...")
+        print(f"[SEARCH] 测试MySQL连接 {db_info['host']}:{db_info['port']}...")
         
         # 测试基础连接（不指定数据库）
         engine = create_engine(db_info['admin_url'])
         with engine.connect() as conn:
             result = conn.execute(text('SELECT VERSION()'))
             version = result.fetchone()[0]
-            print(f"✅ MySQL连接成功 - 版本: {version}")
+            print(f"[SUCCESS] MySQL连接成功 - 版本: {version}")
             return True
     except Exception as e:
-        print(f"❌ MySQL连接失败: {e}")
+        print(f"[ERROR] MySQL连接失败: {e}")
         return False
 
 def create_database(db_info):
     """创建测试数据库"""
     try:
-        print(f"🏗️  创建数据库: {db_info['database']}")
+        print(f"🏗️  创建数据库: {db_info["database']}")
         
         engine = create_engine(db_info['admin_url'])
         with engine.connect() as conn:
@@ -75,16 +75,16 @@ def create_database(db_info):
             )
             
             if result.fetchone():
-                print(f"✅ 数据库 {db_info['database']} 已存在")
+                print(f"[SUCCESS] 数据库 {db_info['database']} 已存在")
             else:
                 # 创建数据库
                 conn.execute(text(f"CREATE DATABASE `{db_info['database']}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"))
                 conn.commit()
-                print(f"✅ 数据库 {db_info['database']} 创建成功")
+                print(f"[SUCCESS] 数据库 {db_info['database']} 创建成功")
         
         return True
     except Exception as e:
-        print(f"❌ 创建数据库失败: {e}")
+        print(f"[ERROR] 创建数据库失败: {e}")
         return False
 
 def test_database_access(db_info):
@@ -96,10 +96,10 @@ def test_database_access(db_info):
         with engine.connect() as conn:
             # 测试基本操作
             conn.execute(text('SELECT 1'))
-            print(f"✅ 数据库 {db_info['database']} 访问正常")
+            print(f"[SUCCESS] 数据库 {db_info['database']} 访问正常")
             return True
     except Exception as e:
-        print(f"❌ 数据库访问测试失败: {e}")
+        print(f"[ERROR] 数据库访问测试失败: {e}")
         return False
 
 def initialize_test_tables(db_info):
@@ -129,23 +129,23 @@ def initialize_test_tables(db_info):
         with app.app_context():
             # 创建所有表
             db.create_all()
-            print("✅ 测试表创建成功")
+            print("[SUCCESS] 测试表创建成功")
             
             # 检查表是否创建成功
             from sqlalchemy import inspect
             inspector = inspect(db.engine)
             tables = inspector.get_table_names()
-            print(f"📊 创建的表: {', '.join(tables)}")
+            print(f"[STATS] 创建的表: {', '.join(tables)}")
         
         return True
     except Exception as e:
-        print(f"❌ 初始化测试表失败: {e}")
+        print(f"[ERROR] 初始化测试表失败: {e}")
         print(f"详细错误: {str(e)}")
         return False
 
 def main():
     """主函数"""
-    print("🚀 MySQL测试数据库设置工具")
+    print("[START] MySQL测试数据库设置工具")
     print("=" * 50)
     
     # 加载配置
@@ -155,8 +155,8 @@ def main():
     
     database_url = config.get('database', {}).get('SQLALCHEMY_DATABASE_URI')
     if not database_url or not database_url.startswith('mysql://'):
-        print("❌ 配置文件中未找到MySQL配置")
-        print("💡 请检查 tests/configs/user_password_config.yaml")
+        print("[ERROR] 配置文件中未找到MySQL配置")
+        print("[TIP] 请检查 tests/configs/user_password_config.yaml")
         return 1
     
     # 解析数据库配置
@@ -172,7 +172,7 @@ def main():
     
     # 1. 测试MySQL连接
     if not test_mysql_connection(db_info):
-        print("\n💡 解决建议:")
+        print("\n[TIP] 解决建议:")
         print("   1. 启动MySQL服务: brew services start mysql")
         print("   2. 检查用户名密码是否正确")
         print("   3. 安装Python MySQL驱动: pip install pymysql mysqlclient")
@@ -180,7 +180,7 @@ def main():
     
     # 2. 创建数据库
     if not create_database(db_info):
-        print("\n💡 解决建议:")
+        print("\n[TIP] 解决建议:")
         print(f"   1. 手动创建数据库: CREATE DATABASE {db_info['database']};")
         print(f"   2. 授予权限: GRANT ALL ON {db_info['database']}.* TO '{db_info['username']}'@'localhost';")
         return 1
@@ -191,9 +191,9 @@ def main():
     
     # 4. 初始化测试表
     if not initialize_test_tables(db_info):
-        print("\n💡 可以稍后通过运行测试来创建表")
+        print("\n[TIP] 可以稍后通过运行测试来创建表")
     
-    print("\n🎉 MySQL测试数据库设置完成！")
+    print("\n[GREAT] MySQL测试数据库设置完成！")
     print("\n🧪 现在可以运行测试:")
     print("   source tests/setup_test_env.sh")
     print("   python -m pytest tests/test_simple_working.py -v")

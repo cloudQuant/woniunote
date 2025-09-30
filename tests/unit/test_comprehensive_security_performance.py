@@ -15,8 +15,8 @@ def test_security_modules():
 def test_performance_modules():
     """测试性能模块"""
     try:
-        import woniunote.common.performance_enhanced
-        assert woniunote.common.performance_enhanced is not None
+        import woniunote.common.utils
+        assert woniunote.common.utils is not None
     except ImportError:
         assert True
 

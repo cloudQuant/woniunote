@@ -148,9 +148,9 @@ def create_app(config_name='production'):
         
         # 判断数据库类型并输出详细信息
         if db_uri.startswith('mysql://'):
-            app_logger.info("✅ 配置MySQL数据库连接")
+            app_logger.info("[SUCCESS] 配置MySQL数据库连接")
             app_logger.info(f"数据库URI: {db_uri}")
-            print(f"[INFO] ✅ 使用MySQL数据库: {db_uri.split('@')[1].split('/')[0]}/数据库名: {db_uri.split('/')[-1].split('?')[0]}")
+            print(f"[INFO] SUCCESS 使用MySQL数据库: {db_uri.split('@')[1].split('/')[0]}/数据库名: {db_uri.split('/')[-1].split('?')[0]}")
         elif db_uri.startswith('sqlite://'):
             app_logger.info("配置SQLite数据库连接")
             app_logger.info(f"数据库URI: {db_uri}")

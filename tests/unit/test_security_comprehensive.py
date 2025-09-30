@@ -7,7 +7,7 @@ WoniuNote 安全模块全面测试
 import sys
 import os
 
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
@@ -76,7 +76,7 @@ except:
 
 # 测试安全模块导入
 security_modules = [
-    'woniunote.common.auth_utils',
+    'woniunote.common.utils',
     'woniunote.common.security_enhanced',
     'woniunote.common.api_security',
     'woniunote.common.api_security_enhancer',
@@ -94,7 +94,7 @@ for module_name in security_modules:
         module = __import__(module_name, fromlist=[''])
         if module is not None:
             imported_modules += 1
-            print(f"✓ Imported: {module_name}")
+            print(f"[OK] Imported: {module_name}")
             
             # 检查模块中的安全相关函数
             for attr_name in dir(module):
@@ -104,9 +104,9 @@ for module_name in security_modules:
                         available_functions.append(f"{module_name}.{attr_name}")
                     
         else:
-            print(f"✗ Import returned None: {module_name}")
+            print(f"[FAIL] Import returned None: {module_name}")
     except Exception as e:
-        print(f"✗ Import failed: {module_name} - {e}")
+        print(f"[FAIL] Import failed: {module_name} - {e}")
 
 import_rate = imported_modules / len(security_modules)
 print(f"\\nSecurity module import summary:")
@@ -159,23 +159,23 @@ except:
     pass
 
 try:
-    from woniunote.common.auth_utils import create_user_session, validate_user_session
+    from woniunote.common.utils import create_user_session, validate_user_session
     
     # 测试函数存在性
     assert callable(create_user_session), "create_user_session should be callable"
     assert callable(validate_user_session), "validate_user_session should be callable"
-    print("✓ Authentication functions are available")
+    print("[OK] Authentication functions are available")
     
     # 测试session创建 (模拟测试)
     test_user = {"id": 1, "username": "testuser", "email": "test@example.com"}
     try:
         session_data = create_user_session(test_user)
         if session_data:
-            print(f"✓ Session creation works: {type(session_data)}")
+            print(f"[OK] Session creation works: {type(session_data)}")
         else:
-            print("⚠ Session creation returned None (may be expected)")
+            print("[WARN] Session creation returned None (may be expected)")
     except Exception as e:
-        print(f"⚠ Session creation issue (expected in test environment): {e}")
+        print(f"[WARN] Session creation issue (expected in test environment): {e}")
     
     print("AUTH_UTILS_SUCCESS")
     
@@ -225,7 +225,7 @@ try:
     
     # 测试密码验证函数存在
     assert callable(verify_password_with_migration), "verify_password_with_migration should be callable"
-    print("✓ Password verification function available")
+    print("[OK] Password verification function available")
     
     # 测试密码验证 (使用简单测试数据)
     try:
@@ -234,9 +234,9 @@ try:
         
         # 只测试函数调用不抛异常
         result = verify_password_with_migration(test_password, test_hash, 1)
-        print(f"✓ Password verification callable: {type(result)}")
+        print(f"[OK] Password verification callable: {type(result)}")
     except Exception as e:
-        print(f"⚠ Password verification issue (expected in test): {e}")
+        print(f"[WARN] Password verification issue (expected in test): {e}")
     
     print("PASSWORD_SECURITY_SUCCESS")
     
@@ -287,7 +287,7 @@ total_tests = 0
 # 测试增强输入验证器
 total_tests += 1
 try:
-    from woniunote.common.unified_validator import validate_input_enhanced
+    from woniunote.common.unified_validator import validate_input
     
     # 测试基本输入验证
     test_cases = [
@@ -299,21 +299,21 @@ try:
     
     for test_input, expected_valid in test_cases:
         try:
-            result = validate_input_enhanced(test_input)
+            result = validate_input({'input': test_input}, {'input': []})
             if isinstance(result, bool):
-                print(f"✓ Input validation: '{test_input[:20]}...' -> {result}")
+                print(f"[OK] Input validation: '{test_input[:20]}...' -> {result}")
             else:
-                print(f"✓ Input validation returned: {type(result)}")
+                print(f"[OK] Input validation returned: {type(result)}")
         except Exception as e:
-            print(f"⚠ Input validation issue: {e}")
+            print(f"[WARN] Input validation issue: {e}")
     
     successful_tests += 1
-    print("✓ Enhanced input validator available")
+    print("[OK] Enhanced input validator available")
     
 except ImportError as e:
-    print(f"⚠ Enhanced input validator not available: {e}")
+    print(f"[WARN] Enhanced input validator not available: {e}")
 except Exception as e:
-    print(f"✗ Enhanced input validator failed: {e}")
+    print(f"[FAIL] Enhanced input validator failed: {e}")
 
 # 测试文件上传验证器
 total_tests += 1
@@ -322,7 +322,7 @@ try:
     
     # 测试文件验证功能存在
     assert callable(validate_file_upload), "validate_file_upload should be callable"
-    print("✓ File upload validator available")
+    print("[OK] File upload validator available")
     
     # 测试文件类型验证
     test_files = [
@@ -342,17 +342,17 @@ try:
             
             mock_file = MockFile(filename, mimetype)
             result = validate_file_upload(mock_file)
-            print(f"✓ File validation: {filename} -> {type(result)}")
+            print(f"[OK] File validation: {filename} -> {type(result)}")
         except Exception as e:
-            print(f"⚠ File validation issue: {e}")
+            print(f"[WARN] File validation issue: {e}")
     
     successful_tests += 1
-    print("✓ File upload validator works")
+    print("[OK] File upload validator works")
     
 except ImportError as e:
-    print(f"⚠ File upload validator not available: {e}")
+    print(f"[WARN] File upload validator not available: {e}")
 except Exception as e:
-    print(f"✗ File upload validator failed: {e}")
+    print(f"[FAIL] File upload validator failed: {e}")
 
 success_rate = successful_tests / total_tests if total_tests > 0 else 0
 print(f"\\nInput validation success: {successful_tests}/{total_tests} ({success_rate:.1%})")
@@ -402,19 +402,19 @@ total_tests = 0
 # 测试API安全模块
 total_tests += 1
 try:
-    from woniunote.common.unified_security import rate_limit, check_api_key
+    from woniunote.common.unified_security import rate_limit, require_jwt_auth
     
     # 验证装饰器函数存在
     assert callable(rate_limit), "rate_limit decorator should be callable"
-    assert callable(check_api_key), "check_api_key should be callable"
-    print("✓ API security functions available")
+    assert callable(require_jwt_auth), "require_jwt_auth should be callable"
+    print("[OK] API security functions available")
     
     successful_tests += 1
     
 except ImportError as e:
-    print(f"⚠ API security not available: {e}")
+    print(f"[WARN] API security not available: {e}")
 except Exception as e:
-    print(f"✗ API security failed: {e}")
+    print(f"[FAIL] API security failed: {e}")
 
 # 测试API安全增强器
 total_tests += 1
@@ -423,14 +423,14 @@ try:
     
     # 验证增强器函数存在
     assert callable(enhance_api_security), "enhance_api_security should be callable"
-    print("✓ API security enhancer available")
+    print("[OK] API security enhancer available")
     
     successful_tests += 1
     
 except ImportError as e:
-    print(f"⚠ API security enhancer not available: {e}")
+    print(f"[WARN] API security enhancer not available: {e}")
 except Exception as e:
-    print(f"✗ API security enhancer failed: {e}")
+    print(f"[FAIL] API security enhancer failed: {e}")
 
 # 测试授权模块
 total_tests += 1
@@ -440,14 +440,14 @@ try:
     # 验证授权函数存在
     assert callable(check_permission), "check_permission should be callable"
     assert callable(require_role), "require_role should be callable"
-    print("✓ Authorization functions available")
+    print("[OK] Authorization functions available")
     
     successful_tests += 1
     
 except ImportError as e:
-    print(f"⚠ Authorization not available: {e}")
+    print(f"[WARN] Authorization not available: {e}")
 except Exception as e:
-    print(f"✗ Authorization failed: {e}")
+    print(f"[FAIL] Authorization failed: {e}")
 
 success_rate = successful_tests / total_tests if total_tests > 0 else 0
 print(f"\\nAPI security success: {successful_tests}/{total_tests} ({success_rate:.1%})")
@@ -504,7 +504,7 @@ try:
     
     # 输入验证
     if len(username) >= 3 and len(password) >= 8:
-        print("✓ Input validation passed")
+        print("[OK] Input validation passed")
     
     # 密码强度检查
     has_upper = any(c.isupper() for c in password)
@@ -513,15 +513,15 @@ try:
     has_special = any(c in "!@#$%^&*" for c in password)
     
     if has_upper and has_lower and has_digit and has_special:
-        print("✓ Password strength validation passed")
+        print("[OK] Password strength validation passed")
     
     # 生成安全哈希
     password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), b'salt', 100000)
     if password_hash:
-        print("✓ Password hashing successful")
+        print("[OK] Password hashing successful")
         
 except Exception as e:
-    print(f"✗ Authentication flow failed: {e}")
+    print(f"[FAIL] Authentication flow failed: {e}")
 
 # 场景2: 文件上传安全
 print("\\n2. File upload security:")
@@ -532,11 +532,11 @@ try:
     for filename in test_files:
         ext = '.' + filename.split('.')[-1].lower()
         is_safe = ext in allowed_extensions
-        status = "✓ Safe" if is_safe else "✗ Blocked"
+        status = "[OK] Safe" if is_safe else "[FAIL] Blocked"
         print(f"  {status}: {filename}")
         
 except Exception as e:
-    print(f"✗ File upload security failed: {e}")
+    print(f"[FAIL] File upload security failed: {e}")
 
 # 场景3: API访问控制
 print("\\n3. API access control:")
@@ -551,14 +551,14 @@ try:
     
     for method, endpoint, api_key in test_requests:
         if endpoint.startswith("/api/public"):
-            print(f"✓ Public endpoint: {method} {endpoint}")
+            print(f"[OK] Public endpoint: {method} {endpoint}")
         elif api_key == valid_api_key:
-            print(f"✓ Authorized: {method} {endpoint}")
+            print(f"[OK] Authorized: {method} {endpoint}")
         else:
-            print(f"✗ Unauthorized: {method} {endpoint}")
+            print(f"[FAIL] Unauthorized: {method} {endpoint}")
             
 except Exception as e:
-    print(f"✗ API access control failed: {e}")
+    print(f"[FAIL] API access control failed: {e}")
 
 # 场景4: XSS防护
 print("\\n4. XSS protection:")
@@ -574,11 +574,11 @@ try:
         # 简单XSS检测
         dangerous_patterns = ['<script', 'javascript:', 'onerror=', 'onload=']
         is_safe = not any(pattern in xss_input.lower() for pattern in dangerous_patterns)
-        status = "✓ Safe" if is_safe else "✗ Blocked"
+        status = "[OK] Safe" if is_safe else "[FAIL] Blocked"
         print(f"  {status}: {xss_input[:30]}...")
         
 except Exception as e:
-    print(f"✗ XSS protection failed: {e}")
+    print(f"[FAIL] XSS protection failed: {e}")
 
 print("\\nSECURITY_INTEGRATION_SUCCESS")
 '''

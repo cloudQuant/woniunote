@@ -10,7 +10,7 @@ import subprocess
 from unittest.mock import Mock, patch
 
 # 确保项目根目录在Python路径中
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
@@ -76,11 +76,11 @@ for module_name in database_modules:
         module = __import__(module_name, fromlist=[''])
         if module is not None:
             imported_modules += 1
-            print(f"✓ Imported: {module_name}")
+            print(f"[OK] Imported: {module_name}")
         else:
-            print(f"✗ Import returned None: {module_name}")
+            print(f"[FAIL] Import returned None: {module_name}")
     except Exception as e:
-        print(f"✗ Import failed: {module_name} - {e}")
+        print(f"[FAIL] Import failed: {module_name} - {e}")
 
 import_rate = imported_modules / len(database_modules)
 print(f"Database module import rate: {imported_modules}/{len(database_modules)} ({import_rate:.1%})")
@@ -132,26 +132,26 @@ try:
     
     # 验证Card模型属性
     assert hasattr(Card, '__tablename__'), "Card should have __tablename__"
-    print(f"✓ Card table name: {Card.__tablename__}")
+    print(f"[OK] Card table name: {Card.__tablename__}")
     
     # 验证Card模型字段（如果可访问）
     if hasattr(Card, '__table__'):
         columns = [col.name for col in Card.__table__.columns]
-        print(f"✓ Card columns: {columns}")
+        print(f"[OK] Card columns: {columns}")
         
         # 检查关键字段
         expected_fields = ['id']  # 至少应该有id字段
         for field in expected_fields:
             if field in columns:
-                print(f"✓ Card has {field} field")
+                print(f"[OK] Card has {field} field")
     
     # 验证CardCategory模型
     assert hasattr(CardCategory, '__tablename__'), "CardCategory should have __tablename__"
-    print(f"✓ CardCategory table name: {CardCategory.__tablename__}")
+    print(f"[OK] CardCategory table name: {CardCategory.__tablename__}")
     
     if hasattr(CardCategory, '__table__'):
         columns = [col.name for col in CardCategory.__table__.columns]
-        print(f"✓ CardCategory columns: {columns}")
+        print(f"[OK] CardCategory columns: {columns}")
     
     # 测试模型实例化（如果支持）
     try:
@@ -161,10 +161,10 @@ try:
         
         assert card_class_callable, "Card class should be callable"
         assert category_class_callable, "CardCategory class should be callable"
-        print("✓ Model classes are callable")
+        print("[OK] Model classes are callable")
         
     except Exception as e:
-        print(f"⚠ Model instantiation issue (expected): {e}")
+        print(f"[WARN] Model instantiation issue (expected): {e}")
     
     print("CARD_MODEL_SUCCESS")
     
@@ -217,26 +217,26 @@ try:
     
     # 验证Item模型属性
     assert hasattr(Item, '__tablename__'), "Item should have __tablename__"
-    print(f"✓ Item table name: {Item.__tablename__}")
+    print(f"[OK] Item table name: {Item.__tablename__}")
     
     # 验证Item模型字段
     if hasattr(Item, '__table__'):
         columns = [col.name for col in Item.__table__.columns]
-        print(f"✓ Item columns: {columns}")
+        print(f"[OK] Item columns: {columns}")
         
         # 检查关键字段
         expected_fields = ['id']
         for field in expected_fields:
             if field in columns:
-                print(f"✓ Item has {field} field")
+                print(f"[OK] Item has {field} field")
     
     # 验证Category模型
     assert hasattr(Category, '__tablename__'), "Category should have __tablename__"
-    print(f"✓ Category table name: {Category.__tablename__}")
+    print(f"[OK] Category table name: {Category.__tablename__}")
     
     if hasattr(Category, '__table__'):
         columns = [col.name for col in Category.__table__.columns]
-        print(f"✓ Category columns: {columns}")
+        print(f"[OK] Category columns: {columns}")
     
     # 测试模型类可调用性
     item_class_callable = callable(Item)
@@ -244,7 +244,7 @@ try:
     
     assert item_class_callable, "Item class should be callable"
     assert category_class_callable, "Category class should be callable"
-    print("✓ Todo model classes are callable")
+    print("[OK] Todo model classes are callable")
     
     print("TODO_MODEL_SUCCESS")
     
@@ -305,7 +305,7 @@ for module_name in user_modules:
         module = __import__(module_name, fromlist=[''])
         if module is not None:
             imported_modules += 1
-            print(f"✓ Imported: {module_name}")
+            print(f"[OK] Imported: {module_name}")
             
             # 检查模块中的函数
             for attr_name in dir(module):
@@ -313,7 +313,7 @@ for module_name in user_modules:
                     available_functions.append(f"{module_name}.{attr_name}")
                     
     except Exception as e:
-        print(f"✗ Import failed: {module_name} - {e}")
+        print(f"[FAIL] Import failed: {module_name} - {e}")
 
 print(f"User modules imported: {imported_modules}/{len(user_modules)}")
 print(f"Available functions: {len(available_functions)}")
