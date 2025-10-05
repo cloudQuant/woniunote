@@ -20,8 +20,12 @@ import re
 import math
 from flask import session, request, g, current_app
 from flask_socketio import SocketIO, emit
-import jieba
-import jieba.analyse
+import warnings
+# Suppress jieba pkg_resources deprecation warning
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=UserWarning, message=".*pkg_resources.*")
+    import jieba
+    import jieba.analyse
 
 logger = logging.getLogger(__name__)
 

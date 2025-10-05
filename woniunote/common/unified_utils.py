@@ -148,6 +148,11 @@ class TraceIdManager:
         
         return trace_id
     
+    @staticmethod
+    def generate_simple_trace_id() -> str:
+        """生成简单的追踪ID"""
+        return str(uuid.uuid4())[:8]
+    
     def get_current_trace_id(self) -> Optional[str]:
         """获取当前线程的追踪ID"""
         with self._lock:

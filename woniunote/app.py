@@ -286,68 +286,41 @@ def create_app(config_name='production'):
         
         # 初始化限流系统
         try:
+            # 直接使用Flask配置中的RATELIMIT_RULES，如果不存在则使用默认值
+            flask_rate_config = app.config.get('RATELIMIT_RULES', {})
+            
             rate_limit_config = {
                 'api': {
                     'type': 'token_bucket',
-                    'capacity': config_manager.get('rate_limit.api.capacity', 500) if config_manager else 500,  # 增加10倍
-                    'refill_rate': config_manager.get('rate_limit.api.refill_rate', 100) if config_manager else 100,  # 增加10倍
-                    'refill_period': config_manager.get('rate_limit.api.refill_period', 1) if config_manager else 1
+                    'capacity': flask_rate_config.get('api', {}).get('capacity', 1000),
+                    'refill_rate': flask_rate_config.get('api', {}).get('refill_rate', 200),
+                    'refill_period': flask_rate_config.get('api', {}).get('refill_period', 3600)
                 },
                 'upload': {
                     'type': 'token_bucket',
-                    'capacity': config_manager.get('rate_limit.upload.capacity', 50) if config_manager else 50,  # 增加10倍
-                    'refill_rate': config_manager.get('rate_limit.upload.refill_rate', 10) if config_manager else 10,  # 增加10倍
-                    'refill_period': config_manager.get('rate_limit.upload.refill_period', 10) if config_manager else 10
+                    'capacity': flask_rate_config.get('upload', {}).get('capacity', 100),
+                    'refill_rate': flask_rate_config.get('upload', {}).get('refill_rate', 50),
+                    'refill_period': flask_rate_config.get('upload', {}).get('refill_period', 3600)
                 },
                 'strict': {
                     'type': 'sliding_window',
-                    'max_requests': config_manager.get('rate_limit.strict.max_requests', 200) if config_manager else 200,  # 增加10倍
-                    'window_size': config_manager.get('rate_limit.strict.window_size', 60) if config_manager else 60
+                    'max_requests': flask_rate_config.get('strict', {}).get('max_requests', 10),
+                    'window_size': flask_rate_config.get('strict', {}).get('window_size', 60)
                 },
                 'moderate': {
                     'type': 'sliding_window',
-                    'max_requests': config_manager.get('rate_limit.moderate.max_requests', 600) if config_manager else 600,  # 增加10倍
-                    'window_size': config_manager.get('rate_limit.moderate.window_size', 60) if config_manager else 60
+                    'max_requests': flask_rate_config.get('moderate', {}).get('max_requests', 50),
+                    'window_size': flask_rate_config.get('moderate', {}).get('window_size', 60)
                 },
                 'lenient': {
                     'type': 'sliding_window',
-                    'max_requests': config_manager.get('rate_limit.lenient.max_requests', 2000) if config_manager else 2000,  # 增加10倍
-                    'window_size': config_manager.get('rate_limit.lenient.window_size', 60) if config_manager else 60
+                    'max_requests': flask_rate_config.get('lenient', {}).get('max_requests', 100),
+                    'window_size': flask_rate_config.get('lenient', {}).get('window_size', 60)
                 }
             }
             
-            # 验证所有配置值都是有效的整数
-            for limiter_name, limiter_config in rate_limit_config.items():
-                for key, value in limiter_config.items():
-                    if key in ['capacity', 'refill_rate', 'refill_period', 'max_requests', 'window_size']:
-                        if value is None or not isinstance(value, int) or value <= 0:
-                            app_logger.warning(f"限流配置 {limiter_name}.{key} 无效，使用默认值")
-                            if key in ['capacity', 'max_requests']:
-                                if limiter_name == 'api':
-                                    rate_limit_config[limiter_name][key] = 1000000  # 增加100倍
-                                elif limiter_name == 'upload':
-                                    rate_limit_config[limiter_name][key] = 100000  # 增加100倍
-                                elif limiter_name == 'strict':
-                                    rate_limit_config[limiter_name][key] = 500000  # 增加100倍
-                                elif limiter_name == 'moderate':
-                                    rate_limit_config[limiter_name][key] = 1500000  # 增加100倍
-                                elif limiter_name == 'lenient':
-                                    rate_limit_config[limiter_name][key] = 5000000  # 增加100倍
-                                else:
-                                    rate_limit_config[limiter_name][key] = 100000
-                            elif key == 'refill_rate':
-                                if limiter_name == 'api':
-                                    rate_limit_config[limiter_name][key] = 200000  # 增加100倍
-                                elif limiter_name == 'upload':
-                                    rate_limit_config[limiter_name][key] = 20000  # 增加100倍
-                                else:
-                                    rate_limit_config[limiter_name][key] = 20000
-                            elif key == 'refill_period':
-                                rate_limit_config[limiter_name][key] = 1 if limiter_name == 'api' else 10 if limiter_name == 'upload' else 60
-                            elif key == 'window_size':
-                                rate_limit_config[limiter_name][key] = 60
-            
             app_logger.info("初始化限流系统...")
+            print(f"[DEBUG] app.py 限流配置: {rate_limit_config}")
             init_rate_limiter(rate_limit_config)
         except Exception as e:
             app_logger.warning(f"限流系统初始化失败，使用默认配置: {e}")
@@ -692,6 +665,14 @@ def create_app(config_name='production'):
     app.register_blueprint(ucenter)
     app.register_blueprint(ueditor)
     app.register_blueprint(user)
+    
+    # 注册性能优化蓝图
+    try:
+        from woniunote.controller.article_optimized import article_optimized
+        app.register_blueprint(article_optimized)
+        app_logger.info("文章性能优化蓝图注册成功")
+    except Exception as e:
+        app_logger.warning(f"文章性能优化蓝图注册失败: {e}")
     
     # 改进错误处理
     @app.errorhandler(404)
@@ -2007,12 +1988,11 @@ config_name = os.environ.get('FLASK_ENV', 'production')
 if config_name in ['development', 'testing'] or __name__ != '__main__':
     config_name = 'development'
 
-app = create_app(config_name)
-
 # 创建应用实例
 if __name__ == '__main__':
-    # 创建应用实例
     app = create_app('development')
+else:
+    app = create_app(config_name)
     
     # 检查SSL证书文件是否存在
     path = get_package_path("woniunote")

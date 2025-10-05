@@ -349,6 +349,12 @@ class UnifiedCacheManager:
             default_ttl=self.config.ttl
         )
         
+        if redis_client is None:
+            try:
+                from .redisdb import redis_connect
+                redis_client = redis_connect()
+            except Exception:
+                redis_client = None
         self.redis_cache = RedisCache(
             redis_client=redis_client,
             default_ttl=self.config.ttl

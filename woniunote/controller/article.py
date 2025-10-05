@@ -106,7 +106,13 @@ def read(articleid):
         Articles.update_read_count(articleid)  # 阅读次数+1
 
         # 获取当前文章的 上一篇和下一篇
-        prev_next = Articles.find_prev_next_by_id(articleid)
+        prev_article, next_article = Articles.find_prev_next_by_id(articleid)
+        prev_next = {
+            'prev_id': prev_article.articleid if prev_article else None,
+            'prev_headline': prev_article.headline if prev_article else '没有了',
+            'next_id': next_article.articleid if next_article else None,
+            'next_headline': next_article.headline if next_article else '没有了'
+        }
 
         # 获取当前文章的评论
         comments = Comments.find_by_articleid(articleid)

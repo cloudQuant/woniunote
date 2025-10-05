@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, abort, request, session
+import traceback
 import uuid
 import math
 import psutil
@@ -805,78 +806,58 @@ def system_status():
     try:
         start_time = time.time()
         
-        # 基础系统信息 - 快速获取
-        memory = psutil.virtual_memory()
-        cpu_percent = psutil.cpu_percent(interval=0.1)  # 减少等待时间
+        # --- Import necessary modules ---
+        from woniunote.common.unified_monitoring import get_monitoring_system
+        from woniunote.common.performance_enhanced import get_performance_manager
+        from woniunote.common.memory_monitor import get_memory_detector
+        from woniunote.common.unified_database_optimizer import get_database_optimizer
+
+        # --- Initialize data containers ---
+        monitoring_data = {
+            'system_overview': {},
+            'performance_report': {},
+            'memory_report': {},
+            'database_report': {}
+        }
         
-        # 优化的磁盘使用率计算
-        disk_percent = 0
-        try:
-            disk = psutil.disk_usage('/')
-            disk_percent = disk.percent
-        except Exception:
-            disk_percent = 0
-        
-        # 简化的监控数据获取 - 只获取核心数据
-        monitoring_data = {}
-        
-        # 1. 统一监控系统数据 - 核心数据
-        try:
-            from woniunote.common.unified_monitoring import UnifiedMonitoringSystem
-            monitor = UnifiedMonitoringSystem()
-            overview = monitor.get_system_overview()
-            monitoring_data['system_overview'] = overview
+        # --- Fetch data from each module ---
+        monitoring_system = get_monitoring_system()
+        if monitoring_system:
+            monitoring_data['system_overview'] = monitoring_system.get_system_overview()
+        else:
+            monitoring_data['system_overview'] = {'error': 'Monitoring system not initialized'}
+
+        performance_manager = get_performance_manager()
+        if performance_manager:
+            monitoring_data['performance_report'] = performance_manager.get_comprehensive_report()
+        else:
+            monitoring_data['performance_report'] = {'error': 'Performance manager not initialized'}
+
+        memory_detector = get_memory_detector()
+        if memory_detector:
+            monitoring_data['memory_report'] = memory_detector.get_memory_report()
+        else:
+             monitoring_data['memory_report'] = {'error': 'Memory detector not initialized'}
+
+        db_optimizer = get_database_optimizer()
+        if db_optimizer:
+            # The optimizer doesn't have a simple report function, so I'll just check availability
+            monitoring_data['database_report'] = {'status': 'available', 'timestamp': datetime.now().isoformat()}
+        else:
+            monitoring_data['database_report'] = {'error': 'Database optimizer not initialized'}
             
-            # 检查是否超时
-            if time.time() - start_time > 1.0:  # 1秒超时
-                monitoring_data['note'] = '部分数据因超时未加载'
-                return render_template('system_status.html', 
-                                     monitoring_data=monitoring_data,
-                                     cpu_percent=cpu_percent,
-                                     memory_percent=memory.percent,
-                                     disk_percent=disk_percent)
-        except Exception as e:
-            monitoring_data['system_overview'] = {'error': str(e)}
+        # --- Basic system info (fallback) ---
+        memory = psutil.virtual_memory()
+        cpu_percent = psutil.cpu_percent(interval=0.1)
+        disk = psutil.disk_usage('/')
         
-        # 2. 内存监控数据 - 简化版本
-        try:
-            from woniunote.common.memory_monitor import get_memory_detector
-            memory_detector = get_memory_detector()
-            if memory_detector:
-                memory_report = memory_detector.get_memory_report()
-                monitoring_data['memory'] = memory_report
-            else:
-                monitoring_data['memory'] = {'error': '内存检测器未初始化'}
-        except Exception as e:
-            monitoring_data['memory'] = {'error': str(e)}
-        
-        # 3. 数据库优化数据 - 简化版本
-        try:
-            from woniunote.common.unified_database_optimizer import get_database_optimizer
-            db_optimizer = get_database_optimizer()
-            if db_optimizer:
-                # 只获取基本报告，不获取详细分析
-                basic_report = {
-                    'timestamp': datetime.now().isoformat(),
-                    'status': 'available'
-                }
-                monitoring_data['database'] = basic_report
-            else:
-                monitoring_data['database'] = {'error': '数据库优化器未初始化'}
-        except Exception as e:
-            monitoring_data['database'] = {'error': str(e)}
-        
-        # 检查总耗时
-        total_time = time.time() - start_time
-        if total_time > 2.0:  # 2秒总超时
-            monitoring_data['performance_warning'] = f'页面加载时间: {total_time:.2f}秒'
-        
-        # 构建system_info数据结构
+        # --- Assemble final context ---
         system_info = {
             'cpu': {
                 'usage_percent': cpu_percent,
-                'core_count': psutil.cpu_count() or 1,
-                'status': 'normal' if cpu_percent < 70 else 'warning' if cpu_percent < 90 else 'critical'
+                'core_count': psutil.cpu_count(logical=True),
+                'status': 'normal' if cpu_percent < 70 else 'warning' if cpu_percent < 90 else 'critical',
+                'load_average': psutil.getloadavg() if hasattr(psutil, 'getloadavg') else (0,0,0)
             },
             'memory': {
                 'usage_percent': memory.percent,
@@ -886,36 +867,31 @@ def system_status():
                 'status': 'normal' if memory.percent < 70 else 'warning' if memory.percent < 90 else 'critical'
             },
             'disk': {
-                'usage_percent': disk_percent,
-                'total_gb': round(disk.total / (1024**3), 2) if 'disk' in locals() else 0,
-                'used_gb': round(disk.used / (1024**3), 2) if 'disk' in locals() else 0,
-                'free_gb': round(disk.free / (1024**3), 2) if 'disk' in locals() else 0,
-                'status': 'normal' if disk_percent < 70 else 'warning' if disk_percent < 90 else 'critical'
-            }
+                'usage_percent': disk.percent,
+                'total_gb': round(disk.total / (1024**3), 2),
+                'used_gb': round(disk.used / (1024**3), 2),
+                'free_gb': round(disk.free / (1024**3), 2),
+                'status': 'normal' if disk.percent < 70 else 'warning' if disk.percent < 90 else 'critical'
+            },
+            'boot_time': datetime.fromtimestamp(psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
         }
 
-        return render_template('system_status.html',
-                             monitoring_data=monitoring_data,
-                             cpu_percent=cpu_percent,
-                             memory_percent=memory.percent,
-                             disk_percent=disk_percent,
-                             system_info=system_info)
-                             
+        # Add trace_id for debugging
+        trace_id = get_index_trace_id()
+
+        total_time = time.time() - start_time
+        if total_time > 2.0:
+            monitoring_data['performance_warning'] = f'页面加载时间过长: {total_time:.2f}秒'
+
+        return render_template('system_status.html', 
+                             monitoring_data=monitoring_data, 
+                             system_info=system_info, 
+                             trace_id=trace_id)
+
     except Exception as e:
-        # 返回简化的错误页面
-        # 构建基本的system_info用于错误页面
-        basic_system_info = {
-            'cpu': {'usage_percent': 0, 'core_count': 1, 'status': 'unknown'},
-            'memory': {'usage_percent': 0, 'total_gb': 0, 'used_gb': 0, 'available_gb': 0, 'status': 'unknown'},
-            'disk': {'usage_percent': 0, 'total_gb': 0, 'used_gb': 0, 'free_gb': 0, 'status': 'unknown'}
-        }
-
-        return render_template('system_status.html',
-                             monitoring_data={'error': str(e)},
-                             cpu_percent=0,
-                             memory_percent=0,
-                             disk_percent=0,
-                             system_info=basic_system_info), 500
+        index_logger.error(f"Error rendering system status page: {e}", {'traceback': traceback.format_exc()})
+        # Simplified error rendering
+        return render_template('error.html', error_message="无法加载系统状态页面")
 
 def get_status_class(value, warning_threshold, critical_threshold):
     """根据阈值返回状态CSS类"""

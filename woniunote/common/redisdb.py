@@ -8,9 +8,23 @@ from woniunote.module.users import Users
 
 
 def redis_connect():
-    pool = redis.ConnectionPool(host='127.0.0.1', port=6379, decode_responses=True, db=0)
-    red = redis.Redis(connection_pool=pool)
-    return red
+    try:
+        from flask import current_app
+        if current_app and 'redis_client' in current_app.extensions:
+            return current_app.extensions['redis_client']
+    except RuntimeError:
+        # Working outside of application context
+        pass
+    
+    try:
+        pool = redis.ConnectionPool(host='127.0.0.1', port=6379, decode_responses=True, db=0)
+        red = redis.Redis(connection_pool=pool)
+        # Test connection
+        red.ping()
+        return red
+    except Exception:
+        # Redis connection failed
+        return None
 
 
 # def redis_mysql_string():
