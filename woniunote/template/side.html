@@ -98,28 +98,33 @@
     $(document).ready(function () {
         // 第一步：发送Ajax请求去访问/recommend接口，获取JSON
         $.get('/recommend', function (data) {
-            // 获取响应并动态填充到对应的推荐栏中
             let lastData = data[0];
             let mostData = data[1];
             let recommendedData = data[2];
 
-            let v1 = new Vue({
-                el: '#last',
-                data: {content: lastData},
-                delimiters: ['${', '}']
-            });
+            if (document.getElementById('last')) {
+                new Vue({
+                    el: '#last',
+                    data: {content: lastData},
+                    delimiters: ['${', '}']
+                });
+            }
 
-            let v2 = new Vue({
-                el: '#most',
-                data: {content: mostData},
-                delimiters: ['${', '}']
-            });
+            if (document.getElementById('most')) {
+                new Vue({
+                    el: '#most',
+                    data: {content: mostData},
+                    delimiters: ['${', '}']
+                });
+            }
 
-            let v3 = new Vue({
-                el: '#recommended',
-                data: {content: recommendedData},
-                delimiters: ['${', '}']
-            });
+            if (document.getElementById('recommended')) {
+                new Vue({
+                    el: '#recommended',
+                    data: {content: recommendedData},
+                    delimiters: ['${', '}']
+                });
+            }
         })
     });
 
@@ -138,19 +143,21 @@
         // 是PC端时才进行右侧停靠
         if (flag === true) {
             let fixedDiv = document.getElementById("fixedmenu");
-            let H = 0;
-            let Y = fixedDiv;
-            while (Y) {
-                H += Y.offsetTop;
-                Y = Y.offsetParent;
-            }
+            if (fixedDiv) {
+                let H = 0;
+                let Y = fixedDiv;
+                while (Y) {
+                    H += Y.offsetTop;
+                    Y = Y.offsetParent;
+                }
 
-            window.onscroll = function () {
-                let s = document.body.scrollTop || document.documentElement.scrollTop;
-                if (s > H + 500) {
-                    fixedDiv.style = "position:fixed; top:0; margin-top:0; width: 306px;";
-                } else {
-                    fixedDiv.style = "";
+                window.onscroll = function () {
+                    let s = document.body.scrollTop || document.documentElement.scrollTop;
+                    if (s > H + 500) {
+                        fixedDiv.style = "position:fixed; top:0; margin-top:0; width: 306px;";
+                    } else {
+                        fixedDiv.style = "";
+                    }
                 }
             }
         }

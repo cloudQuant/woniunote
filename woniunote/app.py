@@ -678,6 +678,9 @@ def create_app(config_name='production'):
     @app.errorhandler(404)
     def page_not_found(e):
         app_logger.warning(f"404 Error: {request.path} from {request.remote_addr}")
+        # 静默处理 Chrome DevTools 的 /.well-known/appspecific 路径
+        if request.path.startswith('/.well-known/appspecific/'):
+            return '', 204
         if request.headers.get('Content-Type') == 'application/json':
             return jsonify({'error': 'Resource not found'}), 404
         return render_template('error-404.html'), 404

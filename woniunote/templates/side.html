@@ -1,4 +1,4 @@
-<script src="/js/vue.js"></script>
+<script src="{{ url_for('static', filename='js/vue.js') }}"></script>
 
 <div class="col-sm-3 col-12" style="padding: 0 10px;">
     <div class="col-12 search-bar form-group row">
@@ -33,21 +33,10 @@
         </ul>
     </div>
 
-{#    <div class="col-12 side" id="fixedmenu">#}
-{#        <div class="tip"  style="text-align: center;" >特别推荐</div>#}
-{#        <ul id="recommended">#}
-{#            <!-- <li v-for="(article, index) in recommended_articles">#}
-{#                <a v-bind:href="'/article/' + article[0]">${index+1}. ${article[1].substr(0,15)}...</a>#}
-{#            </li> -->#}
-{#            {% for row in recommended_articles %}#}
-{#            <!-- <li> <a href="/article/{{row.article}}">{{loop.index}}.{{row.headline|truncate(12)}}</a></li> -->#}
-{#            <li> <a href="/article/{{row[0]}}">{{loop.index}}.{{row[1]|truncate(24)}}</a></li>#}
-{#            {% endfor %}#}
-{#        </ul>#}
-{#        <div class="col-12 side" onclick="gotoTop()" style="height: 40px; text-align: center; cursor: pointer">#}
-{#            回到顶部#}
-{#        </div>#}
-{#    </div>#}
+    <div class="col-12 side" id="fixedmenu">
+        <div class="tip"  style="text-align: center;" >特别推荐</div>
+        <ul id="recommended"></ul>
+    </div>
 
 {#    <div class="col-12 side">#}
 {#        <div class="tip"  style="text-align: center;">人生时间</div>#}
@@ -98,28 +87,34 @@
     $(document).ready(function () {
         // 第一步：发送Ajax请求去访问/recommend接口，获取JSON
         $.get('/recommend', function (data) {
-            // 获取响应并动态填充到对应的推荐栏中
+            if (!window.Vue) return;
             let lastData = data[0];
             let mostData = data[1];
             let recommendedData = data[2];
 
-            let v1 = new Vue({
-                el: '#last',
-                data: {content: lastData},
-                delimiters: ['${', '}']
-            });
+            if (document.getElementById('last')) {
+                new Vue({
+                    el: '#last',
+                    data: {content: lastData},
+                    delimiters: ['${', '}']
+                });
+            }
 
-            let v2 = new Vue({
-                el: '#most',
-                data: {content: mostData},
-                delimiters: ['${', '}']
-            });
+            if (document.getElementById('most')) {
+                new Vue({
+                    el: '#most',
+                    data: {content: mostData},
+                    delimiters: ['${', '}']
+                });
+            }
 
-            let v3 = new Vue({
-                el: '#recommended',
-                data: {content: recommendedData},
-                delimiters: ['${', '}']
-            });
+            if (document.getElementById('recommended')) {
+                new Vue({
+                    el: '#recommended',
+                    data: {content: recommendedData},
+                    delimiters: ['${', '}']
+                });
+            }
         })
     });
 
@@ -138,19 +133,21 @@
         // 是PC端时才进行右侧停靠
         if (flag === true) {
             let fixedDiv = document.getElementById("fixedmenu");
-            let H = 0;
-            let Y = fixedDiv;
-            while (Y) {
-                H += Y.offsetTop;
-                Y = Y.offsetParent;
-            }
+            if (fixedDiv) {
+                let H = 0;
+                let Y = fixedDiv;
+                while (Y) {
+                    H += Y.offsetTop;
+                    Y = Y.offsetParent;
+                }
 
-            window.onscroll = function () {
-                let s = document.body.scrollTop || document.documentElement.scrollTop;
-                if (s > H + 500) {
-                    fixedDiv.style = "position:fixed; top:0; margin-top:0; width: 306px;";
-                } else {
-                    fixedDiv.style = "";
+                window.onscroll = function () {
+                    let s = document.body.scrollTop || document.documentElement.scrollTop;
+                    if (s > H + 500) {
+                        fixedDiv.style = "position:fixed; top:0; margin-top:0; width: 306px;";
+                    } else {
+                        fixedDiv.style = "";
+                    }
                 }
             }
         }

@@ -143,7 +143,9 @@
         </style>
 
         {# 按需引入side.html,首页需要 #}
-        {% include 'side.html' %}
+        {% if not hide_sidebar %}
+            {% include 'side.html' %}
+        {% endif %}
 
 <script>
     // 在页面加载完成后处理文章摘要
