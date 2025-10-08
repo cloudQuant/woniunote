@@ -137,20 +137,7 @@ def read(articleid):
             'comment_count': len(comments),
             'total_articles': total_articles
         })
-        return render_template('article-user.html',
-                            total = total_articles,
-                            article=article_dict,
-                            position=position,
-                            is_favorited=is_favorited,
-                            prev_next=prev_next,
-                            comments=comments,
-                            comment_users=comment_users,
-                            can_use_minute=can_use_minute(),
-                            last_articles=last,
-                            most_articles=most,
-                            recommended_articles=recommended,
-                            current_userid=current_userid,
-                            article_type=ARTICLE_TYPES)
+        return redirect(url_for('article.read_optimized', articleid=articleid))
     except Exception as e:
         # 不捕获HTTP异常（如abort抛出的异常）
         from werkzeug.exceptions import HTTPException
@@ -748,6 +735,9 @@ def read_optimized(articleid):
         
         # 5. 获取热门文章列表 - 使用缓存
         last, most, recommended = ArticlesOptimized.get_hot_articles_cached()
+        if not recommended or len(recommended) == 0:
+            fallback = last if last else most
+            recommended = fallback[:9] if fallback else []
         
         # 6. 获取文章总数 - 使用缓存
         total_articles = ArticlesOptimized.get_article_stats_cached()
@@ -757,6 +747,7 @@ def read_optimized(articleid):
             'trace_id': trace_id,
             'article_id': articleid,
             'total_articles': total_articles,
+            'recommended_fallback_used': (not recommended or len(recommended) == 0),
             'elapsed_ms': round((query_time_5 - query_time_4) * 1000, 2)
         })
         
@@ -783,14 +774,15 @@ def read_optimized(articleid):
                             comments=comments,
                             comment_users=comment_users,
                             can_use_minute=can_use_minute(),
-                            last_articles=last,
+                            last_articles=[],
                             most_articles=most,
                             recommended_articles=recommended,
                             current_userid=current_userid,
                             article_type=ARTICLE_TYPES,
+                            show_last=False,
                             performance_info={
                                 'total_time_ms': round(total_time * 1000, 2),
-                                'cached_queries': 4,  # 使用了4个缓存查询
+                                'cached_queries': 4,
                                 'optimized': True
                             })
                             

@@ -10,15 +10,16 @@
         </div>
     </div>
 
+    {% if show_last is not defined or show_last %}
     <div class="col-12 side">
         <div class="tip"  style="text-align: center;" >最新文章</div>
         <ul id="last">
             {% for row in last_articles %}
-            <!-- <li> <a href="/article/{{row.article}}">{{loop.index}}.{{row.headline|truncate(12)}}</a></li> -->
             <li> <a href="/article/{{row.articleid}}">{{loop.index}}.{{row.headline|truncate(24)}}</a></li>
             {% endfor %}
         </ul>
     </div>
+    {% endif %}
 
     <div class="col-12 side">
         <div  style="text-align: center;" class="tip">最多阅读</div>

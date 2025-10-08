@@ -1,487 +1,151 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<!-- 性能优化版文章页面 -->
-<!-- 优化策略：
-1. 延迟加载外部资源
-2. 异步加载非关键内容
-3. 压缩内联CSS/JS
-4. 使用本地资源替代CDN
--->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [[', '], ['\\(', '\\)']],
+      displayMath: [['$', '$'], ['\\[', '\\]']],
+      processEscapes: true
+    },
+    options: {
+      ignoreHtmlClass: 'tex2jax_ignore',
+      processHtmlClass: 'tex2jax_process'
+    }
+  };
+</script>
 
 <style>
-    /* 内联关键CSS，减少渲染阻塞 */
-    .article-detail {
-        background: #fff;
-        padding: 20px;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-    }
-    .article-detail .title {
-        font-size: 24px;
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #eee;
-    }
-    .article-detail .info {
-        color: #666;
-        font-size: 14px;
-        margin-bottom: 20px;
-    }
-    .article-detail .content {
-        color: #333;
-        line-height: 1.8;
-        font-size: 16px;
-    }
-    .article-detail .content p {
-        margin-bottom: 1.2em;
-    }
-    .article-detail .content img {
-        max-width: 100%;
-        height: auto;
-        margin: 10px 0;
-    }
-    .article-detail .content pre {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 4px;
-        overflow-x: auto;
-        position: relative;
-        margin: 1em 0;
-        border: 1px solid #e1e4e8;
-    }
-    
-    /* 加载状态样式 */
-    .loading-placeholder {
-        background: #f5f5f5;
-        border-radius: 4px;
-        padding: 20px;
-        text-align: center;
-        color: #666;
-        margin: 10px 0;
-    }
-    
-    .performance-info {
-        background: #e8f5e8;
-        border: 1px solid #4caf50;
-        border-radius: 4px;
-        padding: 10px;
-        margin: 10px 0;
-        font-size: 12px;
-        color: #2e7d32;
-    }
-    
-    /* 懒加载容器 */
-    .lazy-load-container {
-        min-height: 200px;
-        position: relative;
-    }
-    
-    .fade-in {
-        animation: fadeIn 0.3s ease-in;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
+    .article-detail { background: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .article-detail .title { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+    .article-detail .info { color: #666; font-size: 14px; margin-bottom: 20px; }
+    .article-detail .content { color: #333; line-height: 1.8; font-size: 16px; }
+    .article-detail .content p { margin-bottom: 1.2em; }
+    .article-detail .content img { max-width: 100%; height: auto; margin: 10px 0; }
+    .article-detail .content pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; position: relative; margin: 1em 0; border: 1px solid #e1e4e8; }
+    .code-language-label { position: absolute; top: 0; right: 0; padding: 0.2em 0.5em; font-size: 0.8em; background-color: #f0f0f0; border-left: 1px solid #ddd; border-bottom: 1px solid #ddd; border-bottom-left-radius: 4px; color: #666; font-family: monospace; }
 </style>
 
-<div class="container">
-    <!-- 性能信息（开发模式显示） -->
-    {% if performance_info and performance_info.optimized %}
-    <div class="performance-info">
-        ⚡ 性能优化版 | 加载时间: {{ performance_info.total_time_ms }}ms | 缓存查询: {{ performance_info.cached_queries }}个
+<div class="col-sm-9 col-12" id="left" style="padding: 0;">
+    <div class="col-12 row article-detail">
+        <div class="col-9 title">
+            {{article.headline}}
+            {% if current_userid %}
+                {% if current_userid == article.userid %}
+                <div class="float-right">
+                    <a href="/article/edit/{{article.articleid}}" class="btn btn-primary btn-sm">编辑</a>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="col-12 info">
+            作者：{{article.nickname}}&nbsp;&nbsp;&nbsp;
+            类别：{{ article_type[article.type//100] }}&nbsp;&nbsp;&nbsp;
+            日期：{{article.createtime}}&nbsp;&nbsp;&nbsp;
+            阅读：{{article.readcount}} 次&nbsp;&nbsp;&nbsp;
+            消耗积分：{{article.credit}} 分
+            &nbsp;&nbsp;&nbsp;
+            {% if session.get('main_islogin') == 'true' and session.get('main_userid') == article.userid %}
+                <a href="{{ url_for('article.go_edit', articleid=article.articleid) }}" >编辑</a>
+            {% endif %}
+            {% if session.get('main_islogin') == 'true' %}
+                {% if is_favorited %}
+                    <a href="javascript:void(0)" onclick="cancelFavorite({{article.articleid}})" class="favorite-link">
+                        <span class="oi oi-heart" aria-hidden="true"></span>取消收藏
+                    </a>
+                {% else %}
+                    <a href="javascript:void(0)" onclick="addFavorite({{article.articleid}})" class="favorite-link">
+                        <span class="oi oi-heart" aria-hidden="true"></span>收藏文章
+                    </a>
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="col-12 content" id="content" style="padding: 20px; line-height: 1.8; font-size: 16px;">
+            <div id="content-preprocessor" style="display:none;">{{article.content | safe}}</div>
+            <div id="content-display"></div>
+            {% if position > 0 %}
+            <div class="col-12 readall" style="margin-top: 20px; text-align: center;">
+                {% if session.get('islogin') == 'true' %}
+                <button class="col-sm-10 col-12" onclick="readAll()">
+                    <span class="oi oi-data-transfer-download" aria-hidden="true"></span> 阅读全文（消耗积分：{{article['credit']}} 分）
+                </button>
+                {% else %}
+                <button class="col-sm-10 col-12" onclick="showLogin()">
+                    <span class="oi oi-data-transfer-download" aria-hidden="true"></span> 你还未登录，占此登录后可阅读全文
+                </button>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
     </div>
-    {% endif %}
-    
-    <div class="row">
-        <div class="col-md-8">
-            <!-- 文章主体内容 - 立即渲染 -->
-            <div class="article-detail">
-                <div class="title">{{ article.headline }}</div>
-                <div class="info">
-                    <span>作者：{{ article.nickname }}</span> |
-                    <span>发布时间：{{ article.createtime.strftime('%Y-%m-%d %H:%M') if article.createtime else '未知' }}</span> |
-                    <span>阅读次数：{{ article.readcount }}</span>
-                    {% if article.credit > 0 %}
-                    | <span style="color: #ff6b6b;">需要积分：{{ article.credit }}</span>
-                    {% endif %}
-                </div>
-                <div class="content" id="content">
-                    {{ article.content | safe }}
-                    
-                    {% if position > 0 %}
-                    <div style="border-top: 2px dashed #ccc; padding-top: 20px; margin-top: 20px;">
-                        <p style="color: #666; text-align: center;">
-                            <strong>以下内容需要消耗 {{ article.credit }} 积分</strong>
-                        </p>
-                        <div style="text-align: center;">
-                            <button class="btn btn-primary" onclick="readAll()">继续阅读</button>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-                
-                <!-- 收藏和分享 -->
-                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;">
-                    {% if current_userid %}
-                    <button class="btn btn-outline-primary btn-sm" onclick="toggleFavorite({{ article.articleid }})" id="favoriteBtn">
-                        {% if is_favorited %}
-                        <i class="fas fa-heart"></i> 已收藏
-                        {% else %}
-                        <i class="far fa-heart"></i> 收藏
-                        {% endif %}
-                    </button>
-                    {% endif %}
-                    
-                    <!-- 上下篇导航 -->
-                    <div class="row" style="margin-top: 15px;">
-                        <div class="col-md-6">
-                            {% if prev_next.prev_id %}
-                            <a href="/article/fast/{{ prev_next.prev_id }}" class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-chevron-left"></i> {{ prev_next.prev_headline }}
-                            </a>
-                            {% else %}
-                            <span class="text-muted">{{ prev_next.prev_headline }}</span>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6 text-right">
-                            {% if prev_next.next_id %}
-                            <a href="/article/fast/{{ prev_next.next_id }}" class="btn btn-outline-secondary btn-sm">
-                                {{ prev_next.next_headline }} <i class="fas fa-chevron-right"></i>
-                            </a>
-                            {% else %}
-                            <span class="text-muted">{{ prev_next.next_headline }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 评论区 - 懒加载 -->
-            <div class="card">
-                <div class="card-header">
-                    <h5>评论区 <span id="commentCount" class="badge badge-secondary">{{ comments|length }}</span></h5>
-                </div>
-                <div class="card-body">
-                    <div id="commentsContainer" class="lazy-load-container">
-                        <!-- 评论内容将通过JavaScript异步加载 -->
-                        <div class="loading-placeholder">
-                            <i class="fas fa-spinner fa-spin"></i> 正在加载评论...
-                        </div>
-                    </div>
-                    
-                    <!-- 评论表单 -->
-                    {% if current_userid %}
-                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;">
-                        <form id="commentForm" onsubmit="submitComment(event)">
-                            <div class="form-group">
-                                <textarea class="form-control" name="content" rows="3" placeholder="写下你的评论..." required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-sm">发表评论</button>
-                        </form>
-                    </div>
-                    {% else %}
-                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; text-align: center;">
-                        <p class="text-muted">请 <a href="/login">登录</a> 后发表评论</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <!-- 侧边栏 - 懒加载 -->
-            <div id="sidebarContainer" class="lazy-load-container">
-                <div class="loading-placeholder">
-                    <i class="fas fa-spinner fa-spin"></i> 正在加载推荐内容...
-                </div>
-            </div>
-        </div>
+
+    <div class="col-12 article-nav">
+        <div>版权所有，转载本站文章请注明出处：云子量化， https://www.yunjinqi.top/article/{{article.articleid}}</div>
+        <div></div>
+        <div><a href="/article/fast/{{prev_next.prev_id}}">上一篇：{{prev_next.prev_headline}}</a></div>
+        <div><a href="/article/fast/{{prev_next.next_id}}">下一篇：{{prev_next.next_headline}}</a></div>
     </div>
 </div>
 
-<!-- JavaScript - 延迟加载和异步处理 -->
 <script>
-// 全局变量
-const articleId = {{ article.articleid }};
-const currentUserId = {{ current_userid if current_userid else 'null' }};
-let commentsLoaded = false;
-let sidebarLoaded = false;
+  document.addEventListener('DOMContentLoaded', function() {
+    var rawContent = document.getElementById('content-preprocessor').innerHTML;
+    var cleanedContent = rawContent.replace(/<style>[\s\S]*?<\/style>/g, '');
+    cleanedContent = processUEditorCodeBlocks(cleanedContent);
+    document.getElementById('content-display').innerHTML = cleanedContent;
+    if (window.hljs) { hljs.highlightAll(); }
+    if (window.MathJax) { MathJax.typeset(['#content-display']); }
+  });
 
-// 页面加载完成后执行
-document.addEventListener('DOMContentLoaded', function() {
-    // 延迟加载非关键内容
-    setTimeout(function() {
-        loadComments();
-        loadSidebar();
-        loadExternalResources();
-    }, 100);
-});
-
-// 异步加载评论
-async function loadComments() {
-    if (commentsLoaded) return;
-    
-    try {
-        const response = await fetch(`/article/api/comments/${articleId}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            renderComments(data.comments);
-            document.getElementById('commentCount').textContent = data.count;
-            commentsLoaded = true;
-        } else {
-            document.getElementById('commentsContainer').innerHTML = 
-                '<div class="alert alert-warning">评论加载失败</div>';
-        }
-    } catch (error) {
-        console.error('加载评论失败:', error);
-        document.getElementById('commentsContainer').innerHTML = 
-            '<div class="alert alert-danger">评论加载失败，请刷新页面重试</div>';
-    }
-}
-
-// 渲染评论
-function renderComments(comments) {
-    const container = document.getElementById('commentsContainer');
-    
-    if (comments.length === 0) {
-        container.innerHTML = '<p class="text-muted text-center">暂无评论，来抢沙发吧！</p>';
-        return;
-    }
-    
-    let html = '';
-    comments.forEach(comment => {
-        html += `
-            <div class="comment-item" style="border-bottom: 1px solid #eee; padding: 15px 0;">
-                <div class="comment-header" style="margin-bottom: 8px;">
-                    <strong>${comment.nickname}</strong>
-                    <small class="text-muted">${comment.createtime}</small>
-                </div>
-                <div class="comment-content">${comment.content}</div>
-            </div>
-        `;
+  function processUEditorCodeBlocks(content) {
+    var codePattern = /<pre class="code(\d+)">(([\s\S](?!<\/pre>))*)<\/pre>/g;
+    return content.replace(codePattern, function(match, codeNum, codeContent) {
+      var language = detectCodeLanguage(codeContent);
+      var cleanedCode = codeContent.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      return '<pre style="position: relative;">' +
+        '<div class="code-language-label">' + language + '</div>' +
+        '<code class="language-' + language + '">' + cleanedCode + '</code></pre>';
     });
-    
-    container.innerHTML = html;
-    container.classList.add('fade-in');
-}
+  }
 
-// 异步加载侧边栏
-async function loadSidebar() {
-    if (sidebarLoaded) return;
-    
-    try {
-        const response = await fetch('/article/api/hot-articles');
-        const data = await response.json();
-        
-        if (data.success) {
-            renderSidebar(data);
-            sidebarLoaded = true;
-        } else {
-            document.getElementById('sidebarContainer').innerHTML = 
-                '<div class="alert alert-warning">推荐内容加载失败</div>';
-        }
-    } catch (error) {
-        console.error('加载侧边栏失败:', error);
-        document.getElementById('sidebarContainer').innerHTML = 
-            '<div class="alert alert-danger">推荐内容加载失败</div>';
-    }
-}
+  function detectCodeLanguage(code) {
+    var language = 'plaintext';
+    if (code.match(/^\s*(import|from|def|class|if __name__)/m)) language = 'python';
+    else if (code.match(/^\s*(function|const|let|var|import from|export|=>)/m)) language = 'javascript';
+    else if (code.match(/^\s*(public class|private|protected|void|static|@Override)/m)) language = 'java';
+    else if (code.match(/^\s*(#include|int main|std::)/m)) language = 'cpp';
+    else if (code.match(/^\s*(<html|<!DOCTYPE|<head|<body|<div|<script)/m)) language = 'html';
+    else if (code.match(/^\s*(body|margin|padding|font-size|color:|background:)/m)) language = 'css';
+    else if (code.match(/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE TABLE)/im)) language = 'sql';
+    else if (code.match(/^\s*(package|import|func|type|struct)/m)) language = 'go';
+    else if (code.match(/^\s*(\{|\[)\s*"[^"]+"\s*:/m)) language = 'json';
+    return language;
+  }
 
-// 渲染侧边栏
-function renderSidebar(data) {
-    const container = document.getElementById('sidebarContainer');
-    
-    let html = '';
-    
-    // 最新文章
-    if (data.last_articles && data.last_articles.length > 0) {
-        html += `
-            <div class="card mb-3">
-                <div class="card-header"><h6>最新文章</h6></div>
-                <div class="card-body">
-        `;
-        data.last_articles.slice(0, 5).forEach(article => {
-            html += `
-                <div class="mb-2">
-                    <a href="/article/fast/${article.articleid}" class="text-decoration-none">
-                        ${article.headline.length > 20 ? article.headline.substring(0, 20) + '...' : article.headline}
-                    </a>
-                    <small class="text-muted d-block">${article.createtime}</small>
-                </div>
-            `;
-        });
-        html += '</div></div>';
-    }
-    
-    // 热门文章
-    if (data.most_articles && data.most_articles.length > 0) {
-        html += `
-            <div class="card mb-3">
-                <div class="card-header"><h6>热门文章</h6></div>
-                <div class="card-body">
-        `;
-        data.most_articles.slice(0, 5).forEach(article => {
-            html += `
-                <div class="mb-2">
-                    <a href="/article/fast/${article.articleid}" class="text-decoration-none">
-                        ${article.headline.length > 20 ? article.headline.substring(0, 20) + '...' : article.headline}
-                    </a>
-                    <small class="text-muted d-block">阅读 ${article.readcount} 次</small>
-                </div>
-            `;
-        });
-        html += '</div></div>';
-    }
-    
-    container.innerHTML = html;
-    container.classList.add('fade-in');
-}
-
-// 延迟加载外部资源
-function loadExternalResources() {
-    // 延迟加载代码高亮
-    const highlightScript = document.createElement('script');
-    highlightScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js';
-    highlightScript.onload = function() {
-        const highlightCSS = document.createElement('link');
-        highlightCSS.rel = 'stylesheet';
-        highlightCSS.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css';
-        document.head.appendChild(highlightCSS);
-        
-        // 初始化代码高亮
-        if (window.hljs) {
-            hljs.highlightAll();
-        }
-    };
-    document.head.appendChild(highlightScript);
-    
-    // 延迟加载MathJax（如果需要）
-    if (document.getElementById('content').innerHTML.includes('$') || 
-        document.getElementById('content').innerHTML.includes('\\[')) {
-        loadMathJax();
-    }
-}
-
-// 加载MathJax
-function loadMathJax() {
-    window.MathJax = {
-        tex: {
-            inlineMath: [['$', '$'], ['\\(', '\\)']],
-            displayMath: [['$$', '$$'], ['\\[', '\\]']],
-            processEscapes: true
-        },
-        options: {
-            ignoreHtmlClass: 'tex2jax_ignore',
-            processHtmlClass: 'tex2jax_process'
-        }
-    };
-    
-    const mathJaxScript = document.createElement('script');
-    mathJaxScript.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-    mathJaxScript.async = true;
-    document.head.appendChild(mathJaxScript);
-}
-
-// 继续阅读功能
-function readAll() {
+  function readAll() {
     const position = {{ position }};
     if (position === 0) return;
-    
     const formData = new FormData();
     formData.append('position', position);
-    formData.append('articleid', articleId);
-    
-    fetch('/article/readall', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.text())
-    .then(content => {
+    formData.append('articleid', {{ article.articleid|int }});
+    fetch('/article/readall', { method: 'POST', body: formData })
+      .then(response => response.text())
+      .then(content => {
         if (content) {
-            const contentDiv = document.getElementById('content');
-            contentDiv.innerHTML = contentDiv.innerHTML.split('<div style="border-top:')[0] + content;
+          const display = document.getElementById('content-display');
+          display.innerHTML = display.innerHTML + content;
+          if (window.hljs) { hljs.highlightAll(); }
+          if (window.MathJax) { MathJax.typeset(['#content-display']); }
+          var btn = document.querySelector('.readall');
+          if (btn) btn.style.display = 'none';
         }
-    })
-    .catch(error => {
-        console.error('加载完整内容失败:', error);
-        alert('加载失败，请重试');
-    });
-}
-
-// 收藏功能
-function toggleFavorite(articleId) {
-    if (!currentUserId) {
-        alert('请先登录');
-        return;
-    }
-    
-    fetch('/favorite/toggle', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `articleid=${articleId}`
-    })
-    .then(response => response.text())
-    .then(result => {
-        const btn = document.getElementById('favoriteBtn');
-        if (result === 'add-success') {
-            btn.innerHTML = '<i class="fas fa-heart"></i> 已收藏';
-            btn.classList.remove('btn-outline-primary');
-            btn.classList.add('btn-primary');
-        } else if (result === 'remove-success') {
-            btn.innerHTML = '<i class="far fa-heart"></i> 收藏';
-            btn.classList.remove('btn-primary');
-            btn.classList.add('btn-outline-primary');
-        }
-    })
-    .catch(error => {
-        console.error('收藏操作失败:', error);
-        alert('操作失败，请重试');
-    });
-}
-
-// 提交评论
-function submitComment(event) {
-    event.preventDefault();
-    
-    if (!currentUserId) {
-        alert('请先登录');
-        return;
-    }
-    
-    const form = event.target;
-    const formData = new FormData(form);
-    formData.append('articleid', articleId);
-    
-    fetch('/comment/add', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.text())
-    .then(result => {
-        if (result === 'add-success') {
-            form.reset();
-            // 重新加载评论
-            commentsLoaded = false;
-            loadComments();
-            alert('评论发表成功！');
-        } else {
-            alert('评论发表失败，请重试');
-        }
-    })
-    .catch(error => {
-        console.error('发表评论失败:', error);
-        alert('发表失败，请重试');
-    });
-}
+      });
+  }
 </script>
+
+{% include 'side.html' %}
 
 {% endblock %}

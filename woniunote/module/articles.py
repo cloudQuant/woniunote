@@ -83,14 +83,16 @@ class Articles:
 
     @staticmethod
     def update_read_count(articleid):
-        """更新文章阅读次数"""
+        """更新文章阅读次数（改为Redis累积+批量回写的前置计数）"""
         try:
-            # 动态获取数据库连接
+            from woniunote.common.redisdb import redis_connect
+            red = redis_connect()
+            if red:
+                red.incr(f"article:readcount:{articleid}")
+                return
             dbsession, md, DBase = dbconnect()
             if dbsession is None:
                 return
-            
-            # 更新阅读次数
             dbsession.query(Article).filter_by(articleid=articleid).update({
                 'readcount': Article.readcount + 1,
                 'updatetime': datetime.datetime.now()
@@ -318,20 +320,22 @@ class ArticlesOptimized:
                 if result:
                     article, user = result
                     article_dict = {
-                        'articleid': article.articleid,
-                        'userid': article.userid,
-                        'headline': article.headline,
-                        'content': article.content,
-                        'type': article.type,
-                        'credit': article.credit,
-                        'thumbnail': article.thumbnail,
-                        'readcount': article.readcount,
-                        'commentcount': getattr(article, 'commentcount', 0),
-                        'drafted': article.drafted,
-                        'checked': article.checked,
-                        'createtime': article.createtime,
-                        'updatetime': article.updatetime,
-                        'nickname': user.nickname if user else "Unknown"
+                        'articleid': int(getattr(article, 'articleid', 0) or 0),
+                        'userid': int(getattr(article, 'userid', 0) or 0),
+                        'headline': str(getattr(article, 'headline', '') or ''),
+                        'content': str(getattr(article, 'content', '') or ''),
+                        'type': int(getattr(article, 'type', 0) or 0),
+                        'credit': int(getattr(article, 'credit', 0) or 0),
+                        'thumbnail': str(getattr(article, 'thumbnail', '') or ''),
+                        'readcount': int(getattr(article, 'readcount', 0) or 0),
+                        'commentcount': int(getattr(article, 'commentcount', 0) or 0),
+                        'drafted': int(getattr(article, 'drafted', 0) or 0),
+                        'checked': int(getattr(article, 'checked', 0) or 0),
+                        'createtime': getattr(article, 'createtime', None),
+                        'updatetime': getattr(article, 'updatetime', None),
+                        'createtime_str': article.createtime.strftime('%Y-%m-%d %H:%M') if getattr(article, 'createtime', None) else '',
+                        'updatetime_str': article.updatetime.strftime('%Y-%m-%d %H:%M') if getattr(article, 'updatetime', None) else '',
+                        'nickname': str(getattr(user, 'nickname', 'Unknown') or 'Unknown')
                     }
                     
                     articles_logger.info("文章详情查询成功（缓存）", {

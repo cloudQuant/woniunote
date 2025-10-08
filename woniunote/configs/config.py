@@ -14,10 +14,10 @@ class Config:
     SQLALCHEMY_MAX_OVERFLOW = 20
     
     # 会话配置
-    SESSION_COOKIE_SECURE = False  # 修改为False，允许HTTP
+    SESSION_COOKIE_SECURE = False
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
-    SESSION_COOKIE_NAME = 'woniunote_session'  # 添加明确的session名称
+    SESSION_COOKIE_NAME = 'woniunote_session'
     SESSION_PERMANENT = True
     PERMANENT_SESSION_LIFETIME = timedelta(days=1)
     
@@ -28,6 +28,13 @@ class Config:
     # 缓存配置
     CACHE_TYPE = 'redis'
     CACHE_DEFAULT_TIMEOUT = 300
+    
+    # Redis配置
+    REDIS_URL = os.getenv('REDIS_URL')
+    REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
+    REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
+    REDIS_DB = int(os.getenv('REDIS_DB', '0'))
+    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
 
 class DevelopmentConfig(Config):
     DEBUG = True

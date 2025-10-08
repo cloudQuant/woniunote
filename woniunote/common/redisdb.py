@@ -1,5 +1,6 @@
 from datetime import datetime
 import re
+import os
 import redis
 from woniunote.common.database import dbconnect
 from woniunote.common.utils import model_list
@@ -12,18 +13,31 @@ def redis_connect():
         from flask import current_app
         if current_app and 'redis_client' in current_app.extensions:
             return current_app.extensions['redis_client']
-    except RuntimeError:
-        # Working outside of application context
-        pass
-    
+        cfg = getattr(current_app, 'config', {})
+        url = cfg.get('REDIS_URL') or os.getenv('REDIS_URL')
+        host = cfg.get('REDIS_HOST') or os.getenv('REDIS_HOST', '127.0.0.1')
+        port = int(cfg.get('REDIS_PORT') or os.getenv('REDIS_PORT', '6379'))
+        dbnum = int(cfg.get('REDIS_DB') or os.getenv('REDIS_DB', '0'))
+        password = cfg.get('REDIS_PASSWORD') or os.getenv('REDIS_PASSWORD')
+    except Exception:
+        url = os.getenv('REDIS_URL')
+        host = os.getenv('REDIS_HOST', '127.0.0.1')
+        port = int(os.getenv('REDIS_PORT', '6379'))
+        dbnum = int(os.getenv('REDIS_DB', '0'))
+        password = os.getenv('REDIS_PASSWORD')
     try:
-        pool = redis.ConnectionPool(host='127.0.0.1', port=6379, decode_responses=True, db=0)
+        if url:
+            red = redis.from_url(url, decode_responses=True)
+            red.ping()
+            return red
+        pool_kwargs = {'host': host, 'port': port, 'db': dbnum, 'decode_responses': True}
+        if password:
+            pool_kwargs['password'] = password
+        pool = redis.ConnectionPool(**pool_kwargs)
         red = redis.Redis(connection_pool=pool)
-        # Test connection
         red.ping()
         return red
     except Exception:
-        # Redis connection failed
         return None
 
 
@@ -45,12 +59,12 @@ def redis_connect():
 def redis_mysql_string():
     from woniunote.common.database import dbconnect
 
-    red = redis_connect()  # 连接到Redis服务器
+    red = redis_connect()
+    if red is None:
+        return
 
-    # 获取数据库连接信息
     dbsession, md, db_base = dbconnect()
 
-    # 查询users表的所有数据，并将其转换为JSON
     result = dbsession.query(Users).all()
     user_list = model_list(result)
     for user in user_list:
@@ -60,12 +74,12 @@ def redis_mysql_string():
 def redis_mysql_hash():
     from woniunote.common.database import dbconnect
 
-    red = redis_connect()  # 连接到Redis服务器
+    red = redis_connect()
+    if red is None:
+        return
 
-    # 获取数据库连接信息
     dbsession, md, db_base = dbconnect()
 
-    # 查询users表的所有数据，并将其转换为JSON
     result = dbsession.query(Users).all()
     user_list = model_list(result)
     for user in user_list:
@@ -75,18 +89,14 @@ def redis_mysql_hash():
 def redis_article_zsort():
     dbsession, md, db_base = dbconnect()
     result = dbsession.query(Article, Users.nickname).join(Users, Users.userid == Article.userid).all()
-    # result的数据格式为：[ (<__main__.Article object at 0x113F9150>, '强哥')，() ]
-    # 对result进行遍历处理，最终生成一个标准的JSON数据结构
 
     m_list = []
     for article, nickname in result:
         m_dict = {}
         for k, v in article.__dict__.items():
-            if not k.startswith('_sa_instance_state'):  # 跳过内置字段
-                # 如果某个字段的值是datetime类型，则将其格式为字符串
+            if not k.startswith('_sa_instance_state'):
                 if isinstance(v, datetime):
                     v = v.strftime('%Y-%m-%d %H:%M:%S')
-                # 将文章内容的HTML和不可见字符删除，再截取前面80个字符
                 elif k == 'content':
                     pattern = re.compile(r'<[^>]+>')
                     temp = pattern.sub('', v)
@@ -97,13 +107,12 @@ def redis_article_zsort():
                     v = temp.strip()[0:80]
                 m_dict[k] = v
         m_dict['nickname'] = nickname
-        m_list.append(m_dict)  # 最终构建一个标准的列表+字典的数据结构
+        m_list.append(m_dict)
 
-    # 将数据缓存到有序集合中
     red = redis_connect()
+    if red is None:
+        return
     for row in m_list:
-        # zadd的命令参数为：（键名，{值:排序依据})
-        # 此处将文章表中的每一行数据作为值，文章编号作为排序依据
         red.zadd('article', {str(row): row['articleid']})
 
 

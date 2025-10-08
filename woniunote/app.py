@@ -100,7 +100,7 @@ def create_app(config_name='production'):
     app_logger = get_simple_logger('app')
     app_logger.info("正在初始化应用程序...")
     
-    app = Flask(__name__, template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template'),
+    app = Flask(__name__, template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'),
                 static_url_path='/', static_folder='resource')
     
     # 加载配置

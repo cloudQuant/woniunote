@@ -65,6 +65,11 @@ def home():
 
         # 获取最新、最热和推荐文章
         last, most, recommended = ArticlesOptimized.get_hot_articles_cached()
+        if not recommended or len(recommended) == 0:
+            import random
+            pool = (last or []) + (most or [])
+            random.shuffle(pool)
+            recommended = pool[:9]
         
         # 记录侧边栏文章查询结果
         index_logger.info("首页侧边栏文章查询", {
@@ -123,41 +128,35 @@ def get_home():
     
     try:
         # 查询文章列表
-        result = Articles.find_limit_with_users(0, 10)
-        total = math.ceil(Articles.get_total_count() / 10)
-        
-        # 记录文章列表查询结果
+        result = ArticlesOptimized.get_articles_page_with_users_cached(0, 10)
+        total = math.ceil(ArticlesOptimized.get_article_stats_cached() / 10)
         index_logger.info("备用首页文章列表查询", {
             'trace_id': trace_id,
             'article_count': len(result) if result else 0,
             'total_pages': total
         })
-
-        # 获取最新、最热和推荐文章
         last, most, recommended = ArticlesOptimized.get_hot_articles_cached()
-        
-        # 记录侧边栏文章查询结果
+        if not recommended or len(recommended) == 0:
+            import random
+            pool = (last or []) + (most or [])
+            random.shuffle(pool)
+            recommended = pool[:9]
         index_logger.info("备用首页侧边栏文章查询", {
             'trace_id': trace_id,
             'last_articles_count': len(last) if last else 0,
             'most_articles_count': len(most) if most else 0,
             'recommended_articles_count': len(recommended) if recommended else 0
         })
-        
-        # 渲染首页模板
         html_file = 'index.html'
         content = render_template(html_file, result=result, page=1, total=total,
                                   can_use_minute=can_use_minute(),
                                   last_articles=last, most_articles=most, recommended_articles=recommended,
                                   article_type=ARTICLE_TYPES)
-        
-        # 记录首页渲染成功
         index_logger.info("备用首页渲染成功", {
             'trace_id': trace_id,
             'template': html_file,
             'content_length': len(content) if content else 0
         })
-        
         return content
     except Exception as e:
         # 记录异常
@@ -210,10 +209,12 @@ def paginate(page):
             'total_pages': total
         })
 
-        # 获取最新、最热和推荐文章
-        last, most, recommended = Articles.find_last_most_recommended()
-        
-        # 记录侧边栏文章查询结果
+        last, most, recommended = ArticlesOptimized.get_hot_articles_cached()
+        if not recommended or len(recommended) == 0:
+            import random
+            pool = (last or []) + (most or [])
+            random.shuffle(pool)
+            recommended = pool[:9]
         index_logger.info("分页侧边栏文章查询", {
             'trace_id': trace_id,
             'page': page,
@@ -300,6 +301,11 @@ def classify(class_type, page):
 
         # 获取最新、最热和推荐文章
         last, most, recommended = article.find_last_most_recommended()
+        if not recommended or len(recommended) == 0:
+            import random
+            pool = (last or []) + (most or [])
+            random.shuffle(pool)
+            recommended = pool[:9]
         
         # 记录侧边栏文章查询结果
         index_logger.info("分类页侧边栏文章查询", {
@@ -395,6 +401,11 @@ def search(page, keyword):
 
         # 获取最新、最热和推荐文章
         last, most, recommended = article.find_last_most_recommended()
+        if not recommended or len(recommended) == 0:
+            import random
+            pool = (last or []) + (most or [])
+            random.shuffle(pool)
+            recommended = pool[:9]
         
         # 记录侧边栏文章查询结果
         index_logger.info("搜索页侧边栏文章查询", {
@@ -473,7 +484,8 @@ def recommend():
         html_file = 'side.html'
         content = render_template(html_file, last_articles=last, most_articles=most,
                                can_use_minute=can_use_minute(),
-                               recommended_articles=recommended)
+                               recommended_articles=recommended,
+                               show_last=False)
         
         # 记录侧边栏渲染成功
         index_logger.info("侧边栏渲染成功", {
