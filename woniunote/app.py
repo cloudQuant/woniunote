@@ -708,7 +708,7 @@ def create_app(config_name='production'):
     @app.before_request
     def before():
         # 只在生产环境强制HTTPS
-        if config_name == 'production' and request.url.startswith('http://'):
+        if request.url.startswith('http://'):
             url = request.url.replace('http://', 'https://', 1)
             return redirect(url, code=301)
 
@@ -1993,24 +1993,22 @@ if config_name in ['development', 'testing'] or __name__ != '__main__':
 
 # 创建应用实例
 if __name__ == '__main__':
-    app = create_app('development')
-else:
     app = create_app(config_name)
-    
-    # 检查SSL证书文件是否存在
     path = get_package_path("woniunote")
     cert_file = os.path.join(path, "configs", "cert.pem")
     key_file = os.path.join(path, "configs", "key.pem")
-    
+    host = os.environ.get('HOST', '0.0.0.0')
+    port = int(os.environ.get('PORT', 5000))
     if os.path.exists(cert_file) and os.path.exists(key_file):
-        # 如果SSL证书存在，使用HTTPS
-        app.run(host="127.0.0.1",
-                debug=True,
-                port=5000,
-                ssl_context=(cert_file, key_file))
+        app.run(host=host, port=port, debug=True, ssl_context=(cert_file, key_file))
     else:
-        # 如果SSL证书不存在，使用HTTP
-        app.run(host="127.0.0.1",
-                debug=True,
-                port=5000)
-        
+        app.run(host=host, port=port, debug=True)
+else:
+    app = create_app(config_name)
+    path = get_package_path("woniunote")
+    cert_file = os.path.join(path, "configs", "cert.pem")
+    key_file = os.path.join(path, "configs", "key.pem")
+    if os.path.exists(cert_file) and os.path.exists(key_file):
+        app.run(host="127.0.0.1", debug=True, port=5000, ssl_context=(cert_file, key_file))
+    else:
+        app.run(host="127.0.0.1", debug=True, port=5000)

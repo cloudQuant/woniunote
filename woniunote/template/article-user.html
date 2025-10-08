@@ -607,10 +607,38 @@
     }
 
     window.onload = function () {
-        fillComment('{{article.articleid}}', '1');
+        fetch('/article/api/comments/{{article.articleid}}')
+            .then(r => r.json())
+            .then(d => {
+                if (!d.success) return;
+                const c = document.getElementById('comments-container') || document.querySelector('.article-comment');
+                const html = d.comments.map(x => `<div class="comment-item"><div class="comment-user">${x.nickname}</div><div class="comment-time">${x.createtime}</div><div class="comment-content">${x.content}</div></div>`).join('');
+                if (c) c.innerHTML = html;
+            }).catch(() => {});
     };
 </script>
 
-{% include 'side.html' %}
+<div id="sidebar">
+  <div class="text-muted">侧边栏加载中...</div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    fetch('/article/api/hot-articles')
+      .then(r => r.json())
+      .then(d => {
+        if (!d.success) return;
+        const html = `
+          <div class="side">
+            <h5>最新文章</h5>
+            ${d.last_articles.map(a => `<div><a href="/article/${a.articleid}">${a.headline}</a></div>`).join('')}
+            <h5>最热文章</h5>
+            ${d.most_articles.map(a => `<div><a href="/article/${a.articleid}">${a.headline}</a></div>`).join('')}
+            <h5>推荐文章</h5>
+            ${d.recommended_articles.map(a => `<div><a href="/article/${a.articleid}">${a.headline}</a></div>`).join('')}
+          </div>`;
+        document.getElementById('sidebar').innerHTML = html;
+      }).catch(() => {});
+  });
+</script>
 
 {% endblock %}

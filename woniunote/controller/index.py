@@ -6,7 +6,7 @@ import psutil
 import time
 from datetime import datetime, UTC
 
-from woniunote.module.articles import Articles
+from woniunote.module.articles import Articles, ArticlesOptimized
 from woniunote.common.unified_utils import can_use_minute
 from woniunote.common.redisdb import redis_connect
 from woniunote.common.unified_logging import SimpleLogger
@@ -53,8 +53,8 @@ def home():
     
     try:
         # 查询文章列表
-        result = Articles.find_limit_with_users(0, 10)
-        total = math.ceil(Articles.get_total_count() / 10)
+        result = ArticlesOptimized.get_articles_page_with_users_cached(0, 10)
+        total = math.ceil(ArticlesOptimized.get_article_stats_cached() / 10)
         
         # 记录文章列表查询结果
         index_logger.info("首页文章列表查询", {
@@ -64,7 +64,7 @@ def home():
         })
 
         # 获取最新、最热和推荐文章
-        last, most, recommended = Articles.find_last_most_recommended()
+        last, most, recommended = ArticlesOptimized.get_hot_articles_cached()
         
         # 记录侧边栏文章查询结果
         index_logger.info("首页侧边栏文章查询", {
@@ -134,7 +134,7 @@ def get_home():
         })
 
         # 获取最新、最热和推荐文章
-        last, most, recommended = Articles.find_last_most_recommended()
+        last, most, recommended = ArticlesOptimized.get_hot_articles_cached()
         
         # 记录侧边栏文章查询结果
         index_logger.info("备用首页侧边栏文章查询", {
@@ -198,8 +198,8 @@ def paginate(page):
     try:
         # 计算开始位置并查询文章
         start = (page - 1) * 10  # 计算正确的开始索引
-        result = Articles.find_limit_with_users(start, 10)
-        total = math.ceil(Articles.get_total_count() / 10)
+        result = ArticlesOptimized.get_articles_page_with_users_cached(start, 10)
+        total = math.ceil(ArticlesOptimized.get_article_stats_cached() / 10)
         
         # 记录文章列表查询结果
         index_logger.info("分页文章列表查询", {

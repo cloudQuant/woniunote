@@ -131,29 +131,17 @@ class Articles:
     def find_limit_with_users(start, count):
         """获取文章列表（带用户信息）"""
         try:
-            # 动态获取数据库连接
             dbsession, md, DBase = dbconnect()
             if dbsession is None:
                 return []
-
-            # 查询文章和用户信息 - 先获取文章，再获取用户信息
-            articles = dbsession.query(Article).filter(
+            results = dbsession.query(Article, User).join(User, Article.userid == User.userid).filter(
                 Article.drafted == 0,
                 Article.checked == 1
             ).order_by(Article.articleid.desc()).offset(start).limit(count).all()
-
-            # 转换为(文章对象, 作者昵称)的元组格式，符合首页模板要求
             articles_list = []
-            for article in articles:
-                # 获取作者信息 - 直接使用User模型
-                try:
-                    user = dbsession.query(User).filter(User.userid == article.userid).first()
-                except Exception:
-                    user = None
-
+            for article, user in results:
                 nickname = user.nickname if user else "Unknown"
                 articles_list.append((article, nickname))
-
             return articles_list
         except Exception as e:
             articles_logger.error(f"获取文章列表失败: {e}")
@@ -278,6 +266,31 @@ def find_by_ids(article_ids):
 
 class ArticlesOptimized:
     """文章性能优化类 - 提供缓存和优化的查询方法"""
+    
+    @staticmethod
+    def get_articles_page_with_users_cached(start, count):
+        from woniunote.common.cache_manager import cached
+        @cached(key_prefix='articles_page', timeout=120)
+        def _get_articles_page(start, count):
+            trace_id = get_articles_trace_id()
+            articles_logger.info("获取文章分页（含作者）", {'trace_id': trace_id, 'start': start, 'count': count})
+            try:
+                dbsession, md, DBase = dbconnect()
+                if dbsession is None:
+                    return []
+                results = dbsession.query(Article, User).join(User, Article.userid == User.userid).filter(
+                    Article.drafted == 0,
+                    Article.checked == 1
+                ).order_by(Article.articleid.desc()).offset(start).limit(count).all()
+                articles_list = []
+                for article, user in results:
+                    nickname = user.nickname if user else "Unknown"
+                    articles_list.append((article, nickname))
+                return articles_list
+            except Exception as e:
+                articles_logger.error("获取文章分页异常", {'trace_id': trace_id, 'error': str(e)})
+                return []
+        return _get_articles_page(start, count)
     
     @staticmethod
     def get_article_with_author_cached(articleid):

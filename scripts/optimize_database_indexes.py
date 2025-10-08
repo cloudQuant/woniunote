@@ -9,7 +9,21 @@ import logging
 import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from woniunote.common.utils import get_db_connection
+import yaml
+
+def _read_db_uri():
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    candidates = [
+        os.path.join(repo_root, 'configs', 'user_password_config.yaml'),
+        os.path.join(repo_root, 'woniunote', 'configs', 'user_password_config.yaml'),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            with open(p, 'r', encoding='utf-8') as f:
+                cfg = yaml.safe_load(f)
+                return cfg['database']['SQLALCHEMY_DATABASE_URI']
+    return os.environ.get('SQLALCHEMY_DATABASE_URI', '')
+from woniunote.common.utils import get_db_connection, parse_db_uri
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -170,23 +184,25 @@ INDEXES_TO_ADD = [
 def check_table_exists(cursor, table_name):
     """检查表是否存在"""
     cursor.execute("""
-        SELECT COUNT(*) 
+        SELECT COUNT(*) AS cnt
         FROM information_schema.tables 
         WHERE table_schema = DATABASE() 
-        AND table_name = %s
+          AND table_name = %s
     """, (table_name,))
-    return cursor.fetchone()[0] > 0
+    row = cursor.fetchone()
+    return (row.get('cnt') if isinstance(row, dict) else row[0]) > 0
 
 def check_index_exists(cursor, table_name, index_name):
     """检查索引是否存在"""
     cursor.execute("""
-        SELECT COUNT(*) 
+        SELECT COUNT(*) AS cnt
         FROM information_schema.statistics 
         WHERE table_schema = DATABASE() 
-        AND table_name = %s 
-        AND index_name = %s
+          AND table_name = %s 
+          AND index_name = %s
     """, (table_name, index_name))
-    return cursor.fetchone()[0] > 0
+    row = cursor.fetchone()
+    return (row.get('cnt') if isinstance(row, dict) else row[0]) > 0
 
 def create_index(cursor, index_info):
     """创建索引"""
@@ -234,32 +250,42 @@ def analyze_table_performance(cursor):
             continue
             
         # 获取表行数
-        cursor.execute(f"SELECT COUNT(*) FROM `{table}`")
-        row_count = cursor.fetchone()[0]
+        cursor.execute(f"SELECT COUNT(*) AS cnt FROM `{table}`")
+        rc = cursor.fetchone()
+        row_count = rc.get('cnt') if isinstance(rc, dict) else rc[0]
         
         # 获取表大小
         cursor.execute("""
             SELECT 
-                ROUND(((data_length + index_length) / 1024 / 1024), 2) AS table_size_mb,
+                ROUND(((data_length + index_length) / 1024 / 1024), 2) AS total_size_mb,
                 ROUND((data_length / 1024 / 1024), 2) AS data_size_mb,
                 ROUND((index_length / 1024 / 1024), 2) AS index_size_mb
             FROM information_schema.tables 
             WHERE table_schema = DATABASE() 
-            AND table_name = %s
+              AND table_name = %s
         """, (table,))
         
         size_info = cursor.fetchone()
         if size_info:
-            total_size, data_size, index_size = size_info
-            logger.info(f"表 {table}: {row_count} 行, "
-                       f"总大小 {total_size}MB (数据 {data_size}MB, 索引 {index_size}MB)")
+            if isinstance(size_info, dict):
+                total_size = size_info.get('total_size_mb')
+                data_size = size_info.get('data_size_mb')
+                index_size = size_info.get('index_size_mb')
+            else:
+                total_size, data_size, index_size = size_info
+            logger.info(f"表 {table}: {row_count} 行, 总大小 {total_size}MB (数据 {data_size}MB, 索引 {index_size}MB)")
 
 def optimize_database_indexes():
     """优化数据库索引"""
     try:
         # 获取数据库连接
-        conn = get_db_connection()
+        db_info = parse_db_uri(_read_db_uri())
+        conn = get_db_connection(db_info)
         cursor = conn.cursor()
+        try:
+            cursor.execute('SET SESSION sql_mode=""')
+        except Exception:
+            pass
         
         logger.info("开始数据库索引优化...")
         
@@ -284,6 +310,14 @@ def optimize_database_indexes():
         conn.commit()
         
         logger.info(f"索引优化完成: 成功 {success_count}, 跳过 {skip_count}, 失败 {error_count}")
+        
+        # 索引后修复可能受影响的用户密码数据
+        try:
+            import subprocess, sys as _sys
+            subprocess.run([_sys.executable, os.path.join(os.path.dirname(__file__), 'repair_user_passwords.py')], check=True)
+            logger.info("已执行用户密码修复脚本")
+        except Exception as e:
+            logger.warning(f"修复脚本执行失败: {e}")
         
         # 重新分析表性能
         logger.info("索引创建后的表性能:")
@@ -312,8 +346,13 @@ def optimize_database_indexes():
 def show_existing_indexes():
     """显示现有索引"""
     try:
-        conn = get_db_connection()
+        db_info = parse_db_uri(_read_db_uri())
+        conn = get_db_connection(db_info)
         cursor = conn.cursor()
+        try:
+            cursor.execute('SET SESSION sql_mode=""')
+        except Exception:
+            pass
         
         logger.info("显示现有索引:")
         
@@ -327,7 +366,7 @@ def show_existing_indexes():
             FROM information_schema.statistics 
             WHERE table_schema = DATABASE()
             AND table_name IN ('article', 'users', 'comment', 'favorite', 'credit', 'card')
-            GROUP BY table_name, index_name
+            GROUP BY table_name, index_name, index_type, non_unique
             ORDER BY table_name, index_name
         """)
         
@@ -335,12 +374,18 @@ def show_existing_indexes():
         current_table = None
         
         for row in results:
-            table_name, index_name, columns, index_type, non_unique = row
+            if isinstance(row, dict):
+                table_name = row.get('table_name')
+                index_name = row.get('index_name')
+                columns = row.get('columns')
+                index_type = row.get('index_type')
+                non_unique = row.get('non_unique')
+            else:
+                table_name, index_name, columns, index_type, non_unique = row
             if table_name != current_table:
                 logger.info(f"\n表 {table_name}:")
                 current_table = table_name
-            
-            unique_str = "UNIQUE" if non_unique == 0 else "NON-UNIQUE"
+            unique_str = "UNIQUE" if (non_unique == 0 or str(non_unique) == '0') else "NON-UNIQUE"
             logger.info(f"  {index_name}: {columns} ({unique_str}, {index_type})")
             
     except Exception as e:
@@ -371,8 +416,13 @@ if __name__ == '__main__':
         show_existing_indexes()
     elif args.analyze:
         try:
-            conn = get_db_connection()
+            db_info = parse_db_uri(_read_db_uri())
+            conn = get_db_connection(db_info)
             cursor = conn.cursor()
+            try:
+                cursor.execute('SET SESSION sql_mode=""')
+            except Exception:
+                pass
             analyze_table_performance(cursor)
         except Exception as e:
             logger.error(f"分析表性能失败: {str(e)}")

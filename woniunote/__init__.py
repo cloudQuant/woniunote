@@ -8,15 +8,9 @@ pymysql.install_as_MySQLdb()
 # 确保common模块总是被导入
 from . import common
 
-# 其他模块可以有条件导入
-try:
-    from . import app
-    from .app import create_app
-    from . import app_factory
-    from woniunote.common.database import db
-except ImportError as e:
-    import warnings
-    warnings.warn(f"Module import warning: {e}")
+# 其他模块不在包导入时加载，避免副作用
+import warnings
+warnings.warn("woniunote package initialized without starting Flask app")
 
 # 不再创建全局应用实例
 # flask_app = create_app()
