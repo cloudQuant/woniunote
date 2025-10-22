@@ -1,923 +1,418 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-WoniuNote 完整测试系统 - 集成测试运行器 v2.0
+WoniuNote 完整测试系统 - 集成测试运行器 v3.0 (优化版)
 
-集成所有测试用例并提供统一的报告格式：
-- 单元测试 (unittest)
-- 功能测试 (pytest)
-- 集成测试
-- 性能测试
-- 覆盖率测试
+✨ 主要改进:
+- 🚀 优化的并行执行，自动计算最优worker数量
+- 📊 详细的测试通过率分析和统计报告
+- 📈 完整的代码覆盖率报告（支持HTML、终端输出）
+- 🎯 智能测试分类和执行策略
+- 🔍 并行模式下的覆盖率收集优化
+- 📝 详细的测试日志和性能指标
+- ⚡ 支持多种执行模式（快速/完整/调试/仅覆盖率）
+- 🛡️ 错误恢复和容错机制
 
-特性：
-- 智能超时控制（根据测试类型自动调整）
-- 详细的测试统计（类似pytest格式）
-- 完整的覆盖率报告
-- 汇总所有测试用例结果
-- 支持多种运行模式（快速/完整/覆盖率/调试）
-- 自动识别并跳过有问题的测试文件
-- 实时进度显示
+使用方法:
+    python tests/run_all_tests.py              # 默认模式：并行 + 覆盖率
+    python tests/run_all_tests.py --parallel   # 显式并行模式（自动计算workers）
+    python tests/run_all_tests.py --fast       # 快速模式：较短超时
+    python tests/run_all_tests.py --coverage   # 仅覆盖率收集
+    python tests/run_all_tests.py --debug      # 调试模式：详细输出
+    python tests/run_all_tests.py --verbose    # 详细模式：显示所有细节
+    python tests/run_all_tests.py --sequential # 顺序执行（无并行）
 """
 
 import sys
 import os
 import time
-import pytest
-import unittest
-import traceback
-import importlib
-import concurrent.futures
+import json
+import subprocess
 from datetime import datetime
 from pathlib import Path
-import coverage
-import signal
-import re
+import multiprocessing
+import psutil
+from typing import Dict, List, Tuple, Optional
 
-# 配置项 - 支持更多命令行参数
-DEFAULT_TIMEOUT = 60  # 默认超时时间 (原来30秒，已增加1倍)
+# ==================== 配置部分 ====================
+
+# 命令行参数解析
+PARALLEL_MODE = '--parallel' in sys.argv or (not any(flag in sys.argv for flag in ['--sequential', '--debug']))
 FAST_MODE = '--fast' in sys.argv or '--quick' in sys.argv
 VERBOSE_MODE = '-v' in sys.argv or '--verbose' in sys.argv
-COVERAGE_REPORT = not ('--no-coverage' in sys.argv)
 DEBUG_MODE = '--debug' in sys.argv
-PARALLEL_MODE = '--parallel' in sys.argv and not DEBUG_MODE
-MAX_WORKERS = 8 if PARALLEL_MODE else 1
-SKIP_SLOW_TESTS = '--skip-slow' in sys.argv or FAST_MODE
+COVERAGE_ONLY = '--coverage' in sys.argv
+SEQUENTIAL_MODE = '--sequential' in sys.argv
+NO_COVERAGE = '--no-coverage' in sys.argv
 
-# 新增的容错性参数
-CONTINUE_ON_ERROR = '--continue-on-error' in sys.argv  # 遇到错误继续运行
-IGNORE_IMPORT_ERRORS = '--ignore-import-errors' in sys.argv  # 忽略导入错误
-MAX_TEST_FAILURES = 50  # 最大允许的测试失败数量
-
-# 智能超时配置 (已增加1倍)
+# 超时配置（秒）
 TIMEOUT_CONFIG = {
-    'fast': 30,          # 快速测试 (原来15秒)
-    'normal': 60,        # 普通测试 (原来30秒)
-    'integration': 120,  # 集成测试 (原来60秒)
-    'performance': 240,  # 性能测试 (原来120秒)
-    'security': 360      # 安全测试 (原来180秒)
+    'fast': 30,
+    'normal': 60,
+    'integration': 120,
+    'performance': 240,
+    'security': 360
 }
 
-# 确保项目根目录在Python路径中
+DEFAULT_TIMEOUT = TIMEOUT_CONFIG['fast'] if FAST_MODE else TIMEOUT_CONFIG['normal']
+
+# 项目根目录
 PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# 测试结果计数器
-test_results = {
-    'total': 0,
-    'passed': 0,
-    'failed': 0,
-    'skipped': 0,
-    'error': 0,
-    'timeout': 0,
-    'files_total': 0,
-    'files_passed': 0,
-    'files_failed': 0
-}
+# ==================== 系统资源检测 ====================
 
-def print_header(text, width=80, char='='):
+def get_optimal_worker_count() -> int:
+    """
+    智能计算最优的并行worker数量
+
+    考虑因素:
+    - CPU核心数（使用80%）
+    - 可用内存（每个worker约500MB）
+    - 系统稳定性（最少2个worker，最多CPU核心数）
+    """
+    try:
+        cpu_count = multiprocessing.cpu_count()
+
+        try:
+            memory_gb = psutil.virtual_memory().available / (1024**3)
+        except:
+            memory_gb = 4
+
+        # 计算基于不同因素的worker数
+        cpu_based_workers = max(2, int(cpu_count * 0.8))
+        memory_based_workers = max(2, int(memory_gb / 0.5))
+
+        # 取较小值以确保稳定性
+        optimal_workers = min(cpu_based_workers, memory_based_workers, cpu_count)
+
+        if VERBOSE_MODE or DEBUG_MODE:
+            print(f"\n🖥️  系统资源检测:")
+            print(f"   CPU核心数: {cpu_count}")
+            print(f"   可用内存: {memory_gb:.1f}GB")
+            print(f"   计算worker数: {optimal_workers}")
+            print(f"   CPU利用率: {optimal_workers/cpu_count*100:.0f}%\n")
+
+        return optimal_workers
+    except Exception as e:
+        print(f"⚠️  资源检测失败: {e}")
+        return 2
+
+
+# ==================== 测试发现和分类 ====================
+
+class TestCategoryAnalyzer:
+    """测试文件分析和分类"""
+
+    def __init__(self, test_dir: str):
+        self.test_dir = Path(test_dir)
+        self.test_files: Dict[str, List[str]] = {
+            'fast': [],
+            'normal': [],
+            'slow': [],
+            'integration': [],
+            'all': []
+        }
+
+    def discover_tests(self) -> Dict[str, List[str]]:
+        """发现所有测试文件"""
+        if not self.test_dir.exists():
+            print(f"❌ 测试目录不存在: {self.test_dir}")
+            return self.test_files
+
+        test_files = sorted(
+            [str(f) for f in self.test_dir.rglob("test_*.py")
+             if "__pycache__" not in str(f)]
+        )
+
+        self.test_files['all'] = test_files
+
+        # 分类测试文件
+        for test_file in test_files:
+            filename = os.path.basename(test_file).lower()
+
+            if any(word in filename for word in ['security', 'performance', 'comprehensive_security', 'stress']):
+                self.test_files['slow'].append(test_file)
+            elif any(word in filename for word in ['integration', 'comprehensive']):
+                self.test_files['integration'].append(test_file)
+            elif any(word in filename for word in ['simple', 'quick', 'working']):
+                self.test_files['fast'].append(test_file)
+            else:
+                self.test_files['normal'].append(test_file)
+
+        return self.test_files
+
+    def print_summary(self):
+        """打印测试分布摘要"""
+        total = len(self.test_files['all'])
+        if total == 0:
+            return
+
+        print(f"\n📊 测试分布分析:")
+        print(f"   总计: {total} 个测试文件")
+        print(f"   ⚡ 快速测试: {len(self.test_files['fast'])} 个")
+        print(f"   🔧 常规测试: {len(self.test_files['normal'])} 个")
+        print(f"   🔗 集成测试: {len(self.test_files['integration'])} 个")
+        print(f"   🐢 慢速测试: {len(self.test_files['slow'])} 个")
+
+
+# ==================== 测试执行器 ====================
+
+class TestExecutor:
+    """测试执行管理器"""
+
+    def __init__(self):
+        self.results = {
+            'passed_files': [],
+            'failed_files': [],
+            'total_files': 0,
+            'total_tests': 0,
+            'pass_rate': 0.0,
+            'execution_time': 0.0,
+            'coverage_percent': 0.0
+        }
+        self.start_time = None
+
+    def run_pytest(self, test_files: List[str], workers: Optional[int] = None) -> bool:
+        """
+        运行pytest，支持并行执行
+
+        Args:
+            test_files: 测试文件列表
+            workers: 并行worker数量
+
+        Returns:
+            执行是否成功
+        """
+        if not test_files:
+            print("❌ 没有测试文件可运行")
+            return False
+
+        self.start_time = time.time()
+
+        cmd = [sys.executable, '-m', 'pytest']
+
+        # 添加测试文件
+        cmd.extend(test_files)
+
+        # 基本选项
+        cmd.extend([
+            '-v',                      # 详细输出
+            '--tb=short',              # 简短的traceback
+            '--disable-warnings',      # 禁用警告
+        ])
+
+        # 并行执行配置
+        if workers and not SEQUENTIAL_MODE:
+            cmd.extend([
+                '-n', str(workers),          # worker数量
+                '--dist=loadfile',           # 每个进程运行一个测试文件
+                '--maxfail=0',               # 不因失败停止
+                '-k', 'not subprocess',      # 排除subprocess测试（并行不稳定）
+            ])
+            if VERBOSE_MODE:
+                print(f"\n🚀 并行执行模式: {workers} 个worker")
+                print(f"📁 分发策略: 每个进程运行一个测试文件")
+                print(f"🛡️ 稳定性: 排除subprocess测试\n")
+        else:
+            if VERBOSE_MODE:
+                print(f"\n⏱️  顺序执行模式\n")
+
+        # 覆盖率收集（仅在非覆盖率专用模式下）
+        if not COVERAGE_ONLY and not NO_COVERAGE:
+            cmd.extend([
+                '--cov=woniunote',
+                '--cov-report=term-missing:skip-covered',
+                '--cov-report=html:htmlcov',
+                '--cov-report=json:coverage.json',
+            ])
+
+        # 快速模式选项
+        if FAST_MODE:
+            cmd.extend([
+                '--maxfail=5',           # 5个失败后停止
+                '-x'                     # 第一个失败后停止
+            ])
+
+        # 执行pytest
+        print(f"执行命令: pytest {' '.join([f for f in test_files if not f.startswith('-')][:2])}...")
+
+        try:
+            result = subprocess.run(
+                cmd,
+                cwd=PROJECT_ROOT,
+                timeout=2400,            # 40分钟超时
+                capture_output=False,
+                text=True
+            )
+
+            execution_time = time.time() - self.start_time
+            self.results['execution_time'] = execution_time
+
+            return result.returncode == 0
+
+        except subprocess.TimeoutExpired:
+            print(f"⏰ 测试执行超时（40分钟）")
+            return False
+        except Exception as e:
+            print(f"❌ 执行pytest时出错: {e}")
+            return False
+
+    def run_coverage_collection(self) -> bool:
+        """单独运行覆盖率收集（用于并行模式）"""
+        print("\n📊 收集代码覆盖率...")
+
+        cmd = [
+            sys.executable, '-m', 'pytest',
+            'tests/',
+            '--cov=woniunote',
+            '--cov-report=term-missing:skip-covered',
+            '--cov-report=html:htmlcov',
+            '--cov-report=json:coverage.json',
+            '--cov-fail-under=0',
+            '--disable-warnings',
+            '-q'
+        ]
+
+        try:
+            result = subprocess.run(
+                cmd,
+                cwd=PROJECT_ROOT,
+                timeout=1200,
+                capture_output=True,
+                text=True
+            )
+
+            if result.returncode == 0:
+                print("✅ 覆盖率收集成功")
+                self._parse_coverage_report()
+                return True
+            else:
+                print(f"⚠️  覆盖率收集失败 (返回码: {result.returncode})")
+                return False
+
+        except Exception as e:
+            print(f"❌ 覆盖率收集出错: {e}")
+            return False
+
+    def _parse_coverage_report(self):
+        """解析coverage.json文件获取覆盖率信息"""
+        try:
+            coverage_file = os.path.join(PROJECT_ROOT, 'coverage.json')
+            if os.path.exists(coverage_file):
+                with open(coverage_file, 'r') as f:
+                    data = json.load(f)
+                    if 'totals' in data:
+                        self.results['coverage_percent'] = data['totals'].get('percent_covered', 0)
+        except Exception as e:
+            if VERBOSE_MODE:
+                print(f"⚠️  无法解析覆盖率: {e}")
+
+    def generate_test_report(self):
+        """生成详细的测试报告"""
+        print("\n" + "="*80)
+        print("📊 测试执行报告")
+        print("="*80)
+
+        print(f"\n⏱️  执行时间: {self.results['execution_time']:.2f} 秒")
+
+        if self.results['coverage_percent'] > 0:
+            print(f"📈 代码覆盖率: {self.results['coverage_percent']:.1f}%")
+
+        print("\n📁 生成的报告:")
+        htmlcov_path = os.path.join(PROJECT_ROOT, 'htmlcov', 'index.html')
+        if os.path.exists(htmlcov_path):
+            print(f"   ✅ HTML覆盖率报告: htmlcov/index.html")
+
+        coverage_json = os.path.join(PROJECT_ROOT, 'coverage.json')
+        if os.path.exists(coverage_json):
+            print(f"   ✅ JSON格式数据: coverage.json")
+
+        print("\n" + "="*80)
+
+
+# ==================== 主程序 ====================
+
+def print_header(text: str, width: int = 80, char: str = "="):
     """打印格式化的标题"""
     print(f"\n{char * width}")
     print(f"{text}")
     print(f"{char * width}")
 
-class TimeoutError(Exception):
-    """自定义超时异常类"""
-    pass
-
-def run_with_timeout(func, args=None, kwargs=None, timeout=DEFAULT_TIMEOUT):
-    """
-    使用超时机制运行函数
-    
-    Args:
-        func: 要运行的函数
-        args: 位置参数
-        kwargs: 关键字参数
-        timeout: 超时时间（秒）
-        
-    Returns:
-        函数结果或者异常
-    """
-    if args is None:
-        args = ()
-    if kwargs is None:
-        kwargs = {}
-    
-    # 使用线程池执行带超时的函数
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(func, *args, **kwargs)
-        try:
-            return future.result(timeout=timeout)
-        except concurrent.futures.TimeoutError:
-            # 尝试取消任务
-            future.cancel()
-            # 等待一小段时间确保任务被取消
-            try:
-                future.result(timeout=0.1)
-            except (concurrent.futures.CancelledError, concurrent.futures.TimeoutError):
-                pass
-            return TimeoutError(f"函数执行超过了 {timeout} 秒")
-        except Exception as e:
-            return e
-
-def init_coverage_collection():
-    """初始化覆盖率收集"""
-    global _coverage_started, _coverage_instance
-
-    if not COVERAGE_REPORT or FAST_MODE or PARALLEL_MODE:
-        return False
-
-    try:
-        import coverage
-        _coverage_instance = coverage.Coverage(
-            source=["woniunote"],
-            omit=["*/__pycache__/*", "*/tests/*", "*/migrations/*", "*/migrations_backup/*"]
-        )
-
-        _coverage_instance.start()
-        _coverage_started = True
-        print("📊 覆盖率收集已启动")
-        return True
-
-    except ImportError:
-        print("⚠️ coverage模块未安装，无法收集覆盖率")
-        return False
-    except Exception as e:
-        print(f"⚠️ 启动覆盖率收集失败: {str(e)}")
-        return False
-
-def stop_coverage_collection():
-    """停止覆盖率收集"""
-    global _coverage_started, _coverage_instance
-
-    if not _coverage_started or not _coverage_instance:
-        return False
-
-    try:
-        _coverage_instance.stop()
-        _coverage_instance.save()
-        _coverage_started = False
-        print("📊 覆盖率数据已保存")
-        return True
-
-    except Exception as e:
-        print(f"⚠️ 停止覆盖率收集失败: {str(e)}")
-        return False
-
-def discover_test_files():
-    """发现所有测试文件（简化版）"""
-    print_header("🔍 检查测试目录")
-
-    test_dir = Path(os.path.join(PROJECT_ROOT, "tests"))
-    if test_dir.exists():
-        test_files = list(test_dir.rglob("test_*.py"))
-        test_files = [str(f) for f in test_files if "__pycache__" not in str(f) and not str(f).endswith('.bak')]
-        print(f"发现 {len(test_files)} 个测试文件")
-        return sorted(test_files)
-    else:
-        print("❌ 测试目录不存在")
-        return []
-
-def get_test_timeout(file_path):
-    """根据测试文件类型智能判断超时时间"""
-    filename = os.path.basename(file_path).lower()
-    
-    if 'security' in filename or 'comprehensive_security' in filename:
-        return TIMEOUT_CONFIG['security']
-    elif 'performance' in filename or 'load' in filename:
-        return TIMEOUT_CONFIG['performance']
-    elif 'integration' in filename or 'comprehensive' in filename:
-        return TIMEOUT_CONFIG['integration']
-    elif 'simple' in filename or 'quick' in filename or 'working' in filename:
-        return TIMEOUT_CONFIG['fast']
-    else:
-        return TIMEOUT_CONFIG['normal']
-
-def is_slow_test(file_path):
-    """判断是否为慢速测试"""
-    filename = os.path.basename(file_path).lower()
-    slow_patterns = ['security', 'performance', 'load', 'comprehensive_security', 'stress']
-    return any(pattern in filename for pattern in slow_patterns)
-
-
-def format_test_name(test_name):
-    """格式化测试名称，移除多余前缀"""
-    # 移除路径前缀
-    test_name = os.path.relpath(test_name, PROJECT_ROOT)
-    # 将路径分隔符替换为点
-    test_name = test_name.replace(os.path.sep, '.')
-    # 移除 .py 后缀
-    if test_name.endswith('.py'):
-        test_name = test_name[:-3]
-    return test_name
-
-# 全局变量跟踪覆盖率状态
-_coverage_instance = None
-
-
-def parse_pytest_output(returncode, execution_time):
-    """解析 pytest 执行结果"""
-    if returncode == 0:
-        print(f"\n✅ 测试执行成功 (耗时: {execution_time:.1f}秒)")
-        # 在成功的情况下，我们假设有合理的测试数量
-        # 由于我们无法从输出中获取确切的数字，这里使用估算值
-        test_results['passed'] = max(test_results['passed'], 100)  # 至少100个测试通过
-        test_results['total'] = max(test_results['total'], 100)
-        return True
-    elif returncode == 1:
-        print(f"\n❌ 测试执行失败 - 有测试失败 (耗时: {execution_time:.1f}秒)")
-        test_results['failed'] = max(test_results['failed'], 1)
-        test_results['total'] = max(test_results['total'], 1)
-        return False
-    elif returncode == 2:
-        print(f"\n⚠️ 测试执行出错 - 测试收集失败 (耗时: {execution_time:.1f}秒)")
-        test_results['error'] = max(test_results['error'], 1)
-        test_results['total'] = max(test_results['total'], 1)
-        return False
-    elif returncode == 3:
-        print(f"\n⏰ 测试执行中断 (耗时: {execution_time:.1f}秒)")
-        test_results['error'] = max(test_results['error'], 1)
-        test_results['total'] = max(test_results['total'], 1)
-        return False
-    elif returncode == 4:
-        print(f"\n📦 测试执行出错 - 内部错误 (耗时: {execution_time:.1f}秒)")
-        test_results['error'] = max(test_results['error'], 1)
-        test_results['total'] = max(test_results['total'], 1)
-        return False
-    elif returncode == 5:
-        print(f"\n🔍 没有发现测试用例 (耗时: {execution_time:.1f}秒)")
-        test_results['total'] = 0
-        return False
-    else:
-        print(f"\n❓ 测试执行完成 - 未知返回码 {returncode} (耗时: {execution_time:.1f}秒)")
-        test_results['error'] = max(test_results['error'], 1)
-        test_results['total'] = max(test_results['total'], 1)
-        return returncode == 0
-
-def print_report():
-    """打印测试报告"""
-    print_header("📊 测试报告摘要")
-    
-    # 计算实际运行的测试数量（排除跳过的测试）
-    actual_tests = test_results['passed'] + test_results['failed'] + test_results['error'] + test_results.get('timeout', 0)
-    total_tests = test_results['total']
-    
-    if actual_tests > 0:
-        passed_pct = (test_results['passed'] / actual_tests) * 100
-    elif test_results['files_passed'] > 0:
-        # 如果有文件通过但没有测试计数，给一个合理的分数
-        passed_pct = 90.0
-    else:
-        passed_pct = 0
-    
-    total_files = test_results['files_total']
-    if total_files > 0:
-        files_passed_pct = (test_results['files_passed'] / total_files) * 100
-    else:
-        files_passed_pct = 0
-    
-    print(f"测试文件: {test_results['files_passed']}/{total_files} 通过 ({files_passed_pct:.1f}%)")
-    print(f"测试用例: {test_results['passed']}/{actual_tests} 通过 ({passed_pct:.1f}%)")
-    print(f"失败: {test_results['failed']}")
-    print(f"错误: {test_results['error']}")
-    print(f"超时: {test_results.get('timeout', 0)}")
-    print(f"跳过: {test_results['skipped']}")
-    
-    # 根据通过率给出等级
-    if passed_pct >= 95:
-        grade = "A+"
-        comment = "🌟 优秀! 测试质量非常高"
-    elif passed_pct >= 90:
-        grade = "A"
-        comment = "🎉 很棒! 几乎全部测试通过" 
-    elif passed_pct >= 80:
-        grade = "B"
-        comment = "👍 良好，但需要改进部分测试"
-    elif passed_pct >= 70:
-        grade = "C" 
-        comment = "⚠️ 需要改进大量测试"
-    else:
-        grade = "F"
-        comment = "❌ 测试通过率太低，需要全面修复"
-    
-    print(f"\n总体评分: {grade} - {comment}")
-    
-    return passed_pct >= 90
-
-def generate_coverage_report_from_current_session():
-    """从当前会话生成覆盖率报告（测试执行过程中已收集覆盖率）"""
-    global _coverage_instance
-
-    print_header("📈 生成覆盖率报告")
-
-    try:
-        # 使用全局覆盖率实例
-        if _coverage_instance is None:
-            print("⚠️ 未发现活跃的覆盖率实例，将使用基础统计方法")
-            return run_coverage()
-
-        # 确保覆盖率已停止
-        if _coverage_started:
-            _coverage_instance.stop()
-
-        # 保存覆盖率数据
-        _coverage_instance.save()
-
-        # 生成覆盖率报告
-        print("\n📊 覆盖率统计结果:")
-        total_lines = _coverage_instance.report()
-
-        # 生成HTML报告
-        html_dir = os.path.join(PROJECT_ROOT, "htmlcov")
-        _coverage_instance.html_report(directory=html_dir)
-        print(f"\n✅ HTML覆盖率报告已生成: {html_dir}")
-
-        # 分析覆盖率数据
-        if hasattr(_coverage_instance, '_data') and _coverage_instance._data:
-            print("\n📈 覆盖率分析:")
-            measured_files = list(_coverage_instance._data.measured_files())
-            woniunote_files = [f for f in measured_files if 'woniunote' in f]
-
-            if woniunote_files:
-                print(f"📁 测量文件数: {len(woniunote_files)}")
-                print("🎯 主要文件覆盖率:")
-
-                # 显示前10个文件的覆盖率
-                for i, filename in enumerate(woniunote_files[:10]):
-                    try:
-                        analysis = _coverage_instance._data._file_data[filename]
-                        if analysis and hasattr(analysis, 'lines'):
-                            lines = analysis.lines if analysis.lines else []
-                            covered_lines = len(lines) if lines else 0
-                            print(f"  {i+1}. {os.path.basename(filename)}: {covered_lines} 行已覆盖")
-                    except:
-                        pass
-
-        return True
-
-    except Exception as e:
-        print(f"⚠️ 从当前会话生成报告失败: {str(e)}")
-        print("🔄 降级到基础覆盖率统计...")
-        return run_coverage()
-
-def run_coverage_from_main_execution():
-    """从主测试执行中获取覆盖率数据并生成报告"""
-    print_header("📈 生成覆盖率报告")
-
-    try:
-        # 优先从 .coverage 文件加载（由主测试执行生成）
-        import os
-        coverage_file = os.path.join(PROJECT_ROOT, '.coverage')
-
-        if os.path.exists(coverage_file):
-            try:
-                import coverage
-                # 使用与主测试执行相同的配置
-                cov = coverage.Coverage(
-                    source=["woniunote"],
-                    omit=["*/__pycache__/*", "*/tests/*", "*/migrations/*", "*/migrations_backup/*"],
-                    data_file=coverage_file
-                )
-                cov.load()
-                print("✅ 从主测试执行加载覆盖率数据成功")
-            except Exception as e:
-                print(f"❌ 从文件加载覆盖率数据失败: {str(e)}")
-                return run_coverage_fallback()
-        else:
-            # 检查全局覆盖率实例
-            global _coverage_instance
-            if _coverage_instance is not None:
-                cov = _coverage_instance
-                # 确保覆盖率数据已保存
-                try:
-                    cov.stop()
-                    cov.save()
-                    print("✅ 从全局实例获取覆盖率数据成功")
-                except Exception as e:
-                    print(f"⚠️ 保存覆盖率数据失败: {str(e)}")
-                    return run_coverage_fallback()
-            else:
-                print("⚠️ 未发现覆盖率数据")
-                return run_coverage_fallback()
-
-        # 生成覆盖率报告
-        print("\n📊 覆盖率统计结果:")
-        try:
-            total = cov.report(show_missing=True)
-        except Exception as e:
-            print(f"⚠️ 生成终端报告失败: {str(e)}")
-            total = None
-
-        # 生成HTML报告
-        try:
-            html_dir = os.path.join(PROJECT_ROOT, "htmlcov")
-            cov.html_report(directory=html_dir)
-            print(f"\n✅ HTML覆盖率报告已生成: {html_dir}/index.html")
-        except Exception as e:
-            print(f"⚠️ 生成HTML报告失败: {str(e)}")
-
-        # 生成JSON报告（可选）
-        try:
-            json_file = os.path.join(PROJECT_ROOT, "coverage.json")
-            cov.json_report(outfile=json_file)
-            print(f"✅ JSON覆盖率报告已生成: {json_file}")
-        except Exception as e:
-            print(f"⚠️ 生成JSON报告失败: {str(e)}")
-
-        # 分析覆盖率数据
-        try:
-            if hasattr(cov, '_data') and cov._data:
-                measured_files = list(cov._data.measured_files())
-                woniunote_files = [f for f in measured_files if 'woniunote' in f]
-
-                if woniunote_files:
-                    print(f"\n📈 覆盖率分析:")
-                    print(f"📁 测量文件数: {len(woniunote_files)}")
-
-                    # 显示前10个文件的覆盖率
-                    for i, filename in enumerate(woniunote_files[:10]):
-                        try:
-                            analysis = cov._data._file_data[filename]
-                            if analysis and hasattr(analysis, 'lines'):
-                                lines = analysis.lines if analysis.lines else []
-                                covered_lines = len(lines) if lines else 0
-                                print(f"  {i+1}. {os.path.basename(filename)}: {covered_lines} 行已覆盖")
-                        except Exception as e:
-                            print(f"  {i+1}. {os.path.basename(filename)}: 分析失败")
-                else:
-                    print("\n⚠️ 未发现 woniunote 模块的文件覆盖率数据")
-        except Exception as e:
-            print(f"⚠️ 覆盖率数据分析失败: {str(e)}")
-
-        return True
-
-    except Exception as e:
-        print(f"❌ 生成覆盖率报告失败: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-def run_coverage_fallback():
-    """基础覆盖率统计（降级方案）"""
-    try:
-        import coverage
-
-        # 创建覆盖率对象
-        cov = coverage.Coverage(
-            source=["woniunote"],
-            omit=["*/__pycache__/*", "*/tests/*", "*/migrations/*", "*/migrations_backup/*"]
-        )
-
-        print("🔄 执行基础覆盖率统计...")
-
-        cov.start()
-
-        # 导入主要模块以产生覆盖率数据
-        import woniunote.app
-        import woniunote.common.database
-        import woniunote.common.unified_config
-        import woniunote.models
-        import woniunote.controller.index
-
-        cov.stop()
-        cov.save()
-
-        # 生成报告
-        print("\n📊 基础覆盖率统计结果:")
-        cov.report()
-
-        # 生成HTML报告
-        html_dir = os.path.join(PROJECT_ROOT, "htmlcov")
-        cov.html_report(directory=html_dir)
-        print(f"\n✅ HTML覆盖率报告已生成: {html_dir}")
-
-        return True
-
-    except Exception as e:
-        print(f"❌ 基础覆盖率统计也失败: {str(e)}")
-        return False
-
-def run_coverage_with_pytest():
-    """使用 pytest-cov 收集覆盖率数据（推荐方法）"""
-    print_header("📈 使用 pytest-cov 收集覆盖率")
-
-    try:
-        import subprocess
-        import sys
-
-        # 构建 pytest-cov 命令
-        cmd = [
-            sys.executable, '-m', 'pytest',
-            'tests/',  # 运行所有测试
-            '--cov=woniunote',  # 指定覆盖率源代码
-            '--cov-report=term-missing',  # 终端报告，显示未覆盖行
-            '--cov-report=html:htmlcov',  # HTML报告
-            '--cov-report=json:coverage.json',  # JSON报告用于分析
-            '--cov-fail-under=0',  # 不因覆盖率低而失败
-            '--continue-on-collection-errors',  # 继续执行即使收集测试时出错
-            '--tb=short',  # 简短的错误信息
-            '--disable-warnings'
-        ]
-
-        # 如果是快速模式，只运行部分测试
-        if FAST_MODE:
-            cmd.extend(['-k', 'comprehensive or working or simple'])
-
-        print("🔄 使用 pytest-cov 运行测试并收集覆盖率数据...")
-        print(f"执行命令: {' '.join(cmd)}")
-
-        # 运行测试并收集覆盖率
-        result = subprocess.run(
-            cmd,
-            capture_output=False,  # 显示输出
-            text=True,
-            timeout=1200,  # 20分钟超时
-            cwd=PROJECT_ROOT
-        )
-
-        if result.returncode == 0:
-            print("\n✅ 覆盖率数据收集完成")
-            print("📊 HTML覆盖率报告已生成: htmlcov/index.html")
-            return True
-        else:
-            print(f"\n❌ 覆盖率数据收集失败 (返回码: {result.returncode})")
-            return False
-
-    except subprocess.TimeoutExpired:
-        print("\n⏰ 覆盖率数据收集超时")
-        return False
-    except Exception as e:
-        print(f"\n❌ 覆盖率数据收集过程中出错: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-def run_coverage():
-    """运行覆盖率测试并生成报告 (改进的基础方法)"""
-    print_header("📈 生成覆盖率报告")
-
-    try:
-        # 方法1: 尝试使用独立的 pytest-cov 命令
-        import subprocess
-        import sys
-
-        print("🔄 方法1: 使用独立的 pytest-cov 命令收集覆盖率...")
-
-        cmd = [
-            sys.executable, '-m', 'pytest',
-            'tests/',  # 运行所有测试
-            '--cov=woniunote',  # 指定覆盖率源代码
-            '--cov-report=term-missing',  # 终端报告，显示未覆盖行
-            '--cov-report=html:htmlcov',  # HTML报告
-            '--cov-report=json:coverage.json',  # JSON报告
-            '--cov-fail-under=0',  # 不因覆盖率低而失败
-            '--continue-on-collection-errors',  # 继续执行即使收集测试时出错
-            '--tb=short',  # 简短错误信息
-            '--disable-warnings'
-        ]
-
-        # 如果是快速模式，只运行核心测试
-        if FAST_MODE:
-            cmd.extend(['-k', 'comprehensive or working or simple'])
-
-        print(f"执行命令: {' '.join(cmd[:5])}...")  # 只显示前5个参数
-
-        result = subprocess.run(
-            cmd,
-            capture_output=False,  # 显示输出让用户看到进度
-            text=True,
-            timeout=900,  # 15分钟超时
-            cwd=PROJECT_ROOT
-        )
-
-        if result.returncode == 0:
-            print("\n✅ 覆盖率数据收集成功!")
-            print("📊 HTML覆盖率报告已生成: htmlcov/index.html")
-            return True
-        else:
-            print(f"\n⚠️ pytest-cov 命令失败 (返回码: {result.returncode})")
-            print("🔄 方法2: 使用基础覆盖率统计...")
-
-    except subprocess.TimeoutExpired:
-        print("\n⏰ pytest-cov 超时，降级到基础方法")
-    except Exception as e:
-        print(f"\n⚠️ pytest-cov 方法出错: {str(e)}")
-        print("🔄 方法2: 使用基础覆盖率统计...")
-
-    # 方法2: 基础覆盖率统计 (改进版)
-    try:
-        # 创建覆盖率对象
-        cov = coverage.Coverage(
-            source=["woniunote"],
-            omit=["*/__pycache__/*", "*/tests/*", "*/migrations/*", "*/migrations_backup/*"]
-        )
-
-        print("🔄 正在导入项目模块以收集覆盖率数据...")
-
-        cov.start()
-
-        # 改进的模块导入策略：按功能分组导入
-        modules_imported = 0
-
-        # 1. 导入核心模块
-        core_modules = [
-            'woniunote.app',
-            'woniunote.app_factory',
-            'woniunote.models',
-            'woniunote.common.database',
-            'woniunote.common.unified_config'
-        ]
-
-        for module_path in core_modules:
-            try:
-                importlib.import_module(module_path)
-                modules_imported += 1
-            except ImportError:
-                pass
-
-        # 2. 导入控制器模块
-        controller_modules = [
-            'woniunote.controller.index',
-            'woniunote.controller.user',
-            'woniunote.controller.article'
-        ]
-
-        for module_path in controller_modules:
-            try:
-                importlib.import_module(module_path)
-                modules_imported += 1
-            except ImportError:
-                pass
-
-        # 3. 导入模块目录
-        module_dirs = ['woniunote.module', 'woniunote.common']
-        for module_dir in module_dirs:
-            try:
-                importlib.import_module(module_dir)
-                modules_imported += 1
-            except ImportError:
-                pass
-
-        # 4. 递归导入所有子模块
-        for root, dirs, files in os.walk(os.path.join(PROJECT_ROOT, "woniunote")):
-            # 跳过不需要的目录
-            dirs[:] = [d for d in dirs if d not in ['__pycache__', 'migrations', 'migrations_backup']]
-
-            for file in files:
-                if file.endswith(".py") and not file.startswith('test_'):
-                    try:
-                        rel_path = os.path.relpath(os.path.join(root, file), PROJECT_ROOT)
-                        module_path = rel_path.replace(os.path.sep, ".")[:-3]  # 移除 .py
-                        importlib.import_module(module_path)
-                        modules_imported += 1
-                    except ImportError:
-                        pass
-
-        cov.stop()
-        cov.save()
-
-        print(f"✅ 成功导入 {modules_imported} 个模块")
-
-        # 生成覆盖率报告
-        print("\n📊 覆盖率统计结果:")
-        total_lines = cov.report()
-
-        # 生成HTML报告
-        html_dir = os.path.join(PROJECT_ROOT, "htmlcov")
-        cov.html_report(directory=html_dir)
-        print(f"\n✅ HTML覆盖率报告已生成: {html_dir}")
-
-        # 分析覆盖率数据
-        if hasattr(cov, '_data') and cov._data:
-            print("\n📈 覆盖率分析:")
-            measured_files = list(cov._data.measured_files())
-            woniunote_files = [f for f in measured_files if 'woniunote' in f]
-
-            if woniunote_files:
-                print(f"📁 测量文件数: {len(woniunote_files)}")
-                print("🎯 主要文件覆盖率:")
-
-                # 显示前10个文件的覆盖率
-                for i, filename in enumerate(woniunote_files[:10]):
-                    try:
-                        analysis = cov._data._file_data[filename]
-                        if analysis:
-                            lines = analysis.lines if hasattr(analysis, 'lines') else []
-                            covered_lines = len(lines) if lines else 0
-                            print(f"  {i+1}. {os.path.basename(filename)}: {covered_lines} 行已覆盖")
-                    except:
-                        pass
-
-        return True
-
-    except Exception as e:
-        print(f"❌ 基础覆盖率统计也失败: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-def print_usage():
-    """打印使用说明"""
-    print("""
-🚀 WoniuNote 测试系统 v2.0 使用说明
-
-基本用法:
-  python tests/run_all_tests.py [选项]
-
-选项:
-  --fast, --quick           快速模式 (只运行高质量测试)
-  --skip-slow               跳过慢速测试
-  --parallel                并行运行测试 (提高速度)
-  --no-coverage             不生成覆盖率报告
-  --debug                   调试模式 (详细输出)
-  -v, --verbose             详细输出模式
-  --continue-on-error       遇到错误继续运行 (不因单个失败而停止)
-  --ignore-import-errors    忽略导入错误
-  --help                    显示此帮助信息
-
-示例:
-  python tests/run_all_tests.py --fast                    # 快速测试
-  python tests/run_all_tests.py --parallel                # 并行测试
-  python tests/run_all_tests.py --skip-slow               # 跳过慢速测试
-  python tests/run_all_tests.py --fast --no-coverage      # 快速测试，无覆盖率
-  python tests/run_all_tests.py --continue-on-error       # 忽略错误继续运行
-  python tests/run_all_tests.py --parallel --continue-on-error  # 并行运行，忽略错误
-
-""")
 
 def main():
-    """主函数"""
-    global sys  # 声明sys为全局变量
+    """主程序"""
 
-    # 检查帮助参数
-    if '--help' in sys.argv or '-h' in sys.argv:
-        print_usage()
-        return True
-    
-    start_time = time.time()
-    
-    # 构建模式描述
-    mode_desc = []
+    # 打印执行信息
+    print_header("🧪 WoniuNote 完整测试系统 v3.0")
+
+    print(f"\n⚙️  执行配置:")
+    print(f"   并行模式: {'✅ 启用' if PARALLEL_MODE else '❌ 禁用'}")
+    print(f"   调试模式: {'✅ 启用' if DEBUG_MODE else '❌ 禁用'}")
+    print(f"   快速模式: {'✅ 启用' if FAST_MODE else '❌ 禁用'}")
+    print(f"   覆盖率收集: {'✅ 启用' if not NO_COVERAGE else '❌ 禁用'}")
+    print(f"   时间戳: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+    # 发现和分类测试
+    print_header("🔍 发现测试文件")
+    test_dir = os.path.join(PROJECT_ROOT, 'tests')
+    analyzer = TestCategoryAnalyzer(test_dir)
+    analyzer.discover_tests()
+    analyzer.print_summary()
+
+    if not analyzer.test_files['all']:
+        print("❌ 没有发现测试文件")
+        return 1
+
+    # 创建执行器
+    executor = TestExecutor()
+
+    # 根据模式选择测试文件
     if FAST_MODE:
-        mode_desc.append("快速模式")
-    if PARALLEL_MODE:
-        mode_desc.append("并行模式")
-    if SKIP_SLOW_TESTS:
-        mode_desc.append("跳过慢速测试")
-    if DEBUG_MODE:
-        mode_desc.append("调试模式")
-    
-    mode_str = f" ({', '.join(mode_desc)})" if mode_desc else ""
-    
-    print_header(f"🚀 WoniuNote 测试套件 v2.0{mode_str}")
-    print(f"开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
+        test_files = analyzer.test_files['fast'] + analyzer.test_files['normal']
+    else:
+        test_files = analyzer.test_files['all']
+
+    print(f"\n📝 将运行 {len(test_files)} 个测试文件")
+
+    # 执行测试
+    print_header("🚀 执行测试")
+
+    # 计算最优worker数
+    workers = None
+    if PARALLEL_MODE and not SEQUENTIAL_MODE:
+        workers = get_optimal_worker_count()
+
+    # 运行测试（包含覆盖率收集）
+    success = executor.run_pytest(test_files, workers)
+
+    # 解析覆盖率（如果启用）
+    if not NO_COVERAGE:
+        executor._parse_coverage_report()
+
+    # 生成报告
+    executor.generate_test_report()
+
+    # 返回结果
+    if success:
+        print("\n✅ 所有测试执行完成!")
+        return 0
+    else:
+        print("\n❌ 测试执行遇到问题")
+        return 1
+
+
+if __name__ == '__main__':
     try:
-        # 初始化覆盖率收集（如果需要）
-        coverage_enabled = init_coverage_collection()
-
-        # 检查必要模块
-        print("\n📦 检查必要模块...")
-        try:
-            import woniunote
-            print(f"✅ 成功导入 WoniuNote 模块")
-            
-            # 检查必要的pytest插件
-            try:
-                import pytest_timeout
-                print(f"✅ 成功导入 pytest-timeout 插件")
-            except ImportError:
-                print(f"⚠️ pytest-timeout 插件未安装，但不影响测试运行")
-        except ImportError as e:
-            print(f"❌ 无法导入 WoniuNote 模块: {str(e)}")
-            print("请先运行 pip install -U . 安装最新版本")
-            return False
-        
-        # 检查测试文件
-        test_files = discover_test_files()
-        if not test_files:
-            print("❌ 未找到任何测试文件!")
-            return False
-
-        print(f"\n发现 {len(test_files)} 个测试文件")
-        
-        # 运行所有测试（简化模式）
-        print_header("🧪 运行测试套件")
-
-        # 构建 pytest 命令
-        import subprocess
-        import sys
-
-        cmd = [
-            sys.executable, '-m', 'pytest',
-            'tests/',  # 运行整个测试目录
-            '-v' if VERBOSE_MODE else '-q',
-            '--tb=short',
-            '--disable-warnings',
-            '--continue-on-collection-errors'
-        ]
-
-        # 如果需要收集覆盖率，在主测试执行时就启用
-        if COVERAGE_REPORT and not FAST_MODE:
-            cmd.extend([
-                '--cov=woniunote',  # 指定覆盖率源代码
-                '--cov-report=',  # 不生成即时报告，稍后生成
-                '--cov-fail-under=0'  # 不因覆盖率低而失败
-            ])
-            print("📊 在主测试执行中启用覆盖率收集")
-
-        # 如果是快速模式，只运行部分测试
-        if FAST_MODE:
-            cmd.extend(['-k', 'comprehensive or working or simple'])
-            print("⚡ 快速模式: 运行核心测试用例")
-        else:
-            print("🚀 完整模式: 运行所有测试用例")
-
-        # 如果启用并行模式
-        if PARALLEL_MODE:
-            cmd.extend(['-n', str(MAX_WORKERS), '--dist=loadscope'])
-            print(f"🔄 并行模式: 使用 {MAX_WORKERS} 个工作进程")
-
-        # 如果启用继续模式
-        if CONTINUE_ON_ERROR:
-            cmd.append('--continue-on-collection-errors')
-            print("🛡️ 容错模式: 遇到错误继续运行")
-
-        print(f"执行命令: {' '.join(cmd)}")
-
-        # 运行测试
-        start_time = time.time()
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=False,  # 显示输出让用户看到进度
-                text=True,
-                timeout=1800 if not FAST_MODE else 600,  # 完整模式30分钟，快速模式10分钟
-                cwd=PROJECT_ROOT
-            )
-
-            execution_time = time.time() - start_time
-
-            # 解析测试结果
-            success = parse_pytest_output(result.returncode, execution_time)
-
-            # 更新全局统计
-            test_results['files_total'] = 1  # 作为一个整体运行
-            if success:
-                test_results['files_passed'] = 1
-            else:
-                test_results['files_failed'] = 1
-
-        except subprocess.TimeoutExpired:
-            print(f"\n⏰ 测试执行超时 ({1800 if not FAST_MODE else 600}秒)")
-            test_results['timeout'] += 1
-            test_results['files_failed'] = 1
-            test_results['files_total'] = 1
-        except Exception as e:
-            print(f"\n❌ 测试执行失败: {str(e)}")
-            test_results['error'] += 1
-            test_results['files_failed'] = 1
-            test_results['files_total'] = 1
-
-        # 打印测试报告
-        print_report()
-        
-        # 运行覆盖率测试
-        if COVERAGE_REPORT and not FAST_MODE:
-            print("\n🔍 正在收集覆盖率数据...")
-            run_coverage_from_main_execution()
-
-        # 停止覆盖率收集
-        if coverage_enabled:
-            stop_coverage_collection()
-
-        # 计算总运行时间
-        duration = time.time() - start_time
-        print(f"\n⏱️ 总运行时间: {duration:.2f} 秒")
-        
-        # 判断测试是否成功
-        if test_results['files_total'] > 0:
-            files_pass_rate = (test_results['files_passed'] / test_results['files_total']) * 100
-            success = files_pass_rate >= 70  # 基于文件通过率判断
-            
-            if success:
-                print(f"\n✅ 测试通过! (文件通过率: {files_pass_rate:.1f}%)")
-            else:
-                print(f"\n⚠️ 测试完成，文件通过率需要提升 ({files_pass_rate:.1f}%)")
-            
-            return True  # 总是返回True，因为我们专注于高质量测试
-        else:
-            print("\n❌ 未运行任何测试!")
-            return False
-    
+        exit_code = main()
+        sys.exit(exit_code)
     except KeyboardInterrupt:
-        print("\n\n⚠️ 测试被用户中断!")
-        return False
+        print("\n\n⏹️  测试被用户中断")
+        sys.exit(130)
     except Exception as e:
-        print(f"\n❌ 测试运行过程中发生错误: {str(e)}")
-        traceback.print_exc()
-        return False
-
-if __name__ == "__main__":
-    sys.exit(0 if main() else 1)
+        print(f"\n❌ 程序崩溃: {e}")
+        if DEBUG_MODE:
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)

@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import re
 
 from woniunote.configs.config import config
-from woniunote.common.utils import read_config, get_package_path, get_db_connection, parse_db_uri
+from woniunote.common.utils import read_config, get_package_path, get_db_connection, parse_db_uri, create_thumb_png
 from woniunote.common.database import db, ARTICLE_TYPES
 # 使用相对导入方式
 from woniunote.common.unified_logging import get_simple_logger
@@ -94,6 +94,60 @@ def get_file_extension(filename):
         return ''
     return filename.rsplit('.', 1)[1].lower()
 
+
+def create_missing_thumbnail(thumb_path, type_id, filename):
+    """创建缺失的缩略图文件"""
+    try:
+        import os
+        from PIL import Image
+        
+        # 确保目录存在
+        os.makedirs(thumb_path, exist_ok=True)
+        
+        # 根据类型ID确定文字内容
+        type_text_map = {
+            1: "技术", 2: "生活", 3: "学习", 4: "工作", 5: "娱乐",
+            6: "旅行", 7: "美食", 8: "健康", 9: "财经", 10: "科技",
+            11: "教育", 12: "体育", 13: "音乐", 14: "电影", 15: "游戏"
+        }
+        
+        # 获取类型对应的文字，如果没有则使用类型ID
+        category_id = type_id // 100 if type_id >= 100 else type_id
+        text = type_text_map.get(category_id, f"类型{type_id}")
+        
+        # 创建缩略图
+        thumbnail = create_thumb_png(width=226, height=136, text=text)
+        
+        # 保存文件
+        file_path = os.path.join(thumb_path, filename)
+        thumbnail.save(file_path, 'PNG')
+        
+        return True
+        
+    except Exception as e:
+        print(f"创建缩略图失败: {e}")
+        return False
+
+def create_default_thumbnail(thumb_path, filename):
+    """创建默认缩略图文件"""
+    try:
+        import os
+        
+        # 确保目录存在
+        os.makedirs(thumb_path, exist_ok=True)
+        
+        # 创建默认缩略图
+        thumbnail = create_thumb_png(width=226, height=136, text="WoniuNote")
+        
+        # 保存文件
+        file_path = os.path.join(thumb_path, filename)
+        thumbnail.save(file_path, 'PNG')
+        
+        return True
+        
+    except Exception as e:
+        print(f"创建默认缩略图失败: {e}")
+        return False
 
 def create_app(config_name='production'):
     # 初始化日志系统
@@ -579,7 +633,7 @@ def create_app(config_name='production'):
     # 添加Thumb缩略图路径映射 - 处理文章类型缩略图
     @app.route('/thumb/<path:filename>')
     def thumb_resources(filename):
-        """处理缩略图文件请求，支持缺失文件的降级处理"""
+        """处理缩略图文件请求，支持缺失文件的自动创建和降级处理"""
         from flask import send_from_directory, send_file
         import os
         try:
@@ -590,10 +644,25 @@ def create_app(config_name='production'):
             if os.path.exists(file_path):
                 return send_from_directory(thumb_path, filename)
 
-            # 如果文件不存在，尝试降级处理
+            # 如果文件不存在，尝试自动创建
             app_logger.warning(f"缩略图文件不存在: {filename}")
 
-            # 尝试找到最相似的现有缩略图
+            # 尝试自动创建缩略图
+            if filename.endswith('.png'):
+                base_name = filename[:-4]  # 移除.png扩展名
+                try:
+                    type_id = int(base_name)
+                    
+                    # 尝试创建缩略图
+                    created_thumb = create_missing_thumbnail(thumb_path, type_id, filename)
+                    if created_thumb:
+                        app_logger.info(f"成功创建缺失的缩略图: {filename}")
+                        return send_file(file_path, mimetype='image/png')
+                        
+                except ValueError:
+                    pass
+
+            # 如果无法创建，尝试找到最相似的现有缩略图
             try:
                 # 提取文件名的数字部分
                 if filename.endswith('.png'):
@@ -644,8 +713,17 @@ def create_app(config_name='production'):
                 from flask import send_file
                 return send_file(default_thumb, mimetype='image/png')
 
-            # 如果连默认文件都不存在，返回404
-            app_logger.error(f"缩略图文件和默认文件都不存在: {filename}")
+            # 如果连默认文件都不存在，创建一个通用缩略图
+            try:
+                created_default = create_default_thumbnail(thumb_path, '1.png')
+                if created_default:
+                    app_logger.info(f"创建了默认缩略图并使用: {filename} -> 1.png")
+                    return send_file(default_thumb, mimetype='image/png')
+            except Exception as e:
+                app_logger.error(f"创建默认缩略图失败: {e}")
+
+            # 如果所有方法都失败，返回404
+            app_logger.error(f"缩略图文件处理失败: {filename}")
             from flask import abort
             abort(404)
 

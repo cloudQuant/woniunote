@@ -1,7 +1,7 @@
 {% extends 'base.html' %}   {# 将当前页面继承至base.html母版 #}
 {% block content %}
 
-        <div class="col-sm-9 col-12" style="padding: 0 10px;" id="left">
+        <div class="col-sm-9 col-12 main-content" id="left">
             <!-- 轮播图组件应用，除了修改图片路径外，其它内容可不修改 -->
 {#            <div id="carouselExampleIndicators" class="col-12 carousel slide"#}
 {#                 data-ride="carousel" style="padding: 0">#}
@@ -36,9 +36,9 @@
             <div class="col-12 row article-list">
                 <div class="col-sm-3 col-3 thumb d-none d-sm-block">
                    <!-- <img src="/thumb/{{article.thumbnail}}"  width="226" height="136"/> -->
-                   <img src="/thumb/{{article.type}}.png"  width="226" height="136" alt="thumb_picture">
+                   <img src="/thumb/{{article.type}}.png" class="article-thumb" alt="{{article.headline}}缩略图">
                 </div>
-                <div class="col-sm-9 col-xs-12 detail">
+                <div class="col-sm-9 col-12 detail">
                     <div class="title">
                         <a href="{{ url_for('article.read', articleid=article.articleid) }}" >{{article.headline}}</a>
                     </div>
@@ -116,29 +116,182 @@
         </div>
 
         <style>
+            /* 主内容区域样式 */
+            .main-content {
+                padding: 0 10px;
+            }
+            
+            /* 文章列表基础样式 */
             .article-list {
                 padding: 15px;
                 margin-bottom: 15px;
                 background: #fff;
                 border-radius: 5px;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
             }
-            .article-list h3 {
-                margin: 0;
-                font-size: 16px;  
-                line-height: 1.8;
+            
+            .article-list:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             }
-            .article-list h3 a {
+            
+            /* 缩略图样式 */
+            .article-thumb {
+                width: 100%;
+                height: auto;
+                max-width: 226px;
+                max-height: 136px;
+                object-fit: cover;
+                border-radius: 8px;
+                transition: transform 0.3s ease;
+            }
+            
+            .article-thumb:hover {
+                transform: scale(1.05);
+            }
+            
+            /* 标题样式 */
+            .article-list .title {
+                margin-bottom: 10px;
+            }
+            
+            .article-list .title a {
                 color: #333;
                 text-decoration: none;
+                font-size: 1.2rem;
+                font-weight: 500;
+                line-height: 1.4;
+                display: block;
+                transition: color 0.2s ease;
             }
-            .article-list h3 a:hover {
+            
+            .article-list .title a:hover {
                 color: #007bff;
+                text-decoration: none;
             }
+            
+            /* 信息栏样式 */
             .article-list .info {
-                margin-top: 10px;
+                margin: 10px 0;
                 color: #666;
                 font-size: 14px;
+                line-height: 1.5;
+            }
+            
+            /* 摘要样式 */
+            .article-list .intro {
+                color: #555;
+                font-size: 14px;
+                line-height: 1.6;
+                margin-top: 8px;
+            }
+            
+            /* 15寸笔记本专用优化 */
+            @media (min-width: 1200px) and (max-width: 1600px) {
+                .main-content {
+                    padding: 0 8px;
+                }
+                
+                .article-list {
+                    padding: 12px;
+                    margin-bottom: 12px;
+                }
+                
+                .article-thumb {
+                    max-width: 180px;
+                    max-height: 108px;
+                }
+                
+                .article-list .title a {
+                    font-size: 1.1rem;
+                }
+                
+                .article-list .info {
+                    font-size: 13px;
+                }
+                
+                .article-list .intro {
+                    font-size: 13px;
+                }
+            }
+            
+            /* 中等屏幕优化 */
+            @media (min-width: 1024px) and (max-width: 1366px) {
+                .main-content {
+                    padding: 0 6px;
+                }
+                
+                .article-list {
+                    padding: 10px;
+                    margin-bottom: 10px;
+                }
+                
+                .article-thumb {
+                    max-width: 160px;
+                    max-height: 96px;
+                }
+                
+                .article-list .title a {
+                    font-size: 1rem;
+                }
+                
+                .article-list .info {
+                    font-size: 12px;
+                }
+                
+                .article-list .intro {
+                    font-size: 12px;
+                }
+            }
+            
+            /* 小屏幕优化 */
+            @media (min-width: 768px) and (max-width: 1024px) {
+                .main-content {
+                    padding: 0 5px;
+                }
+                
+                .article-list {
+                    padding: 8px;
+                    margin-bottom: 8px;
+                }
+                
+                .article-thumb {
+                    max-width: 140px;
+                    max-height: 84px;
+                }
+                
+                .article-list .title a {
+                    font-size: 0.95rem;
+                }
+                
+                .article-list .info {
+                    font-size: 11px;
+                }
+                
+                .article-list .intro {
+                    font-size: 11px;
+                }
+            }
+            
+            /* 移动端优化 */
+            @media (max-width: 767px) {
+                .main-content {
+                    padding: 0 10px;
+                }
+                
+                .article-list .thumb {
+                    display: none !important;
+                }
+                
+                .article-list .detail {
+                    flex: 0 0 100% !important;
+                    max-width: 100% !important;
+                }
+                
+                .article-list .title a {
+                    font-size: 1.1rem;
+                }
             }
         </style>
 
