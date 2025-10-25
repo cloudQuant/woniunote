@@ -860,7 +860,11 @@ def system_status():
             
         # --- Basic system info (fallback) ---
         memory = psutil.virtual_memory()
-        cpu_percent = psutil.cpu_percent(interval=0.1)
+        # 使用非阻塞模式获取CPU使用率，避免误报
+        cpu_percent = psutil.cpu_percent(interval=None)
+        # 如果是第一次调用返回0，使用带间隔的方式
+        if cpu_percent == 0:
+            cpu_percent = psutil.cpu_percent(interval=1.0)
         disk = psutil.disk_usage('/')
         
         # --- Assemble final context ---

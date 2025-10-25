@@ -242,6 +242,80 @@ class Articles:
             })
             return []
 
+    @staticmethod
+    def insert_article(article_type, headline, content, credit, thumbnail, drafted, checked):
+        """插入新文章"""
+        trace_id = get_articles_trace_id()
+        articles_logger.info("开始插入新文章", {
+            'trace_id': trace_id,
+            'headline': headline[:30] + '...' if len(headline) > 30 else headline,
+            'article_type': article_type,
+            'drafted': drafted,
+            'checked': checked
+        })
+
+        try:
+            # 获取当前登录用户ID
+            userid = session.get('main_userid')
+            if not userid:
+                articles_logger.error("用户未登录，无法插入文章", {'trace_id': trace_id})
+                raise ValueError("用户未登录")
+
+            # 动态获取数据库连接
+            dbsession, md, DBase = dbconnect()
+            if dbsession is None:
+                articles_logger.error("无法获取数据库连接", {'trace_id': trace_id})
+                raise Exception("数据库连接失败")
+
+            # 创建文章对象
+            now = datetime.datetime.now()
+            new_article = Article(
+                userid=userid,
+                type=article_type,
+                headline=headline,
+                content=content,
+                credit=credit,
+                thumbnail=thumbnail,
+                drafted=drafted,
+                checked=checked,
+                readcount=0,
+                replycount=0,
+                recommended=0,
+                hidden=0,
+                createtime=now,
+                updatetime=now
+            )
+
+            # 添加到会话并提交
+            dbsession.add(new_article)
+            dbsession.commit()
+
+            # 获取新插入的文章ID
+            article_id = new_article.articleid
+
+            articles_logger.info("文章插入成功", {
+                'trace_id': trace_id,
+                'article_id': article_id,
+                'userid': userid,
+                'headline': headline[:30] + '...' if len(headline) > 30 else headline
+            })
+
+            return article_id
+
+        except Exception as e:
+            articles_logger.error("插入文章异常", {
+                'trace_id': trace_id,
+                'error': str(e),
+                'error_type': type(e).__name__,
+                'traceback': traceback.format_exc()
+            })
+            # 回滚事务
+            try:
+                dbsession.rollback()
+            except:
+                pass
+            raise
+
 # 为了兼容性，提供一些基本的别名方法
 def find_by_id(articleid):
     return Articles.find_by_id(articleid)
@@ -263,6 +337,9 @@ def find_prev_next_by_id(articleid):
 
 def find_by_ids(article_ids):
     return Articles.find_by_ids(article_ids)
+
+def insert_article(article_type, headline, content, credit, thumbnail, drafted, checked):
+    return Articles.insert_article(article_type, headline, content, credit, thumbnail, drafted, checked)
 
 # ==================== 性能优化方法 ====================
 

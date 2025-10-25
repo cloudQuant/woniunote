@@ -27,6 +27,16 @@ def debug_editor():
     """提供UEditor调试页面"""
     return render_template('ueditor-debug.html')
 
+@ueditor.route('/test-contentimport')
+def test_contentimport():
+    """提供Contentimport测试和诊断页面"""
+    return render_template('test-contentimport.html')
+
+@ueditor.route('/path-test')
+def path_test():
+    """提供UEditor路径诊断工具"""
+    return render_template('ueditor-path-test.html')
+
 @ueditor.route('/resource/ueditor/<path:filename>')
 def ueditor_static(filename):
     """提供UEditor静态文件"""

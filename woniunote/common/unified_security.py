@@ -66,12 +66,18 @@ class UnifiedSecurityManager:
         def add_security_headers(response):
             # 基本安全头
             response.headers['X-Content-Type-Options'] = 'nosniff'
-            response.headers['X-Frame-Options'] = 'DENY'
+            
+            # X-Frame-Options: 允许同源iframe（UEditor对话框需要）
+            # DENY 会阻止所有iframe，包括同源的
+            # SAMEORIGIN 允许同源iframe加载
+            response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+            
             response.headers['X-XSS-Protection'] = '1; mode=block'
             response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
             
             # CSP策略 - 支持UEditor和外部资源
-            csp_policy = "default-src 'self' data: blob: https: http:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http: *.googletagmanager.com *.jquery.com *.jsdelivr.net code.jquery.com www.googletagmanager.com; style-src 'self' 'unsafe-inline' https: http: fonts.googleapis.com *.jsdelivr.net cdn.jsdelivr.net; font-src 'self' data: https: http: fonts.gstatic.com *.gstatic.com; img-src 'self' data: blob: https: http:; frame-src 'self' https: http:; connect-src 'self' https: http:; object-src 'none'; media-src 'self' data: blob: https: http:;"
+            # frame-ancestors 'self' 也允许同源iframe
+            csp_policy = "default-src 'self' data: blob: https: http:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http: *.googletagmanager.com *.jquery.com *.jsdelivr.net code.jquery.com www.googletagmanager.com; style-src 'self' 'unsafe-inline' https: http: fonts.googleapis.com *.jsdelivr.net cdn.jsdelivr.net; font-src 'self' data: https: http: fonts.gstatic.com *.gstatic.com; img-src 'self' data: blob: https: http:; frame-src 'self' https: http:; frame-ancestors 'self'; connect-src 'self' https: http:; object-src 'none'; media-src 'self' data: blob: https: http:;"
             response.headers['Content-Security-Policy'] = csp_policy
             
             return response

@@ -644,8 +644,24 @@ class PerformanceMonitorAdvanced:
     def collect_metrics(self) -> PerformanceMetrics:
         """收集性能指标"""
         try:
-            # 系统指标
-            cpu_usage = psutil.cpu_percent(interval=0.1)
+            # 系统指标 - 使用非阻塞模式获取更准确的CPU使用率
+            cpu_usage = psutil.cpu_percent(interval=None)
+            
+            # 如果第一次调用返回0，使用带间隔的方式
+            if cpu_usage == 0 or not hasattr(self, '_perf_cpu_initialized'):
+                cpu_usage = psutil.cpu_percent(interval=1.0)
+                self._perf_cpu_initialized = True
+            
+            # 平滑处理
+            if not hasattr(self, '_perf_cpu_samples'):
+                self._perf_cpu_samples = []
+            
+            self._perf_cpu_samples.append(cpu_usage)
+            if len(self._perf_cpu_samples) > 5:
+                self._perf_cpu_samples.pop(0)
+            
+            cpu_usage = sum(self._perf_cpu_samples) / len(self._perf_cpu_samples)
+            
             memory = psutil.virtual_memory()
             memory_usage = memory.percent
             

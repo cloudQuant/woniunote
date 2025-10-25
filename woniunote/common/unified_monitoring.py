@@ -103,11 +103,28 @@ class UnifiedMonitoringSystem:
         try:
             current_time = time.time()
             
-            # CPU使用率
-            cpu_percent = psutil.cpu_percent(interval=0.1)
+            # CPU使用率 - 使用非阻塞模式获取自上次调用以来的平均值
+            # 第一次调用返回0，后续调用返回准确的平均值
+            # 这比使用短interval更准确，因为它测量了实际的CPU使用情况
+            cpu_percent = psutil.cpu_percent(interval=None)
+            
+            # 如果第一次调用返回0或值异常，使用带间隔的方式获取
+            if cpu_percent == 0 or not hasattr(self, '_cpu_initialized'):
+                cpu_percent = psutil.cpu_percent(interval=1.0)
+                self._cpu_initialized = True
+            
+            # 对 CPU 使用率进行平滑处理（移动平均），减少波动
+            if not hasattr(self, '_cpu_samples'):
+                self._cpu_samples = deque(maxlen=5)  # 保留最近5次采样
+            
+            self._cpu_samples.append(cpu_percent)
+            # 使用移动平均值作为最终结果
+            cpu_percent_smoothed = sum(self._cpu_samples) / len(self._cpu_samples)
+            
             self.metrics_history['cpu'].append({
                 'timestamp': current_time,
-                'value': cpu_percent
+                'value': cpu_percent_smoothed,
+                'raw_value': cpu_percent  # 保留原始值用于调试
             })
             
             # 内存使用率 - 根据操作系统使用不同的计算方式

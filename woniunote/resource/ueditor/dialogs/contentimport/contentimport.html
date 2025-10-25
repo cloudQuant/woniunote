@@ -3,7 +3,7 @@
 <head>
     <title></title>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-    <script type="text/javascript" src="../internal.js?aea0c61c"></script>
+    <script type="text/javascript" src="/ueditor/dialogs/internal.js?aea0c61c"></script>
     <style type="text/css">
         body {
             margin: 0;
@@ -355,24 +355,66 @@ document.getElementById('contentImport').addEventListener('change', function() {
 // 与UEditor交互 - 使用internal.js提供的对象
 // internal.js已经为我们提供了dialog和editor对象
 
-// 设置确认按钮处理
-dialog.onok = function() {
-    if (!contentImport.data.result) {
-        alert('请先选择文件或粘贴Markdown内容并转换');
-        return false;
-    }
-    
-    // 插入HTML内容到编辑器
-    editor.fireEvent('saveScene');
-    editor.execCommand('inserthtml', contentImport.data.result);
-    editor.fireEvent('saveScene');
-    return true;
-};
-
-dialog.oncancel = function() {
-    // 取消操作
-    return true;
-};
+// 等待页面加载完成后初始化对话框
+(function() {
+    // 延迟执行，确保internal.js已加载
+    setTimeout(function() {
+        try {
+            // 检查dialog和editor对象是否存在
+            if (typeof dialog === 'undefined' || typeof editor === 'undefined') {
+                console.error('UEditor对话框对象未定义，尝试从父窗口获取...');
+                
+                // 尝试从父窗口获取
+                var parent = window.parent;
+                if (parent && parent.$EDITORUI && window.frameElement) {
+                    var dialogId = window.frameElement.id.replace(/_iframe$/, '');
+                    window.dialog = parent.$EDITORUI[dialogId];
+                    window.editor = window.dialog ? window.dialog.editor : null;
+                    
+                    console.log('从父窗口获取对话框对象:', window.dialog ? '成功' : '失败');
+                }
+                
+                // 如果还是获取不到，显示错误
+                if (!window.dialog || !window.editor) {
+                    console.error('无法获取UEditor对话框对象');
+                    alert('编辑器初始化失败，请刷新页面重试');
+                    return;
+                }
+            }
+            
+            // 设置确认按钮处理
+            dialog.onok = function() {
+                if (!contentImport.data.result) {
+                    alert('请先选择文件或粘贴Markdown内容并转换');
+                    return false;
+                }
+                
+                // 插入HTML内容到编辑器
+                try {
+                    editor.fireEvent('saveScene');
+                    editor.execCommand('inserthtml', contentImport.data.result);
+                    editor.fireEvent('saveScene');
+                    return true;
+                } catch(e) {
+                    console.error('插入内容失败:', e);
+                    alert('插入内容失败: ' + e.message);
+                    return false;
+                }
+            };
+            
+            dialog.oncancel = function() {
+                // 取消操作
+                return true;
+            };
+            
+            console.log('UEditor对话框初始化成功');
+            
+        } catch(e) {
+            console.error('初始化UEditor对话框时出错:', e);
+            alert('对话框初始化失败: ' + e.message);
+        }
+    }, 100); // 延迟100ms，确保internal.js已加载
+})();
 </script>
 </body>
 </html>

@@ -5,10 +5,16 @@
 <script type="text/javascript" src="/ueditor/ueditor.config.js"></script>
 <script type="text/javascript" src="/ueditor/ueditor.all.js"></script>
 <script type="text/javascript">
-    let ue = UE.getEditor('content', {
-        initialFrameHeight: 400,
-        autoHeightEnabled: true,
-        serverUrl: '/uedit',
+    // 声明全局编辑器变量
+    let ue = null;
+    
+    // 等待DOM加载完成后再初始化编辑器
+    document.addEventListener('DOMContentLoaded', function() {
+        ue = UE.getEditor('content', {
+            initialFrameHeight: 400,
+            autoHeightEnabled: true,
+            serverUrl: '/uedit',
+        });
     });
 </script>
 

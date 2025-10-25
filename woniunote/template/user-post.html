@@ -60,10 +60,16 @@
 <script type="text/javascript" src="/ue/ueditor.all.min.js"> </script>
 <script type="text/javascript" src="/ue/lang/zh-cn/zh-cn.js"></script>
 <script type="text/javascript">
-    let ue = UE.getEditor('content', {
-        initialFrameHeight: 400,
-        autoHeightEnabled: true,
-        serverUrl: '/uedit',
+    // 声明全局编辑器变量
+    let ue = null;
+    
+    // 等待DOM加载完成后再初始化编辑器
+    document.addEventListener('DOMContentLoaded', function() {
+        ue = UE.getEditor('content', {
+            initialFrameHeight: 400,
+            autoHeightEnabled: true,
+            serverUrl: '/uedit',
+        });
     });
 
     // 发布用户投稿

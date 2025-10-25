@@ -2079,7 +2079,9 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     if os.path.exists(cert_file) and os.path.exists(key_file):
         app.run(host=host, port=port, debug=True, ssl_context=(cert_file, key_file))
+        # app.run(host=host, port=port, debug=True, use_reloader=False, ssl_context=(cert_file, key_file))
     else:
+        # app.run(host=host, port=port, debug=True, use_reloader=False)
         app.run(host=host, port=port, debug=True)
 else:
     app = create_app(config_name)
@@ -2087,6 +2089,6 @@ else:
     cert_file = os.path.join(path, "configs", "cert.pem")
     key_file = os.path.join(path, "configs", "key.pem")
     if os.path.exists(cert_file) and os.path.exists(key_file):
-        app.run(host="127.0.0.1", debug=True, port=5000, ssl_context=(cert_file, key_file))
+        app.run(host="127.0.0.1", debug=True, port=5000, use_reloader=False, ssl_context=(cert_file, key_file))
     else:
-        app.run(host="127.0.0.1", debug=True, port=5000)
+        app.run(host="127.0.0.1", debug=True, port=5000, use_reloader=False)
