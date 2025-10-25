@@ -1,30 +1,40 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+import sys
+import os
+import io
+
+# 设置标准输出为UTF-8编码（Windows兼容）
+if sys.platform == 'win32':
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except:
+        pass
+
 """
 WoniuNote 完整测试系统 - 集成测试运行器 v3.0 (优化版)
 
-✨ 主要改进:
-- 🚀 优化的并行执行，自动计算最优worker数量
-- 📊 详细的测试通过率分析和统计报告
-- 📈 完整的代码覆盖率报告（支持HTML、终端输出）
-- 🎯 智能测试分类和执行策略
-- 🔍 并行模式下的覆盖率收集优化
-- 📝 详细的测试日志和性能指标
-- ⚡ 支持多种执行模式（快速/完整/调试/仅覆盖率）
-- 🛡️ 错误恢复和容错机制
+主要改进:
+- 优化的并行执行，自动计算最优worker数量
+- 详细的测试通过率分析和统计报告
+- 完整的代码覆盖率报告（支持HTML、终端输出）
+- 智能测试分类和执行策略
+- 并行模式下的稳定性优化
+- 详细的测试日志和性能指标
+- 支持多种执行模式（快速/完整/调试/仅覆盖率）
+- 错误恢复和容错机制
 
 使用方法:
-    python tests/run_all_tests.py              # 默认模式：并行 + 覆盖率
-    python tests/run_all_tests.py --parallel   # 显式并行模式（自动计算workers）
+    python tests/run_all_tests.py              # 默认模式：单线程 + 覆盖率
+    python tests/run_all_tests.py --parallel   # 并行模式（智能过滤subprocess测试）
+    python tests/run_all_tests.py --parallel --full  # 并行运行所有测试（不稳定）
     python tests/run_all_tests.py --fast       # 快速模式：较短超时
-    python tests/run_all_tests.py --coverage   # 仅覆盖率收集
     python tests/run_all_tests.py --debug      # 调试模式：详细输出
     python tests/run_all_tests.py --verbose    # 详细模式：显示所有细节
     python tests/run_all_tests.py --sequential # 顺序执行（无并行）
 """
-
-import sys
-import os
 import time
 import json
 import subprocess
@@ -37,13 +47,14 @@ from typing import Dict, List, Tuple, Optional
 # ==================== 配置部分 ====================
 
 # 命令行参数解析
-PARALLEL_MODE = '--parallel' in sys.argv or (not any(flag in sys.argv for flag in ['--sequential', '--debug']))
-FAST_MODE = '--fast' in sys.argv or '--quick' in sys.argv
+PARALLEL_MODE = '--parallel' in sys.argv
+FAST_MODE = '--fast' in sys.argv or '--quick' in sys.argv  
 VERBOSE_MODE = '-v' in sys.argv or '--verbose' in sys.argv
 DEBUG_MODE = '--debug' in sys.argv
 COVERAGE_ONLY = '--coverage' in sys.argv
-SEQUENTIAL_MODE = '--sequential' in sys.argv
-NO_COVERAGE = '--no-coverage' in sys.argv
+SEQUENTIAL_MODE = '--sequential' in sys.argv or not PARALLEL_MODE  # 默认单线程
+NO_COVERAGE = '--no-coverage' in sys.argv or PARALLEL_MODE  # 并行模式禁用覆盖率
+FULL_MODE = '--full' in sys.argv  # 运行所有测试包括subprocess测试
 
 # 超时配置（秒）
 TIMEOUT_CONFIG = {
@@ -68,9 +79,9 @@ def get_optimal_worker_count() -> int:
     智能计算最优的并行worker数量
 
     考虑因素:
-    - CPU核心数（使用80%）
+    - CPU核心数（使用50%以确保稳定性）
     - 可用内存（每个worker约500MB）
-    - 系统稳定性（最少2个worker，最多CPU核心数）
+    - 系统稳定性（最少2个worker，最多8个）
     """
     try:
         cpu_count = multiprocessing.cpu_count()
@@ -80,12 +91,12 @@ def get_optimal_worker_count() -> int:
         except:
             memory_gb = 4
 
-        # 计算基于不同因素的worker数
-        cpu_based_workers = max(2, int(cpu_count * 0.8))
+        # 计算基于不同因素的worker数 - 使用保守的50%CPU
+        cpu_based_workers = max(2, int(cpu_count * 0.5))
         memory_based_workers = max(2, int(memory_gb / 0.5))
 
-        # 取较小值以确保稳定性
-        optimal_workers = min(cpu_based_workers, memory_based_workers, cpu_count)
+        # 取较小值，并限制最大为8以确保稳定性
+        optimal_workers = min(cpu_based_workers, memory_based_workers, cpu_count, 8)
 
         if VERBOSE_MODE or DEBUG_MODE:
             print(f"\n🖥️  系统资源检测:")
@@ -189,12 +200,32 @@ class TestExecutor:
             print("❌ 没有测试文件可运行")
             return False
 
+        # 在并行模式下，除非指定--full，否则过滤掉subprocess测试文件
+        if workers and not FULL_MODE:
+            excluded_patterns = [
+                'test_final_comprehensive.py',
+                'test_import_coverage.py',
+                'test_database_models_comprehensive.py',
+                'test_security_comprehensive.py',
+                'test_performance_comprehensive.py',
+                'test_logging_comprehensive.py',
+                'test_simple_working.py',
+                'test_actual_code_execution.py',
+            ]
+            
+            filtered_files = [
+                f for f in test_files
+                if not any(pattern in f for pattern in excluded_patterns)
+            ]
+            
+            if VERBOSE_MODE:
+                print(f"\n📝 过滤测试文件: {len(test_files)} → {len(filtered_files)} (排除subprocess测试)")
+        else:
+            filtered_files = test_files
+
         self.start_time = time.time()
 
         cmd = [sys.executable, '-m', 'pytest']
-
-        # 添加测试文件
-        cmd.extend(test_files)
 
         # 基本选项
         cmd.extend([
@@ -202,22 +233,27 @@ class TestExecutor:
             '--tb=short',              # 简短的traceback
             '--disable-warnings',      # 禁用警告
         ])
-
+        
+        # 添加过滤后的测试文件
+        cmd.extend(filtered_files)
+        
         # 并行执行配置
         if workers and not SEQUENTIAL_MODE:
             cmd.extend([
                 '-n', str(workers),          # worker数量
-                '--dist=loadfile',           # 每个进程运行一个测试文件
+                '--dist=worksteal',          # 使用worksteal策略
                 '--maxfail=0',               # 不因失败停止
                 '-k', 'not subprocess',      # 排除subprocess测试（并行不稳定）
+                '--tb=line',                 # 最简短的traceback
             ])
             if VERBOSE_MODE:
-                print(f"\n🚀 并行执行模式: {workers} 个worker")
-                print(f"📁 分发策略: 每个进程运行一个测试文件")
-                print(f"🛡️ 稳定性: 排除subprocess测试\n")
+                print(f"\n🚀 并行执行模式: {workers} 个worker (50% CPU)")
+                print(f"📁 分发策略: worksteal (动态负载均衡)")
+                print(f"🛡️ 稳定性: 排除subprocess测试文件\n")
         else:
             if VERBOSE_MODE:
-                print(f"\n⏱️  顺序执行模式\n")
+                print(f"\n⏱️  顺序执行模式")
+                print(f"🛡️ 稳定性: 排除subprocess测试文件\n")
 
         # 覆盖率收集（仅在非覆盖率专用模式下）
         if not COVERAGE_ONLY and not NO_COVERAGE:
