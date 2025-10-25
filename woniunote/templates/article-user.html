@@ -45,8 +45,16 @@
           // 更新内容
           contentElement.innerHTML = html;
           
-          // 重新渲染数学公式
-          MathJax.typeset([contentElement]);
+          // 重新渲染数学公式 - 使用 try-catch 避免错误
+          try {
+            if (MathJax && MathJax.typeset) {
+              MathJax.typeset([contentElement]);
+            } else if (MathJax && MathJax.typesetPromise) {
+              MathJax.typesetPromise([contentElement]);
+            }
+          } catch(e) {
+            console.log('MathJax渲染跳过:', e.message);
+          }
         }, 500);
       }
     }
@@ -241,8 +249,18 @@
                 initHighlightJS();
                 
                 // 如果有MathJax，重新渲染数学公式
-                if (window.MathJax) {
-                    MathJax.typeset(['#content-display']);
+                if (window.MathJax && window.MathJax.typeset) {
+                    try {
+                        MathJax.typeset(['#content-display']);
+                    } catch(e) {
+                        console.log('MathJax渲染跳过:', e.message);
+                    }
+                } else if (window.MathJax && window.MathJax.typesetPromise) {
+                    try {
+                        MathJax.typesetPromise(['#content-display']);
+                    } catch(e) {
+                        console.log('MathJax渲染跳过:', e.message);
+                    }
                 }
             });
             

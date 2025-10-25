@@ -97,7 +97,19 @@
     cleanedContent = processUEditorCodeBlocks(cleanedContent);
     document.getElementById('content-display').innerHTML = cleanedContent;
     if (window.hljs) { hljs.highlightAll(); }
-    if (window.MathJax) { MathJax.typeset(['#content-display']); }
+    if (window.MathJax && window.MathJax.typeset) {
+      try {
+        MathJax.typeset(['#content-display']);
+      } catch(e) {
+        console.log('MathJax渲染跳过:', e.message);
+      }
+    } else if (window.MathJax && window.MathJax.typesetPromise) {
+      try {
+        MathJax.typesetPromise(['#content-display']);
+      } catch(e) {
+        console.log('MathJax渲染跳过:', e.message);
+      }
+    }
   });
 
   function processUEditorCodeBlocks(content) {
@@ -138,7 +150,19 @@
           const display = document.getElementById('content-display');
           display.innerHTML = display.innerHTML + content;
           if (window.hljs) { hljs.highlightAll(); }
-          if (window.MathJax) { MathJax.typeset(['#content-display']); }
+          if (window.MathJax && window.MathJax.typeset) {
+            try {
+              MathJax.typeset(['#content-display']);
+            } catch(e) {
+              console.log('MathJax渲染跳过:', e.message);
+            }
+          } else if (window.MathJax && window.MathJax.typesetPromise) {
+            try {
+              MathJax.typesetPromise(['#content-display']);
+            } catch(e) {
+              console.log('MathJax渲染跳过:', e.message);
+            }
+          }
           var btn = document.querySelector('.readall');
           if (btn) btn.style.display = 'none';
         }

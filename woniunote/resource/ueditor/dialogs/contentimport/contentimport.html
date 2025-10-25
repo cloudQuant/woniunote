@@ -141,6 +141,15 @@
         <div class="upload-button">
             <div class="text" onclick="showMarkdownInput()">粘贴Markdown</div>
         </div>
+        <div class="upload-button">
+            <div class="text" onclick="showYuanbaoInput()">粘贴元宝</div>
+        </div>
+        <div class="upload-button">
+            <div class="text" onclick="showDeepseekInput()">粘贴Deepseek</div>
+        </div>
+        <div class="upload-button">
+            <div class="text" onclick="showChatgptInput()">粘贴ChatGPT</div>
+        </div>
         <div class="file-tip"></div>
     </div>
     <div class="file-manual">
@@ -152,11 +161,14 @@
                 <li><b>Markdown</b>：md、txt文件</li>
                 <li><b>Word文档</b>：docx（基础支持）</li>
                 <li><b>直接粘贴</b>：Markdown文本内容</li>
+                <li><b>粘贴元宝</b>：元宝AI生成的Markdown内容</li>
+                <li><b>粘贴Deepseek</b>：Deepseek生成的Markdown内容</li>
+                <li><b>粘贴ChatGPT</b>：ChatGPT生成的Markdown内容</li>
             </ul>
         </div>
     </div>
     <div class="file-result"></div>
-    <div class="file-input">
+    <div class="file-input" id="markdown-input">
         <textarea id="fileInputContent" placeholder="在此粘贴Markdown内容...
 
 支持的语法：
@@ -184,6 +196,90 @@
             <a href="javascript:;" onclick="hideMarkdownInput()">关闭</a>
         </div>
     </div>
+    <div class="file-input" id="yuanbao-input">
+        <textarea id="yuanbaoInputContent" placeholder="在此粘贴元宝AI的Markdown内容...
+
+支持的语法：
+# 标题1
+## 标题2
+### 标题3
+
+**粗体** *斜体* ~~删除线~~
+
+- 无序列表
+1. 有序列表
+
+[链接](http://example.com)
+![图片](image.jpg)
+
+```
+代码块
+```
+
+`行内代码`
+
+> 引用内容"></textarea>
+        <div class="tool">
+            <a href="javascript:;" onclick="convertYuanbao()">转换预览</a>
+            <a href="javascript:;" onclick="hideYuanbaoInput()">关闭</a>
+        </div>
+    </div>
+    <div class="file-input" id="deepseek-input">
+        <textarea id="deepseekInputContent" placeholder="在此粘贴Deepseek的Markdown内容...
+
+支持的语法：
+# 标题1
+## 标题2
+### 标题3
+
+**粗体** *斜体* ~~删除线~~
+
+- 无序列表
+1. 有序列表
+
+[链接](http://example.com)
+![图片](image.jpg)
+
+```
+代码块
+```
+
+`行内代码`
+
+> 引用内容"></textarea>
+        <div class="tool">
+            <a href="javascript:;" onclick="convertDeepseek()">转换预览</a>
+            <a href="javascript:;" onclick="hideDeepseekInput()">关闭</a>
+        </div>
+    </div>
+    <div class="file-input" id="chatgpt-input">
+        <textarea id="chatgptInputContent" placeholder="在此粘贴ChatGPT的Markdown内容...
+
+支持的语法：
+# 标题1
+## 标题2
+### 标题3
+
+**粗体** *斜体* ~~删除线~~
+
+- 无序列表
+1. 有序列表
+
+[链接](http://example.com)
+![图片](image.jpg)
+
+```
+代码块
+```
+
+`行内代码`
+
+> 引用内容"></textarea>
+        <div class="tool">
+            <a href="javascript:;" onclick="convertChatgpt()">转换预览</a>
+            <a href="javascript:;" onclick="hideChatgptInput()">关闭</a>
+        </div>
+    </div>
 </div>
 
 <script type="text/javascript">
@@ -199,7 +295,9 @@ function $(selector) {
     return document.querySelector(selector);
 }
 
-// Markdown转换函数
+// ============================================================================
+// Markdown转换函数 - 通用版本
+// ============================================================================
 function convertMarkdownToHtml(markdown) {
     var html = markdown;
     
@@ -292,15 +390,64 @@ function convertMarkdownToHtml(markdown) {
     return html;
 }
 
-// UI函数
+// ============================================================================
+// Markdown转换函数 - 元宝AI专用版本
+// ============================================================================
+function convertYuanbaoMarkdownToHtml(markdown) {
+    // TODO: 在这里添加元宝AI特有的格式处理
+    // 例如：
+    // - 中文标点符号优化
+    // - 元宝AI特有的代码块格式
+    // - 特殊符号处理
+    
+    console.log('[元宝AI] 使用元宝专用转换器');
+    
+    // 当前使用通用转换逻辑，后续可以针对元宝AI的输出特点进行优化
+    return convertMarkdownToHtml(markdown);
+}
+
+// ============================================================================
+// Markdown转换函数 - Deepseek专用版本
+// ============================================================================
+function convertDeepseekMarkdownToHtml(markdown) {
+    // TODO: 在这里添加Deepseek特有的格式处理
+    // 例如：
+    // - 技术文档格式增强
+    // - 数学公式处理
+    // - 代码块语言识别优化
+    
+    console.log('[Deepseek] 使用Deepseek专用转换器');
+    
+    // 当前使用通用转换逻辑，后续可以针对Deepseek的输出特点进行优化
+    return convertMarkdownToHtml(markdown);
+}
+
+// ============================================================================
+// Markdown转换函数 - ChatGPT专用版本
+// ============================================================================
+function convertChatgptMarkdownToHtml(markdown) {
+    // TODO: 在这里添加ChatGPT特有的格式处理
+    // 例如：
+    // - 对话式内容格式处理
+    // - ChatGPT代码注释优化
+    // - 示例代码增强
+    
+    console.log('[ChatGPT] 使用ChatGPT专用转换器');
+    
+    // 当前使用通用转换逻辑，后续可以针对ChatGPT的输出特点进行优化
+    return convertMarkdownToHtml(markdown);
+}
+
+// UI函数 - Markdown
 function showMarkdownInput() {
-    $('.file-input').style.display = 'block';
+    hideAllInputs();
+    $('#markdown-input').style.display = 'block';
     $('.file-tip').innerHTML = '';
     $('#fileInputContent').focus();
 }
 
 function hideMarkdownInput() {
-    $('.file-input').style.display = 'none';
+    $('#markdown-input').style.display = 'none';
 }
 
 function convertMarkdown() {
@@ -317,8 +464,110 @@ function convertMarkdown() {
     
     $('.file-result').innerHTML = html;
     $('.file-result').style.display = 'block';
-    $('.file-input').style.display = 'none';
+    $('#markdown-input').style.display = 'none';
     $('.file-tip').innerHTML = '转换成功！点击下方"确认"按钮插入内容到编辑器。';
+}
+
+// UI函数 - 元宝
+function showYuanbaoInput() {
+    hideAllInputs();
+    $('#yuanbao-input').style.display = 'block';
+    $('.file-tip').innerHTML = '';
+    $('#yuanbaoInputContent').focus();
+}
+
+function hideYuanbaoInput() {
+    $('#yuanbao-input').style.display = 'none';
+}
+
+function convertYuanbao() {
+    var textarea = $('#yuanbaoInputContent');
+    var markdown = textarea.value;
+    
+    if (!markdown.trim()) {
+        $('.file-tip').innerHTML = '请输入元宝AI的Markdown内容';
+        return;
+    }
+    
+    // 使用元宝AI专用转换器
+    var html = convertYuanbaoMarkdownToHtml(markdown);
+    contentImport.data.result = html;
+    
+    $('.file-result').innerHTML = html;
+    $('.file-result').style.display = 'block';
+    $('#yuanbao-input').style.display = 'none';
+    $('.file-tip').innerHTML = '元宝内容转换成功！点击下方"确认"按钮插入内容到编辑器。';
+}
+
+// UI函数 - Deepseek
+function showDeepseekInput() {
+    hideAllInputs();
+    $('#deepseek-input').style.display = 'block';
+    $('.file-tip').innerHTML = '';
+    $('#deepseekInputContent').focus();
+}
+
+function hideDeepseekInput() {
+    $('#deepseek-input').style.display = 'none';
+}
+
+function convertDeepseek() {
+    var textarea = $('#deepseekInputContent');
+    var markdown = textarea.value;
+    
+    if (!markdown.trim()) {
+        $('.file-tip').innerHTML = '请输入Deepseek的Markdown内容';
+        return;
+    }
+    
+    // 使用Deepseek专用转换器
+    var html = convertDeepseekMarkdownToHtml(markdown);
+    contentImport.data.result = html;
+    
+    $('.file-result').innerHTML = html;
+    $('.file-result').style.display = 'block';
+    $('#deepseek-input').style.display = 'none';
+    $('.file-tip').innerHTML = 'Deepseek内容转换成功！点击下方"确认"按钮插入内容到编辑器。';
+}
+
+// UI函数 - ChatGPT
+function showChatgptInput() {
+    hideAllInputs();
+    $('#chatgpt-input').style.display = 'block';
+    $('.file-tip').innerHTML = '';
+    $('#chatgptInputContent').focus();
+}
+
+function hideChatgptInput() {
+    $('#chatgpt-input').style.display = 'none';
+}
+
+function convertChatgpt() {
+    var textarea = $('#chatgptInputContent');
+    var markdown = textarea.value;
+    
+    if (!markdown.trim()) {
+        $('.file-tip').innerHTML = '请输入ChatGPT的Markdown内容';
+        return;
+    }
+    
+    // 使用ChatGPT专用转换器
+    var html = convertChatgptMarkdownToHtml(markdown);
+    contentImport.data.result = html;
+    
+    $('.file-result').innerHTML = html;
+    $('.file-result').style.display = 'block';
+    $('#chatgpt-input').style.display = 'none';
+    $('.file-tip').innerHTML = 'ChatGPT内容转换成功！点击下方"确认"按钮插入内容到编辑器。';
+}
+
+// 通用函数 - 隐藏所有输入框
+function hideAllInputs() {
+    $('#markdown-input').style.display = 'none';
+    $('#yuanbao-input').style.display = 'none';
+    $('#deepseek-input').style.display = 'none';
+    $('#chatgpt-input').style.display = 'none';
+    $('.file-result').style.display = 'none';
 }
 
 // 文件上传处理
