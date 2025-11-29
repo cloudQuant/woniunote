@@ -1,0 +1,119 @@
+/* 全局样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
+  line-height: 1.6;
+}
+
+a {
+  color: #409eff;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #66b1ff;
+}
+
+/* 容器 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 卡片样式 */
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+/* 文章列表 */
+.article-list {
+  display: grid;
+  gap: 20px;
+}
+
+.article-item {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.article-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 20px 0 rgba(0, 0, 0, 0.15);
+}
+
+.article-thumbnail {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.article-content {
+  padding: 15px;
+}
+
+.article-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.article-meta {
+  font-size: 14px;
+  color: #909399;
+}
+
+/* 分页 */
+.pagination-container {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+}
+
+/* 侧边栏 */
+.sidebar {
+  position: sticky;
+  top: 80px;
+}
+
+.sidebar-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.sidebar-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #409eff;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 10px;
+  }
+  
+  .article-thumbnail {
+    height: 140px;
+  }
+}

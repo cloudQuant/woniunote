@@ -1,0 +1,157 @@
+<template>
+  <div class="ueditor-container">
+    <div :id="editorId"></div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+
+const props = defineProps({
+  modelValue: {
+    type: String,
+    default: ''
+  },
+  config: {
+    type: Object,
+    default: () => ({})
+  },
+  editorId: {
+    type: String,
+    default: () => `editor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  }
+})
+
+const emit = defineEmits(['update:modelValue', 'ready'])
+
+let editor = null
+const isReady = ref(false)
+
+// 默认配置
+const defaultConfig = {
+  initialFrameWidth: '100%',
+  initialFrameHeight: 400,
+  autoHeightEnabled: true,
+  autoFloatEnabled: false,
+  zIndex: 1000,
+  UEDITOR_HOME_URL: '/ueditor/'
+}
+
+// 加载 UEditor 脚本
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    // 检查是否已加载
+    const existingScript = document.querySelector(`script[src="${src}"]`)
+    if (existingScript) {
+      resolve()
+      return
+    }
+    
+    const script = document.createElement('script')
+    script.src = src
+    script.onload = resolve
+    script.onerror = reject
+    document.head.appendChild(script)
+  })
+}
+
+// 初始化编辑器
+async function initEditor() {
+  try {
+    // 设置 UEditor 根路径
+    window.UEDITOR_HOME_URL = '/ueditor/'
+    
+    // 加载 UEditor 脚本
+    if (!window.UE) {
+      await loadScript('/ueditor/ueditor.config.js')
+      await loadScript('/ueditor/ueditor.all.js')
+    }
+    
+    // 等待 DOM 更新
+    await nextTick()
+    
+    // 合并配置
+    const config = { ...defaultConfig, ...props.config }
+    
+    // 创建编辑器实例
+    editor = window.UE.getEditor(props.editorId, config)
+    
+    // 编辑器就绪
+    editor.ready(() => {
+      isReady.value = true
+      
+      // 设置初始内容
+      if (props.modelValue) {
+        editor.setContent(props.modelValue)
+      }
+      
+      // 监听内容变化
+      editor.addListener('contentChange', () => {
+        const content = editor.getContent()
+        emit('update:modelValue', content)
+      })
+      
+      emit('ready', editor)
+    })
+    
+  } catch (error) {
+    console.error('Failed to initialize UEditor:', error)
+  }
+}
+
+// 监听 modelValue 变化
+watch(() => props.modelValue, (newVal) => {
+  if (isReady.value && editor) {
+    const currentContent = editor.getContent()
+    if (newVal !== currentContent) {
+      editor.setContent(newVal || '')
+    }
+  }
+})
+
+onMounted(() => {
+  initEditor()
+})
+
+onBeforeUnmount(() => {
+  if (editor) {
+    try {
+      editor.destroy()
+    } catch (e) {
+      console.warn('Error destroying editor:', e)
+    }
+    editor = null
+  }
+})
+
+// 暴露方法供父组件调用
+defineExpose({
+  getEditor: () => editor,
+  getContent: () => editor?.getContent() || '',
+  setContent: (content) => editor?.setContent(content || ''),
+  insertHtml: (html) => editor?.execCommand('insertHtml', html),
+  focus: () => editor?.focus()
+})
+</script>
+
+<style scoped>
+.ueditor-container {
+  width: 100%;
+  line-height: normal;
+}
+
+/* 覆盖 UEditor 默认样式 */
+:deep(.edui-editor) {
+  border: 1px solid #dcdfe6 !important;
+  border-radius: 4px;
+}
+
+:deep(.edui-editor-toolbarbox) {
+  border-bottom: 1px solid #dcdfe6 !important;
+  background: #f5f7fa !important;
+}
+
+:deep(.edui-editor-iframeholder) {
+  border: none !important;
+}
+</style>

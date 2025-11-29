@@ -1,0 +1,338 @@
+<template>
+  <div class="write-article-page">
+    <div class="editor-container">
+      <h2 class="page-title">{{ isEdit ? '编辑文章' : '写文章' }}</h2>
+      
+      <el-form 
+        ref="formRef"
+        :model="form" 
+        :rules="rules" 
+        label-position="top"
+      >
+        <el-form-item label="标题" prop="headline">
+          <el-input 
+            v-model="form.headline" 
+            placeholder="请输入文章标题"
+            maxlength="100"
+            show-word-limit
+          />
+        </el-form-item>
+        
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="分类" prop="type">
+              <el-cascader
+                v-model="form.typeArray"
+                :options="categoryOptions"
+                placeholder="请选择分类"
+                @change="onTypeChange"
+                clearable
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="积分">
+              <el-input-number 
+                v-model="form.credit" 
+                :min="0" 
+                :max="100"
+                placeholder="阅读所需积分"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-form-item label="缩略图">
+          <el-upload
+            class="thumbnail-uploader"
+            :show-file-list="false"
+            :http-request="uploadThumbnail"
+            accept="image/*"
+          >
+            <img v-if="form.thumbnail" :src="form.thumbnail" class="thumbnail-preview" />
+            <el-icon v-else class="upload-icon"><Plus /></el-icon>
+          </el-upload>
+        </el-form-item>
+        
+        <el-form-item label="内容" prop="content">
+          <div class="editor-wrapper">
+            <UEditor
+              v-model="form.content"
+              :config="editorConfig"
+              @ready="onEditorReady"
+            />
+          </div>
+        </el-form-item>
+        
+        <el-form-item>
+          <div class="form-actions">
+            <el-button @click="saveDraft" :loading="saving">保存草稿</el-button>
+            <el-button type="primary" @click="publish" :loading="publishing">
+              {{ isEdit ? '更新' : '发布' }}
+            </el-button>
+          </div>
+        </el-form-item>
+      </el-form>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
+import { useArticleStore } from '@/stores/article'
+import { articleApi, uploadApi } from '@/api'
+import UEditor from '@/components/editor/UEditor.vue'
+
+const route = useRoute()
+const router = useRouter()
+const articleStore = useArticleStore()
+
+const formRef = ref(null)
+const saving = ref(false)
+const publishing = ref(false)
+
+const isEdit = computed(() => !!route.params.id)
+
+// UEditor 配置
+const editorConfig = {
+  initialFrameHeight: 450,
+  autoHeightEnabled: true,
+  autoFloatEnabled: false,
+  maximumWords: 100000
+}
+
+// 编辑器就绪回调
+function onEditorReady(editor) {
+  console.log('UEditor ready:', editor)
+}
+
+const form = reactive({
+  headline: '',
+  type: null,
+  typeArray: [],
+  content: '',
+  thumbnail: '',
+  credit: 0,
+  drafted: 0
+})
+
+const rules = {
+  headline: [
+    { required: true, message: '请输入标题', trigger: 'blur' },
+    { max: 100, message: '标题不能超过100个字符', trigger: 'blur' }
+  ],
+  type: [
+    { required: true, message: '请选择分类', trigger: 'change' }
+  ],
+  content: [
+    { required: true, message: '请输入内容', trigger: 'blur' }
+  ]
+}
+
+const categoryOptions = computed(() => {
+  const types = articleStore.articleTypes
+  const options = []
+  const mainCategories = {}
+  
+  // 分组
+  for (const [id, name] of Object.entries(types)) {
+    const typeId = parseInt(id)
+    if (typeId < 100) {
+      mainCategories[typeId] = {
+        value: typeId,
+        label: name,
+        children: []
+      }
+    }
+  }
+  
+  // 添加子分类
+  for (const [id, name] of Object.entries(types)) {
+    const typeId = parseInt(id)
+    if (typeId >= 100) {
+      const mainId = Math.floor(typeId / 100)
+      if (mainCategories[mainId]) {
+        mainCategories[mainId].children.push({
+          value: typeId,
+          label: name
+        })
+      }
+    }
+  }
+  
+  // 转换为数组
+  for (const category of Object.values(mainCategories)) {
+    if (category.children.length === 0) {
+      delete category.children
+    }
+    options.push(category)
+  }
+  
+  return options
+})
+
+function onTypeChange(value) {
+  if (value && value.length > 0) {
+    form.type = value[value.length - 1]
+  } else {
+    form.type = null
+  }
+}
+
+async function uploadThumbnail({ file }) {
+  try {
+    const res = await uploadApi.uploadImage(file)
+    form.thumbnail = res.data.url
+    ElMessage.success('上传成功')
+  } catch (error) {
+    console.error('上传失败:', error)
+  }
+}
+
+async function saveDraft() {
+  form.drafted = 1
+  await saveArticle()
+}
+
+async function publish() {
+  form.drafted = 0
+  await saveArticle()
+}
+
+async function saveArticle() {
+  if (!formRef.value) return
+  
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+  
+  const action = form.drafted === 1 ? 'saving' : 'publishing'
+  if (action === 'saving') {
+    saving.value = true
+  } else {
+    publishing.value = true
+  }
+  
+  try {
+    const data = {
+      headline: form.headline,
+      type: form.type,
+      content: form.content,
+      thumbnail: form.thumbnail,
+      credit: form.credit,
+      drafted: form.drafted
+    }
+    
+    if (isEdit.value) {
+      await articleApi.update(route.params.id, data)
+      ElMessage.success('更新成功')
+    } else {
+      const res = await articleApi.create(data)
+      ElMessage.success(form.drafted === 1 ? '草稿已保存' : '发布成功')
+      router.push({ name: 'ArticleDetail', params: { id: res.data.articleid } })
+    }
+  } catch (error) {
+    console.error('保存失败:', error)
+  } finally {
+    saving.value = false
+    publishing.value = false
+  }
+}
+
+async function fetchArticle() {
+  if (!isEdit.value) return
+  
+  try {
+    const res = await articleApi.getDetail(route.params.id)
+    const article = res.data
+    
+    form.headline = article.headline
+    form.type = article.type
+    form.content = article.content
+    form.thumbnail = article.thumbnail
+    form.credit = article.credit
+    form.drafted = article.drafted
+    
+    // 设置级联选择器的值
+    const mainType = Math.floor(article.type / 100)
+    if (article.type >= 100) {
+      form.typeArray = [mainType, article.type]
+    } else {
+      form.typeArray = [article.type]
+    }
+  } catch (error) {
+    console.error('获取文章失败:', error)
+    ElMessage.error('文章不存在')
+    router.push({ name: 'Home' })
+  }
+}
+
+onMounted(async () => {
+  await articleStore.fetchArticleTypes()
+  await fetchArticle()
+})
+</script>
+
+<style scoped>
+.write-article-page {
+  padding: 20px 0;
+  background: #f5f7fa;
+  min-height: calc(100vh - 200px);
+}
+
+.editor-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 30px;
+  color: #303133;
+}
+
+.thumbnail-uploader {
+  width: 200px;
+  height: 120px;
+  border: 1px dashed #dcdfe6;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.3s;
+}
+
+.thumbnail-uploader:hover {
+  border-color: #409eff;
+}
+
+.thumbnail-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.upload-icon {
+  font-size: 40px;
+  color: #909399;
+}
+
+.editor-wrapper {
+  width: 100%;
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+}
+</style>
