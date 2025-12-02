@@ -18,42 +18,6 @@
           />
         </el-form-item>
         
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="分类" prop="type">
-              <el-cascader
-                v-model="form.typeArray"
-                :options="categoryOptions"
-                placeholder="请选择分类"
-                @change="onTypeChange"
-                clearable
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="积分">
-              <el-input-number 
-                v-model="form.credit" 
-                :min="0" 
-                :max="100"
-                placeholder="阅读所需积分"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-form-item label="缩略图">
-          <el-upload
-            class="thumbnail-uploader"
-            :show-file-list="false"
-            :http-request="uploadThumbnail"
-            accept="image/*"
-          >
-            <img v-if="form.thumbnail" :src="form.thumbnail" class="thumbnail-preview" />
-            <el-icon v-else class="upload-icon"><Plus /></el-icon>
-          </el-upload>
-        </el-form-item>
-        
         <el-form-item label="内容" prop="content">
           <div class="editor-wrapper">
             <UEditor
@@ -63,6 +27,45 @@
             />
           </div>
         </el-form-item>
+        
+        <el-row :gutter="20" class="meta-row">
+          <el-col :xs="24" :sm="12" :md="8">
+            <el-form-item label="分类" prop="type" class="meta-item">
+              <el-cascader
+                v-model="form.typeArray"
+                :options="categoryOptions"
+                placeholder="请选择分类"
+                @change="onTypeChange"
+                clearable
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12" :md="8">
+            <el-form-item label="积分" class="meta-item">
+              <el-input-number 
+                v-model="form.credit" 
+                :min="0" 
+                :max="100"
+                placeholder="阅读所需积分"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="24" :md="8">
+            <el-form-item label="缩略图" class="meta-item">
+              <div class="thumbnail-box">
+                <el-upload
+                  class="thumbnail-uploader"
+                  :show-file-list="false"
+                  :http-request="uploadThumbnail"
+                  accept="image/*"
+                >
+                  <img v-if="form.thumbnail" :src="form.thumbnail" class="thumbnail-preview" />
+                  <el-icon v-else class="upload-icon"><Plus /></el-icon>
+                </el-upload>
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
         
         <el-form-item>
           <div class="form-actions">
@@ -298,9 +301,38 @@ onMounted(async () => {
   color: #303133;
 }
 
+.meta-row {
+  margin-bottom: 12px;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+}
+
+.meta-item :deep(.el-form-item__label) {
+  margin-bottom: 4px;
+}
+
+.meta-item :deep(.el-form-item__content) {
+  display: flex;
+  align-items: flex-start;
+}
+
+.meta-item :deep(.el-input-number),
+.meta-item :deep(.el-cascader) {
+  width: 220px;
+}
+
+.thumbnail-box {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .thumbnail-uploader {
-  width: 200px;
-  height: 120px;
+  width: 180px;
+  height: 40px;
   border: 1px dashed #dcdfe6;
   border-radius: 6px;
   cursor: pointer;
@@ -322,7 +354,7 @@ onMounted(async () => {
 }
 
 .upload-icon {
-  font-size: 40px;
+  font-size: 16px;
   color: #909399;
 }
 

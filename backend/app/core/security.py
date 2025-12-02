@@ -4,21 +4,35 @@
 import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Union
+
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+
 from app.core.config import settings
 
 
-# 密码上下文
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """验证密码"""
-    # 兼容旧的MD5密码
-    if len(hashed_password) == 32:
-        return hashlib.md5(plain_password.encode()).hexdigest() == hashed_password
-    return pwd_context.verify(plain_password, hashed_password)
+    """验证密码
+
+    - 兼容旧的 MD5 密码（32 位十六进制）
+    - 其余情况使用 bcrypt 库直接验证，避免 passlib 与 bcrypt 版本不兼容问题
+    """
+    if not hashed_password:
+        return False
+
+    # 兼容旧的 MD5 密码
+    if len(hashed_password) == 32 and all(c in "0123456789abcdef" for c in hashed_password.lower()):
+        return hashlib.md5(plain_password.encode("utf-8")).hexdigest() == hashed_password
+
+    # 其余使用 bcrypt 校验
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"),
+            hashed_password.encode("utf-8"),
+        )
+    except ValueError:
+        # 哈希格式不正确时，直接返回 False
+        return False
 
 
 def is_md5_password(hashed_password: str) -> bool:
@@ -27,8 +41,10 @@ def is_md5_password(hashed_password: str) -> bool:
 
 
 def get_password_hash(password: str) -> str:
-    """获取bcrypt密码哈希（推荐用于新用户）"""
-    return pwd_context.hash(password)
+    """获取 bcrypt 密码哈希（推荐用于新用户）"""
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
 
 
 def get_md5_hash(password: str) -> str:

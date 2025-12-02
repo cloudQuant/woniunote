@@ -1,6 +1,6 @@
 import { isVNode, createVNode, render } from 'vue';
-import NotificationConstructor from './notification.mjs';
-import { notificationTypes } from './notification2.mjs';
+import NotificationConstructor from './notification2.mjs';
+import { notificationTypes } from './notification.mjs';
 import { isClient } from '@vueuse/core';
 import { isString, isFunction } from '@vue/shared';
 import { isElement, isUndefined } from '../../../utils/types.mjs';

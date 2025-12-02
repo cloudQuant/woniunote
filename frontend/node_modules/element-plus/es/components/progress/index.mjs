@@ -1,5 +1,5 @@
-import Progress from './src/progress2.mjs';
-export { progressProps } from './src/progress.mjs';
+import Progress from './src/progress.mjs';
+export { progressProps } from './src/progress2.mjs';
 import { withInstall } from '../../utils/vue/install.mjs';
 
 const ElProgress = withInstall(Progress);

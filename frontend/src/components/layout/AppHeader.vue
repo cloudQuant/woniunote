@@ -4,11 +4,10 @@
     <div class="top-bar">
       <div class="top-container">
         <router-link to="/" class="logo">
-          <img src="/logo.png" alt="云子量化" class="logo-img" />
-          <span class="logo-text">云子量化</span>
+          <img src="/logo.png" alt="WoniuNote Logo" class="logo-img" />
         </router-link>
         <div class="slogan-wrapper">
-          <span class="slogan">量化的不仅是股票、期货、期权、债券等投资交易工具，更是量化自我，量化是人生漫长的修行</span>
+          <span class="slogan">量化投资 · 量化自我 · 量化是一生的修行</span>
         </div>
       </div>
     </div>

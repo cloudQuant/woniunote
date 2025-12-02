@@ -113,11 +113,14 @@ async def login(
             detail="用户名或密码错误"
         )
     
-    # 自动升级MD5密码为bcrypt（增强安全性）
-    if is_md5_password(user.password):
-        user.password = get_password_hash(login_data.password)
-        user.updatetime = datetime.now()
-        await db.commit()
+    # 注意：当前数据库 users.password 字段长度为 varchar(32)，仅能存储 MD5 哈希。
+    # 为避免 "Data too long for column 'password'" 错误，这里暂不在登录时自动将 MD5 升级为 bcrypt，
+    # 仅在注册新用户时使用 bcrypt 存储密码。
+    # 如需启用自动升级，需要先在数据库中将 users.password 字段扩展到足够长度（例如 varchar(128)）。
+    # if is_md5_password(user.password):
+    #     user.password = get_password_hash(login_data.password)
+    #     user.updatetime = datetime.now()
+    #     await db.commit()
     
     # 生成令牌
     access_token = create_access_token(data={"sub": str(user.userid)})

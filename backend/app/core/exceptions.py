@@ -11,6 +11,7 @@ from pydantic import ValidationError
 import traceback
 
 from app.core.logger import log_error, log_warning
+from app.core.config import settings
 
 
 # ==================== 自定义异常 ====================
@@ -159,15 +160,22 @@ async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError) -
         elif "foreign key constraint" in str(exc).lower():
             error_msg = "关联数据不存在或被引用"
     
-    log_error(f"数据库异常: {error_msg}", {
+    # 在日志中附带完整的异常信息，方便排查
+    log_error(f"数据库异常: {error_msg} - {str(exc)[:500]}", {
         "path": str(request.url.path),
         "method": request.method,
         "error": str(exc)[:500]  # 限制错误信息长度
     })
     
+    # 开发环境下，将具体异常信息返回到 detail 字段，方便前端看到真实错误
+    detail_data: Optional[Any] = None
+    if settings.DEBUG:
+        detail_data = {"error": str(exc)[:500]}
+    
     return create_error_response(
         code=500,
         message=error_msg,
+        detail=detail_data,
         path=str(request.url.path)
     )
 

@@ -13,7 +13,8 @@ class CommentVote(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     userid = Column(Integer, ForeignKey("users.userid"), nullable=False, index=True)
-    commentid = Column(Integer, ForeignKey("comments.commentid"), nullable=False, index=True)
+    # 关联到 comment 表的 commentid 字段（注意表名是 comment，而不是 comments）
+    commentid = Column(Integer, ForeignKey("comment.commentid"), nullable=False, index=True)
     vote_type = Column(Integer, nullable=False)  # 1: 点赞, -1: 踩
     createtime = Column(DateTime, default=datetime.now)
     

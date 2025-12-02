@@ -11,11 +11,15 @@ class Settings(BaseSettings):
     """应用配置类"""
     # 应用设置
     APP_NAME: str = "WoniuNote"
-    DEBUG: bool = False
+    # 开发环境下默认开启 DEBUG，方便定位错误
+    DEBUG: bool = True
     SECRET_KEY: str = "your-secret-key-change-in-production"
     
     # 数据库设置
-    DATABASE_URL: str = "mysql+asyncmy://root:password@localhost:3306/woniunote"
+    # 默认使用专用的 woniunote_user 账户，避免使用 root 帐号导致权限或安全问题
+    # 注意：MySQL 用户通常创建为 'woniunote_user'@'localhost'，因此这里使用 localhost 而不是 127.0.0.1
+    # 如需本地覆盖，可在 .env 中设置 DATABASE_URL
+    DATABASE_URL: str = "mysql+asyncmy://woniunote_user:Woniunote_password1!@localhost:3306/woniunote"
     
     # Redis设置
     REDIS_URL: str = "redis://localhost:6379/0"

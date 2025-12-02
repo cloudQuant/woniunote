@@ -46,7 +46,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             elif response.status_code >= 500:
                 log_error(
                     f"Server error: {method} {path}",
-                    extra={"status": response.status_code, "client_ip": client_ip}
+                    {"status": response.status_code, "client_ip": client_ip}
                 )
             
             return response
@@ -58,7 +58,10 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             # 记录异常
             log_error(
                 f"Request exception: {method} {path}",
-                error=e,
-                extra={"duration_ms": f"{duration_ms:.2f}", "client_ip": client_ip}
+                {
+                    "error": repr(e),
+                    "duration_ms": f"{duration_ms:.2f}",
+                    "client_ip": client_ip,
+                },
             )
             raise

@@ -145,3 +145,10 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Node / frontend
+node_modules/
+frontend/node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
