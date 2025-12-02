@@ -31,11 +31,16 @@ class Base(DeclarativeBase):
 
 
 async def get_db() -> AsyncSession:
-    """获取数据库会话的依赖项"""
+    """
+    获取数据库会话的依赖项
+    
+    注意: 事务管理由业务代码负责
+    - 业务代码需要显式调用 await db.commit() 提交
+    - 异常时会自动回滚
+    """
     async with AsyncSessionLocal() as session:
         try:
             yield session
-            await session.commit()
         except Exception:
             await session.rollback()
             raise

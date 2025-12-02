@@ -162,3 +162,74 @@ export const uploadApi = {
     })
   }
 }
+
+// 积分API
+export const creditApi = {
+  getList: (params) => api.get('/credits/', { params }),
+  getSummary: () => api.get('/credits/summary'),
+  payArticle: (articleId) => api.post(`/credits/pay-article/${articleId}`),
+  checkArticle: (articleId) => api.get(`/credits/check-article/${articleId}`)
+}
+
+// 管理员API
+export const adminApi = {
+  getStats: () => api.get('/admin/stats'),
+  getUsers: (params) => api.get('/admin/users', { params }),
+  toggleHide: (articleId) => api.post(`/articles/${articleId}/hide`),
+  toggleCheck: (articleId) => api.post(`/articles/${articleId}/check`),
+  toggleRecommend: (articleId) => api.post(`/articles/${articleId}/recommend`)
+}
+
+// 扩展评论API
+export const myCommentApi = {
+  getMyComments: (params) => api.get('/comments/my', { params })
+}
+
+// 草稿API
+export const draftApi = {
+  getMyDrafts: (params) => api.get('/articles/drafts/my', { params })
+}
+
+// 待办事项API
+export const todoApi = {
+  // 分类
+  getCategories: () => api.get('/todos/categories'),
+  createCategory: (data) => api.post('/todos/categories', data),
+  updateCategory: (id, data) => api.put(`/todos/categories/${id}`, data),
+  deleteCategory: (id) => api.delete(`/todos/categories/${id}`),
+  // 事项
+  getItems: (params) => api.get('/todos/items', { params }),
+  createItem: (data) => api.post('/todos/items', data),
+  updateItem: (id, data) => api.put(`/todos/items/${id}`, data),
+  toggleItem: (id) => api.post(`/todos/items/${id}/toggle`),
+  deleteItem: (id) => api.delete(`/todos/items/${id}`),
+  getStats: () => api.get('/todos/stats')
+}
+
+// 卡片管理API
+export const cardApi = {
+  // 分类
+  getCategories: () => api.get('/cards/categories'),
+  createCategory: (data) => api.post('/cards/categories', data),
+  updateCategory: (id, data) => api.put(`/cards/categories/${id}`, data),
+  deleteCategory: (id) => api.delete(`/cards/categories/${id}`),
+  // 卡片
+  getCards: (params) => api.get('/cards/', { params }),
+  getCard: (id) => api.get(`/cards/${id}`),
+  createCard: (data) => api.post('/cards/', data),
+  updateCard: (id, data) => api.put(`/cards/${id}`, data),
+  deleteCard: (id) => api.delete(`/cards/${id}`),
+  // 时间追踪
+  startCard: (id) => api.post(`/cards/${id}/start`),
+  stopCard: (id) => api.post(`/cards/${id}/stop`),
+  completeCard: (id) => api.post(`/cards/${id}/complete`),
+  reopenCard: (id) => api.post(`/cards/${id}/reopen`),
+  getStats: () => api.get('/cards/stats/summary')
+}
+
+// 系统监控API
+export const systemApi = {
+  getStatus: () => api.get('/system/status'),
+  getDatabase: () => api.get('/system/database'),
+  healthCheck: () => api.get('/system/health')
+}

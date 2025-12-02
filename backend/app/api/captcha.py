@@ -3,7 +3,9 @@
 """
 import random
 import base64
+import threading
 from io import BytesIO
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Response
 from PIL import Image, ImageDraw, ImageFont
 import os
@@ -11,7 +13,24 @@ import os
 router = APIRouter()
 
 # 存储验证码 (简化版，生产环境应使用Redis)
+# 格式: {captcha_id: (code, expire_time)}
 captcha_store = {}
+captcha_lock = threading.Lock()
+
+# 验证码有效期（秒）
+CAPTCHA_EXPIRE_SECONDS = 300  # 5分钟
+
+
+def cleanup_expired_captchas():
+    """清理过期的验证码"""
+    now = datetime.now()
+    with captcha_lock:
+        expired_keys = [
+            key for key, (code, expire_time) in captcha_store.items()
+            if expire_time < now
+        ]
+        for key in expired_keys:
+            del captcha_store[key]
 
 
 def get_system_font():
@@ -71,14 +90,19 @@ def generate_code(length: int = 4) -> str:
 @router.get("/generate")
 async def generate_captcha():
     """生成验证码图片"""
+    # 先清理过期验证码（每次生成时清理，避免内存泄漏）
+    cleanup_expired_captchas()
+    
     # 生成验证码
     code = generate_code()
     
     # 生成唯一ID
     captcha_id = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=16))
     
-    # 存储验证码 (5分钟有效)
-    captcha_store[captcha_id] = code
+    # 存储验证码（带过期时间）
+    expire_time = datetime.now() + timedelta(seconds=CAPTCHA_EXPIRE_SECONDS)
+    with captcha_lock:
+        captcha_store[captcha_id] = (code, expire_time)
     
     # 生成图片
     image = generate_captcha_image(code)
@@ -101,17 +125,29 @@ async def generate_captcha():
 @router.post("/verify")
 async def verify_captcha(captcha_id: str, captcha_code: str):
     """验证验证码"""
-    stored_code = captcha_store.get(captcha_id)
-    
-    if not stored_code:
-        return {
-            "code": 400,
-            "message": "验证码已过期",
-            "data": {"valid": False}
-        }
-    
-    # 验证后删除
-    del captcha_store[captcha_id]
+    with captcha_lock:
+        stored = captcha_store.get(captcha_id)
+        
+        if not stored:
+            return {
+                "code": 400,
+                "message": "验证码已过期",
+                "data": {"valid": False}
+            }
+        
+        stored_code, expire_time = stored
+        
+        # 检查是否过期
+        if datetime.now() > expire_time:
+            del captcha_store[captcha_id]
+            return {
+                "code": 400,
+                "message": "验证码已过期",
+                "data": {"valid": False}
+            }
+        
+        # 验证后删除
+        del captcha_store[captcha_id]
     
     if stored_code.lower() == captcha_code.lower():
         return {
@@ -135,13 +171,21 @@ def validate_captcha(captcha_id: str, captcha_code: str) -> tuple[bool, str]:
     if not captcha_id or not captcha_code:
         return False, "请输入验证码"
     
-    stored_code = captcha_store.get(captcha_id)
-    
-    if not stored_code:
-        return False, "验证码已过期，请点击刷新"
-    
-    # 验证后删除
-    del captcha_store[captcha_id]
+    with captcha_lock:
+        stored = captcha_store.get(captcha_id)
+        
+        if not stored:
+            return False, "验证码已过期，请点击刷新"
+        
+        stored_code, expire_time = stored
+        
+        # 检查是否过期
+        if datetime.now() > expire_time:
+            del captcha_store[captcha_id]
+            return False, "验证码已过期，请点击刷新"
+        
+        # 验证后删除
+        del captcha_store[captcha_id]
     
     if stored_code.lower() == captcha_code.lower():
         return True, ""

@@ -21,13 +21,18 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
+def is_md5_password(hashed_password: str) -> bool:
+    """检查是否是MD5密码（需要升级）"""
+    return len(hashed_password) == 32
+
+
 def get_password_hash(password: str) -> str:
-    """获取密码哈希"""
+    """获取bcrypt密码哈希（推荐用于新用户）"""
     return pwd_context.hash(password)
 
 
 def get_md5_hash(password: str) -> str:
-    """获取MD5哈希（兼容旧系统）"""
+    """获取MD5哈希（仅用于兼容旧系统，不推荐新用户使用）"""
     return hashlib.md5(password.encode()).hexdigest()
 
 

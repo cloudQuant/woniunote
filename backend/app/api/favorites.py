@@ -27,14 +27,14 @@ async def get_my_favorites(
 ):
     """获取我的收藏列表"""
     # 获取总数
-    count_query = select(func.count()).where(
+    count_query = select(func.count()).select_from(Favorite).where(
         and_(
             Favorite.userid == current_user.userid,
             Favorite.canceled == 0
         )
     )
     total_result = await db.execute(count_query)
-    total = total_result.scalar()
+    total = total_result.scalar() or 0
     
     # 分页获取收藏
     offset = (page - 1) * page_size

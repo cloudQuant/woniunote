@@ -2,15 +2,15 @@
 用户API
 """
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.core.database import get_db
-from app.core.security import verify_password, get_md5_hash
+from app.core.security import verify_password, get_password_hash
 from app.models.user import User
 from app.schemas.user import UserUpdate, UserPasswordUpdate, UserResponse
-from app.schemas.common import ResponseModel
+from app.schemas.common import ResponseModel, PaginatedResponse
 from app.api.deps import get_current_user_required, get_admin_user
 
 router = APIRouter()
@@ -75,34 +75,50 @@ async def update_password(
             detail="旧密码错误"
         )
     
-    # 更新密码
-    current_user.password = get_md5_hash(password_data.new_password)
+    # 更新密码（使用bcrypt加密）
+    current_user.password = get_password_hash(password_data.new_password)
     current_user.updatetime = datetime.now()
     await db.commit()
     
     return ResponseModel(code=200, message="密码修改成功")
 
 
-@router.get("/", response_model=ResponseModel[list])
+@router.get("/", response_model=PaginatedResponse[dict])
 async def list_users(
-    page: int = 1,
-    page_size: int = 10,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    keyword: str = Query(None, description="搜索用户名或昵称"),
     admin_user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
     """获取用户列表（管理员）"""
-    offset = (page - 1) * page_size
+    # 构建查询
+    query = select(User)
     
-    result = await db.execute(
-        select(User)
-        .order_by(User.userid.desc())
-        .offset(offset)
-        .limit(page_size)
-    )
+    # 关键词搜索
+    if keyword:
+        query = query.where(
+            User.username.contains(keyword) | User.nickname.contains(keyword)
+        )
+    
+    # 获取总数
+    count_query = select(func.count()).select_from(query.subquery())
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+    
+    # 分页
+    offset = (page - 1) * page_size
+    query = query.order_by(User.userid.desc()).offset(offset).limit(page_size)
+    
+    result = await db.execute(query)
     users = result.scalars().all()
     
-    return ResponseModel(
+    return PaginatedResponse(
         code=200,
         message="success",
-        data=[UserResponse.model_validate(u).model_dump() for u in users]
+        data=[UserResponse.model_validate(u).model_dump() for u in users],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size if total > 0 else 0
     )

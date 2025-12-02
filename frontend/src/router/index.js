@@ -72,6 +72,24 @@ const routes = [
         name: 'UserFavorites',
         component: () => import('@/views/user/MyFavorites.vue'),
         meta: { title: '我的收藏' }
+      },
+      {
+        path: 'comments',
+        name: 'UserComments',
+        component: () => import('@/views/user/MyComments.vue'),
+        meta: { title: '我的评论' }
+      },
+      {
+        path: 'credits',
+        name: 'UserCredits',
+        component: () => import('@/views/user/MyCredits.vue'),
+        meta: { title: '我的积分' }
+      },
+      {
+        path: 'drafts',
+        name: 'UserDrafts',
+        component: () => import('@/views/user/MyDrafts.vue'),
+        meta: { title: '我的草稿' }
       }
     ]
   },
@@ -86,6 +104,18 @@ const routes = [
     name: 'AdminDashboard',
     component: () => import('@/views/admin/AdminDashboard.vue'),
     meta: { title: '系统管理', requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/todo',
+    name: 'Todo',
+    component: () => import('@/views/Todo.vue'),
+    meta: { title: '待办事项', requiresAuth: true }
+  },
+  {
+    path: '/cards',
+    name: 'Cards',
+    component: () => import('@/views/Cards.vue'),
+    meta: { title: '任务卡片', requiresAuth: true }
   },
   {
     path: '/edit/:id',

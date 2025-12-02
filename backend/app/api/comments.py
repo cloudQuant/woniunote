@@ -11,9 +11,12 @@ from app.core.database import get_db
 from app.models.comment import Comment
 from app.models.article import Article
 from app.models.user import User
+from app.models.credit import Credit
+from app.models.comment_vote import CommentVote
 from app.schemas.comment import CommentCreate, CommentUpdate, CommentResponse
 from app.schemas.common import ResponseModel, PaginatedResponse
 from app.api.deps import get_current_user_required, get_admin_user
+from sqlalchemy import and_
 
 router = APIRouter()
 
@@ -37,12 +40,12 @@ async def get_article_comments(
         )
     
     # 获取评论总数
-    count_query = select(func.count()).where(
+    count_query = select(func.count()).select_from(Comment).where(
         Comment.articleid == articleid,
         Comment.hidden == 0
     )
     total_result = await db.execute(count_query)
-    total = total_result.scalar()
+    total = total_result.scalar() or 0
     
     # 分页获取评论
     offset = (page - 1) * page_size
@@ -107,6 +110,23 @@ async def create_comment(
     
     await db.commit()
     await db.refresh(new_comment)
+    
+    # 添加积分记录 - 发表评论+2积分
+    credit_category = "回复评论" if comment_data.replyid else "发表评论"
+    credit_record = Credit(
+        userid=current_user.userid,
+        category=credit_category,
+        target=comment_data.articleid,
+        credit=2,
+        createtime=datetime.now(),
+        updatetime=datetime.now()
+    )
+    db.add(credit_record)
+    
+    # 更新用户积分
+    current_user.credit = (current_user.credit or 0) + 2
+    
+    await db.commit()
     
     return ResponseModel(
         code=200,
@@ -212,13 +232,44 @@ async def agree_comment(
             detail="评论不存在"
         )
     
-    comment.agreecount += 1
+    # 检查是否已投票
+    vote_result = await db.execute(
+        select(CommentVote).where(
+            and_(
+                CommentVote.userid == current_user.userid,
+                CommentVote.commentid == commentid
+            )
+        )
+    )
+    existing_vote = vote_result.scalar_one_or_none()
+    
+    if existing_vote:
+        if existing_vote.vote_type == 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="您已经点过赞了"
+            )
+        else:
+            # 之前是踩，现在改为赞
+            existing_vote.vote_type = 1
+            comment.opposecount = max(0, comment.opposecount - 1)
+            comment.agreecount += 1
+    else:
+        # 新投票
+        new_vote = CommentVote(
+            userid=current_user.userid,
+            commentid=commentid,
+            vote_type=1
+        )
+        db.add(new_vote)
+        comment.agreecount += 1
+    
     await db.commit()
     
     return ResponseModel(
         code=200,
         message="点赞成功",
-        data={"agreecount": comment.agreecount}
+        data={"agreecount": comment.agreecount, "opposecount": comment.opposecount}
     )
 
 
@@ -240,11 +291,113 @@ async def oppose_comment(
             detail="评论不存在"
         )
     
-    comment.opposecount += 1
+    # 检查是否已投票
+    vote_result = await db.execute(
+        select(CommentVote).where(
+            and_(
+                CommentVote.userid == current_user.userid,
+                CommentVote.commentid == commentid
+            )
+        )
+    )
+    existing_vote = vote_result.scalar_one_or_none()
+    
+    if existing_vote:
+        if existing_vote.vote_type == -1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="您已经踩过了"
+            )
+        else:
+            # 之前是赞，现在改为踩
+            existing_vote.vote_type = -1
+            comment.agreecount = max(0, comment.agreecount - 1)
+            comment.opposecount += 1
+    else:
+        # 新投票
+        new_vote = CommentVote(
+            userid=current_user.userid,
+            commentid=commentid,
+            vote_type=-1
+        )
+        db.add(new_vote)
+        comment.opposecount += 1
+    
     await db.commit()
     
     return ResponseModel(
         code=200,
         message="操作成功",
-        data={"opposecount": comment.opposecount}
+        data={"agreecount": comment.agreecount, "opposecount": comment.opposecount}
+    )
+
+
+@router.get("/{commentid}/vote-status")
+async def get_vote_status(
+    commentid: int,
+    current_user: User = Depends(get_current_user_required),
+    db: AsyncSession = Depends(get_db)
+):
+    """获取当前用户对评论的投票状态"""
+    vote_result = await db.execute(
+        select(CommentVote).where(
+            and_(
+                CommentVote.userid == current_user.userid,
+                CommentVote.commentid == commentid
+            )
+        )
+    )
+    vote = vote_result.scalar_one_or_none()
+    
+    return ResponseModel(
+        code=200,
+        message="success",
+        data={
+            "voted": vote is not None,
+            "vote_type": vote.vote_type if vote else None
+        }
+    )
+
+
+@router.get("/my", response_model=PaginatedResponse[dict])
+async def get_my_comments(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(get_current_user_required),
+    db: AsyncSession = Depends(get_db)
+):
+    """获取我的评论列表"""
+    # 获取评论总数
+    count_query = select(func.count()).select_from(Comment).where(Comment.userid == current_user.userid)
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+    
+    # 分页获取评论，同时加载文章信息
+    offset = (page - 1) * page_size
+    query = select(Comment).where(
+        Comment.userid == current_user.userid
+    ).options(
+        selectinload(Comment.article)
+    ).order_by(desc(Comment.createtime)).offset(offset).limit(page_size)
+    
+    result = await db.execute(query)
+    comments = result.scalars().all()
+    
+    # 构建响应，包含文章标题
+    comment_list = []
+    for c in comments:
+        comment_data = CommentResponse.model_validate(c).model_dump()
+        if c.article:
+            comment_data["article_headline"] = c.article.headline
+            comment_data["article_id"] = c.article.articleid
+        comment_list.append(comment_data)
+    
+    return PaginatedResponse(
+        code=200,
+        message="success",
+        data=comment_list,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size if total > 0 else 0
     )

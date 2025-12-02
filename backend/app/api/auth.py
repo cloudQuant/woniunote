@@ -11,6 +11,7 @@ from app.core.security import (
     verify_password,
     get_password_hash,
     get_md5_hash,
+    is_md5_password,
     create_access_token,
     create_refresh_token,
     decode_token
@@ -20,6 +21,7 @@ from app.schemas.user import UserCreate, UserLogin, UserResponse
 from app.schemas.common import ResponseModel, TokenResponse
 from app.api.deps import get_current_user_required
 from app.api.captcha import validate_captcha
+from app.models.credit import Credit
 
 router = APIRouter()
 
@@ -40,10 +42,10 @@ async def register(
             detail="用户名已存在"
         )
     
-    # 创建用户
+    # 创建用户（新用户使用bcrypt加密密码）
     new_user = User(
         username=user_data.username,
-        password=get_md5_hash(user_data.password),  # 兼容旧系统使用MD5
+        password=get_password_hash(user_data.password),  # 使用bcrypt加密
         nickname=user_data.nickname or user_data.username,
         qq=user_data.qq,
         role="user",
@@ -55,6 +57,18 @@ async def register(
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
+    
+    # 添加注册积分记录
+    credit_record = Credit(
+        userid=new_user.userid,
+        category="用户注册",
+        target=new_user.userid,
+        credit=50,
+        createtime=datetime.now(),
+        updatetime=datetime.now()
+    )
+    db.add(credit_record)
+    await db.commit()
     
     return ResponseModel(
         code=200,
@@ -98,6 +112,12 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户名或密码错误"
         )
+    
+    # 自动升级MD5密码为bcrypt（增强安全性）
+    if is_md5_password(user.password):
+        user.password = get_password_hash(login_data.password)
+        user.updatetime = datetime.now()
+        await db.commit()
     
     # 生成令牌
     access_token = create_access_token(data={"sub": str(user.userid)})

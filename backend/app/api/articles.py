@@ -429,3 +429,106 @@ async def toggle_recommend(
         message="推荐状态已更新",
         data={"recommended": article.recommended}
     )
+
+
+@router.post("/{articleid}/hide")
+async def toggle_hide(
+    articleid: int,
+    admin_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """切换文章隐藏状态（管理员）"""
+    result = await db.execute(
+        select(Article).where(Article.articleid == articleid)
+    )
+    article = result.scalar_one_or_none()
+    
+    if not article:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="文章不存在"
+        )
+    
+    article.hidden = 1 if article.hidden == 0 else 0
+    article.updatetime = datetime.now()
+    await db.commit()
+    
+    return ResponseModel(
+        code=200,
+        message="隐藏状态已更新",
+        data={"hidden": article.hidden}
+    )
+
+
+@router.post("/{articleid}/check")
+async def toggle_check(
+    articleid: int,
+    admin_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """切换文章审核状态（管理员）"""
+    result = await db.execute(
+        select(Article).where(Article.articleid == articleid)
+    )
+    article = result.scalar_one_or_none()
+    
+    if not article:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="文章不存在"
+        )
+    
+    article.checked = 1 if article.checked == 0 else 0
+    article.updatetime = datetime.now()
+    await db.commit()
+    
+    return ResponseModel(
+        code=200,
+        message="审核状态已更新",
+        data={"checked": article.checked}
+    )
+
+
+@router.get("/drafts/my", response_model=PaginatedResponse[dict])
+async def get_my_drafts(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    current_user: User = Depends(get_current_user_required),
+    db: AsyncSession = Depends(get_db)
+):
+    """获取我的草稿列表"""
+    # 构建查询 - 获取当前用户的草稿
+    query = select(Article).where(
+        and_(
+            Article.userid == current_user.userid,
+            Article.drafted == 1
+        )
+    )
+    
+    # 获取总数
+    count_query = select(func.count()).select_from(query.subquery())
+    total_result = await db.execute(count_query)
+    total = total_result.scalar()
+    
+    # 分页
+    offset = (page - 1) * page_size
+    query = query.order_by(desc(Article.updatetime)).offset(offset).limit(page_size)
+    
+    result = await db.execute(query)
+    articles = result.scalars().all()
+    
+    # 构建响应
+    article_list = []
+    for article in articles:
+        item = ArticleListItem.model_validate(article)
+        article_list.append(item.model_dump())
+    
+    return PaginatedResponse(
+        code=200,
+        message="success",
+        data=article_list,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=math.ceil(total / page_size) if total > 0 else 0
+    )

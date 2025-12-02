@@ -28,6 +28,18 @@
               <el-icon><Star /></el-icon>
               <span>我的收藏</span>
             </el-menu-item>
+            <el-menu-item index="/user/comments">
+              <el-icon><ChatDotRound /></el-icon>
+              <span>我的评论</span>
+            </el-menu-item>
+            <el-menu-item index="/user/credits">
+              <el-icon><Coin /></el-icon>
+              <span>我的积分</span>
+            </el-menu-item>
+            <el-menu-item index="/user/drafts">
+              <el-icon><EditPen /></el-icon>
+              <span>我的草稿</span>
+            </el-menu-item>
           </el-menu>
         </div>
       </el-col>
@@ -44,7 +56,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { User, Document, Star } from '@element-plus/icons-vue'
+import { User, Document, Star, ChatDotRound, Coin, EditPen } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
