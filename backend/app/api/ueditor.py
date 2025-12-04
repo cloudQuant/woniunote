@@ -283,7 +283,7 @@ async def ueditor_handler(
             logger.error(f"Video upload failed: {e}")
             return JSONResponse(content={"state": "FAIL", "message": str(e)})
     
-    # 上传附件
+    # 上传附件（支持PDF/PPT特殊处理）
     elif action == "uploadfile":
         if not upfile:
             return JSONResponse(content={"state": "FAIL", "message": "No file uploaded"})
@@ -307,12 +307,34 @@ async def ueditor_handler(
             with open(save_path, "wb") as f:
                 f.write(content)
             
-            return JSONResponse(content={
+            # 如果是PPT/PPTX，转换为PDF
+            pdf_url = None
+            if suffix in ['.ppt', '.pptx']:
+                from app.utils.ppt_converter import convert_ppt_to_pdf
+                pdf_path = convert_ppt_to_pdf(save_path, upload_dir)
+                if pdf_path and os.path.exists(pdf_path):
+                    pdf_filename = os.path.basename(pdf_path)
+                    pdf_url = f"/api/uploads/{pdf_filename}"
+                    logger.info(f"PPT converted to PDF: {pdf_filename}")
+            
+            # 构建返回数据
+            response_data = {
                 "state": "SUCCESS",
                 "url": f"/api/uploads/{new_filename}",
                 "title": filename,
                 "original": filename
-            })
+            }
+            
+            # 如果是PDF或PPT，返回包含PDF查看器占位符的HTML，而不是普通链接
+            if suffix == '.pdf' or pdf_url:
+                pdf_url_final = pdf_url if pdf_url else f"/api/uploads/{new_filename}"
+                # UEditor会直接插入这个HTML到编辑器中
+                response_data["url"] = pdf_url_final
+                response_data["fileType"] = "pdf"
+                # 返回HTML片段，UEditor会自动插入
+                response_data["html"] = f'<div class="pdf-viewer-placeholder" data-pdf-url="{pdf_url_final}" data-type="pdf"></div>'
+            
+            return JSONResponse(content=response_data)
             
         except Exception as e:
             logger.error(f"File upload failed: {e}")

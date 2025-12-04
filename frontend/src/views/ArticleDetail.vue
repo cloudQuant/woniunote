@@ -24,7 +24,9 @@
                 </div>
               </header>
               
-              <div class="article-body" v-html="article.content"></div>
+              <div class="article-body" ref="articleBodyRef">
+                <div v-html="article.content"></div>
+              </div>
               
               <footer class="article-footer">
                 <div class="article-actions">
@@ -119,7 +121,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { View, Star, Edit, CaretTop, CaretBottom } from '@element-plus/icons-vue'
@@ -127,6 +129,8 @@ import { useUserStore } from '@/stores/user'
 import { useArticleStore } from '@/stores/article'
 import { articleApi, commentApi, favoriteApi } from '@/api'
 import Sidebar from '@/components/sidebar/Sidebar.vue'
+import PdfViewer from '@/components/viewer/PdfViewer.vue'
+import { createApp } from 'vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -140,6 +144,7 @@ const isFavorited = ref(false)
 const favoriteLoading = ref(false)
 const newComment = ref('')
 const submittingComment = ref(false)
+const articleBodyRef = ref(null)
 
 const typeName = computed(() => {
   if (!article.value) return ''
@@ -171,11 +176,63 @@ async function fetchArticle() {
     
     // 获取评论
     await fetchComments()
+    
+    // 等待DOM更新后，替换PDF占位符
+    await nextTick()
+    replacePdfPlaceholders()
   } catch (error) {
     console.error('获取文章详情失败:', error)
   } finally {
     loading.value = false
   }
+}
+
+// 替换文章内容中的PDF占位符为PDF查看器组件
+function replacePdfPlaceholders() {
+  if (!articleBodyRef.value) return
+  
+  // 查找所有PDF占位符
+  const placeholders = articleBodyRef.value.querySelectorAll('.pdf-viewer-placeholder')
+  placeholders.forEach((placeholder) => {
+    const pdfUrl = placeholder.getAttribute('data-pdf-url')
+    if (!pdfUrl) return
+    
+    // 创建容器div
+    const container = document.createElement('div')
+    container.className = 'pdf-viewer-wrapper'
+    container.style.margin = '20px 0'
+    
+    // 创建Vue应用实例并挂载PDF查看器组件
+    const app = createApp(PdfViewer, { pdfUrl })
+    app.mount(container)
+    
+    // 替换占位符
+    if (placeholder.parentNode) {
+      placeholder.parentNode.replaceChild(container, placeholder)
+    }
+  })
+  
+  // 同时检查是否有PDF链接需要转换为查看器
+  const pdfLinks = articleBodyRef.value.querySelectorAll('a[href$=".pdf"]')
+  pdfLinks.forEach((link) => {
+    const href = link.getAttribute('href')
+    if (href && href.includes('/api/uploads/')) {
+      // 检查是否已经有占位符，避免重复
+      const existing = link.closest('.pdf-viewer-wrapper')
+      if (!existing) {
+        const container = document.createElement('div')
+        container.className = 'pdf-viewer-wrapper'
+        container.style.margin = '20px 0'
+        
+        const app = createApp(PdfViewer, { pdfUrl: href })
+        app.mount(container)
+        
+        if (link.parentNode) {
+          link.parentNode.replaceChild(container, link)
+        }
+      }
+    }
+  })
 }
 
 async function fetchComments() {
@@ -439,6 +496,12 @@ onMounted(() => {
   margin-top: 10px;
   display: flex;
   gap: 20px;
+}
+
+/* PDF查看器样式 */
+.pdf-viewer-wrapper {
+  margin: 20px 0;
+  width: 100%;
 }
 
 .comment-actions span {

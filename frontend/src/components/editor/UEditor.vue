@@ -91,6 +91,32 @@ async function initEditor() {
         emit('update:modelValue', content)
       })
       
+      // 监听UEditor的文件上传成功事件
+      // UEditor上传文件成功后，如果后端返回了html字段，会使用该HTML插入编辑器
+      // 否则会插入默认的文件链接
+      // 我们通过监听afterUpfile事件来替换默认插入的文件链接为PDF占位符
+      editor.addListener('afterUpfile', (type, result) => {
+        try {
+          // result是后端返回的JSON对象
+          if (result && result.fileType === 'pdf' && result.html) {
+            // 如果后端返回了html字段，UEditor应该已经插入了
+            // 但为了确保，我们检查一下并替换可能的默认链接
+            setTimeout(() => {
+              const content = editor.getContent()
+              const pdfUrl = result.pdfUrl || result.url
+              // 查找可能的文件链接并替换为PDF占位符
+              const linkPattern = new RegExp(`<a[^>]*href=["']${pdfUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^>]*>.*?</a>`, 'gi')
+              if (linkPattern.test(content)) {
+                const newContent = content.replace(linkPattern, result.html)
+                editor.setContent(newContent)
+              }
+            }, 200)
+          }
+        } catch (e) {
+          console.warn('处理PDF上传结果失败:', e)
+        }
+      })
+      
       emit('ready', editor)
     })
     

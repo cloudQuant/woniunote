@@ -5,12 +5,12 @@ echo "  WoniuNote 应用停止脚本"
 echo "========================================"
 echo ""
 
-# 关闭占用端口8000的进程（后端）
-echo "[1/2] 停止后端服务 (端口 8000)..."
-PID_8000=$(lsof -ti:8000 2>/dev/null)
-if [ -n "$PID_8000" ]; then
-    echo "     正在关闭进程 $PID_8000..."
-    kill -9 $PID_8000 2>/dev/null
+# 关闭占用端口8888的进程（后端）
+echo "[1/2] 停止后端服务 (端口 8888)..."
+PID_8888=$(lsof -ti:8888 2>/dev/null)
+if [ -n "$PID_8888" ]; then
+    echo "     正在关闭进程 $PID_8888..."
+    kill -9 $PID_8888 2>/dev/null
     echo "     后端服务已停止"
 else
     echo "     后端服务未运行"

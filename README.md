@@ -129,8 +129,8 @@ cd woniunote && python app.py
 cd backend
 pip install -r requirements.txt
 cp .env.example .env  # 编辑配置
-uvicorn app.main:app --reload --port 8001
-# API文档: http://localhost:8001/docs
+uvicorn app.main:app --reload --port 8888
+# API文档: http://localhost:8888/docs
 
 # 前端 (新终端)
 cd frontend
@@ -214,8 +214,8 @@ pytest tests/ --cov=woniunote --cov-report=html
 ## 📚 API 文档
 
 现代架构启动后自动生成：
-- **Swagger UI**: http://localhost:8001/docs
-- **ReDoc**: http://localhost:8001/redoc
+- **Swagger UI**: http://localhost:8888/docs
+- **ReDoc**: http://localhost:8888/redoc
 
 主要 API 端点：
 
@@ -273,7 +273,7 @@ pip install -r requirements.txt
 cd woniunote && python app.py
 
 # Option 2: Modern (FastAPI + Vue)
-cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload --port 8001
+cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload --port 8888
 cd frontend && npm install && npm run dev
 ```
 

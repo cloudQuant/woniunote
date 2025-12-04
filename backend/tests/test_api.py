@@ -6,7 +6,7 @@ import pytest
 import httpx
 import asyncio
 
-BASE_URL = "http://localhost:8001"
+BASE_URL = "http://localhost:8888"
 
 class TestHealthAPI:
     """健康检查测试"""
