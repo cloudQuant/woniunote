@@ -331,8 +331,12 @@ async def ueditor_handler(
                 # UEditor会直接插入这个HTML到编辑器中
                 response_data["url"] = pdf_url_final
                 response_data["fileType"] = "pdf"
-                # 返回HTML片段，UEditor会自动插入
-                response_data["html"] = f'<div class="pdf-viewer-placeholder" data-pdf-url="{pdf_url_final}" data-type="pdf"></div>'
+                response_data["pdfUrl"] = pdf_url_final
+                # 返回HTML片段，包含可见内容防止被UEditor过滤
+                # 使用p标签包裹，添加文字内容，确保不会被过滤
+                response_data["html"] = f'''<p class="pdf-viewer-placeholder" data-pdf-url="{pdf_url_final}" data-type="pdf" style="background:#f5f5f5;padding:20px;border:1px dashed #ccc;border-radius:4px;text-align:center;margin:10px 0;">
+📄 PDF文档: {filename}<br/><small style="color:#999;">文档将在发布后以PDF查看器形式显示</small>
+</p>'''
             
             return JSONResponse(content=response_data)
             

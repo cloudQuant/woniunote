@@ -121,9 +121,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import ElementPlus from 'element-plus'
 import { View, Star, Edit, CaretTop, CaretBottom } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useArticleStore } from '@/stores/article'
@@ -131,6 +132,9 @@ import { articleApi, commentApi, favoriteApi } from '@/api'
 import Sidebar from '@/components/sidebar/Sidebar.vue'
 import PdfViewer from '@/components/viewer/PdfViewer.vue'
 import { createApp } from 'vue'
+
+// 存储创建的PDF查看器应用实例，用于清理
+const pdfViewerApps = []
 
 const route = useRoute()
 const router = useRouter()
@@ -191,10 +195,19 @@ async function fetchArticle() {
 function replacePdfPlaceholders() {
   if (!articleBodyRef.value) return
   
+  // 清理之前创建的应用实例
+  pdfViewerApps.forEach(app => {
+    try { app.unmount() } catch(e) {}
+  })
+  pdfViewerApps.length = 0
+  
   // 查找所有PDF占位符
   const placeholders = articleBodyRef.value.querySelectorAll('.pdf-viewer-placeholder')
+  console.log('Found PDF placeholders:', placeholders.length)
+  
   placeholders.forEach((placeholder) => {
     const pdfUrl = placeholder.getAttribute('data-pdf-url')
+    console.log('PDF URL:', pdfUrl)
     if (!pdfUrl) return
     
     // 创建容器div
@@ -202,9 +215,11 @@ function replacePdfPlaceholders() {
     container.className = 'pdf-viewer-wrapper'
     container.style.margin = '20px 0'
     
-    // 创建Vue应用实例并挂载PDF查看器组件
+    // 创建Vue应用实例并挂载PDF查看器组件，注入ElementPlus
     const app = createApp(PdfViewer, { pdfUrl })
+    app.use(ElementPlus)
     app.mount(container)
+    pdfViewerApps.push(app)
     
     // 替换占位符
     if (placeholder.parentNode) {
@@ -225,7 +240,9 @@ function replacePdfPlaceholders() {
         container.style.margin = '20px 0'
         
         const app = createApp(PdfViewer, { pdfUrl: href })
+        app.use(ElementPlus)
         app.mount(container)
+        pdfViewerApps.push(app)
         
         if (link.parentNode) {
           link.parentNode.replaceChild(container, link)
@@ -328,6 +345,14 @@ watch(() => route.params.id, () => {
 onMounted(() => {
   articleStore.fetchArticleTypes()
   fetchArticle()
+})
+
+onBeforeUnmount(() => {
+  // 清理PDF查看器应用实例
+  pdfViewerApps.forEach(app => {
+    try { app.unmount() } catch(e) {}
+  })
+  pdfViewerApps.length = 0
 })
 </script>
 

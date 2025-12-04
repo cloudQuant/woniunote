@@ -136,7 +136,7 @@
     <div class="file-upload">
         <div class="upload-button">
             <div class="text">选择本地文件</div>
-            <input type="file" id="contentImport" accept=".md,.txt,.docx"/>
+            <input type="file" id="contentImport" accept=".md,.txt,.docx,.pdf,.ppt,.pptx"/>
         </div>
         <div class="upload-button">
             <div class="text" onclick="showMarkdownInput()">粘贴Markdown</div>
@@ -160,6 +160,8 @@
             <ul>
                 <li><b>Markdown</b>：md、txt文件</li>
                 <li><b>Word文档</b>：docx（基础支持）</li>
+                <li><b>PDF文档</b>：pdf文件（直接嵌入）</li>
+                <li><b>PPT演示</b>：ppt、pptx文件（自动转换为PDF）</li>
                 <li><b>直接粘贴</b>：Markdown文本内容</li>
                 <li><b>粘贴元宝</b>：元宝AI生成的Markdown内容</li>
                 <li><b>粘贴Deepseek</b>：Deepseek生成的Markdown内容</li>
@@ -580,6 +582,18 @@ document.getElementById('contentImport').addEventListener('change', function() {
     
     $('.file-tip').innerHTML = '正在读取文件...';
     
+    // PDF和PPT文件需要上传到服务器
+    if (fileExt === 'pdf' || fileExt === 'ppt' || fileExt === 'pptx') {
+        uploadDocumentFile(file, fileExt);
+        return;
+    }
+    
+    // DOCX文件也上传到服务器处理
+    if (fileExt === 'docx') {
+        uploadDocxFile(file);
+        return;
+    }
+    
     var reader = new FileReader();
     reader.onload = function(e) {
         var content = e.target.result;
@@ -590,7 +604,7 @@ document.getElementById('contentImport').addEventListener('change', function() {
             showMarkdownInput();
             $('.file-tip').innerHTML = '文件内容已加载到输入框中，请检查后点击"转换预览"';
         } else {
-            $('.file-tip').innerHTML = '暂不支持该文件格式，请选择.md或.txt文件';
+            $('.file-tip').innerHTML = '暂不支持该文件格式';
         }
     };
     
@@ -600,6 +614,100 @@ document.getElementById('contentImport').addEventListener('change', function() {
     
     reader.readAsText(file, 'UTF-8');
 });
+
+// 上传PDF/PPT文档到服务器
+function uploadDocumentFile(file, fileExt) {
+    var formData = new FormData();
+    formData.append('upfile', file);
+    
+    var typeText = fileExt === 'pdf' ? 'PDF' : 'PPT';
+    $('.file-tip').innerHTML = '正在上传' + typeText + '文件...';
+    
+    // 使用UEditor的上传接口
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/uedit?action=uploadfile', true);
+    
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                var result = JSON.parse(xhr.responseText);
+                if (result.state === 'SUCCESS') {
+                    // 如果后端返回了html字段（PDF占位符），直接使用
+                    if (result.html) {
+                        contentImport.data.result = result.html;
+                        $('.file-result').innerHTML = '<div style="text-align:center;padding:20px;"><p style="color:#52c41a;">✓ ' + typeText + '文件上传成功</p><p>文件将以PDF查看器形式嵌入</p><p style="color:#999;font-size:12px;">文件URL: ' + result.url + '</p></div>';
+                        $('.file-result').style.display = 'block';
+                        $('.file-tip').innerHTML = typeText + '上传成功！点击下方"确认"按钮插入内容到编辑器。';
+                    } else {
+                        // 普通文件链接
+                        var html = '<p><a href="' + result.url + '" target="_blank">' + (result.original || file.name) + '</a></p>';
+                        contentImport.data.result = html;
+                        $('.file-result').innerHTML = html;
+                        $('.file-result').style.display = 'block';
+                        $('.file-tip').innerHTML = '文件上传成功！点击下方"确认"按钮插入链接到编辑器。';
+                    }
+                } else {
+                    $('.file-tip').innerHTML = '上传失败: ' + (result.message || '未知错误');
+                }
+            } catch (e) {
+                $('.file-tip').innerHTML = '解析响应失败: ' + e.message;
+            }
+        } else {
+            $('.file-tip').innerHTML = '上传失败: HTTP ' + xhr.status;
+        }
+    };
+    
+    xhr.onerror = function() {
+        $('.file-tip').innerHTML = '网络错误，上传失败';
+    };
+    
+    xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+            var percent = Math.round((e.loaded / e.total) * 100);
+            $('.file-tip').innerHTML = '正在上传' + typeText + '文件... ' + percent + '%';
+        }
+    };
+    
+    xhr.send(formData);
+}
+
+// 上传DOCX文档（基础支持）
+function uploadDocxFile(file) {
+    var formData = new FormData();
+    formData.append('upfile', file);
+    
+    $('.file-tip').innerHTML = '正在上传Word文档...';
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/uedit?action=uploadfile', true);
+    
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                var result = JSON.parse(xhr.responseText);
+                if (result.state === 'SUCCESS') {
+                    var html = '<p><a href="' + result.url + '" target="_blank" style="color:#1890ff;">' + (result.original || file.name) + '</a></p>';
+                    contentImport.data.result = html;
+                    $('.file-result').innerHTML = '<div style="text-align:center;padding:20px;"><p style="color:#52c41a;">✓ Word文档上传成功</p>' + html + '</div>';
+                    $('.file-result').style.display = 'block';
+                    $('.file-tip').innerHTML = 'Word文档上传成功！点击下方"确认"按钮插入链接到编辑器。';
+                } else {
+                    $('.file-tip').innerHTML = '上传失败: ' + (result.message || '未知错误');
+                }
+            } catch (e) {
+                $('.file-tip').innerHTML = '解析响应失败: ' + e.message;
+            }
+        } else {
+            $('.file-tip').innerHTML = '上传失败: HTTP ' + xhr.status;
+        }
+    };
+    
+    xhr.onerror = function() {
+        $('.file-tip').innerHTML = '网络错误，上传失败';
+    };
+    
+    xhr.send(formData);
+}
 
 // 与UEditor交互 - 使用internal.js提供的对象
 // internal.js已经为我们提供了dialog和editor对象

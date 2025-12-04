@@ -1,5 +1,5 @@
 <template>
-  <div class="pdf-viewer-container">
+  <div class="pdf-viewer-container" ref="containerRef">
     <div class="pdf-viewer-toolbar">
       <el-button-group>
         <el-button size="small" @click="prevPage" :disabled="pageNum <= 1">
@@ -18,10 +18,10 @@
         <el-button size="small" @click="zoomOut" :disabled="scale <= 0.5">
           <el-icon><ZoomOut /></el-icon>
         </el-button>
-        <el-button size="small" @click="resetZoom">
-          {{ Math.round(scale * 100) }}%
+        <el-button size="small" @click="fitWidth" :type="fitMode === 'width' ? 'primary' : 'default'">
+          适应宽度
         </el-button>
-        <el-button size="small" @click="zoomIn" :disabled="scale >= 3">
+        <el-button size="small" @click="zoomIn" :disabled="scale >= 5">
           <el-icon><ZoomIn /></el-icon>
         </el-button>
       </el-button-group>
@@ -47,11 +47,12 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import * as pdfjsLib from 'pdfjs-dist'
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { ArrowLeft, ArrowRight, ZoomIn, ZoomOut, Download, Loading, Warning } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
-// 设置worker路径
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+// 设置worker路径 - 使用本地worker文件
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker
 
 const props = defineProps({
   pdfUrl: {
@@ -62,12 +63,31 @@ const props = defineProps({
 
 const canvasRef = ref(null)
 const viewerRef = ref(null)
+const containerRef = ref(null)
 const loading = ref(false)
 const error = ref('')
 const pageNum = ref(1)
 const numPages = ref(0)
-const scale = ref(1.5)
+const scale = ref(1)
+const fitMode = ref('width') // 'width' 或 'manual'
 let pdfDoc = null
+let currentPage = null // 缓存当前页面对象
+
+// 计算适应宽度的缩放比例
+function calculateFitWidthScale(page) {
+  if (!viewerRef.value) return 1
+  
+  // 获取容器宽度（减去padding）
+  const containerWidth = viewerRef.value.clientWidth - 40
+  
+  // 获取页面原始尺寸（scale=1）
+  const viewport = page.getViewport({ scale: 1 })
+  
+  // 计算缩放比例使页面宽度适应容器
+  const fitScale = containerWidth / viewport.width
+  
+  return Math.min(fitScale, 3) // 最大缩放3倍
+}
 
 // 渲染PDF页面
 async function renderPage(num) {
@@ -78,13 +98,26 @@ async function renderPage(num) {
     error.value = ''
     
     const page = await pdfDoc.getPage(num)
+    currentPage = page
+    
+    // 如果是适应宽度模式，自动计算缩放比例
+    if (fitMode.value === 'width') {
+      scale.value = calculateFitWidthScale(page)
+    }
+    
     const viewport = page.getViewport({ scale: scale.value })
     
     const canvas = canvasRef.value
     const context = canvas.getContext('2d')
     
-    canvas.height = viewport.height
-    canvas.width = viewport.width
+    // 使用设备像素比提高清晰度
+    const pixelRatio = window.devicePixelRatio || 1
+    canvas.height = viewport.height * pixelRatio
+    canvas.width = viewport.width * pixelRatio
+    canvas.style.height = viewport.height + 'px'
+    canvas.style.width = viewport.width + 'px'
+    
+    context.scale(pixelRatio, pixelRatio)
     
     const renderContext = {
       canvasContext: context,
@@ -107,10 +140,13 @@ async function loadPdf() {
     loading.value = true
     error.value = ''
     
-    // 构建完整URL
-    const url = props.pdfUrl.startsWith('http') 
-      ? props.pdfUrl 
-      : `${import.meta.env.VITE_API_BASE_URL || ''}${props.pdfUrl}`
+    // 构建完整URL - 使用当前页面的origin确保正确的域名和端口
+    let url = props.pdfUrl
+    if (!url.startsWith('http')) {
+      url = `${window.location.origin}${url}`
+    }
+    
+    console.log('Loading PDF from:', url)
     
     const loadingTask = pdfjsLib.getDocument({
       url: url,
@@ -119,11 +155,12 @@ async function loadPdf() {
     
     pdfDoc = await loadingTask.promise
     numPages.value = pdfDoc.numPages
+    console.log('PDF loaded successfully, pages:', numPages.value)
     
     await renderPage(1)
   } catch (err) {
     console.error('Load PDF error:', err)
-    error.value = '加载PDF失败，请检查文件是否存在'
+    error.value = '加载PDF失败: ' + (err.message || '请检查文件是否存在')
     loading.value = false
   }
 }
@@ -142,28 +179,32 @@ function nextPage() {
 
 // 缩放
 function zoomIn() {
-  if (scale.value >= 3) return
-  scale.value = Math.min(scale.value + 0.25, 3)
+  fitMode.value = 'manual'
+  if (scale.value >= 5) return
+  scale.value = Math.min(scale.value + 0.25, 5)
   renderPage(pageNum.value)
 }
 
 function zoomOut() {
+  fitMode.value = 'manual'
   if (scale.value <= 0.5) return
   scale.value = Math.max(scale.value - 0.25, 0.5)
   renderPage(pageNum.value)
 }
 
-function resetZoom() {
-  scale.value = 1.5
+function fitWidth() {
+  fitMode.value = 'width'
   renderPage(pageNum.value)
 }
 
 // 下载PDF
 function downloadPdf() {
+  let url = props.pdfUrl
+  if (!url.startsWith('http')) {
+    url = `${window.location.origin}${url}`
+  }
   const link = document.createElement('a')
-  link.href = props.pdfUrl.startsWith('http') 
-    ? props.pdfUrl 
-    : `${import.meta.env.VITE_API_BASE_URL || ''}${props.pdfUrl}`
+  link.href = url
   link.download = ''
   link.target = '_blank'
   document.body.appendChild(link)
@@ -182,9 +223,19 @@ onMounted(() => {
   if (props.pdfUrl) {
     loadPdf()
   }
+  
+  // 监听窗口大小变化，重新计算适应宽度
+  window.addEventListener('resize', handleResize)
 })
 
+function handleResize() {
+  if (fitMode.value === 'width' && pdfDoc) {
+    renderPage(pageNum.value)
+  }
+}
+
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
   if (pdfDoc) {
     pdfDoc.destroy()
     pdfDoc = null
