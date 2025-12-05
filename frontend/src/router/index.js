@@ -148,7 +148,7 @@ router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   
   // 设置页面标题
-  document.title = to.meta.title ? `${to.meta.title} - WoniuNote` : 'WoniuNote'
+  document.title = to.meta.title ? `${to.meta.title} - cloudQuant` : 'cloudQuant'
   
   // 需要登录的页面
   if (to.meta.requiresAuth && !userStore.isLoggedIn) {

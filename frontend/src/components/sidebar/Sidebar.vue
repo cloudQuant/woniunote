@@ -14,21 +14,6 @@
       </el-input>
     </div>
     
-    <!-- 最新文章 -->
-    <div class="sidebar-card">
-      <h3 class="sidebar-title">最新文章</h3>
-      <ul class="article-list">
-        <li v-for="(article, index) in hotArticles.latest" :key="article.articleid">
-          <router-link :to="{ name: 'ArticleDetail', params: { id: article.articleid } }">
-            <span class="list-num">{{ index + 1 }}.</span>{{ article.headline }}
-          </router-link>
-        </li>
-        <li v-if="!hotArticles.latest || hotArticles.latest.length === 0" class="empty-tip">
-          暂无文章
-        </li>
-      </ul>
-    </div>
-    
     <!-- 热门文章 -->
     <div class="sidebar-card">
       <h3 class="sidebar-title">热门文章</h3>

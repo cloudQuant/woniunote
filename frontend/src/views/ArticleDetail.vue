@@ -172,6 +172,11 @@ async function fetchArticle() {
     const res = await articleApi.getDetail(route.params.id)
     article.value = res.data
     
+    // 动态设置页面标题为文章标题
+    if (article.value?.headline) {
+      document.title = `${article.value.headline} - cloudQuant`
+    }
+    
     // 检查收藏状态
     if (userStore.isLoggedIn) {
       const favRes = await favoriteApi.check(route.params.id)

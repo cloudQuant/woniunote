@@ -53,17 +53,15 @@ def get_thumb_root() -> str:
         if os.path.exists(thumb_dir):
             return thumb_dir
     
-    # 2. 尝试从当前文件位置推断项目根目录
-    # backend/app/api/thumb.py -> backend -> 项目根目录 -> woniunote/resource/thumb
+    # 2. 尝试从当前文件位置推断 backend 目录
+    # backend/app/api/thumb.py -> app/api -> app -> backend
     current_file = os.path.abspath(__file__)
     backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
-    project_root = os.path.dirname(backend_dir)
     
+    # 优先使用 backend/resource/thumb（新架构）
     possible_paths = [
-        os.path.join(project_root, "woniunote", "resource", "thumb"),
-        os.path.join(backend_dir, "..", "woniunote", "resource", "thumb"),
-        os.path.join(os.getcwd(), "woniunote", "resource", "thumb"),
-        os.path.join(os.getcwd(), "..", "woniunote", "resource", "thumb"),
+        os.path.join(backend_dir, "resource", "thumb"),
+        os.path.join(os.getcwd(), "resource", "thumb"),
     ]
     
     for path in possible_paths:

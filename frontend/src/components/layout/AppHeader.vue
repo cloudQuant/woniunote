@@ -4,7 +4,7 @@
     <div class="top-bar">
       <div class="top-container">
         <router-link to="/" class="logo">
-          <img src="/logo.png" alt="WoniuNote Logo" class="logo-img" />
+          <img src="/logo.png" alt="cloudQuant Logo" class="logo-img" />
         </router-link>
         <div class="slogan-wrapper">
           <span class="slogan">量化投资 · 量化自我 · 量化是一生的修行</span>

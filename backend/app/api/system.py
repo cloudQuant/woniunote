@@ -1,9 +1,12 @@
 """
 系统监控API
+提供系统资源、数据库状态、进程信息等监控功能
 """
 import os
+import sys
 import platform
 from datetime import datetime
+from typing import List, Dict, Any
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
@@ -17,6 +20,13 @@ from app.api.deps import get_admin_user
 
 router = APIRouter()
 
+# 尝试导入psutil
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
+
 
 def get_size_format(bytes_size: int) -> str:
     """格式化字节大小"""
@@ -25,6 +35,14 @@ def get_size_format(bytes_size: int) -> str:
             return f"{bytes_size:.2f} {unit}"
         bytes_size /= 1024
     return f"{bytes_size:.2f} PB"
+
+
+def get_size_bytes(bytes_size: int) -> Dict[str, Any]:
+    """返回字节大小的详细信息"""
+    return {
+        "bytes": bytes_size,
+        "formatted": get_size_format(bytes_size)
+    }
 
 
 def get_time_format(seconds: int) -> str:
@@ -46,13 +64,10 @@ async def get_system_status(
     admin_user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取系统状态"""
-    try:
-        import psutil
-        has_psutil = True
-    except ImportError:
-        has_psutil = False
-    
+    """
+    获取完整系统状态
+    包括：系统信息、CPU、内存、磁盘、网络、进程等
+    """
     # 基础系统信息
     system_info = {
         "platform": platform.system(),
@@ -64,45 +79,172 @@ async def get_system_status(
         "current_time": datetime.now().isoformat()
     }
     
-    # 资源信息（如果有psutil）
-    resource_info = {}
-    if has_psutil:
+    # 资源信息
+    resources = {
+        "has_psutil": HAS_PSUTIL
+    }
+    
+    if HAS_PSUTIL:
         # CPU信息
-        resource_info["cpu_count"] = psutil.cpu_count()
-        resource_info["cpu_percent"] = psutil.cpu_percent(interval=1)
+        cpu_freq = psutil.cpu_freq()
+        resources["cpu"] = {
+            "count_physical": psutil.cpu_count(logical=False),
+            "count_logical": psutil.cpu_count(logical=True),
+            "percent": psutil.cpu_percent(interval=0.5),
+            "percent_per_cpu": psutil.cpu_percent(interval=0.1, percpu=True),
+            "freq_current": round(cpu_freq.current, 2) if cpu_freq else None,
+            "freq_max": round(cpu_freq.max, 2) if cpu_freq else None,
+        }
         
         # 内存信息
         memory = psutil.virtual_memory()
-        resource_info["memory_total"] = get_size_format(memory.total)
-        resource_info["memory_used"] = get_size_format(memory.used)
-        resource_info["memory_percent"] = memory.percent
+        swap = psutil.swap_memory()
+        resources["memory"] = {
+            "total": get_size_bytes(memory.total),
+            "used": get_size_bytes(memory.used),
+            "available": get_size_bytes(memory.available),
+            "percent": memory.percent,
+            "swap_total": get_size_bytes(swap.total),
+            "swap_used": get_size_bytes(swap.used),
+            "swap_percent": swap.percent
+        }
         
-        # 磁盘信息 (Windows使用C盘，Linux使用根目录)
-        import platform as pf
-        disk_path = 'C:\\' if pf.system() == 'Windows' else '/'
+        # 磁盘信息
+        disk_path = 'C:\\' if platform.system() == 'Windows' else '/'
         try:
             disk = psutil.disk_usage(disk_path)
-            resource_info["disk_total"] = get_size_format(disk.total)
-            resource_info["disk_used"] = get_size_format(disk.used)
-            resource_info["disk_percent"] = disk.percent
-            resource_info["disk_path"] = disk_path
+            disk_io = psutil.disk_io_counters()
+            resources["disk"] = {
+                "path": disk_path,
+                "total": get_size_bytes(disk.total),
+                "used": get_size_bytes(disk.used),
+                "free": get_size_bytes(disk.free),
+                "percent": disk.percent,
+                "read_bytes": get_size_bytes(disk_io.read_bytes) if disk_io else None,
+                "write_bytes": get_size_bytes(disk_io.write_bytes) if disk_io else None,
+            }
+        except Exception as e:
+            resources["disk"] = {"error": str(e)}
+        
+        # 网络信息
+        try:
+            net_io = psutil.net_io_counters()
+            resources["network"] = {
+                "bytes_sent": get_size_bytes(net_io.bytes_sent),
+                "bytes_recv": get_size_bytes(net_io.bytes_recv),
+                "packets_sent": net_io.packets_sent,
+                "packets_recv": net_io.packets_recv,
+                "errors_in": net_io.errin,
+                "errors_out": net_io.errout,
+            }
         except Exception:
-            resource_info["disk_error"] = "无法获取磁盘信息"
+            resources["network"] = {"error": "无法获取网络信息"}
         
         # 系统运行时间
         boot_time = datetime.fromtimestamp(psutil.boot_time())
-        uptime = (datetime.now() - boot_time).total_seconds()
-        resource_info["uptime"] = get_time_format(int(uptime))
-        resource_info["boot_time"] = boot_time.isoformat()
+        uptime_seconds = (datetime.now() - boot_time).total_seconds()
+        resources["uptime"] = {
+            "seconds": int(uptime_seconds),
+            "formatted": get_time_format(int(uptime_seconds)),
+            "boot_time": boot_time.isoformat()
+        }
+        
+        # 当前进程信息
+        current_process = psutil.Process()
+        resources["process"] = {
+            "pid": current_process.pid,
+            "name": current_process.name(),
+            "cpu_percent": current_process.cpu_percent(),
+            "memory_percent": round(current_process.memory_percent(), 2),
+            "memory_used": get_size_bytes(current_process.memory_info().rss),
+            "threads": current_process.num_threads(),
+            "create_time": datetime.fromtimestamp(current_process.create_time()).isoformat()
+        }
     else:
-        resource_info["note"] = "安装 psutil 库以获取更详细的系统资源信息"
+        resources["note"] = "请安装 psutil 库以获取系统资源信息: pip install psutil"
     
     return ResponseModel(
         code=200,
         message="success",
         data={
             "system": system_info,
-            "resources": resource_info
+            "resources": resources
+        }
+    )
+
+
+@router.get("/metrics", response_model=ResponseModel[dict])
+async def get_realtime_metrics(
+    admin_user: User = Depends(get_admin_user)
+):
+    """
+    获取实时监控指标（轻量级，用于定时刷新）
+    """
+    if not HAS_PSUTIL:
+        return ResponseModel(
+            code=200,
+            message="psutil not installed",
+            data={"error": "请安装 psutil 库"}
+        )
+    
+    memory = psutil.virtual_memory()
+    current_process = psutil.Process()
+    
+    return ResponseModel(
+        code=200,
+        message="success",
+        data={
+            "timestamp": datetime.now().isoformat(),
+            "cpu_percent": psutil.cpu_percent(interval=0.1),
+            "memory_percent": memory.percent,
+            "memory_used_gb": round(memory.used / (1024**3), 2),
+            "memory_total_gb": round(memory.total / (1024**3), 2),
+            "process_cpu": current_process.cpu_percent(),
+            "process_memory_mb": round(current_process.memory_info().rss / (1024**2), 2),
+        }
+    )
+
+
+@router.get("/processes", response_model=ResponseModel[dict])
+async def get_top_processes(
+    admin_user: User = Depends(get_admin_user),
+    limit: int = 10
+):
+    """
+    获取占用资源最多的进程
+    """
+    if not HAS_PSUTIL:
+        return ResponseModel(
+            code=200,
+            message="psutil not installed",
+            data={"error": "请安装 psutil 库"}
+        )
+    
+    processes = []
+    for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+        try:
+            pinfo = proc.info
+            processes.append({
+                "pid": pinfo['pid'],
+                "name": pinfo['name'],
+                "cpu_percent": pinfo['cpu_percent'] or 0,
+                "memory_percent": round(pinfo['memory_percent'] or 0, 2)
+            })
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+    
+    # 按CPU使用率排序
+    top_by_cpu = sorted(processes, key=lambda x: x['cpu_percent'], reverse=True)[:limit]
+    # 按内存使用率排序
+    top_by_memory = sorted(processes, key=lambda x: x['memory_percent'], reverse=True)[:limit]
+    
+    return ResponseModel(
+        code=200,
+        message="success",
+        data={
+            "top_by_cpu": top_by_cpu,
+            "top_by_memory": top_by_memory,
+            "total_processes": len(processes)
         }
     )
 

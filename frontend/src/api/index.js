@@ -231,5 +231,7 @@ export const cardApi = {
 export const systemApi = {
   getStatus: () => api.get('/system/status'),
   getDatabase: () => api.get('/system/database'),
+  getMetrics: () => api.get('/system/metrics'),
+  getProcesses: (limit = 10) => api.get(`/system/processes?limit=${limit}`),
   healthCheck: () => api.get('/system/health')
 }

@@ -44,6 +44,9 @@ const articleStore = useArticleStore()
 // 生成缩略图：优先使用后端缩略图服务，其次使用本地SVG占位图
 const colors = ['#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399', '#6f7ad3']
 
+// 缓存破坏版本号（更新缩略图后递增此值）
+const THUMB_VERSION = 'v2'
+
 const thumbnailUrl = computed(() => {
   // 1. 如果后端返回了具体的 thumbnail 字段，认为是 thumb 文件名，例如 "101.png"
   if (props.article.thumbnail) {
@@ -51,13 +54,13 @@ const thumbnailUrl = computed(() => {
     if (props.article.thumbnail.startsWith('http://') || props.article.thumbnail.startsWith('https://')) {
       return props.article.thumbnail
     }
-    // 否则走新后端缩略图路由
-    return `/api/thumb/${props.article.thumbnail}`
+    // 否则走新后端缩略图路由（带版本号防止缓存）
+    return `/api/thumb/${props.article.thumbnail}?${THUMB_VERSION}`
   }
 
   // 2. 如果没有 thumbnail，但有文章类型，则使用类型ID自动生成缩略图
   if (props.article.type) {
-    return `/api/thumb/${props.article.type}.png`
+    return `/api/thumb/${props.article.type}.png?${THUMB_VERSION}`
   }
 
   // 3. 最后兜底：使用 SVG data URL 作为占位图
