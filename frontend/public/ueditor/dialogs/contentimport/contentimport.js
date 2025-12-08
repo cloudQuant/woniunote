@@ -31,7 +31,254 @@ function processWord(file) {
     reader.readAsArrayBuffer(file);
 }
 
+// 修复元宝表格格式
+function fixYuanbaoTable(text) {
+    var result = text;
+    
+    // 1. 首先处理表格行被压缩成一行的情况
+    // 元宝格式: | 维度 | 分类树 | 回归树 |   |---|---|---|   | 任务目标 | xxx | yyy |
+    // 需要在两个或更多空格处分行
+    result = result.replace(/\|\s{2,}\|/g, '|\n|');
+    
+    // 2. 检测并修复分隔符行 |---|---|---|
+    // 分隔符行前后应该有换行
+    result = result.replace(/(\|[^|\n-]+\|[^|\n-]*\|[^\n]*)(\|[-:]+\|(?:[-:]+\|)+)/g, '$1\n$2');
+    result = result.replace(/(\|[-:]+\|(?:[-:]+\|)+)(\|[^|\n-]+)/g, '$1\n$2');
+    
+    // 3. 处理多列表格行被合并的情况
+    // 检测 | xxx | yyy | zzz |  后面跟着空格和另一个表格行
+    result = result.replace(/(\|(?:[^|\n]+\|){2,})\s{2,}(\|(?:[^|\n]+\|){2,})/g, '$1\n$2');
+    
+    // 4. 确保表格分隔符行独立
+    result = result.replace(/([^\n|])(\|[-:]+[-:|\s]+\|)/g, '$1\n$2');
+    result = result.replace(/(\|[-:]+[-:|\s]+\|)([^\n|])/g, '$1\n$2');
+    
+    // 5. 智能分行：检测完整的表格行模式
+    // 一个表格行通常是 | cell1 | cell2 | cell3 | 格式
+    // 计算每行应有的列数，然后分行
+    var lines = result.split('\n');
+    var processedLines = [];
+    
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        
+        // 检查是否是被压缩的表格行
+        if (line.indexOf('|') !== -1 && (line.match(/\|/g) || []).length > 6) {
+            // 可能是多行被压缩，尝试分割
+            // 检测分隔符模式 |---|
+            var separatorMatch = line.match(/\|[-:]+\|(?:[-:]+\|)+/);
+            if (separatorMatch) {
+                var separator = separatorMatch[0];
+                var parts = line.split(separator);
+                if (parts.length >= 2) {
+                    // 头部 + 分隔符 + 数据行们
+                    var headerPart = parts[0].trim();
+                    var dataParts = parts.slice(1).join(separator).trim();
+                    
+                    if (headerPart) processedLines.push(headerPart);
+                    processedLines.push(separator);
+                    
+                    // 分割数据行
+                    if (dataParts) {
+                        // 数据行用多空格分隔
+                        var dataRows = dataParts.split(/\s{2,}/).filter(function(r) { return r.trim(); });
+                        dataRows.forEach(function(row) {
+                            if (row.trim()) processedLines.push(row.trim());
+                        });
+                    }
+                    continue;
+                }
+            }
+            
+            // 尝试按多空格分割
+            var subLines = line.split(/\s{2,}/).filter(function(s) { return s.indexOf('|') !== -1; });
+            if (subLines.length > 1) {
+                subLines.forEach(function(sl) {
+                    if (sl.trim()) processedLines.push(sl.trim());
+                });
+                continue;
+            }
+        }
+        
+        processedLines.push(line);
+    }
+    
+    result = processedLines.join('\n');
+    
+    // 6. 清理表格中多余的空行
+    result = result.replace(/\|\n\n+\|/g, '|\n|');
+    
+    // 7. 确保表格前后有空行（Markdown表格需要）
+    result = result.replace(/([^\n])\n(\|[^|]+\|)/g, '$1\n\n$2');
+    result = result.replace(/(\|[^|]+\|)\n([^\n|])/g, '$1\n\n$2');
+    
+    return result;
+}
+
+// 预处理元宝格式的Markdown
+function preprocessYuanbaoMarkdown(markdown) {
+    var result = markdown;
+    
+    // 0. 首先处理换行符统一
+    result = result.replace(/\r\n/g, '\n');
+    result = result.replace(/\r/g, '\n');
+    
+    // 1. 移除零宽空格和其他不可见字符
+    result = result.replace(/[\u200B-\u200D\uFEFF]/g, '');
+    
+    // 1b. 修复元宝标题格式 - 标题后可能有多余的空格或特殊字符
+    // 处理标题：确保 # 号数量正确，去除末尾特殊字符
+    result = result.replace(/^(#{1,6})\s*(.*?)\s*$/gm, function(match, hashes, title) {
+        // 去除标题文本中的特殊字符
+        title = title.replace(/[​\u200B-\u200D\uFEFF]/g, '').trim();
+        return hashes + ' ' + title;
+    });
+    
+    // 1c. 处理元宝特有的表格格式（在同一行内的表格）
+    // 检测表格模式：| xxx |   | yyy |   | zzz |
+    // 元宝会把表格行压缩成一行，用多个空格分隔
+    result = result.replace(/(\|[^|\n]+\|)\s{2,}(\|[-:]+\|)/g, '$1\n$2');
+    result = result.replace(/(\|[-:]+\|)\s{2,}(\|[^|\n]+\|)/g, '$1\n$2');
+    result = result.replace(/(\|[^|\n]+\|)\s{2,}(\|[^|\n]+\|)/g, '$1\n$2');
+    
+    // 2. 处理元宝特殊的列表标记 "- ••" -> "-"
+    result = result.replace(/^(\s*)-\s*•+\s*/gm, '$1- ');
+    
+    // 3. 处理元宝特殊的编号列表 "1. 1.1.内容" -> "1. 内容"
+    result = result.replace(/^(\s*)(\d+)\.\s*\d+\.\d+\.\s*/gm, '$1$2. ');
+    
+    // 4. 处理元宝代码块中错误渲染的公式格式
+    // 例如：Gini(D)=1−k=1∑K​pk2​ 这种格式的公式在代码块中
+    // 将代码块中的公式保留为代码格式
+    
+    // 5. 处理元宝公式格式 - 检测并修复被错误渲染的LaTeX公式
+    // 修复常见的数学符号（元宝会把LaTeX渲染成Unicode数学符号）
+    var mathSymbolMap = {
+        '∑': '\\sum',
+        '∏': '\\prod',
+        '∫': '\\int',
+        '√': '\\sqrt',
+        '∞': '\\infty',
+        '≈': '\\approx',
+        '≠': '\\neq',
+        '≤': '\\leq',
+        '≥': '\\geq',
+        '×': '\\times',
+        '÷': '\\div',
+        '±': '\\pm',
+        '−': '-',
+        '·': '\\cdot',
+        '…': '\\cdots',
+        'α': '\\alpha',
+        'β': '\\beta',
+        'γ': '\\gamma',
+        'δ': '\\delta',
+        'ε': '\\epsilon',
+        'θ': '\\theta',
+        'λ': '\\lambda',
+        'μ': '\\mu',
+        'σ': '\\sigma',
+        'π': '\\pi',
+        'ω': '\\omega',
+        '∂': '\\partial',
+        '∇': '\\nabla',
+        '∈': '\\in',
+        '∉': '\\notin',
+        '⊂': '\\subset',
+        '⊃': '\\supset',
+        '∪': '\\cup',
+        '∩': '\\cap',
+        '∧': '\\wedge',
+        '∨': '\\vee',
+        '¬': '\\neg',
+        '→': '\\rightarrow',
+        '←': '\\leftarrow',
+        '↔': '\\leftrightarrow',
+        '⇒': '\\Rightarrow',
+        '⇐': '\\Leftarrow',
+        '⇔': '\\Leftrightarrow'
+    };
+    
+    // 6. 检测并修复元宝特有的公式格式
+    // 元宝会把公式如 \sum_{k=1}^{K} p_k^2 渲染成 k=1∑K​pk2​
+    // 这种格式很难完全还原，但我们可以尝试识别并包装为$$
+    
+    // 匹配看起来像被渲染过的公式的文本
+    // 特征：包含数学Unicode符号、下标上标格式等
+    result = result.replace(/([A-Za-z]+\([A-Za-z]\)\s*=\s*[^\n]+(?:[∑∏∫∞αβγδεθλμσπω]|[₀-₉⁰-⁹])[^\n]*)/g, function(match) {
+        // 如果已经在$$中，跳过
+        if (match.indexOf('$$') !== -1) return match;
+        // 如果在代码块中，跳过
+        if (match.indexOf('```') !== -1) return match;
+        
+        // 尝试将Unicode数学符号转换回LaTeX
+        var latex = match;
+        for (var symbol in mathSymbolMap) {
+            latex = latex.split(symbol).join(mathSymbolMap[symbol]);
+        }
+        
+        // 处理下标和上标的Unicode字符
+        latex = latex.replace(/([a-z])([₀-₉]+)/gi, function(m, letter, subscript) {
+            var num = subscript.replace(/[₀₁₂₃₄₅₆₇₈₉]/g, function(c) {
+                return '0123456789'['₀₁₂₃₄₅₆₇₈₉'.indexOf(c)];
+            });
+            return letter + '_{' + num + '}';
+        });
+        latex = latex.replace(/([a-z])([⁰¹²³⁴⁵⁶⁷⁸⁹]+)/gi, function(m, letter, superscript) {
+            var num = superscript.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, function(c) {
+                return '0123456789'['⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(c)];
+            });
+            return letter + '^{' + num + '}';
+        });
+        
+        return '$$' + latex + '$$';
+    });
+    
+    // 7. 处理独立行的公式（被代码块包裹的公式文本）
+    result = result.replace(/```\n([^`]+(?:[∑∏∫∞]|[=\-+])[^`]+)\n```/g, function(match, formula) {
+        // 将Unicode数学符号转换回LaTeX
+        var latex = formula.trim();
+        for (var symbol in mathSymbolMap) {
+            latex = latex.split(symbol).join(mathSymbolMap[symbol]);
+        }
+        return '$$' + latex + '$$';
+    });
+    
+    // 8. 处理元宝特有的公式格式：函数名(变量)=表达式
+    // 如：Entropy(D)=−k=1∑K​pk​log2​pk​
+    result = result.replace(/\n([A-Za-z]+\([A-Za-z]+\)\s*=\s*[^\n]*[∑∏∫∞−×÷±αβγδεθλμσπω][^\n]*)\n/g, function(match, formula) {
+        // 如果已经在$$中或代码块中，跳过
+        if (formula.indexOf('$$') !== -1 || formula.indexOf('```') !== -1) return match;
+        
+        var latex = formula.trim();
+        for (var symbol in mathSymbolMap) {
+            latex = latex.split(symbol).join(mathSymbolMap[symbol]);
+        }
+        return '\n$$' + latex + '$$\n';
+    });
+    
+    // 9. 处理元宝特有的下标格式: pk​ -> p_k (带有零宽空格的下标)
+    // 元宝会用特殊方式表示下标
+    result = result.replace(/([a-zA-Z])([a-zA-Z])​/g, function(match, base, subscript) {
+        return base + '_{' + subscript + '}';
+    });
+    
+    // 10. 处理log2​ -> \log_2 格式
+    result = result.replace(/log([0-9]+)​/g, '\\log_{$1}');
+    
+    // 11. 修复元宝表格格式 - 智能表格修复
+    result = fixYuanbaoTable(result);
+    
+    // 12. 修复重复的换行
+    result = result.replace(/\n{3,}/g, '\n\n');
+    
+    return result;
+}
+
 function processMarkdown(markdown) {
+    // 预处理元宝格式
+    markdown = preprocessYuanbaoMarkdown(markdown);
+    
     // 保存原始Markdown内容
     var originalMarkdown = markdown;
     var processedMarkdown = markdown;
@@ -261,12 +508,15 @@ function processMarkdown(markdown) {
         '<script type="text/javascript" id="MathJax-script" async ' +
         'src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>';
     
-    // 添加表格样式
+    // 添加表格样式 - 增强美观性
     var styles = '<style>\n' +
-        'table {border-collapse: collapse; width: 100%; margin: 10px 0;}\n' +
-        'table, th, td {border: 1px solid #ddd;}\n' +
-        'th, td {padding: 8px; text-align: left;}\n' +
-        'th {background-color: #f2f2f2;}\n' +
+        'table {border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);}\n' +
+        'table, th, td {border: 1px solid #e0e0e0;}\n' +
+        'th, td {padding: 12px 16px; text-align: left; vertical-align: top;}\n' +
+        'th {background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%); font-weight: 600; color: #333;}\n' +
+        'tr:nth-child(even) {background-color: #f8f9fa;}\n' +
+        'tr:hover {background-color: #e8f4fd;}\n' +
+        'td:first-child {font-weight: 500; white-space: nowrap;}\n' +
         '</style>\n';
     
     // 特别为网站添加的公式处理脚本

@@ -186,14 +186,39 @@ async function fetchArticle() {
     // 获取评论
     await fetchComments()
     
-    // 等待DOM更新后，替换PDF占位符
+    // 等待DOM更新后，替换PDF占位符并渲染公式
     await nextTick()
     replacePdfPlaceholders()
+    renderMathFormulas()
   } catch (error) {
     console.error('获取文章详情失败:', error)
   } finally {
     loading.value = false
   }
+}
+
+// 渲染数学公式
+function renderMathFormulas() {
+  if (!articleBodyRef.value) return
+  
+  // 延迟执行确保DOM完全更新
+  setTimeout(() => {
+    if (window.MathJax) {
+      try {
+        // MathJax 3.x
+        if (window.MathJax.typeset) {
+          window.MathJax.typeset([articleBodyRef.value])
+          console.log('MathJax公式渲染成功')
+        } 
+        // MathJax 2.x
+        else if (window.MathJax.Hub) {
+          window.MathJax.Hub.Queue(['Typeset', window.MathJax.Hub, articleBodyRef.value])
+        }
+      } catch (e) {
+        console.error('MathJax渲染失败:', e)
+      }
+    }
+  }, 100)
 }
 
 // 替换文章内容中的PDF占位符为PDF查看器组件
@@ -442,6 +467,43 @@ onBeforeUnmount(() => {
   padding: 2px 6px;
   border-radius: 3px;
   font-family: Consolas, Monaco, monospace;
+}
+
+/* 表格样式 */
+.article-body :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 16px 0;
+  font-size: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.article-body :deep(th),
+.article-body :deep(td) {
+  border: 1px solid #e0e0e0;
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.article-body :deep(th) {
+  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+  font-weight: 600;
+  color: #333;
+}
+
+.article-body :deep(tr:nth-child(even)) {
+  background-color: #f8f9fa;
+}
+
+.article-body :deep(tr:hover) {
+  background-color: #e8f4fd;
+}
+
+.article-body :deep(td:first-child) {
+  font-weight: 500;
 }
 
 .article-footer {

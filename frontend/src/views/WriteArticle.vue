@@ -229,8 +229,12 @@ async function saveArticle() {
     }
     
     if (isEdit.value) {
-      await articleApi.update(route.params.id, data)
+      const res = await articleApi.update(route.params.id, data)
       ElMessage.success('更新成功')
+      const targetId = res?.data?.articleid || route.params.id
+      if (targetId) {
+        router.push({ name: 'ArticleDetail', params: { id: targetId } })
+      }
     } else {
       const res = await articleApi.create(data)
       ElMessage.success(form.drafted === 1 ? '草稿已保存' : '发布成功')
