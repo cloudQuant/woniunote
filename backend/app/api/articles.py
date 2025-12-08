@@ -4,7 +4,7 @@
 import math
 from datetime import datetime
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, and_, delete
 from sqlalchemy.orm import selectinload
@@ -21,6 +21,7 @@ from app.schemas.article import (
 )
 from app.schemas.common import ResponseModel, PaginatedResponse
 from app.api.deps import get_current_user, get_current_user_required, get_admin_user
+from app.core.logger import log_article_access
 
 router = APIRouter()
 
@@ -256,6 +257,7 @@ async def get_hot_articles(
 @router.get("/{articleid}", response_model=ResponseModel[dict])
 async def get_article(
     articleid: int,
+    request: Request,
     current_user: Optional[User] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -279,6 +281,24 @@ async def get_article(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="文章已隐藏"
             )
+    
+    # 获取客户端IP地址（支持代理）
+    client_ip = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+    if not client_ip:
+        client_ip = request.headers.get("X-Real-IP", "")
+    if not client_ip:
+        client_ip = request.client.host if request.client else "unknown"
+    
+    # 记录文章访问日志
+    log_article_access(
+        ip_address=client_ip,
+        article_id=article.articleid,
+        article_title=article.headline,
+        article_url=f"/article/{article.articleid}",
+        user_id=current_user.userid if current_user else None,
+        user_agent=request.headers.get("User-Agent"),
+        referer=request.headers.get("Referer")
+    )
     
     # 更新阅读次数
     article.readcount += 1

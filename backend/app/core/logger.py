@@ -83,6 +83,7 @@ def setup_logger(name: str, log_type: str, level: int = logging.INFO) -> logging
 info_logger = setup_logger('woniunote.info', 'info', logging.INFO)
 error_logger = setup_logger('woniunote.error', 'error', logging.ERROR)
 warning_logger = setup_logger('woniunote.warning', 'warning', logging.WARNING)
+access_logger = setup_logger('woniunote.access', 'access', logging.INFO)  # 文章访问日志
 
 
 def log_info(message: str, extra: Optional[Dict[str, Any]] = None):
@@ -171,3 +172,49 @@ def log_api_error(path: str, method: str, error_type: str, message: str, user_id
         "message": message,
         "user_id": user_id
     })
+
+
+# ==================== 文章访问日志 ====================
+
+def log_article_access(
+    ip_address: str,
+    article_id: int,
+    article_title: str,
+    article_url: str,
+    user_id: Optional[int] = None,
+    user_agent: Optional[str] = None,
+    referer: Optional[str] = None
+):
+    """
+    记录文章访问日志
+    
+    Args:
+        ip_address: 访问者IP地址
+        article_id: 文章ID
+        article_title: 文章标题
+        article_url: 文章链接
+        user_id: 用户ID（已登录用户）
+        user_agent: 浏览器User-Agent
+        referer: 来源页面
+    """
+    access_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    log_data = {
+        "access_time": access_time,
+        "ip_address": ip_address,
+        "article_id": article_id,
+        "article_title": article_title,
+        "article_url": article_url,
+        "user_id": user_id,
+        "user_agent": user_agent,
+        "referer": referer
+    }
+    
+    # 写入访问日志
+    record = access_logger.makeRecord(
+        access_logger.name, logging.INFO, "", 0,
+        f"文章访问: [{ip_address}] {article_title} ({article_url})",
+        (), None
+    )
+    record.extra_data = log_data
+    access_logger.handle(record)
