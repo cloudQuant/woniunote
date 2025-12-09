@@ -1,0 +1,12 @@
+{
+    "rdbms": "mysql",
+    "host": "127.0.0.1",
+    "port": 3306,
+    "dbname": "woniunote",
+    "user": "woniunote_user",
+    "password": "Woniunote_password1!",
+    "tables": [],
+    "relationships": {
+        "enabled": false
+    }
+}
