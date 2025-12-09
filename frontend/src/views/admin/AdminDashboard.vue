@@ -270,6 +270,12 @@
 </template>
 
 <script setup>
+/**
+ * @component AdminDashboard
+ * @description 管理员后台仪表盘组件
+ * 提供系统数据统计、服务器资源监控（CPU、内存、磁盘、网络）和文章管理功能。
+ * 只有管理员权限的用户可以访问此页面。
+ */
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'

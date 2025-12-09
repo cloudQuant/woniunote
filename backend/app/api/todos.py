@@ -1,5 +1,7 @@
 """
-待办事项API
+待办事项 API 模块
+
+本模块提供待办事项的增删改查、分类管理、完成状态切换以及统计功能。
 """
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -26,7 +28,18 @@ async def get_categories(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取所有分类"""
+    """
+    获取所有分类
+    
+    获取当前用户的所有待办事项分类，按排序字段和 ID 排序。
+    
+    Args:
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[list]: 分类列表
+    """
     query = select(TodoCategory).where(
         TodoCategory.userid == current_user.userid
     ).order_by(TodoCategory.sort_order, TodoCategory.id)
@@ -47,7 +60,17 @@ async def create_category(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """创建分类"""
+    """
+    创建分类
+    
+    Args:
+        data: 分类创建数据
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 创建成功的分类信息
+    """
     new_category = TodoCategory(
         userid=current_user.userid,
         name=data.name,
@@ -73,7 +96,21 @@ async def update_category(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """更新分类"""
+    """
+    更新分类
+    
+    Args:
+        category_id: 分类 ID
+        data: 分类更新数据
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 更新后的分类信息
+        
+    Raises:
+        HTTPException(404): 分类不存在
+    """
     result = await db.execute(
         select(TodoCategory).where(
             TodoCategory.id == category_id,
@@ -106,7 +143,22 @@ async def delete_category(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """删除分类（同时删除该分类下的所有待办事项）"""
+    """
+    删除分类
+    
+    同时删除该分类下的所有待办事项。
+    
+    Args:
+        category_id: 分类 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 成功消息
+        
+    Raises:
+        HTTPException(404): 分类不存在
+    """
     result = await db.execute(
         select(TodoCategory).where(
             TodoCategory.id == category_id,
@@ -128,14 +180,29 @@ async def delete_category(
 
 @router.get("/items", response_model=PaginatedResponse[dict])
 async def get_items(
-    category_id: int = Query(None),
-    done: int = Query(None),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    category_id: int = Query(None, description="分类 ID"),
+    done: int = Query(None, description="完成状态 (0:未完成, 1:已完成)"),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(50, ge=1, le=100, description="每页数量"),
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取待办事项列表"""
+    """
+    获取待办事项列表
+    
+    分页获取待办事项列表，支持按分类和完成状态筛选。
+    
+    Args:
+        category_id: 分类 ID
+        done: 完成状态
+        page: 页码
+        page_size: 每页数量
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        PaginatedResponse[dict]: 分页的待办事项列表
+    """
     # 构建查询
     conditions = [TodoItem.userid == current_user.userid]
     
@@ -179,7 +246,20 @@ async def create_item(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """创建待办事项"""
+    """
+    创建待办事项
+    
+    Args:
+        data: 待办事项创建数据
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 创建成功的待办事项信息
+        
+    Raises:
+        HTTPException(400): 分类不存在或无权访问
+    """
     # 验证分类归属
     category_result = await db.execute(
         select(TodoCategory).where(
@@ -217,7 +297,22 @@ async def update_item(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """更新待办事项"""
+    """
+    更新待办事项
+    
+    Args:
+        item_id: 待办事项 ID
+        data: 待办事项更新数据
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 更新后的待办事项信息
+        
+    Raises:
+        HTTPException(404): 待办事项不存在
+        HTTPException(400): 目标分类不存在或无权访问
+    """
     result = await db.execute(
         select(TodoItem).where(
             TodoItem.id == item_id,
@@ -261,7 +356,20 @@ async def toggle_item(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """切换待办事项完成状态"""
+    """
+    切换待办事项完成状态
+    
+    Args:
+        item_id: 待办事项 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 新的完成状态和完成时间
+        
+    Raises:
+        HTTPException(404): 待办事项不存在
+    """
     result = await db.execute(
         select(TodoItem).where(
             TodoItem.id == item_id,
@@ -291,7 +399,20 @@ async def delete_item(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """删除待办事项"""
+    """
+    删除待办事项
+    
+    Args:
+        item_id: 待办事项 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 成功消息
+        
+    Raises:
+        HTTPException(404): 待办事项不存在
+    """
     result = await db.execute(
         select(TodoItem).where(
             TodoItem.id == item_id,
@@ -314,7 +435,18 @@ async def get_stats(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取待办事项统计"""
+    """
+    获取待办事项统计
+    
+    统计当前用户的待办事项总数、已完成数、未完成数以及按分类的统计数据。
+    
+    Args:
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 统计数据
+    """
     base_filter = TodoItem.userid == current_user.userid
     
     # 总数

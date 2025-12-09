@@ -1,0 +1,469 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.api.credits &mdash; WoniuNote 1.0.0 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=34088549"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            WoniuNote
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">app</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">WoniuNote</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">app.api.credits</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>app.api.credits 源代码</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">积分 API 模块</span>
+
+<span class="sd">本模块提供积分的查询、统计以及积分支付文章等功能。</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">HTTPException</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">Query</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.ext.asyncio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncSession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">select</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">desc</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.core.database</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_db</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.models.credit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Credit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.models.user</span><span class="w"> </span><span class="kn">import</span> <span class="n">User</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.schemas.credit</span><span class="w"> </span><span class="kn">import</span> <span class="n">CreditResponse</span><span class="p">,</span> <span class="n">CreditSummary</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.schemas.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResponseModel</span><span class="p">,</span> <span class="n">PaginatedResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.api.deps</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_current_user_required</span>
+
+<span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">()</span>
+
+
+<span class="c1"># 积分类型常量</span>
+<div class="viewcode-block" id="CreditType">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.credits.CreditType">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CreditType</span><span class="p">:</span>
+    <span class="n">REGISTER</span> <span class="o">=</span> <span class="s2">&quot;用户注册&quot;</span>
+    <span class="n">LOGIN</span> <span class="o">=</span> <span class="s2">&quot;每日登录&quot;</span>
+    <span class="n">POST_ARTICLE</span> <span class="o">=</span> <span class="s2">&quot;发布文章&quot;</span>
+    <span class="n">POST_COMMENT</span> <span class="o">=</span> <span class="s2">&quot;发表评论&quot;</span>
+    <span class="n">REPLY_COMMENT</span> <span class="o">=</span> <span class="s2">&quot;回复评论&quot;</span>
+    <span class="n">READ_ARTICLE</span> <span class="o">=</span> <span class="s2">&quot;阅读文章&quot;</span>
+    <span class="n">RECEIVE_COMMENT</span> <span class="o">=</span> <span class="s2">&quot;收到评论&quot;</span></div>
+
+    
+<span class="c1"># 积分值配置</span>
+<span class="n">CREDIT_VALUES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">CreditType</span><span class="o">.</span><span class="n">REGISTER</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">CreditType</span><span class="o">.</span><span class="n">LOGIN</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">CreditType</span><span class="o">.</span><span class="n">POST_ARTICLE</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">CreditType</span><span class="o">.</span><span class="n">POST_COMMENT</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="n">CreditType</span><span class="o">.</span><span class="n">REPLY_COMMENT</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="n">CreditType</span><span class="o">.</span><span class="n">READ_ARTICLE</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># 消耗积分</span>
+    <span class="n">CreditType</span><span class="o">.</span><span class="n">RECEIVE_COMMENT</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="add_credit">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.credits.add_credit">[文档]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">add_credit</span><span class="p">(</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span>
+    <span class="n">userid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">category</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">target</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">credit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Credit</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    添加积分记录并更新用户积分</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        userid: 用户 ID</span>
+<span class="sd">        category: 积分类型/分类</span>
+<span class="sd">        target: 关联目标 ID (如文章 ID)</span>
+<span class="sd">        credit: 积分值 (如果不提供，则根据分类自动获取)</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Credit: 新创建的积分记录</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 如果未指定积分值，从配置中获取</span>
+    <span class="k">if</span> <span class="n">credit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">credit</span> <span class="o">=</span> <span class="n">CREDIT_VALUES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    
+    <span class="c1"># 创建积分记录</span>
+    <span class="n">new_credit</span> <span class="o">=</span> <span class="n">Credit</span><span class="p">(</span>
+        <span class="n">userid</span><span class="o">=</span><span class="n">userid</span><span class="p">,</span>
+        <span class="n">category</span><span class="o">=</span><span class="n">category</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+        <span class="n">credit</span><span class="o">=</span><span class="n">credit</span><span class="p">,</span>
+        <span class="n">createtime</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+        <span class="n">updatetime</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_credit</span><span class="p">)</span>
+    
+    <span class="c1"># 更新用户积分</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">select</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">userid</span><span class="p">))</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">user</span><span class="p">:</span>
+        <span class="n">user</span><span class="o">.</span><span class="n">credit</span> <span class="o">=</span> <span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">credit</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">credit</span>
+    
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">new_credit</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_credit</span></div>
+
+
+
+<div class="viewcode-block" id="check_payed_article">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.credits.check_payed_article">[文档]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">check_payed_article</span><span class="p">(</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span>
+    <span class="n">userid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">articleid</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    检查用户是否已支付阅读该文章</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        userid: 用户 ID</span>
+<span class="sd">        articleid: 文章 ID</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: 是否已支付</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Credit</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">Credit</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">userid</span><span class="p">,</span>
+            <span class="n">Credit</span><span class="o">.</span><span class="n">category</span> <span class="o">==</span> <span class="n">CreditType</span><span class="o">.</span><span class="n">READ_ARTICLE</span><span class="p">,</span>
+            <span class="n">Credit</span><span class="o">.</span><span class="n">target</span> <span class="o">==</span> <span class="n">articleid</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="get_my_credits">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.credits.get_my_credits">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">PaginatedResponse</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_my_credits</span><span class="p">(</span>
+    <span class="n">page</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;页码&quot;</span><span class="p">),</span>
+    <span class="n">page_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;每页数量&quot;</span><span class="p">),</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取我的积分记录</span>
+<span class="sd">    </span>
+<span class="sd">    分页获取当前用户的积分变动记录。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        page: 页码</span>
+<span class="sd">        page_size: 每页数量</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        PaginatedResponse[dict]: 分页的积分记录</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 获取总数</span>
+    <span class="n">count_query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">Credit</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Credit</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span><span class="p">)</span>
+    <span class="n">total_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">count_query</span><span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">total_result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
+    
+    <span class="c1"># 分页查询</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">page</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">page_size</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">Credit</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">Credit</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">desc</span><span class="p">(</span><span class="n">Credit</span><span class="o">.</span><span class="n">createtime</span><span class="p">))</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">page_size</span><span class="p">)</span>
+    
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+    <span class="n">credits</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">PaginatedResponse</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">CreditResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">credits</span><span class="p">],</span>
+        <span class="n">total</span><span class="o">=</span><span class="n">total</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
+        <span class="n">page_size</span><span class="o">=</span><span class="n">page_size</span><span class="p">,</span>
+        <span class="n">total_pages</span><span class="o">=</span><span class="p">(</span><span class="n">total</span> <span class="o">+</span> <span class="n">page_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">page_size</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_credit_summary">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.credits.get_credit_summary">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/summary&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_credit_summary</span><span class="p">(</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取积分汇总</span>
+<span class="sd">    </span>
+<span class="sd">    获取当前用户的总积分、最近变动记录以及按类型统计的积分数据。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 积分汇总数据</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 获取当前积分</span>
+    <span class="n">total_credit</span> <span class="o">=</span> <span class="n">current_user</span><span class="o">.</span><span class="n">credit</span> <span class="ow">or</span> <span class="mi">0</span>
+    
+    <span class="c1"># 获取最近10条记录</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">Credit</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">Credit</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">desc</span><span class="p">(</span><span class="n">Credit</span><span class="o">.</span><span class="n">createtime</span><span class="p">))</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+    <span class="n">recent_credits</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    
+    <span class="c1"># 按类型统计</span>
+    <span class="n">type_stats_query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span>
+        <span class="n">Credit</span><span class="o">.</span><span class="n">category</span><span class="p">,</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">Credit</span><span class="o">.</span><span class="n">credit</span><span class="p">)</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;total&quot;</span><span class="p">),</span>
+        <span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s2">&quot;count&quot;</span><span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">Credit</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="n">Credit</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
+    
+    <span class="n">type_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">type_stats_query</span><span class="p">)</span>
+    <span class="n">type_stats</span> <span class="o">=</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="p">{</span><span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">]}</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">type_result</span><span class="o">.</span><span class="n">all</span><span class="p">()}</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;total_credit&quot;</span><span class="p">:</span> <span class="n">total_credit</span><span class="p">,</span>
+            <span class="s2">&quot;recent_credits&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">CreditResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">recent_credits</span><span class="p">],</span>
+            <span class="s2">&quot;type_stats&quot;</span><span class="p">:</span> <span class="n">type_stats</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="pay_for_article">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.credits.pay_for_article">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/pay-article/</span><span class="si">{articleid}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">pay_for_article</span><span class="p">(</span>
+    <span class="n">articleid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    支付积分阅读文章</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        articleid: 文章 ID</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 支付结果</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 文章不存在</span>
+<span class="sd">        HTTPException(400): 积分不足</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">app.models.article</span><span class="w"> </span><span class="kn">import</span> <span class="n">Article</span>
+    
+    <span class="c1"># 检查文章是否存在</span>
+    <span class="n">article_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">articleid</span> <span class="o">==</span> <span class="n">articleid</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">article</span> <span class="o">=</span> <span class="n">article_result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">article</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;文章不存在&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># 检查文章是否需要积分</span>
+    <span class="k">if</span> <span class="n">article</span><span class="o">.</span><span class="n">credit</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+            <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;该文章免费阅读&quot;</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;paid&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;required_credit&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># 检查是否已支付</span>
+    <span class="k">if</span> <span class="k">await</span> <span class="n">check_payed_article</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span><span class="p">,</span> <span class="n">articleid</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+            <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;已支付过&quot;</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;paid&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;required_credit&quot;</span><span class="p">:</span> <span class="n">article</span><span class="o">.</span><span class="n">credit</span><span class="p">}</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># 检查积分是否足够</span>
+    <span class="k">if</span> <span class="n">current_user</span><span class="o">.</span><span class="n">credit</span> <span class="o">&lt;</span> <span class="n">article</span><span class="o">.</span><span class="n">credit</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;积分不足，需要</span><span class="si">{</span><span class="n">article</span><span class="o">.</span><span class="n">credit</span><span class="si">}</span><span class="s2">积分，当前只有</span><span class="si">{</span><span class="n">current_user</span><span class="o">.</span><span class="n">credit</span><span class="si">}</span><span class="s2">积分&quot;</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># 扣除积分</span>
+    <span class="n">remaining</span> <span class="o">=</span> <span class="p">(</span><span class="n">current_user</span><span class="o">.</span><span class="n">credit</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">article</span><span class="o">.</span><span class="n">credit</span>
+    <span class="k">await</span> <span class="n">add_credit</span><span class="p">(</span>
+        <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+        <span class="n">userid</span><span class="o">=</span><span class="n">current_user</span><span class="o">.</span><span class="n">userid</span><span class="p">,</span>
+        <span class="n">category</span><span class="o">=</span><span class="n">CreditType</span><span class="o">.</span><span class="n">READ_ARTICLE</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="n">articleid</span><span class="p">,</span>
+        <span class="n">credit</span><span class="o">=-</span><span class="n">article</span><span class="o">.</span><span class="n">credit</span>
+    <span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;支付成功&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;paid&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;required_credit&quot;</span><span class="p">:</span> <span class="n">article</span><span class="o">.</span><span class="n">credit</span><span class="p">,</span>
+            <span class="s2">&quot;remaining_credit&quot;</span><span class="p">:</span> <span class="n">remaining</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="check_article_payment">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.credits.check_article_payment">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/check-article/</span><span class="si">{articleid}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">check_article_payment</span><span class="p">(</span>
+    <span class="n">articleid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    检查是否已支付文章</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        articleid: 文章 ID</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 支付状态信息</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 文章不存在</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">app.models.article</span><span class="w"> </span><span class="kn">import</span> <span class="n">Article</span>
+    
+    <span class="c1"># 检查文章</span>
+    <span class="n">article_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">articleid</span> <span class="o">==</span> <span class="n">articleid</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">article</span> <span class="o">=</span> <span class="n">article_result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">article</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;文章不存在&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># 文章作者无需支付</span>
+    <span class="k">if</span> <span class="n">article</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+            <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;paid&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;is_owner&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;required_credit&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># 免费文章</span>
+    <span class="k">if</span> <span class="n">article</span><span class="o">.</span><span class="n">credit</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+            <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;paid&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;is_free&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;required_credit&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># 检查支付状态</span>
+    <span class="n">paid</span> <span class="o">=</span> <span class="k">await</span> <span class="n">check_payed_article</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span><span class="p">,</span> <span class="n">articleid</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;paid&quot;</span><span class="p">:</span> <span class="n">paid</span><span class="p">,</span>
+            <span class="s2">&quot;required_credit&quot;</span><span class="p">:</span> <span class="n">article</span><span class="o">.</span><span class="n">credit</span><span class="p">,</span>
+            <span class="s2">&quot;user_credit&quot;</span><span class="p">:</span> <span class="n">current_user</span><span class="o">.</span><span class="n">credit</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, WoniuNote Team。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

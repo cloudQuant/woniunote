@@ -1,5 +1,7 @@
 """
-管理员API
+管理员 API 模块
+
+本模块提供管理员专用的统计数据和用户管理接口。
 """
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -21,7 +23,18 @@ async def get_admin_stats(
     admin_user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取管理统计数据"""
+    """
+    获取管理统计数据
+    
+    获取系统总文章数、用户数、评论数、阅读量以及今日新增数据。
+    
+    Args:
+        admin_user: 管理员用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 统计数据
+    """
     # 文章总数
     articles_count = await db.execute(select(func.count()).select_from(Article))
     total_articles = articles_count.scalar() or 0
@@ -79,7 +92,20 @@ async def get_all_users(
     admin_user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取所有用户列表"""
+    """
+    获取所有用户列表
+    
+    分页获取系统所有用户列表。
+    
+    Args:
+        page: 页码
+        page_size: 每页数量
+        admin_user: 管理员用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 用户列表及分页信息
+    """
     import math
     
     # 获取总数

@@ -90,6 +90,12 @@
 </template>
 
 <script setup>
+/**
+ * @component Profile
+ * @description 用户个人资料设置组件
+ * 提供修改头像、昵称、QQ等个人信息的功能。
+ * 同时包含修改密码的表单，支持旧密码验证和新密码确认。
+ */
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'

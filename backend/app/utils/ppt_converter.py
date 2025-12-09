@@ -1,5 +1,7 @@
 """
-PPT转PDF工具
+PPT 转 PDF 工具模块
+
+本模块提供将 PPT/PPTX 文件转换为 PDF 的功能。
 支持多种转换方式：
 1. Windows: 使用 Microsoft PowerPoint (COM) 或 LibreOffice
 2. Linux/Mac: 使用 LibreOffice 或 unoconv
@@ -18,14 +20,16 @@ IS_WINDOWS = sys.platform == 'win32'
 
 def convert_ppt_to_pdf(ppt_path: str, output_dir: str = None) -> str:
     """
-    将PPT/PPTX文件转换为PDF
+    将 PPT/PPTX 文件转换为 PDF
+    
+    尝试使用多种工具（PowerPoint COM, LibreOffice, unoconv）进行转换。
     
     Args:
-        ppt_path: PPT文件路径
-        output_dir: 输出目录，如果为None则使用PPT文件所在目录
+        ppt_path: PPT 文件路径
+        output_dir: 输出目录，如果为 None 则使用 PPT 文件所在目录
     
     Returns:
-        PDF文件路径，如果转换失败则返回None
+        str: PDF 文件路径，如果转换失败则返回 None
     """
     if not os.path.exists(ppt_path):
         logger.error(f"PPT file not found: {ppt_path}")
@@ -64,7 +68,15 @@ def convert_ppt_to_pdf(ppt_path: str, output_dir: str = None) -> str:
 def _convert_with_powerpoint_com(ppt_path: str, pdf_path: str) -> bool:
     """
     使用 Microsoft PowerPoint COM 接口转换 (仅 Windows)
-    需要安装 Microsoft Office
+    
+    需要安装 Microsoft Office。
+    
+    Args:
+        ppt_path: PPT 文件路径
+        pdf_path: 目标 PDF 文件路径
+        
+    Returns:
+        bool: 是否转换成功
     """
     if not IS_WINDOWS:
         return False
@@ -104,7 +116,12 @@ def _convert_with_powerpoint_com(ppt_path: str, pdf_path: str) -> bool:
 
 
 def _find_libreoffice_windows() -> str:
-    """在 Windows 上查找 LibreOffice 可执行文件"""
+    """
+    在 Windows 上查找 LibreOffice 可执行文件
+    
+    Returns:
+        str: LibreOffice 可执行文件路径，未找到则返回 None
+    """
     possible_paths = [
         "C:\\Program Files\\LibreOffice\\program\\soffice.exe",
         "C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe",
@@ -133,7 +150,12 @@ def _find_libreoffice_windows() -> str:
 
 
 def _find_libreoffice_unix() -> str:
-    """在 Linux/Mac 上查找 LibreOffice"""
+    """
+    在 Linux/Mac 上查找 LibreOffice
+    
+    Returns:
+        str: LibreOffice 可执行文件路径，未找到则返回 None
+    """
     try:
         result = subprocess.run(
             ["which", "libreoffice"],
@@ -158,7 +180,16 @@ def _find_libreoffice_unix() -> str:
 
 
 def _convert_with_libreoffice(ppt_path: str, pdf_path: str) -> bool:
-    """使用LibreOffice命令行转换"""
+    """
+    使用 LibreOffice 命令行转换
+    
+    Args:
+        ppt_path: PPT 文件路径
+        pdf_path: 目标 PDF 文件路径
+        
+    Returns:
+        bool: 是否转换成功
+    """
     try:
         # 根据系统查找 LibreOffice
         if IS_WINDOWS:
@@ -205,7 +236,16 @@ def _convert_with_libreoffice(ppt_path: str, pdf_path: str) -> bool:
 
 
 def _convert_with_unoconv(ppt_path: str, pdf_path: str) -> bool:
-    """使用unoconv转换 (Linux/Mac)"""
+    """
+    使用 unoconv 转换 (Linux/Mac)
+    
+    Args:
+        ppt_path: PPT 文件路径
+        pdf_path: 目标 PDF 文件路径
+        
+    Returns:
+        bool: 是否转换成功
+    """
     if IS_WINDOWS:
         return False
     

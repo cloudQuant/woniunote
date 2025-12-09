@@ -11,6 +11,12 @@
 </template>
 
 <script setup>
+/**
+ * @file App.vue
+ * @description Root component of the application.
+ * Wraps the application in Element Plus configuration provider for internalization (zh-cn).
+ * Defines the main layout structure with Header, Main Content area, and Footer.
+ */
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import AppHeader from '@/components/layout/AppHeader.vue'

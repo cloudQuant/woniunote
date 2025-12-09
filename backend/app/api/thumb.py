@@ -1,6 +1,7 @@
 """
-缩略图资源路由
-支持自动生成和返回文章类型缩略图
+缩略图资源 API 模块
+
+本模块提供文章类型缩略图的自动生成和获取功能。
 """
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
@@ -46,7 +47,17 @@ ARTICLE_TYPE_NAMES = {
 
 
 def get_thumb_root() -> str:
-    """获取缩略图根目录，支持多种路径查找策略"""
+    """
+    获取缩略图根目录
+    
+    支持多种路径查找策略：
+    1. 配置中的 RESOURCE_DIR
+    2. 自动推断 backend/resource/thumb
+    3. 当前工作目录下的 resource/thumb
+    
+    Returns:
+        str: 缩略图根目录的绝对路径
+    """
     # 1. 如果配置了 RESOURCE_DIR，优先使用
     if settings.RESOURCE_DIR:
         thumb_dir = os.path.join(settings.RESOURCE_DIR, "thumb")
@@ -77,7 +88,15 @@ def get_thumb_root() -> str:
 
 
 def get_type_text(type_id: int) -> str:
-    """根据类型ID获取显示文字"""
+    """
+    根据类型 ID 获取显示文字
+    
+    Args:
+        type_id: 文章类型 ID
+        
+    Returns:
+        str: 类型名称或默认格式
+    """
     # 直接查找完整类型ID
     if type_id in ARTICLE_TYPE_NAMES:
         return ARTICLE_TYPE_NAMES[type_id]
@@ -93,7 +112,22 @@ def get_type_text(type_id: int) -> str:
 
 @router.get("/thumb/{filename:path}")
 async def thumb_resources(filename: str):
-    """获取缩略图资源，支持自动生成"""
+    """
+    获取缩略图资源
+    
+    获取指定文件名的缩略图。如果文件不存在，尝试根据文件名（假设为类型 ID）自动生成。
+    如果生成失败，则尝试查找最接近的现有缩略图或返回默认缩略图。
+    
+    Args:
+        filename: 缩略图文件名 (例如 "101.png")
+        
+    Returns:
+        FileResponse: 图片文件响应
+        
+    Raises:
+        HTTPException(500): 无法准备缩略图目录
+        HTTPException(404): 缩略图未找到且无法生成
+    """
     thumb_root = get_thumb_root()
     file_path = os.path.join(thumb_root, filename)
 

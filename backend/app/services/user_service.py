@@ -1,5 +1,7 @@
 """
-用户服务层 - 处理用户相关业务逻辑
+用户服务层模块
+
+本模块处理用户相关的业务逻辑，包括用户注册、登录、信息更新、密码修改等操作。
 """
 from typing import Optional, Tuple
 from datetime import datetime
@@ -25,20 +27,40 @@ from app.core.exceptions import (
 
 
 class UserService:
-    """用户服务类"""
+    """
+    用户服务类
+    
+    提供用户管理的业务逻辑接口。
+    """
     
     def __init__(self, db: AsyncSession):
         self.db = db
     
     async def get_user_by_id(self, user_id: int) -> Optional[User]:
-        """根据ID获取用户"""
+        """
+        根据 ID 获取用户
+        
+        Args:
+            user_id: 用户 ID
+            
+        Returns:
+            Optional[User]: 用户对象，如果不存在则返回 None
+        """
         result = await self.db.execute(
             select(User).where(User.userid == user_id)
         )
         return result.scalar_one_or_none()
     
     async def get_user_by_username(self, username: str) -> Optional[User]:
-        """根据用户名获取用户"""
+        """
+        根据用户名获取用户
+        
+        Args:
+            username: 用户名
+            
+        Returns:
+            Optional[User]: 用户对象，如果不存在则返回 None
+        """
         result = await self.db.execute(
             select(User).where(User.username == username)
         )
@@ -57,11 +79,11 @@ class UserService:
         Args:
             username: 用户名
             password: 明文密码
-            nickname: 昵称
-            qq: QQ号
+            nickname: 昵称 (默认为用户名)
+            qq: QQ 号
             
         Returns:
-            新创建的用户对象
+            User: 新创建的用户对象
             
         Raises:
             ConflictException: 用户名已存在
@@ -111,17 +133,17 @@ class UserService:
         password: str
     ) -> Tuple[User, str, str]:
         """
-        验证用户并生成Token
+        验证用户并生成 Token
         
         Args:
             username: 用户名
             password: 明文密码
             
         Returns:
-            (用户对象, access_token, refresh_token)
+            Tuple[User, str, str]: (用户对象, access_token, refresh_token)
             
         Raises:
-            UnauthorizedException: 认证失败
+            UnauthorizedException: 用户名或密码错误
         """
         user = await self.get_user_by_username(username)
         
@@ -163,7 +185,7 @@ class UserService:
             new_password: 新密码
             
         Returns:
-            是否成功
+            bool: 是否更新成功
             
         Raises:
             BadRequestException: 旧密码错误
@@ -189,10 +211,10 @@ class UserService:
         
         Args:
             user: 用户对象
-            **kwargs: 要更新的字段
+            **kwargs: 要更新的字段及值
             
         Returns:
-            更新后的用户对象
+            User: 更新后的用户对象
         """
         for field, value in kwargs.items():
             if hasattr(user, field) and field not in ['userid', 'username', 'password', 'role', 'credit']:

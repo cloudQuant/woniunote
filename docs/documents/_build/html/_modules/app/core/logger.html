@@ -1,0 +1,458 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.core.logger &mdash; WoniuNote 1.0.0 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=34088549"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            WoniuNote
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">app</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">WoniuNote</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">app.core.logger</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>app.core.logger 源代码</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">日志系统配置模块</span>
+
+<span class="sd">本模块配置了应用的日志系统，支持控制台输出和文件记录。</span>
+<span class="sd">主要功能包括：</span>
+<span class="sd">- INFO/ERROR/WARNING 等级日志记录</span>
+<span class="sd">- 结构化日志输出 (JSON 格式)</span>
+<span class="sd">- 自动日志轮转 (RotatingFileHandler)</span>
+<span class="sd">- 业务日志封装 (用户操作、认证事件、数据库操作等)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">logging.handlers</span><span class="w"> </span><span class="kn">import</span> <span class="n">RotatingFileHandler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="c1"># 日志目录</span>
+<span class="n">LOG_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))),</span> <span class="s1">&#39;logs&#39;</span><span class="p">)</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">LOG_DIR</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># 日志格式</span>
+<span class="n">LOG_FORMAT</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(name)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">&#39;</span>
+<span class="n">JSON_LOG_FORMAT</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%(message)s</span><span class="s1">&#39;</span>
+<span class="n">DATE_FORMAT</span> <span class="o">=</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span>
+
+
+<div class="viewcode-block" id="StructuredLogFormatter">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.StructuredLogFormatter">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StructuredLogFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    结构化日志格式化器</span>
+<span class="sd">    </span>
+<span class="sd">    将日志记录格式化为 JSON 字符串，便于日志收集和分析。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="StructuredLogFormatter.format">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.StructuredLogFormatter.format">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">LogRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        格式化日志记录</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            record: 日志记录对象</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str: JSON 格式的日志字符串</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+            <span class="s2">&quot;level&quot;</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">levelname</span><span class="p">,</span>
+            <span class="s2">&quot;logger&quot;</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">getMessage</span><span class="p">(),</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># 添加额外数据</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s1">&#39;extra_data&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">record</span><span class="o">.</span><span class="n">extra_data</span><span class="p">:</span>
+            <span class="n">log_data</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">extra_data</span>
+        
+        <span class="c1"># 添加异常信息</span>
+        <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">exc_info</span><span class="p">:</span>
+            <span class="n">log_data</span><span class="p">[</span><span class="s2">&quot;exception&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">formatException</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">exc_info</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">log_data</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="get_log_filename">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.get_log_filename">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_log_filename</span><span class="p">(</span><span class="n">log_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取日志文件名</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        log_type: 日志类型 (如 info, error)</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: 完整的日志文件路径</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">today</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">LOG_DIR</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">log_type</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">today</span><span class="si">}</span><span class="s1">.log&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="setup_logger">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.setup_logger">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup_logger</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">log_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    设置日志记录器</span>
+<span class="sd">    </span>
+<span class="sd">    配置日志记录器，添加文件处理器和控制台处理器。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        name: 记录器名称</span>
+<span class="sd">        log_type: 日志类型 (用于生成文件名)</span>
+<span class="sd">        level: 日志级别</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        logging.Logger: 配置好的日志记录器实例</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
+    
+    <span class="c1"># 避免重复添加handler</span>
+    <span class="k">if</span> <span class="n">logger</span><span class="o">.</span><span class="n">handlers</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">logger</span>
+    
+    <span class="c1"># 文件处理器</span>
+    <span class="n">file_handler</span> <span class="o">=</span> <span class="n">RotatingFileHandler</span><span class="p">(</span>
+        <span class="n">get_log_filename</span><span class="p">(</span><span class="n">log_type</span><span class="p">),</span>
+        <span class="n">maxBytes</span><span class="o">=</span><span class="mi">10</span><span class="o">*</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="p">,</span>  <span class="c1"># 10MB</span>
+        <span class="n">backupCount</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span>
+    <span class="p">)</span>
+    <span class="n">file_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="n">LOG_FORMAT</span><span class="p">,</span> <span class="n">DATE_FORMAT</span><span class="p">))</span>
+    <span class="n">file_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
+    
+    <span class="c1"># 控制台处理器</span>
+    <span class="n">console_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
+    <span class="n">console_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="n">LOG_FORMAT</span><span class="p">,</span> <span class="n">DATE_FORMAT</span><span class="p">))</span>
+    <span class="n">console_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">file_handler</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">console_handler</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">logger</span></div>
+
+
+
+<span class="c1"># 创建各类日志记录器</span>
+<span class="n">info_logger</span> <span class="o">=</span> <span class="n">setup_logger</span><span class="p">(</span><span class="s1">&#39;woniunote.info&#39;</span><span class="p">,</span> <span class="s1">&#39;info&#39;</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">error_logger</span> <span class="o">=</span> <span class="n">setup_logger</span><span class="p">(</span><span class="s1">&#39;woniunote.error&#39;</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
+<span class="n">warning_logger</span> <span class="o">=</span> <span class="n">setup_logger</span><span class="p">(</span><span class="s1">&#39;woniunote.warning&#39;</span><span class="p">,</span> <span class="s1">&#39;warning&#39;</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+<span class="n">access_logger</span> <span class="o">=</span> <span class="n">setup_logger</span><span class="p">(</span><span class="s1">&#39;woniunote.access&#39;</span><span class="p">,</span> <span class="s1">&#39;access&#39;</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>  <span class="c1"># 文章访问日志</span>
+
+
+<div class="viewcode-block" id="log_info">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.log_info">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_info</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    记录 INFO 级别日志</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        message: 日志消息</span>
+<span class="sd">        extra: 额外数据字典</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">info_logger</span><span class="o">.</span><span class="n">makeRecord</span><span class="p">(</span>
+        <span class="n">info_logger</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="p">(),</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="n">record</span><span class="o">.</span><span class="n">extra_data</span> <span class="o">=</span> <span class="n">extra</span>
+    <span class="n">info_logger</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="log_error">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.log_error">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_error</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    记录 ERROR 级别日志</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        message: 日志消息</span>
+<span class="sd">        extra: 额外数据字典</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">error_logger</span><span class="o">.</span><span class="n">makeRecord</span><span class="p">(</span>
+        <span class="n">error_logger</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="p">(),</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="n">record</span><span class="o">.</span><span class="n">extra_data</span> <span class="o">=</span> <span class="n">extra</span>
+    <span class="n">error_logger</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="log_warning">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.log_warning">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_warning</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    记录 WARNING 级别日志</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        message: 日志消息</span>
+<span class="sd">        extra: 额外数据字典</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">warning_logger</span><span class="o">.</span><span class="n">makeRecord</span><span class="p">(</span>
+        <span class="n">warning_logger</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="p">(),</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="n">record</span><span class="o">.</span><span class="n">extra_data</span> <span class="o">=</span> <span class="n">extra</span>
+    <span class="n">warning_logger</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="log_request">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.log_request">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_request</span><span class="p">(</span><span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">duration_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    记录 HTTP 请求日志</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        method: HTTP 方法</span>
+<span class="sd">        path: 请求路径</span>
+<span class="sd">        status_code: 响应状态码</span>
+<span class="sd">        duration_ms: 请求耗时 (毫秒)</span>
+<span class="sd">        user_id: 用户ID (可选)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log_info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">status_code</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">duration_ms</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">ms&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="n">method</span><span class="p">,</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">path</span><span class="p">,</span>
+        <span class="s2">&quot;status_code&quot;</span><span class="p">:</span> <span class="n">status_code</span><span class="p">,</span>
+        <span class="s2">&quot;duration_ms&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">duration_ms</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span>
+    <span class="p">})</span></div>
+
+
+
+<span class="c1"># ==================== 业务日志函数 ====================</span>
+
+<div class="viewcode-block" id="log_user_action">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.log_user_action">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_user_action</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    记录用户操作日志</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        user_id: 用户ID</span>
+<span class="sd">        action: 操作名称</span>
+<span class="sd">        target: 操作目标 (可选)</span>
+<span class="sd">        detail: 详细信息 (可选)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log_info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;用户操作: </span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span>
+        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="n">action</span><span class="p">,</span>
+        <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">target</span><span class="p">,</span>
+        <span class="o">**</span><span class="p">(</span><span class="n">detail</span> <span class="ow">or</span> <span class="p">{})</span>
+    <span class="p">})</span></div>
+
+
+
+<div class="viewcode-block" id="log_auth_event">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.log_auth_event">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_auth_event</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    记录认证事件日志</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        event: 事件名称 (如 login, register)</span>
+<span class="sd">        username: 用户名</span>
+<span class="sd">        user_id: 用户ID</span>
+<span class="sd">        success: 是否成功</span>
+<span class="sd">        reason: 失败原因 (可选)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;event&quot;</span><span class="p">:</span> <span class="n">event</span><span class="p">,</span>
+        <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="n">username</span><span class="p">,</span>
+        <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span>
+        <span class="s2">&quot;success&quot;</span><span class="p">:</span> <span class="n">success</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">reason</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;reason&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reason</span>
+    
+    <span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+        <span class="n">log_info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;认证事件: </span><span class="si">{</span><span class="n">event</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">log_warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;认证失败: </span><span class="si">{</span><span class="n">event</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="log_db_operation">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.log_db_operation">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_db_operation</span><span class="p">(</span><span class="n">operation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">table</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">record_id</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    记录数据库操作日志</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        operation: 操作类型 (如 create, update, delete)</span>
+<span class="sd">        table: 表名</span>
+<span class="sd">        record_id: 记录ID</span>
+<span class="sd">        user_id: 操作用户ID</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log_info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;数据库操作: </span><span class="si">{</span><span class="n">operation</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">table</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">&quot;operation&quot;</span><span class="p">:</span> <span class="n">operation</span><span class="p">,</span>
+        <span class="s2">&quot;table&quot;</span><span class="p">:</span> <span class="n">table</span><span class="p">,</span>
+        <span class="s2">&quot;record_id&quot;</span><span class="p">:</span> <span class="n">record_id</span><span class="p">,</span>
+        <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span>
+    <span class="p">})</span></div>
+
+
+
+<div class="viewcode-block" id="log_api_error">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.log_api_error">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_api_error</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">error_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    记录 API 错误日志</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        path: 请求路径</span>
+<span class="sd">        method: HTTP 方法</span>
+<span class="sd">        error_type: 错误类型</span>
+<span class="sd">        message: 错误消息</span>
+<span class="sd">        user_id: 用户ID</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;API错误: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">path</span><span class="p">,</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="n">method</span><span class="p">,</span>
+        <span class="s2">&quot;error_type&quot;</span><span class="p">:</span> <span class="n">error_type</span><span class="p">,</span>
+        <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="n">message</span><span class="p">,</span>
+        <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span>
+    <span class="p">})</span></div>
+
+
+
+<span class="c1"># ==================== 文章访问日志 ====================</span>
+
+<div class="viewcode-block" id="log_article_access">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.logger.log_article_access">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_article_access</span><span class="p">(</span>
+    <span class="n">ip_address</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">article_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">article_title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">article_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">user_agent</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">referer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    记录文章访问日志</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        ip_address: 访问者IP地址</span>
+<span class="sd">        article_id: 文章ID</span>
+<span class="sd">        article_title: 文章标题</span>
+<span class="sd">        article_url: 文章链接</span>
+<span class="sd">        user_id: 用户ID（已登录用户）</span>
+<span class="sd">        user_agent: 浏览器User-Agent</span>
+<span class="sd">        referer: 来源页面</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">access_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span>
+    
+    <span class="n">log_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;access_time&quot;</span><span class="p">:</span> <span class="n">access_time</span><span class="p">,</span>
+        <span class="s2">&quot;ip_address&quot;</span><span class="p">:</span> <span class="n">ip_address</span><span class="p">,</span>
+        <span class="s2">&quot;article_id&quot;</span><span class="p">:</span> <span class="n">article_id</span><span class="p">,</span>
+        <span class="s2">&quot;article_title&quot;</span><span class="p">:</span> <span class="n">article_title</span><span class="p">,</span>
+        <span class="s2">&quot;article_url&quot;</span><span class="p">:</span> <span class="n">article_url</span><span class="p">,</span>
+        <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span>
+        <span class="s2">&quot;user_agent&quot;</span><span class="p">:</span> <span class="n">user_agent</span><span class="p">,</span>
+        <span class="s2">&quot;referer&quot;</span><span class="p">:</span> <span class="n">referer</span>
+    <span class="p">}</span>
+    
+    <span class="c1"># 写入访问日志</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">access_logger</span><span class="o">.</span><span class="n">makeRecord</span><span class="p">(</span>
+        <span class="n">access_logger</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;文章访问: [</span><span class="si">{</span><span class="n">ip_address</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">article_title</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">article_url</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+        <span class="p">(),</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="n">record</span><span class="o">.</span><span class="n">extra_data</span> <span class="o">=</span> <span class="n">log_data</span>
+    <span class="n">access_logger</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">record</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, WoniuNote Team。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

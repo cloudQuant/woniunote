@@ -1,5 +1,7 @@
 """
-评论投票模型 - 用于记录用户对评论的点赞/踩
+评论投票模型模块
+
+用于记录用户对评论的点赞/踩操作。
 """
 from datetime import datetime
 from sqlalchemy import Column, Integer, DateTime, ForeignKey, UniqueConstraint
@@ -8,7 +10,18 @@ from app.core.database import Base
 
 
 class CommentVote(Base):
-    """评论投票表"""
+    """
+    评论投票表
+    
+    记录用户对评论的评价（点赞或踩）。
+    
+    Attributes:
+        id (int): 投票 ID，主键
+        userid (int): 用户 ID，外键关联 users 表
+        commentid (int): 评论 ID，外键关联 comment 表
+        vote_type (int): 投票类型 (1: 点赞, -1: 踩)
+        createtime (datetime): 创建时间
+    """
     __tablename__ = "comment_vote"
     
     id = Column(Integer, primary_key=True, autoincrement=True)

@@ -1,5 +1,7 @@
 """
-用户模型
+用户模型模块
+
+本模块定义了用户相关的数据模型。
 """
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime
@@ -8,7 +10,23 @@ from app.core.database import Base
 
 
 class User(Base):
-    """用户表"""
+    """
+    用户表
+    
+    存储用户的基本信息。
+    
+    Attributes:
+        userid (int): 用户 ID，主键
+        username (str): 用户名，唯一
+        password (str): 密码哈希
+        nickname (str): 昵称
+        avatar (str): 头像路径
+        qq (str): QQ 号
+        role (str): 角色 (user, admin)
+        credit (int): 积分
+        createtime (datetime): 创建时间
+        updatetime (datetime): 更新时间
+    """
     __tablename__ = "users"
     
     userid = Column(Integer, primary_key=True, autoincrement=True)

@@ -1,5 +1,7 @@
 """
-收藏模型
+收藏模型模块
+
+本模块定义了用户收藏文章的数据模型。
 """
 from datetime import datetime
 from sqlalchemy import Column, Integer, DateTime, ForeignKey, UniqueConstraint
@@ -8,7 +10,19 @@ from app.core.database import Base
 
 
 class Favorite(Base):
-    """收藏表"""
+    """
+    收藏表
+    
+    记录用户收藏的文章。
+    
+    Attributes:
+        favoriteid (int): 收藏 ID，主键
+        userid (int): 用户 ID，外键关联 users 表
+        articleid (int): 文章 ID，外键关联 article 表
+        canceled (int): 是否取消收藏 (0: 否, 1: 是)
+        createtime (datetime): 创建时间
+        updatetime (datetime): 更新时间
+    """
     __tablename__ = "favorite"
     
     favoriteid = Column(Integer, primary_key=True, autoincrement=True)

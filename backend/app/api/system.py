@@ -1,6 +1,7 @@
 """
-系统监控API
-提供系统资源、数据库状态、进程信息等监控功能
+系统监控 API 模块
+
+本模块提供系统资源、数据库状态、进程信息等监控功能。
 """
 import os
 import sys
@@ -29,7 +30,17 @@ except ImportError:
 
 
 def get_size_format(bytes_size: int) -> str:
-    """格式化字节大小"""
+    """
+    格式化字节大小
+    
+    将字节数转换为人类可读的格式（B, KB, MB, GB, TB, PB）。
+    
+    Args:
+        bytes_size: 字节大小
+        
+    Returns:
+        str: 格式化后的字符串
+    """
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if bytes_size < 1024:
             return f"{bytes_size:.2f} {unit}"
@@ -38,7 +49,15 @@ def get_size_format(bytes_size: int) -> str:
 
 
 def get_size_bytes(bytes_size: int) -> Dict[str, Any]:
-    """返回字节大小的详细信息"""
+    """
+    返回字节大小的详细信息
+    
+    Args:
+        bytes_size: 字节大小
+        
+    Returns:
+        Dict[str, Any]: 包含原始字节数和格式化字符串的字典
+    """
     return {
         "bytes": bytes_size,
         "formatted": get_size_format(bytes_size)
@@ -46,7 +65,17 @@ def get_size_bytes(bytes_size: int) -> Dict[str, Any]:
 
 
 def get_time_format(seconds: int) -> str:
-    """格式化时间"""
+    """
+    格式化时间
+    
+    将秒数转换为天、小时、分钟的格式。
+    
+    Args:
+        seconds: 秒数
+        
+    Returns:
+        str: 格式化后的时间字符串
+    """
     days = seconds // 86400
     hours = (seconds % 86400) // 3600
     minutes = (seconds % 3600) // 60
@@ -66,7 +95,16 @@ async def get_system_status(
 ):
     """
     获取完整系统状态
-    包括：系统信息、CPU、内存、磁盘、网络、进程等
+    
+    获取包括系统信息、CPU、内存、磁盘、网络、进程等在内的完整系统状态信息。
+    需要管理员权限。
+    
+    Args:
+        admin_user: 管理员用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 系统状态信息
     """
     # 基础系统信息
     system_info = {
@@ -178,7 +216,15 @@ async def get_realtime_metrics(
     admin_user: User = Depends(get_admin_user)
 ):
     """
-    获取实时监控指标（轻量级，用于定时刷新）
+    获取实时监控指标
+    
+    获取轻量级的实时监控数据，适用于定时刷新。
+    
+    Args:
+        admin_user: 管理员用户
+        
+    Returns:
+        ResponseModel[dict]: 实时监控指标
     """
     if not HAS_PSUTIL:
         return ResponseModel(
@@ -212,6 +258,15 @@ async def get_top_processes(
 ):
     """
     获取占用资源最多的进程
+    
+    获取 CPU 或内存占用率最高的进程列表。
+    
+    Args:
+        admin_user: 管理员用户
+        limit: 返回的进程数量限制
+        
+    Returns:
+        ResponseModel[dict]: 进程列表
     """
     if not HAS_PSUTIL:
         return ResponseModel(
@@ -254,7 +309,18 @@ async def get_database_status(
     admin_user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取数据库状态"""
+    """
+    获取数据库状态
+    
+    统计数据库中的表记录数及今日新增数据。
+    
+    Args:
+        admin_user: 管理员用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 数据库统计信息
+    """
     # 表统计
     tables_stats = {}
     
@@ -303,7 +369,17 @@ async def get_database_status(
 async def health_check(
     db: AsyncSession = Depends(get_db)
 ):
-    """健康检查（不需要管理员权限）"""
+    """
+    健康检查
+    
+    检查系统和数据库连接状态。不需要管理员权限。
+    
+    Args:
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 健康状态信息
+    """
     health_status = {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),

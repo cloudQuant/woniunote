@@ -1,5 +1,8 @@
 """
-应用配置
+应用配置模块
+
+本模块定义了应用的全局配置，使用 pydantic_settings 进行管理。
+配置项可以通过环境变量或 .env 文件进行覆盖。
 """
 import os
 from typing import List
@@ -8,7 +11,11 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    """应用配置类"""
+    """
+    应用配置类
+    
+    包含应用的所有配置项，如数据库、Redis、JWT、CORS 等。
+    """
     # 应用设置
     APP_NAME: str = "WoniuNote"
     # 开发环境下默认开启 DEBUG，方便定位错误
@@ -52,7 +59,14 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    """获取配置单例"""
+    """
+    获取配置单例
+    
+    使用 lru_cache 缓存配置实例，避免重复读取环境变量。
+    
+    Returns:
+        Settings: 配置实例
+    """
     return Settings()
 
 

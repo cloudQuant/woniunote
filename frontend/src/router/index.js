@@ -1,6 +1,16 @@
+/**
+ * @module router
+ * @description 路由配置模块
+ * 定义应用的路由规则、导航守卫和滚动行为。
+ */
+
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
+/**
+ * 路由配置数组
+ * @type {import('vue-router').RouteRecordRaw[]}
+ */
 const routes = [
   {
     path: '/',
@@ -131,9 +141,16 @@ const routes = [
   }
 ]
 
+/**
+ * 路由器实例
+ */
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  /**
+   * 滚动行为控制
+   * 切换路由时滚动到顶部，或者恢复保存的位置
+   */
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
@@ -143,31 +160,34 @@ const router = createRouter({
   }
 })
 
-// 路由守卫
+/**
+ * 全局前置守卫
+ * 处理页面标题、登录验证和权限控制
+ */
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
-  
+
   // 设置页面标题
   document.title = to.meta.title ? `${to.meta.title} - cloudQuant` : 'cloudQuant'
-  
+
   // 需要登录的页面
   if (to.meta.requiresAuth && !userStore.isLoggedIn) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
     return
   }
-  
+
   // 需要管理员权限的页面
   if (to.meta.requiresAdmin && !userStore.isAdmin) {
     next({ name: 'Home' })
     return
   }
-  
+
   // 已登录用户访问登录/注册页面
   if (to.meta.guest && userStore.isLoggedIn) {
     next({ name: 'Home' })
     return
   }
-  
+
   next()
 })
 

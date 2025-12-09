@@ -1,0 +1,281 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.core.rate_limit &mdash; WoniuNote 1.0.0 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=34088549"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            WoniuNote
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">app</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">WoniuNote</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">app.core.rate_limit</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>app.core.rate_limit 源代码</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">请求限流中间件模块</span>
+
+<span class="sd">本模块实现了基于令牌桶算法的简单内存限流功能。</span>
+<span class="sd">用于防止 API 被滥用，保护服务器资源。</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Request</span><span class="p">,</span> <span class="n">HTTPException</span><span class="p">,</span> <span class="n">status</span>
+
+
+<div class="viewcode-block" id="RateLimiter">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.rate_limit.RateLimiter">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RateLimiter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    简单的内存限流器</span>
+<span class="sd">    </span>
+<span class="sd">    使用令牌桶算法实现。</span>
+<span class="sd">    </span>
+<span class="sd">    Note:</span>
+<span class="sd">        这是一个单机内存限流实现，重启后数据丢失。</span>
+<span class="sd">        生产环境建议使用 Redis 实现分布式限流。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># {key: (tokens, last_update_time)}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+    
+<div class="viewcode-block" id="RateLimiter.is_allowed">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.rate_limit.RateLimiter.is_allowed">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_allowed</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+        <span class="n">max_requests</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> 
+        <span class="n">window_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        检查是否允许请求</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            key: 限流 key（如 IP 地址、用户 ID 等）</span>
+<span class="sd">            max_requests: 时间窗口内允许的最大请求数</span>
+<span class="sd">            window_seconds: 时间窗口大小（秒）</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple[bool, int]: (是否允许请求, 剩余令牌数)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="n">tokens</span><span class="p">,</span> <span class="n">last_update</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            
+            <span class="c1"># 计算应该补充的令牌数</span>
+            <span class="n">elapsed</span> <span class="o">=</span> <span class="n">now</span> <span class="o">-</span> <span class="n">last_update</span>
+            <span class="n">refill</span> <span class="o">=</span> <span class="n">elapsed</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_requests</span> <span class="o">/</span> <span class="n">window_seconds</span><span class="p">)</span>
+            <span class="n">tokens</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_requests</span><span class="p">,</span> <span class="n">tokens</span> <span class="o">+</span> <span class="n">refill</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">tokens</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">tokens</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="mi">0</span></div>
+
+    
+<div class="viewcode-block" id="RateLimiter.cleanup">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.rate_limit.RateLimiter.cleanup">[文档]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_age_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3600</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        清理过期的限流记录</span>
+<span class="sd">        </span>
+<span class="sd">        防止内存无限增长。</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            max_age_seconds: 记录最大保留时间（秒）</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="n">expired_keys</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">key</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">last_update</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">now</span> <span class="o">-</span> <span class="n">last_update</span> <span class="o">&gt;</span> <span class="n">max_age_seconds</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">expired_keys</span><span class="p">:</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+</div>
+
+
+
+<span class="c1"># 全局限流器实例</span>
+<span class="n">rate_limiter</span> <span class="o">=</span> <span class="n">RateLimiter</span><span class="p">()</span>
+
+
+<span class="c1"># 不同接口的限流配置</span>
+<span class="n">RATE_LIMIT_CONFIG</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># 格式: &quot;路由前缀&quot;: (最大请求数, 时间窗口秒数)</span>
+    <span class="s2">&quot;/api/auth/login&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span>        <span class="c1"># 登录: 每分钟5次</span>
+    <span class="s2">&quot;/api/auth/register&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span>     <span class="c1"># 注册: 每分钟3次</span>
+    <span class="s2">&quot;/api/captcha/generate&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span> <span class="c1"># 验证码: 每分钟10次</span>
+    <span class="s2">&quot;/api/comments&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span>         <span class="c1"># 评论: 每分钟20次</span>
+    <span class="s2">&quot;/api/upload&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span>           <span class="c1"># 上传: 每分钟10次</span>
+    <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span>              <span class="c1"># 默认: 每分钟120次</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="get_rate_limit_config">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.rate_limit.get_rate_limit_config">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_rate_limit_config</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取路径对应的限流配置</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        path: 请求路径</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple[int, int]: (最大请求数, 时间窗口秒数)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">RATE_LIMIT_CONFIG</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">prefix</span> <span class="o">!=</span> <span class="s2">&quot;default&quot;</span> <span class="ow">and</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">config</span>
+    <span class="k">return</span> <span class="n">RATE_LIMIT_CONFIG</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="rate_limit_middleware">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.rate_limit.rate_limit_middleware">[文档]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">rate_limit_middleware</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">call_next</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    限流中间件函数</span>
+<span class="sd">    </span>
+<span class="sd">    拦截请求并检查是否超过限流阈值。</span>
+<span class="sd">    如果超过阈值，返回 429 Too Many Requests 响应。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        request: 请求对象</span>
+<span class="sd">        call_next: 下一个处理函数</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Response: 响应对象</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException: 当请求超过限制时抛出 429 异常</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 获取客户端IP</span>
+    <span class="n">client_ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">host</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">client</span> <span class="k">else</span> <span class="s2">&quot;unknown&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span>
+    
+    <span class="c1"># 获取限流配置</span>
+    <span class="n">max_requests</span><span class="p">,</span> <span class="n">window_seconds</span> <span class="o">=</span> <span class="n">get_rate_limit_config</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    
+    <span class="c1"># 构建限流key（IP + 路径前缀）</span>
+    <span class="c1"># 对于认证相关接口，只使用IP</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/api/auth/&quot;</span><span class="p">):</span>
+        <span class="n">limit_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;auth:</span><span class="si">{</span><span class="n">client_ip</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">limit_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">client_ip</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">))</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;root&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+    
+    <span class="c1"># 检查限流</span>
+    <span class="n">allowed</span><span class="p">,</span> <span class="n">remaining</span> <span class="o">=</span> <span class="n">rate_limiter</span><span class="o">.</span><span class="n">is_allowed</span><span class="p">(</span><span class="n">limit_key</span><span class="p">,</span> <span class="n">max_requests</span><span class="p">,</span> <span class="n">window_seconds</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">allowed</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_429_TOO_MANY_REQUESTS</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;请求过于频繁，请稍后再试&quot;</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Retry-After&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">window_seconds</span><span class="p">)}</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># 继续处理请求</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">call_next</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+    
+    <span class="c1"># 添加限流相关响应头</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;X-RateLimit-Remaining&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">remaining</span><span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;X-RateLimit-Limit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">max_requests</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">response</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, WoniuNote Team。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

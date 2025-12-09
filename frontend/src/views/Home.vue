@@ -16,6 +16,11 @@
 </template>
 
 <script setup>
+/**
+ * @component Home
+ * @description 首页组件
+ * 展示文章列表和侧边栏。支持分页浏览。
+ */
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ArticleList from '@/components/article/ArticleList.vue'
@@ -24,12 +29,19 @@ import Sidebar from '@/components/sidebar/Sidebar.vue'
 const route = useRoute()
 const router = useRouter()
 
-// 从路由获取当前页码
+/**
+ * 当前页码
+ * 从路由参数 page 获取，默认为 1
+ */
 const currentPage = computed(() => {
   return parseInt(route.params.page) || 1
 })
 
-// 处理分页变化
+/**
+ * 处理分页变化
+ * 跳转到对应的分页路由
+ * @param {number} page - 目标页码
+ */
 function handlePageChange(page) {
   if (page === 1) {
     router.push({ name: 'Home' })

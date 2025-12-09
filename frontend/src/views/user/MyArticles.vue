@@ -71,6 +71,12 @@
 </template>
 
 <script setup>
+/**
+ * @component MyArticles
+ * @description 我的文章管理组件
+ * 展示当前登录用户的文章列表，支持分页查看。
+ * 提供文章的编辑和删除功能，展示文章的状态（草稿/已发布）和统计数据（阅读/评论）。
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'

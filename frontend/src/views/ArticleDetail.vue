@@ -121,6 +121,12 @@
 </template>
 
 <script setup>
+/**
+ * @component ArticleDetail
+ * @description 文章详情页组件
+ * 展示文章内容、元数据、评论区，支持收藏、评论、点赞等交互。
+ * 包含 PDF 预览和 MathJax 公式渲染功能。
+ */
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -141,6 +147,7 @@ const router = useRouter()
 const userStore = useUserStore()
 const articleStore = useArticleStore()
 
+// 状态
 const article = ref(null)
 const comments = ref([])
 const loading = ref(true)
@@ -150,22 +157,38 @@ const newComment = ref('')
 const submittingComment = ref(false)
 const articleBodyRef = ref(null)
 
+/**
+ * 文章分类名称
+ */
 const typeName = computed(() => {
   if (!article.value) return ''
   return articleStore.getTypeName(article.value.type)
 })
 
+/**
+ * 是否有编辑权限
+ * 作者本人或编辑/管理员可编辑
+ */
 const canEdit = computed(() => {
   if (!userStore.isLoggedIn || !article.value) return false
   return article.value.userid === userStore.user?.userid || userStore.isEditor
 })
 
+/**
+ * 格式化日期
+ * @param {string} dateStr - ISO 日期字符串
+ */
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   return date.toLocaleString('zh-CN')
 }
 
+/**
+ * 获取文章详情
+ * 包括文章内容、收藏状态、评论列表
+ * 并处理 PDF 占位符和 MathJax 公式
+ */
 async function fetchArticle() {
   loading.value = true
   try {
@@ -197,7 +220,10 @@ async function fetchArticle() {
   }
 }
 
-// 渲染数学公式
+/**
+ * 渲染数学公式
+ * 支持 MathJax 2.x and 3.x
+ */
 function renderMathFormulas() {
   if (!articleBodyRef.value) return
   
@@ -221,7 +247,10 @@ function renderMathFormulas() {
   }, 100)
 }
 
-// 替换文章内容中的PDF占位符为PDF查看器组件
+/**
+ * 替换文章内容中的PDF占位符为PDF查看器组件
+ * 动态挂载 Vue 组件到 DOM 节点
+ */
 function replacePdfPlaceholders() {
   if (!articleBodyRef.value) return
   
@@ -282,6 +311,9 @@ function replacePdfPlaceholders() {
   })
 }
 
+/**
+ * 获取评论列表
+ */
 async function fetchComments() {
   try {
     const res = await commentApi.getByArticle(route.params.id, { page: 1, page_size: 50 })
@@ -291,6 +323,9 @@ async function fetchComments() {
   }
 }
 
+/**
+ * 切换收藏状态
+ */
 async function toggleFavorite() {
   if (!userStore.isLoggedIn) {
     router.push({ name: 'Login', query: { redirect: route.fullPath } })
@@ -315,6 +350,9 @@ async function toggleFavorite() {
   }
 }
 
+/**
+ * 提交评论
+ */
 async function submitComment() {
   if (!newComment.value.trim()) return
   
@@ -334,6 +372,10 @@ async function submitComment() {
   }
 }
 
+/**
+ * 点赞评论
+ * @param {Object} comment - 评论对象
+ */
 async function agreeComment(comment) {
   if (!userStore.isLoggedIn) {
     router.push({ name: 'Login' })
@@ -348,6 +390,10 @@ async function agreeComment(comment) {
   }
 }
 
+/**
+ * 反对评论
+ * @param {Object} comment - 评论对象
+ */
 async function opposeComment(comment) {
   if (!userStore.isLoggedIn) {
     router.push({ name: 'Login' })
@@ -362,10 +408,14 @@ async function opposeComment(comment) {
   }
 }
 
+/**
+ * 跳转到编辑页面
+ */
 function editArticle() {
   router.push({ name: 'EditArticle', params: { id: article.value.articleid } })
 }
 
+// 监听路由参数变化，重新获取文章
 watch(() => route.params.id, () => {
   if (route.params.id) {
     fetchArticle()
@@ -383,6 +433,9 @@ onBeforeUnmount(() => {
     try { app.unmount() } catch(e) {}
   })
   pdfViewerApps.length = 0
+  
+  // 恢复默认标题
+  document.title = 'cloudQuant'
 })
 </script>
 

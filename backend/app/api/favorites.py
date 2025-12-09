@@ -1,5 +1,7 @@
 """
-收藏API
+收藏 API 模块
+
+本模块提供文章收藏的添加、取消、列表获取以及检查收藏状态等接口。
 """
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -20,12 +22,25 @@ router = APIRouter()
 
 @router.get("/", response_model=PaginatedResponse[dict])
 async def get_my_favorites(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取我的收藏列表"""
+    """
+    获取我的收藏列表
+    
+    分页获取当前用户收藏的文章列表。
+    
+    Args:
+        page: 页码
+        page_size: 每页数量
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        PaginatedResponse[dict]: 分页的收藏列表
+    """
     # 获取总数
     count_query = select(func.count()).select_from(Favorite).where(
         and_(
@@ -67,7 +82,23 @@ async def add_favorite(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """添加收藏"""
+    """
+    添加收藏
+    
+    如果已经收藏过但已取消，则恢复收藏；如果已收藏且未取消，则报错。
+    
+    Args:
+        favorite_data: 收藏创建数据
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 收藏信息
+        
+    Raises:
+        HTTPException(404): 文章不存在
+        HTTPException(400): 已经收藏过了
+    """
     # 检查文章是否存在
     article_result = await db.execute(
         select(Article).where(Article.articleid == favorite_data.articleid)
@@ -132,7 +163,20 @@ async def remove_favorite(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """取消收藏"""
+    """
+    取消收藏
+    
+    Args:
+        articleid: 文章 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 成功消息
+        
+    Raises:
+        HTTPException(404): 未收藏此文章
+    """
     result = await db.execute(
         select(Favorite).where(
             and_(
@@ -162,7 +206,17 @@ async def check_favorite(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """检查是否已收藏"""
+    """
+    检查是否已收藏
+    
+    Args:
+        articleid: 文章 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 包含 is_favorited 字段
+    """
     result = await db.execute(
         select(Favorite).where(
             and_(

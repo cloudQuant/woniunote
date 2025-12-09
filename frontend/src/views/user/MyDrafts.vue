@@ -54,6 +54,12 @@
 </template>
 
 <script setup>
+/**
+ * @component MyDrafts
+ * @description 我的草稿箱组件
+ * 展示用户保存的草稿文章，支持编辑（继续写作）和删除操作。
+ * 显示草稿的标题、最后编辑时间和分类信息。
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'

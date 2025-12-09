@@ -1,5 +1,7 @@
 """
-文章API
+文章 API 模块
+
+本模块提供文章的增删改查、推荐、隐藏、审核以及获取文章类型等接口。
 """
 import math
 from datetime import datetime
@@ -102,7 +104,14 @@ ARTICLE_TYPES = {
 
 @router.get("/types", response_model=ResponseModel[dict])
 async def get_article_types():
-    """获取文章类型配置"""
+    """
+    获取文章类型配置
+    
+    返回系统支持的所有文章类型及其 ID。
+    
+    Returns:
+        ResponseModel[dict]: 文章类型字典
+    """
     return ResponseModel(
         code=200,
         message="success",
@@ -112,13 +121,27 @@ async def get_article_types():
 
 @router.get("/", response_model=PaginatedResponse[dict])
 async def list_articles(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
-    type: Optional[int] = None,
-    keyword: Optional[str] = None,
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
+    type: Optional[int] = Query(None, description="文章类型 ID"),
+    keyword: Optional[str] = Query(None, description="搜索关键词"),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取文章列表"""
+    """
+    获取文章列表
+    
+    分页获取文章列表，支持按类型和关键词筛选。
+    
+    Args:
+        page: 页码
+        page_size: 每页数量
+        type: 文章类型 ID
+        keyword: 搜索关键词
+        db: 数据库会话
+        
+    Returns:
+        PaginatedResponse[dict]: 分页的文章列表
+    """
     # 构建查询 - 只过滤隐藏和草稿，不过滤checked状态以兼容测试数据
     query = select(Article).where(
         and_(
@@ -174,12 +197,25 @@ async def list_articles(
 
 @router.get("/my", response_model=PaginatedResponse[dict])
 async def get_my_articles(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取当前用户的文章列表"""
+    """
+    获取当前用户的文章列表
+    
+    获取当前登录用户发布的所有文章（包括草稿）。
+    
+    Args:
+        page: 页码
+        page_size: 每页数量
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        PaginatedResponse[dict]: 分页的文章列表
+    """
     # 构建查询 - 获取当前用户的所有文章（包括草稿）
     query = select(Article).where(Article.userid == current_user.userid)
     
@@ -216,7 +252,17 @@ async def get_my_articles(
 async def get_hot_articles(
     db: AsyncSession = Depends(get_db)
 ):
-    """获取热门文章（最新、最热、推荐）"""
+    """
+    获取热门文章
+    
+    返回最新、最热（阅读量最高）和推荐的文章列表。
+    
+    Args:
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 包含 latest, most, recommended 三个列表的字典
+    """
     base_filter = and_(
         Article.hidden == 0,
         Article.drafted == 0
@@ -261,7 +307,24 @@ async def get_article(
     current_user: Optional[User] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取文章详情"""
+    """
+    获取文章详情
+    
+    根据文章 ID 获取详细信息，并增加阅读次数。
+    
+    Args:
+        articleid: 文章 ID
+        request: 请求对象 (用于记录 IP)
+        current_user: 当前用户 (可选，用于记录访问日志)
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 文章详情
+        
+    Raises:
+        HTTPException(404): 文章不存在
+        HTTPException(403): 文章已隐藏且无权访问
+    """
     query = select(Article).where(Article.articleid == articleid).options(
         selectinload(Article.author)
     )
@@ -317,7 +380,17 @@ async def create_article(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """创建文章"""
+    """
+    创建文章
+    
+    Args:
+        article_data: 文章创建数据
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 创建成功的文章信息
+    """
     new_article = Article(
         userid=current_user.userid,
         type=article_data.type,
@@ -348,7 +421,22 @@ async def update_article(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """更新文章"""
+    """
+    更新文章
+    
+    Args:
+        articleid: 文章 ID
+        article_data: 文章更新数据
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 更新后的文章信息
+        
+    Raises:
+        HTTPException(404): 文章不存在
+        HTTPException(403): 没有权限修改此文章
+    """
     result = await db.execute(
         select(Article).where(Article.articleid == articleid)
     )
@@ -389,7 +477,23 @@ async def delete_article(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """删除文章"""
+    """
+    删除文章
+    
+    同时删除关联的评论和收藏记录。
+    
+    Args:
+        articleid: 文章 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 成功消息
+        
+    Raises:
+        HTTPException(404): 文章不存在
+        HTTPException(403): 没有权限删除此文章
+    """
     # 仅查询文章的拥有者ID，避免加载带有关系的 ORM 对象
     result = await db.execute(
         select(Article.userid).where(Article.articleid == articleid)
@@ -428,7 +532,20 @@ async def toggle_recommend(
     admin_user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """切换文章推荐状态（管理员）"""
+    """
+    切换文章推荐状态（管理员）
+    
+    Args:
+        articleid: 文章 ID
+        admin_user: 管理员用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 新的推荐状态
+        
+    Raises:
+        HTTPException(404): 文章不存在
+    """
     result = await db.execute(
         select(Article).where(Article.articleid == articleid)
     )
@@ -457,7 +574,20 @@ async def toggle_hide(
     admin_user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """切换文章隐藏状态（管理员）"""
+    """
+    切换文章隐藏状态（管理员）
+    
+    Args:
+        articleid: 文章 ID
+        admin_user: 管理员用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 新的隐藏状态
+        
+    Raises:
+        HTTPException(404): 文章不存在
+    """
     result = await db.execute(
         select(Article).where(Article.articleid == articleid)
     )
@@ -486,7 +616,20 @@ async def toggle_check(
     admin_user: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """切换文章审核状态（管理员）"""
+    """
+    切换文章审核状态（管理员）
+    
+    Args:
+        articleid: 文章 ID
+        admin_user: 管理员用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 新的审核状态
+        
+    Raises:
+        HTTPException(404): 文章不存在
+    """
     result = await db.execute(
         select(Article).where(Article.articleid == articleid)
     )
@@ -511,12 +654,23 @@ async def toggle_check(
 
 @router.get("/drafts/my", response_model=PaginatedResponse[dict])
 async def get_my_drafts(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取我的草稿列表"""
+    """
+    获取我的草稿列表
+    
+    Args:
+        page: 页码
+        page_size: 每页数量
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        PaginatedResponse[dict]: 分页的草稿列表
+    """
     # 构建查询 - 获取当前用户的草稿
     query = select(Article).where(
         and_(

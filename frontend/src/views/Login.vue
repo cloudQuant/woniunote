@@ -50,6 +50,11 @@
 </template>
 
 <script setup>
+/**
+ * @component Login
+ * @description 用户登录页面组件
+ * 提供用户名密码登录表单，包含表单验证和登录状态处理。
+ */
 import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'

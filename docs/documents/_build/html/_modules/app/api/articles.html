@@ -1,0 +1,846 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.api.articles &mdash; WoniuNote 1.0.0 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=34088549"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            WoniuNote
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">app</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">WoniuNote</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">app.api.articles</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>app.api.articles 源代码</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">文章 API 模块</span>
+
+<span class="sd">本模块提供文章的增删改查、推荐、隐藏、审核以及获取文章类型等接口。</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">HTTPException</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">Query</span><span class="p">,</span> <span class="n">Request</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.ext.asyncio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncSession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">select</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">and_</span><span class="p">,</span> <span class="n">delete</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.orm</span><span class="w"> </span><span class="kn">import</span> <span class="n">selectinload</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.core.database</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_db</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.models.article</span><span class="w"> </span><span class="kn">import</span> <span class="n">Article</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.models.user</span><span class="w"> </span><span class="kn">import</span> <span class="n">User</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.models.comment</span><span class="w"> </span><span class="kn">import</span> <span class="n">Comment</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.models.favorite</span><span class="w"> </span><span class="kn">import</span> <span class="n">Favorite</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.schemas.article</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ArticleCreate</span><span class="p">,</span> <span class="n">ArticleUpdate</span><span class="p">,</span> <span class="n">ArticleResponse</span><span class="p">,</span> 
+    <span class="n">ArticleListItem</span><span class="p">,</span> <span class="n">ArticleTypeConfig</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.schemas.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResponseModel</span><span class="p">,</span> <span class="n">PaginatedResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.api.deps</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_current_user</span><span class="p">,</span> <span class="n">get_current_user_required</span><span class="p">,</span> <span class="n">get_admin_user</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.core.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_article_access</span>
+
+<span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">()</span>
+
+<span class="c1"># 文章类型配置</span>
+<span class="n">ARTICLE_TYPES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;交易策略&#39;</span><span class="p">,</span>
+    <span class="mi">101</span><span class="p">:</span> <span class="s1">&#39;CTA策略&#39;</span><span class="p">,</span>
+    <span class="mi">102</span><span class="p">:</span> <span class="s1">&#39;统计套利&#39;</span><span class="p">,</span>
+    <span class="mi">103</span><span class="p">:</span> <span class="s1">&#39;高频交易&#39;</span><span class="p">,</span>
+    <span class="mi">104</span><span class="p">:</span> <span class="s1">&#39;因子策略&#39;</span><span class="p">,</span>
+    <span class="mi">105</span><span class="p">:</span> <span class="s1">&#39;选股与择时&#39;</span><span class="p">,</span>
+    <span class="mi">106</span><span class="p">:</span> <span class="s1">&#39;机器学习&#39;</span><span class="p">,</span>
+    <span class="mi">107</span><span class="p">:</span> <span class="s1">&#39;深度学习&#39;</span><span class="p">,</span>
+    <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;量化框架&#39;</span><span class="p">,</span>
+    <span class="mi">201</span><span class="p">:</span> <span class="s1">&#39;backtrader&#39;</span><span class="p">,</span>
+    <span class="mi">202</span><span class="p">:</span> <span class="s1">&#39;wondertrader&#39;</span><span class="p">,</span>
+    <span class="mi">203</span><span class="p">:</span> <span class="s1">&#39;wtpy&#39;</span><span class="p">,</span>
+    <span class="mi">204</span><span class="p">:</span> <span class="s1">&#39;pyfolio&#39;</span><span class="p">,</span>
+    <span class="mi">205</span><span class="p">:</span> <span class="s1">&#39;alphalens&#39;</span><span class="p">,</span>
+    <span class="mi">3</span><span class="p">:</span> <span class="s1">&#39;投资&#39;</span><span class="p">,</span>
+    <span class="mi">301</span><span class="p">:</span> <span class="s1">&#39;股票&#39;</span><span class="p">,</span>
+    <span class="mi">302</span><span class="p">:</span> <span class="s1">&#39;期货&#39;</span><span class="p">,</span>
+    <span class="mi">303</span><span class="p">:</span> <span class="s1">&#39;期权&#39;</span><span class="p">,</span>
+    <span class="mi">304</span><span class="p">:</span> <span class="s1">&#39;外汇&#39;</span><span class="p">,</span>
+    <span class="mi">305</span><span class="p">:</span> <span class="s1">&#39;crypto&#39;</span><span class="p">,</span>
+    <span class="mi">306</span><span class="p">:</span> <span class="s1">&#39;黄金&#39;</span><span class="p">,</span>
+    <span class="mi">307</span><span class="p">:</span> <span class="s1">&#39;债券&#39;</span><span class="p">,</span>
+    <span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;理财&#39;</span><span class="p">,</span>
+    <span class="mi">401</span><span class="p">:</span> <span class="s1">&#39;基金&#39;</span><span class="p">,</span>
+    <span class="mi">402</span><span class="p">:</span> <span class="s1">&#39;保险&#39;</span><span class="p">,</span>
+    <span class="mi">403</span><span class="p">:</span> <span class="s1">&#39;信托&#39;</span><span class="p">,</span>
+    <span class="mi">404</span><span class="p">:</span> <span class="s1">&#39;银行理财&#39;</span><span class="p">,</span>
+    <span class="mi">405</span><span class="p">:</span> <span class="s1">&#39;存款&#39;</span><span class="p">,</span>
+    <span class="mi">5</span><span class="p">:</span> <span class="s1">&#39;区块链与defi&#39;</span><span class="p">,</span>
+    <span class="mi">501</span><span class="p">:</span> <span class="s1">&#39;去中心化交易所&#39;</span><span class="p">,</span>
+    <span class="mi">502</span><span class="p">:</span> <span class="s1">&#39;去中心化金融&#39;</span><span class="p">,</span>
+    <span class="mi">503</span><span class="p">:</span> <span class="s1">&#39;去中心化借贷&#39;</span><span class="p">,</span>
+    <span class="mi">504</span><span class="p">:</span> <span class="s1">&#39;去中心化治理&#39;</span><span class="p">,</span>
+    <span class="mi">505</span><span class="p">:</span> <span class="s1">&#39;其他defi&#39;</span><span class="p">,</span>
+    <span class="mi">506</span><span class="p">:</span> <span class="s1">&#39;区块链&#39;</span><span class="p">,</span>
+    <span class="mi">507</span><span class="p">:</span> <span class="s1">&#39;比特币&#39;</span><span class="p">,</span>
+    <span class="mi">508</span><span class="p">:</span> <span class="s1">&#39;以太坊&#39;</span><span class="p">,</span>
+    <span class="mi">6</span><span class="p">:</span> <span class="s1">&#39;机器学习&#39;</span><span class="p">,</span>
+    <span class="mi">601</span><span class="p">:</span> <span class="s1">&#39;tensorflow&#39;</span><span class="p">,</span>
+    <span class="mi">602</span><span class="p">:</span> <span class="s1">&#39;pytorch&#39;</span><span class="p">,</span>
+    <span class="mi">603</span><span class="p">:</span> <span class="s1">&#39;keras&#39;</span><span class="p">,</span>
+    <span class="mi">604</span><span class="p">:</span> <span class="s1">&#39;scikit-learn&#39;</span><span class="p">,</span>
+    <span class="mi">605</span><span class="p">:</span> <span class="s1">&#39;机器学习与交易&#39;</span><span class="p">,</span>
+    <span class="mi">606</span><span class="p">:</span> <span class="s1">&#39;深度学习与交易&#39;</span><span class="p">,</span>
+    <span class="mi">7</span><span class="p">:</span> <span class="s1">&#39;编程&#39;</span><span class="p">,</span>
+    <span class="mi">701</span><span class="p">:</span> <span class="s1">&#39;python&#39;</span><span class="p">,</span>
+    <span class="mi">702</span><span class="p">:</span> <span class="s1">&#39;c++&#39;</span><span class="p">,</span>
+    <span class="mi">703</span><span class="p">:</span> <span class="s1">&#39;cython&#39;</span><span class="p">,</span>
+    <span class="mi">704</span><span class="p">:</span> <span class="s1">&#39;java&#39;</span><span class="p">,</span>
+    <span class="mi">705</span><span class="p">:</span> <span class="s1">&#39;javascript&#39;</span><span class="p">,</span>
+    <span class="mi">706</span><span class="p">:</span> <span class="s1">&#39;swing&#39;</span><span class="p">,</span>
+    <span class="mi">707</span><span class="p">:</span> <span class="s1">&#39;pybind11&#39;</span><span class="p">,</span>
+    <span class="mi">8</span><span class="p">:</span> <span class="s1">&#39;笔记&#39;</span><span class="p">,</span>
+    <span class="mi">801</span><span class="p">:</span> <span class="s1">&#39;幸福&#39;</span><span class="p">,</span>
+    <span class="mi">802</span><span class="p">:</span> <span class="s1">&#39;金融&#39;</span><span class="p">,</span>
+    <span class="mi">803</span><span class="p">:</span> <span class="s1">&#39;经济&#39;</span><span class="p">,</span>
+    <span class="mi">804</span><span class="p">:</span> <span class="s1">&#39;哲学&#39;</span><span class="p">,</span>
+    <span class="mi">805</span><span class="p">:</span> <span class="s1">&#39;历史&#39;</span><span class="p">,</span>
+    <span class="mi">806</span><span class="p">:</span> <span class="s1">&#39;科技&#39;</span><span class="p">,</span>
+    <span class="mi">807</span><span class="p">:</span> <span class="s1">&#39;读书笔记&#39;</span><span class="p">,</span>
+    <span class="mi">808</span><span class="p">:</span> <span class="s1">&#39;其他笔记&#39;</span><span class="p">,</span>
+    <span class="mi">809</span><span class="p">:</span> <span class="s1">&#39;个人知识库&#39;</span><span class="p">,</span>
+    <span class="mi">9</span><span class="p">:</span> <span class="s1">&#39;教程&#39;</span><span class="p">,</span>
+    <span class="mi">901</span><span class="p">:</span> <span class="s1">&#39;woniunote入门教程&#39;</span><span class="p">,</span>
+    <span class="mi">902</span><span class="p">:</span> <span class="s1">&#39;backtrader基础教程&#39;</span><span class="p">,</span>
+    <span class="mi">903</span><span class="p">:</span> <span class="s1">&#39;airflow入门教程&#39;</span><span class="p">,</span>
+    <span class="mi">904</span><span class="p">:</span> <span class="s1">&#39;arrow入门教程&#39;</span><span class="p">,</span>
+    <span class="mi">905</span><span class="p">:</span> <span class="s1">&#39;量化交易入门教程&#39;</span><span class="p">,</span>
+    <span class="mi">906</span><span class="p">:</span> <span class="s1">&#39;机器学习入门教程&#39;</span><span class="p">,</span>
+    <span class="mi">907</span><span class="p">:</span> <span class="s1">&#39;ib_tws_api入门教程&#39;</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="get_article_types">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.articles.get_article_types">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/types&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_article_types</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取文章类型配置</span>
+<span class="sd">    </span>
+<span class="sd">    返回系统支持的所有文章类型及其 ID。</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 文章类型字典</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;types&quot;</span><span class="p">:</span> <span class="n">ARTICLE_TYPES</span><span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="list_articles">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.articles.list_articles">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">PaginatedResponse</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">list_articles</span><span class="p">(</span>
+    <span class="n">page</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;页码&quot;</span><span class="p">),</span>
+    <span class="n">page_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;每页数量&quot;</span><span class="p">),</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;文章类型 ID&quot;</span><span class="p">),</span>
+    <span class="n">keyword</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;搜索关键词&quot;</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取文章列表</span>
+<span class="sd">    </span>
+<span class="sd">    分页获取文章列表，支持按类型和关键词筛选。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        page: 页码</span>
+<span class="sd">        page_size: 每页数量</span>
+<span class="sd">        type: 文章类型 ID</span>
+<span class="sd">        keyword: 搜索关键词</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        PaginatedResponse[dict]: 分页的文章列表</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 构建查询 - 只过滤隐藏和草稿，不过滤checked状态以兼容测试数据</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">and_</span><span class="p">(</span>
+            <span class="n">Article</span><span class="o">.</span><span class="n">hidden</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">Article</span><span class="o">.</span><span class="n">drafted</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    
+    <span class="c1"># 类型过滤</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
+            <span class="c1"># 主类型，匹配所有子类型</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="n">and_</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">type</span> <span class="o">&gt;=</span> <span class="nb">type</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">Article</span><span class="o">.</span><span class="n">type</span> <span class="o">&lt;</span> <span class="p">(</span><span class="nb">type</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span> <span class="o">|</span>
+                <span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="nb">type</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="nb">type</span><span class="p">)</span>
+    
+    <span class="c1"># 关键词搜索</span>
+    <span class="k">if</span> <span class="n">keyword</span><span class="p">:</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">headline</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">keyword</span><span class="p">))</span>
+    
+    <span class="c1"># 获取总数</span>
+    <span class="n">count_query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">subquery</span><span class="p">())</span>
+    <span class="n">total_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">count_query</span><span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">total_result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span>
+    
+    <span class="c1"># 分页</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">page</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">page_size</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">selectinload</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">author</span><span class="p">))</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">desc</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">createtime</span><span class="p">))</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">page_size</span><span class="p">)</span>
+    
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+    <span class="n">articles</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    
+    <span class="c1"># 构建响应</span>
+    <span class="n">article_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">article</span> <span class="ow">in</span> <span class="n">articles</span><span class="p">:</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">ArticleListItem</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">article</span><span class="p">)</span>
+        <span class="n">article_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span>
+    
+    <span class="k">return</span> <span class="n">PaginatedResponse</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">article_list</span><span class="p">,</span>
+        <span class="n">total</span><span class="o">=</span><span class="n">total</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
+        <span class="n">page_size</span><span class="o">=</span><span class="n">page_size</span><span class="p">,</span>
+        <span class="n">total_pages</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">total</span> <span class="o">/</span> <span class="n">page_size</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_my_articles">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.articles.get_my_articles">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/my&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">PaginatedResponse</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_my_articles</span><span class="p">(</span>
+    <span class="n">page</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;页码&quot;</span><span class="p">),</span>
+    <span class="n">page_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;每页数量&quot;</span><span class="p">),</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取当前用户的文章列表</span>
+<span class="sd">    </span>
+<span class="sd">    获取当前登录用户发布的所有文章（包括草稿）。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        page: 页码</span>
+<span class="sd">        page_size: 每页数量</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        PaginatedResponse[dict]: 分页的文章列表</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 构建查询 - 获取当前用户的所有文章（包括草稿）</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span><span class="p">)</span>
+    
+    <span class="c1"># 获取总数</span>
+    <span class="n">count_query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">subquery</span><span class="p">())</span>
+    <span class="n">total_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">count_query</span><span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">total_result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span>
+    
+    <span class="c1"># 分页</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">page</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">page_size</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">desc</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">createtime</span><span class="p">))</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">page_size</span><span class="p">)</span>
+    
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+    <span class="n">articles</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    
+    <span class="c1"># 构建响应</span>
+    <span class="n">article_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">article</span> <span class="ow">in</span> <span class="n">articles</span><span class="p">:</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">ArticleListItem</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">article</span><span class="p">)</span>
+        <span class="n">article_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span>
+    
+    <span class="k">return</span> <span class="n">PaginatedResponse</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">article_list</span><span class="p">,</span>
+        <span class="n">total</span><span class="o">=</span><span class="n">total</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
+        <span class="n">page_size</span><span class="o">=</span><span class="n">page_size</span><span class="p">,</span>
+        <span class="n">total_pages</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">total</span> <span class="o">/</span> <span class="n">page_size</span><span class="p">)</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_hot_articles">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.articles.get_hot_articles">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/hot&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_hot_articles</span><span class="p">(</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取热门文章</span>
+<span class="sd">    </span>
+<span class="sd">    返回最新、最热（阅读量最高）和推荐的文章列表。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 包含 latest, most, recommended 三个列表的字典</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">base_filter</span> <span class="o">=</span> <span class="n">and_</span><span class="p">(</span>
+        <span class="n">Article</span><span class="o">.</span><span class="n">hidden</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">Article</span><span class="o">.</span><span class="n">drafted</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="p">)</span>
+    
+    <span class="c1"># 最新文章 - 使用selectinload预加载author关系</span>
+    <span class="n">latest_query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">base_filter</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="p">(</span>
+        <span class="n">selectinload</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">author</span><span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">desc</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">createtime</span><span class="p">))</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">latest_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">latest_query</span><span class="p">)</span>
+    <span class="n">latest</span> <span class="o">=</span> <span class="n">latest_result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    
+    <span class="c1"># 最热文章</span>
+    <span class="n">most_query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">base_filter</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="p">(</span>
+        <span class="n">selectinload</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">author</span><span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">desc</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">readcount</span><span class="p">))</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">most_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">most_query</span><span class="p">)</span>
+    <span class="n">most</span> <span class="o">=</span> <span class="n">most_result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    
+    <span class="c1"># 推荐文章</span>
+    <span class="n">recommended_query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">and_</span><span class="p">(</span><span class="n">base_filter</span><span class="p">,</span> <span class="n">Article</span><span class="o">.</span><span class="n">recommended</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">selectinload</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">author</span><span class="p">))</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">desc</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">createtime</span><span class="p">))</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span>
+    <span class="n">recommended_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">recommended_query</span><span class="p">)</span>
+    <span class="n">recommended</span> <span class="o">=</span> <span class="n">recommended_result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;latest&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">ArticleListItem</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">latest</span><span class="p">],</span>
+            <span class="s2">&quot;most&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">ArticleListItem</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">most</span><span class="p">],</span>
+            <span class="s2">&quot;recommended&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">ArticleListItem</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">recommended</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_article">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.articles.get_article">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{articleid}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_article</span><span class="p">(</span>
+    <span class="n">articleid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">User</span><span class="p">]</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取文章详情</span>
+<span class="sd">    </span>
+<span class="sd">    根据文章 ID 获取详细信息，并增加阅读次数。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        articleid: 文章 ID</span>
+<span class="sd">        request: 请求对象 (用于记录 IP)</span>
+<span class="sd">        current_user: 当前用户 (可选，用于记录访问日志)</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 文章详情</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 文章不存在</span>
+<span class="sd">        HTTPException(403): 文章已隐藏且无权访问</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">articleid</span> <span class="o">==</span> <span class="n">articleid</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="p">(</span>
+        <span class="n">selectinload</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">author</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+    <span class="n">article</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">article</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_404_NOT_FOUND</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;文章不存在&quot;</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># 检查访问权限</span>
+    <span class="k">if</span> <span class="n">article</span><span class="o">.</span><span class="n">hidden</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">current_user</span> <span class="ow">or</span> <span class="p">(</span><span class="n">current_user</span><span class="o">.</span><span class="n">userid</span> <span class="o">!=</span> <span class="n">article</span><span class="o">.</span><span class="n">userid</span> <span class="ow">and</span> <span class="n">current_user</span><span class="o">.</span><span class="n">role</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span> <span class="s2">&quot;editor&quot;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+                <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_403_FORBIDDEN</span><span class="p">,</span>
+                <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;文章已隐藏&quot;</span>
+            <span class="p">)</span>
+    
+    <span class="c1"># 获取客户端IP地址（支持代理）</span>
+    <span class="n">client_ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;X-Forwarded-For&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">client_ip</span><span class="p">:</span>
+        <span class="n">client_ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;X-Real-IP&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">client_ip</span><span class="p">:</span>
+        <span class="n">client_ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">host</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">client</span> <span class="k">else</span> <span class="s2">&quot;unknown&quot;</span>
+    
+    <span class="c1"># 记录文章访问日志</span>
+    <span class="n">log_article_access</span><span class="p">(</span>
+        <span class="n">ip_address</span><span class="o">=</span><span class="n">client_ip</span><span class="p">,</span>
+        <span class="n">article_id</span><span class="o">=</span><span class="n">article</span><span class="o">.</span><span class="n">articleid</span><span class="p">,</span>
+        <span class="n">article_title</span><span class="o">=</span><span class="n">article</span><span class="o">.</span><span class="n">headline</span><span class="p">,</span>
+        <span class="n">article_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;/article/</span><span class="si">{</span><span class="n">article</span><span class="o">.</span><span class="n">articleid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">user_id</span><span class="o">=</span><span class="n">current_user</span><span class="o">.</span><span class="n">userid</span> <span class="k">if</span> <span class="n">current_user</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">user_agent</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;User-Agent&quot;</span><span class="p">),</span>
+        <span class="n">referer</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Referer&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    
+    <span class="c1"># 更新阅读次数</span>
+    <span class="n">article</span><span class="o">.</span><span class="n">readcount</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">ArticleResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">article</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_article">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.articles.create_article">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_article</span><span class="p">(</span>
+    <span class="n">article_data</span><span class="p">:</span> <span class="n">ArticleCreate</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    创建文章</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        article_data: 文章创建数据</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 创建成功的文章信息</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">new_article</span> <span class="o">=</span> <span class="n">Article</span><span class="p">(</span>
+        <span class="n">userid</span><span class="o">=</span><span class="n">current_user</span><span class="o">.</span><span class="n">userid</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">article_data</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
+        <span class="n">headline</span><span class="o">=</span><span class="n">article_data</span><span class="o">.</span><span class="n">headline</span><span class="p">,</span>
+        <span class="n">content</span><span class="o">=</span><span class="n">article_data</span><span class="o">.</span><span class="n">content</span><span class="p">,</span>
+        <span class="n">thumbnail</span><span class="o">=</span><span class="n">article_data</span><span class="o">.</span><span class="n">thumbnail</span><span class="p">,</span>
+        <span class="n">credit</span><span class="o">=</span><span class="n">article_data</span><span class="o">.</span><span class="n">credit</span><span class="p">,</span>
+        <span class="n">drafted</span><span class="o">=</span><span class="n">article_data</span><span class="o">.</span><span class="n">drafted</span><span class="p">,</span>
+        <span class="n">createtime</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+        <span class="n">updatetime</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="p">)</span>
+    
+    <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_article</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">new_article</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;创建成功&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">ArticleResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">new_article</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="update_article">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.articles.update_article">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{articleid}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_article</span><span class="p">(</span>
+    <span class="n">articleid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">article_data</span><span class="p">:</span> <span class="n">ArticleUpdate</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    更新文章</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        articleid: 文章 ID</span>
+<span class="sd">        article_data: 文章更新数据</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 更新后的文章信息</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 文章不存在</span>
+<span class="sd">        HTTPException(403): 没有权限修改此文章</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">articleid</span> <span class="o">==</span> <span class="n">articleid</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">article</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">article</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_404_NOT_FOUND</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;文章不存在&quot;</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># 检查权限</span>
+    <span class="k">if</span> <span class="n">article</span><span class="o">.</span><span class="n">userid</span> <span class="o">!=</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span> <span class="ow">and</span> <span class="n">current_user</span><span class="o">.</span><span class="n">role</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span> <span class="s2">&quot;editor&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_403_FORBIDDEN</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;没有权限修改此文章&quot;</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># 更新字段</span>
+    <span class="n">update_data</span> <span class="o">=</span> <span class="n">article_data</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">exclude_unset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">update_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">article</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    
+    <span class="n">article</span><span class="o">.</span><span class="n">updatetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">article</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;更新成功&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">ArticleResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">article</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="delete_article">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.articles.delete_article">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{articleid}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_article</span><span class="p">(</span>
+    <span class="n">articleid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    删除文章</span>
+<span class="sd">    </span>
+<span class="sd">    同时删除关联的评论和收藏记录。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        articleid: 文章 ID</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel: 成功消息</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 文章不存在</span>
+<span class="sd">        HTTPException(403): 没有权限删除此文章</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 仅查询文章的拥有者ID，避免加载带有关系的 ORM 对象</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">userid</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">articleid</span> <span class="o">==</span> <span class="n">articleid</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">row</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_404_NOT_FOUND</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;文章不存在&quot;</span>
+        <span class="p">)</span>
+    
+    <span class="n">owner_id</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1"># 检查权限</span>
+    <span class="k">if</span> <span class="n">owner_id</span> <span class="o">!=</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span> <span class="ow">and</span> <span class="n">current_user</span><span class="o">.</span><span class="n">role</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span> <span class="s2">&quot;editor&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_403_FORBIDDEN</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;没有权限删除此文章&quot;</span>
+        <span class="p">)</span>
+    
+    <span class="c1"># 先删除关联的评论和收藏记录</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">delete</span><span class="p">(</span><span class="n">Comment</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Comment</span><span class="o">.</span><span class="n">articleid</span> <span class="o">==</span> <span class="n">articleid</span><span class="p">))</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">delete</span><span class="p">(</span><span class="n">Favorite</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Favorite</span><span class="o">.</span><span class="n">articleid</span> <span class="o">==</span> <span class="n">articleid</span><span class="p">))</span>
+    
+    <span class="c1"># 删除文章本身</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">delete</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">articleid</span> <span class="o">==</span> <span class="n">articleid</span><span class="p">))</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;删除成功&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="toggle_recommend">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.articles.toggle_recommend">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{articleid}</span><span class="s2">/recommend&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">toggle_recommend</span><span class="p">(</span>
+    <span class="n">articleid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">admin_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_admin_user</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    切换文章推荐状态（管理员）</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        articleid: 文章 ID</span>
+<span class="sd">        admin_user: 管理员用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel: 新的推荐状态</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 文章不存在</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">articleid</span> <span class="o">==</span> <span class="n">articleid</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">article</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">article</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_404_NOT_FOUND</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;文章不存在&quot;</span>
+        <span class="p">)</span>
+    
+    <span class="n">article</span><span class="o">.</span><span class="n">recommended</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">article</span><span class="o">.</span><span class="n">recommended</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">article</span><span class="o">.</span><span class="n">updatetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;推荐状态已更新&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;recommended&quot;</span><span class="p">:</span> <span class="n">article</span><span class="o">.</span><span class="n">recommended</span><span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="toggle_hide">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.articles.toggle_hide">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{articleid}</span><span class="s2">/hide&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">toggle_hide</span><span class="p">(</span>
+    <span class="n">articleid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">admin_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_admin_user</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    切换文章隐藏状态（管理员）</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        articleid: 文章 ID</span>
+<span class="sd">        admin_user: 管理员用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel: 新的隐藏状态</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 文章不存在</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">articleid</span> <span class="o">==</span> <span class="n">articleid</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">article</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">article</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_404_NOT_FOUND</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;文章不存在&quot;</span>
+        <span class="p">)</span>
+    
+    <span class="n">article</span><span class="o">.</span><span class="n">hidden</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">article</span><span class="o">.</span><span class="n">hidden</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">article</span><span class="o">.</span><span class="n">updatetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;隐藏状态已更新&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;hidden&quot;</span><span class="p">:</span> <span class="n">article</span><span class="o">.</span><span class="n">hidden</span><span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="toggle_check">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.articles.toggle_check">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{articleid}</span><span class="s2">/check&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">toggle_check</span><span class="p">(</span>
+    <span class="n">articleid</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">admin_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_admin_user</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    切换文章审核状态（管理员）</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        articleid: 文章 ID</span>
+<span class="sd">        admin_user: 管理员用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel: 新的审核状态</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 文章不存在</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">articleid</span> <span class="o">==</span> <span class="n">articleid</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">article</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">article</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_404_NOT_FOUND</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;文章不存在&quot;</span>
+        <span class="p">)</span>
+    
+    <span class="n">article</span><span class="o">.</span><span class="n">checked</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">article</span><span class="o">.</span><span class="n">checked</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">article</span><span class="o">.</span><span class="n">updatetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;审核状态已更新&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;checked&quot;</span><span class="p">:</span> <span class="n">article</span><span class="o">.</span><span class="n">checked</span><span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_my_drafts">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.articles.get_my_drafts">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/drafts/my&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">PaginatedResponse</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_my_drafts</span><span class="p">(</span>
+    <span class="n">page</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;页码&quot;</span><span class="p">),</span>
+    <span class="n">page_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;每页数量&quot;</span><span class="p">),</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取我的草稿列表</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        page: 页码</span>
+<span class="sd">        page_size: 每页数量</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        PaginatedResponse[dict]: 分页的草稿列表</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 构建查询 - 获取当前用户的草稿</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">and_</span><span class="p">(</span>
+            <span class="n">Article</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span><span class="p">,</span>
+            <span class="n">Article</span><span class="o">.</span><span class="n">drafted</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    
+    <span class="c1"># 获取总数</span>
+    <span class="n">count_query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">subquery</span><span class="p">())</span>
+    <span class="n">total_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">count_query</span><span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">total_result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span>
+    
+    <span class="c1"># 分页</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">page</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">page_size</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">desc</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">updatetime</span><span class="p">))</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">page_size</span><span class="p">)</span>
+    
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+    <span class="n">articles</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    
+    <span class="c1"># 构建响应</span>
+    <span class="n">article_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">article</span> <span class="ow">in</span> <span class="n">articles</span><span class="p">:</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">ArticleListItem</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">article</span><span class="p">)</span>
+        <span class="n">article_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span>
+    
+    <span class="k">return</span> <span class="n">PaginatedResponse</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">article_list</span><span class="p">,</span>
+        <span class="n">total</span><span class="o">=</span><span class="n">total</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
+        <span class="n">page_size</span><span class="o">=</span><span class="n">page_size</span><span class="p">,</span>
+        <span class="n">total_pages</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">total</span> <span class="o">/</span> <span class="n">page_size</span><span class="p">)</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, WoniuNote Team。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

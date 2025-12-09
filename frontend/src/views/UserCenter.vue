@@ -54,6 +54,12 @@
 </template>
 
 <script setup>
+/**
+ * @component UserCenter
+ * @description 用户中心布局组件
+ * 包含左侧用户信息/导航栏和右侧内容区域。
+ * 负责展示通过 `router-view` 渲染的子路由组件（如个人资料、文章管理等）。
+ */
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { User, Document, Star, ChatDotRound, Coin, EditPen } from '@element-plus/icons-vue'

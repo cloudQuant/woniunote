@@ -45,16 +45,23 @@
 </template>
 
 <script setup>
+/**
+ * @component PdfViewer
+ * @description PDF 文件预览组件
+ * 基于 pdf.js 实现，支持翻页、缩放、适应宽度和下载功能。
+ */
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import * as pdfjsLib from 'pdfjs-dist'
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { ArrowLeft, ArrowRight, ZoomIn, ZoomOut, Download, Loading, Warning } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
 
 // 设置worker路径 - 使用本地worker文件
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker
 
 const props = defineProps({
+  /**
+   * PDF 文件 URL
+   */
   pdfUrl: {
     type: String,
     required: true
@@ -73,7 +80,11 @@ const fitMode = ref('width') // 'width' 或 'manual'
 let pdfDoc = null
 let currentPage = null // 缓存当前页面对象
 
-// 计算适应宽度的缩放比例
+/**
+ * 计算适应宽度的缩放比例
+ * @param {Object} page - PDF 页面对象
+ * @returns {number} 缩放比例
+ */
 function calculateFitWidthScale(page) {
   if (!viewerRef.value) return 1
   
@@ -89,7 +100,10 @@ function calculateFitWidthScale(page) {
   return Math.min(fitScale, 3) // 最大缩放3倍
 }
 
-// 渲染PDF页面
+/**
+ * 渲染指定页码的 PDF 页面
+ * @param {number} num - 页码
+ */
 async function renderPage(num) {
   if (!pdfDoc || !canvasRef.value) return
   
@@ -134,7 +148,9 @@ async function renderPage(num) {
   }
 }
 
-// 加载PDF
+/**
+ * 加载 PDF 文档
+ */
 async function loadPdf() {
   try {
     loading.value = true
@@ -165,19 +181,25 @@ async function loadPdf() {
   }
 }
 
-// 上一页
+/**
+ * 上一页
+ */
 function prevPage() {
   if (pageNum.value <= 1) return
   renderPage(pageNum.value - 1)
 }
 
-// 下一页
+/**
+ * 下一页
+ */
 function nextPage() {
   if (pageNum.value >= numPages.value) return
   renderPage(pageNum.value + 1)
 }
 
-// 缩放
+/**
+ * 放大
+ */
 function zoomIn() {
   fitMode.value = 'manual'
   if (scale.value >= 5) return
@@ -185,6 +207,9 @@ function zoomIn() {
   renderPage(pageNum.value)
 }
 
+/**
+ * 缩小
+ */
 function zoomOut() {
   fitMode.value = 'manual'
   if (scale.value <= 0.5) return
@@ -192,12 +217,17 @@ function zoomOut() {
   renderPage(pageNum.value)
 }
 
+/**
+ * 适应宽度模式
+ */
 function fitWidth() {
   fitMode.value = 'width'
   renderPage(pageNum.value)
 }
 
-// 下载PDF
+/**
+ * 下载 PDF 文件
+ */
 function downloadPdf() {
   let url = props.pdfUrl
   if (!url.startsWith('http')) {
@@ -316,4 +346,3 @@ onBeforeUnmount(() => {
   }
 }
 </style>
-

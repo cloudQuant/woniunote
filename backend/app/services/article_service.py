@@ -1,5 +1,7 @@
 """
-文章服务层 - 处理文章相关业务逻辑
+文章服务层模块
+
+本模块处理文章相关的业务逻辑，包括文章的增删改查、推荐、隐藏等操作。
 """
 from typing import Optional, List, Tuple
 from datetime import datetime
@@ -20,7 +22,11 @@ from app.core.exceptions import (
 
 
 class ArticleService:
-    """文章服务类"""
+    """
+    文章服务类
+    
+    提供文章管理的业务逻辑接口。
+    """
     
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -31,11 +37,14 @@ class ArticleService:
         include_author: bool = True
     ) -> Optional[Article]:
         """
-        根据ID获取文章
+        根据 ID 获取文章
         
         Args:
-            article_id: 文章ID
+            article_id: 文章 ID
             include_author: 是否包含作者信息
+            
+        Returns:
+            Optional[Article]: 文章对象，如果不存在则返回 None
         """
         query = select(Article).where(Article.articleid == article_id)
         if include_author:
@@ -57,17 +66,19 @@ class ArticleService:
         """
         获取文章列表
         
+        支持分页、类型筛选、关键词搜索、用户筛选等功能。
+        
         Args:
-            page: 页码
+            page: 页码，从 1 开始
             page_size: 每页数量
-            article_type: 文章类型
-            keyword: 搜索关键词
-            user_id: 指定用户ID
+            article_type: 文章类型 ID
+            keyword: 搜索关键词 (匹配标题)
+            user_id: 指定用户 ID
             include_hidden: 是否包含隐藏文章
             include_drafted: 是否包含草稿
             
         Returns:
-            (文章列表, 总数)
+            Tuple[List[Article], int]: (文章列表, 总记录数)
         """
         conditions = []
         
@@ -127,16 +138,16 @@ class ArticleService:
         创建文章
         
         Args:
-            user: 作者
-            headline: 标题
-            content: 内容
-            article_type: 类型
-            thumbnail: 缩略图
+            user: 作者对象
+            headline: 文章标题
+            content: 文章内容
+            article_type: 文章类型 ID
+            thumbnail: 缩略图路径
             credit: 阅读所需积分
-            drafted: 是否草稿
+            drafted: 是否为草稿 (0: 否, 1: 是)
             
         Returns:
-            新创建的文章
+            Article: 新创建的文章对象
         """
         new_article = Article(
             userid=user.userid,
@@ -169,16 +180,16 @@ class ArticleService:
         更新文章
         
         Args:
-            article_id: 文章ID
-            user: 当前用户
-            **kwargs: 要更新的字段
+            article_id: 文章 ID
+            user: 当前用户对象 (用于权限检查)
+            **kwargs: 要更新的字段及值
             
         Returns:
-            更新后的文章
+            Article: 更新后的文章对象
             
         Raises:
             NotFoundException: 文章不存在
-            ForbiddenException: 没有权限
+            ForbiddenException: 没有权限修改此文章
         """
         article = await self.get_article_by_id(article_id, include_author=False)
         
@@ -212,16 +223,18 @@ class ArticleService:
         """
         删除文章
         
+        同时删除关联的评论和收藏记录。
+        
         Args:
-            article_id: 文章ID
-            user: 当前用户
+            article_id: 文章 ID
+            user: 当前用户对象 (用于权限检查)
             
         Returns:
-            是否成功
+            bool: 是否删除成功
             
         Raises:
             NotFoundException: 文章不存在
-            ForbiddenException: 没有权限
+            ForbiddenException: 没有权限删除此文章
         """
         # 检查文章存在性和权限
         result = await self.db.execute(
@@ -248,14 +261,30 @@ class ArticleService:
         return True
     
     async def increment_read_count(self, article_id: int) -> None:
-        """增加文章阅读次数"""
+        """
+        增加文章阅读次数
+        
+        Args:
+            article_id: 文章 ID
+        """
         article = await self.get_article_by_id(article_id, include_author=False)
         if article:
             article.readcount += 1
             await self.db.commit()
     
     async def toggle_recommend(self, article_id: int) -> int:
-        """切换推荐状态"""
+        """
+        切换文章推荐状态
+        
+        Args:
+            article_id: 文章 ID
+            
+        Returns:
+            int: 新的推荐状态 (0 或 1)
+            
+        Raises:
+            NotFoundException: 文章不存在
+        """
         article = await self.get_article_by_id(article_id, include_author=False)
         if not article:
             raise NotFoundException("文章不存在")
@@ -267,7 +296,18 @@ class ArticleService:
         return article.recommended
     
     async def toggle_hidden(self, article_id: int) -> int:
-        """切换隐藏状态"""
+        """
+        切换文章隐藏状态
+        
+        Args:
+            article_id: 文章 ID
+            
+        Returns:
+            int: 新的隐藏状态 (0 或 1)
+            
+        Raises:
+            NotFoundException: 文章不存在
+        """
         article = await self.get_article_by_id(article_id, include_author=False)
         if not article:
             raise NotFoundException("文章不存在")

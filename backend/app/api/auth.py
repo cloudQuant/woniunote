@@ -1,5 +1,7 @@
 """
-认证API
+认证 API 模块
+
+本模块提供用户注册、登录、登出、Token 刷新和获取当前用户信息等接口。
 """
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -31,7 +33,21 @@ async def register(
     user_data: UserCreate,
     db: AsyncSession = Depends(get_db)
 ):
-    """用户注册"""
+    """
+    用户注册
+    
+    注册新用户，并赠送初始积分。
+    
+    Args:
+        user_data: 用户注册信息
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[UserResponse]: 注册成功的用户信息
+        
+    Raises:
+        HTTPException(400): 用户名已存在
+    """
     # 检查用户名是否已存在
     result = await db.execute(
         select(User).where(User.username == user_data.username)
@@ -82,7 +98,22 @@ async def login(
     login_data: UserLogin,
     db: AsyncSession = Depends(get_db)
 ):
-    """用户登录"""
+    """
+    用户登录
+    
+    验证用户名、密码和验证码，成功后返回 Access Token 和 Refresh Token。
+    
+    Args:
+        login_data: 登录信息
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 包含 Token 和用户信息的响应
+        
+    Raises:
+        HTTPException(400): 验证码错误
+        HTTPException(401): 用户名或密码错误
+    """
     # 验证验证码
     captcha_valid, captcha_error = validate_captcha(
         login_data.captcha_id, 
@@ -143,7 +174,21 @@ async def refresh_token(
     refresh_token: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """刷新访问令牌"""
+    """
+    刷新访问令牌
+    
+    使用 Refresh Token 获取新的 Access Token 和 Refresh Token。
+    
+    Args:
+        refresh_token: 刷新令牌
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[TokenResponse]: 新的令牌对
+        
+    Raises:
+        HTTPException(401): 无效的刷新令牌或用户不存在
+    """
     payload = decode_token(refresh_token)
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(
@@ -179,7 +224,17 @@ async def refresh_token(
 async def get_me(
     current_user: User = Depends(get_current_user_required)
 ):
-    """获取当前用户信息"""
+    """
+    获取当前用户信息
+    
+    需要认证。
+    
+    Args:
+        current_user: 当前已认证用户
+        
+    Returns:
+        ResponseModel[UserResponse]: 当前用户信息
+    """
     return ResponseModel(
         code=200,
         message="success",
@@ -189,5 +244,12 @@ async def get_me(
 
 @router.post("/logout")
 async def logout():
-    """用户登出"""
+    """
+    用户登出
+    
+    目前仅返回成功消息，客户端应清除本地保存的 Token。
+    
+    Returns:
+        ResponseModel: 登出成功消息
+    """
     return ResponseModel(code=200, message="登出成功")

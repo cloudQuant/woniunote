@@ -81,6 +81,12 @@
 </template>
 
 <script setup>
+/**
+ * @component WriteArticle
+ * @description 文章编辑/发布页面组件
+ * 提供富文本编辑器（UEditor）用于撰写文章，支持设置标题、分类、积分、缩略图等元数据。
+ * 支持保存草稿和发布文章，同时处理新建和编辑模式。
+ */
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'

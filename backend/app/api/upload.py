@@ -1,5 +1,7 @@
 """
-文件上传API
+文件上传 API 模块
+
+本模块提供图片、普通文件和头像的上传功能。
 """
 import os
 import uuid
@@ -14,14 +16,32 @@ router = APIRouter()
 
 
 def get_file_extension(filename: str) -> str:
-    """获取文件扩展名"""
+    """
+    获取文件扩展名
+    
+    Args:
+        filename: 文件名
+        
+    Returns:
+        str: 文件扩展名（小写）
+    """
     if '.' not in filename:
         return ''
     return filename.rsplit('.', 1)[1].lower()
 
 
 def generate_filename(original_filename: str) -> str:
-    """生成唯一文件名"""
+    """
+    生成唯一文件名
+    
+    格式: {timestamp}_{uuid}.{ext}
+    
+    Args:
+        original_filename: 原始文件名
+        
+    Returns:
+        str: 生成的唯一文件名
+    """
     ext = get_file_extension(original_filename)
     unique_id = uuid.uuid4().hex[:8]
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -33,7 +53,21 @@ async def upload_image(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user_required)
 ):
-    """上传图片"""
+    """
+    上传图片
+    
+    支持 jpg, jpeg, png, gif, webp 格式。
+    
+    Args:
+        file: 上传的文件
+        current_user: 当前已认证用户
+        
+    Returns:
+        ResponseModel[dict]: 上传结果，包含文件 URL
+        
+    Raises:
+        HTTPException(400): 不支持的文件格式或文件过大
+    """
     # 检查文件类型
     ext = get_file_extension(file.filename)
     if ext not in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
@@ -82,7 +116,21 @@ async def upload_file(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user_required)
 ):
-    """上传普通文件"""
+    """
+    上传普通文件
+    
+    支持配置中允许的文件格式。
+    
+    Args:
+        file: 上传的文件
+        current_user: 当前已认证用户
+        
+    Returns:
+        ResponseModel[dict]: 上传结果，包含文件 URL
+        
+    Raises:
+        HTTPException(400): 不支持的文件格式或文件过大
+    """
     # 检查文件类型
     ext = get_file_extension(file.filename)
     if ext not in settings.ALLOWED_EXTENSIONS:
@@ -132,7 +180,21 @@ async def upload_avatar(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user_required)
 ):
-    """上传头像"""
+    """
+    上传头像
+    
+    支持 jpg, jpeg, png, gif 格式，最大 2MB。
+    
+    Args:
+        file: 上传的文件
+        current_user: 当前已认证用户
+        
+    Returns:
+        ResponseModel[dict]: 上传结果，包含文件 URL
+        
+    Raises:
+        HTTPException(400): 不支持的文件格式或文件过大
+    """
     # 检查文件类型
     ext = get_file_extension(file.filename)
     if ext not in ['jpg', 'jpeg', 'png', 'gif']:

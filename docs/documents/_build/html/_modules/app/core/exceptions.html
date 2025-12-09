@@ -1,0 +1,460 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.core.exceptions &mdash; WoniuNote 1.0.0 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=34088549"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            WoniuNote
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">app</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">WoniuNote</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">app.core.exceptions</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>app.core.exceptions 源代码</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">全局异常处理模块</span>
+
+<span class="sd">本模块定义了应用自定义异常类和全局异常处理器。</span>
+<span class="sd">通过统一的异常处理机制，确保 API 返回一致的错误响应格式。</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Request</span><span class="p">,</span> <span class="n">HTTPException</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">RequestValidationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.exc</span><span class="w"> </span><span class="kn">import</span> <span class="n">SQLAlchemyError</span><span class="p">,</span> <span class="n">IntegrityError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.core.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_error</span><span class="p">,</span> <span class="n">log_warning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+
+
+<span class="c1"># ==================== 自定义异常 ====================</span>
+
+<div class="viewcode-block" id="AppException">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.AppException">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AppException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    应用基础异常类</span>
+<span class="sd">    </span>
+<span class="sd">    所有自定义异常都应继承此类。</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        code (int): HTTP 状态码</span>
+<span class="sd">        message (str): 错误信息</span>
+<span class="sd">        detail (Optional[Any]): 详细错误信息</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">code</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span> 
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;服务器内部错误&quot;</span><span class="p">,</span>
+        <span class="n">detail</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detail</span> <span class="o">=</span> <span class="n">detail</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="BadRequestException">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.BadRequestException">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BadRequestException</span><span class="p">(</span><span class="n">AppException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    请求错误异常 (400)</span>
+<span class="sd">    </span>
+<span class="sd">    当客户端发送的请求有误时抛出。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;请求参数错误&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">detail</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="UnauthorizedException">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.UnauthorizedException">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">UnauthorizedException</span><span class="p">(</span><span class="n">AppException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    未授权异常 (401)</span>
+<span class="sd">    </span>
+<span class="sd">    当用户未登录或 Token 无效时抛出。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;未授权访问&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="mi">401</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">detail</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ForbiddenException">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.ForbiddenException">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ForbiddenException</span><span class="p">(</span><span class="n">AppException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    禁止访问异常 (403)</span>
+<span class="sd">    </span>
+<span class="sd">    当用户权限不足时抛出。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;禁止访问&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="mi">403</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">detail</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="NotFoundException">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.NotFoundException">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NotFoundException</span><span class="p">(</span><span class="n">AppException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    资源不存在异常 (404)</span>
+<span class="sd">    </span>
+<span class="sd">    当请求的资源不存在时抛出。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;资源不存在&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="mi">404</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">detail</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ConflictException">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.ConflictException">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConflictException</span><span class="p">(</span><span class="n">AppException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    资源冲突异常 (409)</span>
+<span class="sd">    </span>
+<span class="sd">    当请求的操作会导致资源冲突（如重复创建）时抛出。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;资源冲突&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="mi">409</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">detail</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ValidationException">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.ValidationException">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ValidationException</span><span class="p">(</span><span class="n">AppException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    验证错误异常 (422)</span>
+<span class="sd">    </span>
+<span class="sd">    当数据验证失败时抛出。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;数据验证失败&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="mi">422</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">detail</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="DatabaseException">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.DatabaseException">[文档]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DatabaseException</span><span class="p">(</span><span class="n">AppException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    数据库错误异常 (500)</span>
+<span class="sd">    </span>
+<span class="sd">    当数据库操作失败时抛出。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;数据库操作失败&quot;</span><span class="p">,</span> <span class="n">detail</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">detail</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ==================== 异常处理器 ====================</span>
+
+<div class="viewcode-block" id="create_error_response">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.create_error_response">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_error_response</span><span class="p">(</span>
+    <span class="n">code</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> 
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+    <span class="n">detail</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    创建统一的错误响应</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        code: HTTP 状态码</span>
+<span class="sd">        message: 错误提示信息</span>
+<span class="sd">        detail: 详细错误数据（可选）</span>
+<span class="sd">        path: 请求路径（可选）</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        JSONResponse: 包含错误信息的 JSON 响应</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">code</span><span class="p">,</span>
+        <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="n">message</span><span class="p">,</span>
+        <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="kc">None</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">detail</span><span class="p">:</span>
+        <span class="n">content</span><span class="p">[</span><span class="s2">&quot;detail&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">detail</span>
+    <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
+        <span class="n">content</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span>
+    
+    <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="n">code</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="app_exception_handler">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.app_exception_handler">[文档]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">app_exception_handler</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span> <span class="n">AppException</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    处理自定义应用异常</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        request: FastAPI 请求对象</span>
+<span class="sd">        exc: 捕获的 AppException 实例</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        JSONResponse: 格式化的错误响应</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log_warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;应用异常: </span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">exc</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="p">),</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
+        <span class="s2">&quot;detail&quot;</span><span class="p">:</span> <span class="n">exc</span><span class="o">.</span><span class="n">detail</span>
+    <span class="p">})</span>
+    <span class="k">return</span> <span class="n">create_error_response</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="n">exc</span><span class="o">.</span><span class="n">code</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="n">exc</span><span class="o">.</span><span class="n">message</span><span class="p">,</span>
+        <span class="n">detail</span><span class="o">=</span><span class="n">exc</span><span class="o">.</span><span class="n">detail</span><span class="p">,</span>
+        <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="http_exception_handler">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.http_exception_handler">[文档]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">http_exception_handler</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span> <span class="n">HTTPException</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    处理 FastAPI 内置 HTTPException</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        request: FastAPI 请求对象</span>
+<span class="sd">        exc: 捕获的 HTTPException 实例</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        JSONResponse: 格式化的错误响应</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log_warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP异常: </span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">detail</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">&quot;status_code&quot;</span><span class="p">:</span> <span class="n">exc</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="p">),</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span>
+    <span class="p">})</span>
+    <span class="k">return</span> <span class="n">create_error_response</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="n">exc</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">detail</span><span class="p">),</span>
+        <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="validation_exception_handler">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.validation_exception_handler">[文档]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">validation_exception_handler</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span> <span class="n">RequestValidationError</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    处理请求参数验证错误</span>
+<span class="sd">    </span>
+<span class="sd">    将 Pydantic 的验证错误转换为统一格式。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        request: FastAPI 请求对象</span>
+<span class="sd">        exc: 捕获的 RequestValidationError 实例</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        JSONResponse: 格式化的错误响应 (422)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">exc</span><span class="o">.</span><span class="n">errors</span><span class="p">():</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">loc</span><span class="p">)</span> <span class="k">for</span> <span class="n">loc</span> <span class="ow">in</span> <span class="n">error</span><span class="p">[</span><span class="s2">&quot;loc&quot;</span><span class="p">])</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+            <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="n">field</span><span class="p">,</span>
+            <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="n">error</span><span class="p">[</span><span class="s2">&quot;msg&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">error</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span>
+        <span class="p">})</span>
+    
+    <span class="n">log_warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;请求验证失败&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="p">),</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
+        <span class="s2">&quot;errors&quot;</span><span class="p">:</span> <span class="n">errors</span>
+    <span class="p">})</span>
+    
+    <span class="k">return</span> <span class="n">create_error_response</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">422</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;请求参数验证失败&quot;</span><span class="p">,</span>
+        <span class="n">detail</span><span class="o">=</span><span class="n">errors</span><span class="p">,</span>
+        <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="sqlalchemy_exception_handler">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.sqlalchemy_exception_handler">[文档]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">sqlalchemy_exception_handler</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span> <span class="n">SQLAlchemyError</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    处理 SQLAlchemy 数据库异常</span>
+<span class="sd">    </span>
+<span class="sd">    捕获数据库层面的错误，如唯一约束冲突、外键约束等，并转换为友好的错误信息。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        request: FastAPI 请求对象</span>
+<span class="sd">        exc: 捕获的 SQLAlchemyError 实例</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        JSONResponse: 格式化的错误响应 (500)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">error_msg</span> <span class="o">=</span> <span class="s2">&quot;数据库操作失败&quot;</span>
+    
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">IntegrityError</span><span class="p">):</span>
+        <span class="c1"># 处理唯一约束冲突等</span>
+        <span class="k">if</span> <span class="s2">&quot;Duplicate entry&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;UNIQUE constraint&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
+            <span class="n">error_msg</span> <span class="o">=</span> <span class="s2">&quot;数据已存在，请勿重复操作&quot;</span>
+        <span class="k">elif</span> <span class="s2">&quot;foreign key constraint&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="n">error_msg</span> <span class="o">=</span> <span class="s2">&quot;关联数据不存在或被引用&quot;</span>
+    
+    <span class="c1"># 在日志中附带完整的异常信息，方便排查</span>
+    <span class="n">log_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;数据库异常: </span><span class="si">{</span><span class="n">error_msg</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)[:</span><span class="mi">500</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="p">),</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
+        <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)[:</span><span class="mi">500</span><span class="p">]</span>  <span class="c1"># 限制错误信息长度</span>
+    <span class="p">})</span>
+    
+    <span class="c1"># 开发环境下，将具体异常信息返回到 detail 字段，方便前端看到真实错误</span>
+    <span class="n">detail_data</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
+        <span class="n">detail_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)[:</span><span class="mi">500</span><span class="p">]}</span>
+    
+    <span class="k">return</span> <span class="n">create_error_response</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="n">error_msg</span><span class="p">,</span>
+        <span class="n">detail</span><span class="o">=</span><span class="n">detail_data</span><span class="p">,</span>
+        <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="general_exception_handler">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.general_exception_handler">[文档]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">general_exception_handler</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    处理所有未捕获的异常</span>
+<span class="sd">    </span>
+<span class="sd">    作为最后的防线，捕获所有未处理的异常，记录堆栈跟踪，并返回 500 错误。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        request: FastAPI 请求对象</span>
+<span class="sd">        exc: 捕获的 Exception 实例</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        JSONResponse: 格式化的错误响应 (500)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 记录完整的堆栈跟踪</span>
+    <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+    
+    <span class="n">log_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;未处理异常: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="p">),</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
+        <span class="s2">&quot;traceback&quot;</span><span class="p">:</span> <span class="n">tb</span><span class="p">[:</span><span class="mi">2000</span><span class="p">]</span>  <span class="c1"># 限制长度</span>
+    <span class="p">})</span>
+    
+    <span class="k">return</span> <span class="n">create_error_response</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;服务器内部错误，请稍后重试&quot;</span><span class="p">,</span>
+        <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="register_exception_handlers">
+<a class="viewcode-back" href="../../../api/app.core.html#app.core.exceptions.register_exception_handlers">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_exception_handlers</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    注册所有异常处理器到 FastAPI 应用</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        app: FastAPI 应用实例</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_exception_handler</span><span class="p">(</span><span class="n">AppException</span><span class="p">,</span> <span class="n">app_exception_handler</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_exception_handler</span><span class="p">(</span><span class="n">HTTPException</span><span class="p">,</span> <span class="n">http_exception_handler</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_exception_handler</span><span class="p">(</span><span class="n">RequestValidationError</span><span class="p">,</span> <span class="n">validation_exception_handler</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_exception_handler</span><span class="p">(</span><span class="n">SQLAlchemyError</span><span class="p">,</span> <span class="n">sqlalchemy_exception_handler</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_exception_handler</span><span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="n">general_exception_handler</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, WoniuNote Team。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

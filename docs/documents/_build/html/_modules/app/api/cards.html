@@ -1,0 +1,876 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.api.cards &mdash; WoniuNote 1.0.0 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=34088549"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            WoniuNote
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">app</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">WoniuNote</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">app.api.cards</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>app.api.cards 源代码</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">卡片管理 API 模块</span>
+
+<span class="sd">本模块提供卡片（任务/笔记）的增删改查、分类管理、时间追踪以及统计功能。</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">HTTPException</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">Query</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.ext.asyncio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncSession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">select</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">and_</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.core.database</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_db</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.models.card</span><span class="w"> </span><span class="kn">import</span> <span class="n">CardCategory</span><span class="p">,</span> <span class="n">Card</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.models.user</span><span class="w"> </span><span class="kn">import</span> <span class="n">User</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.schemas.card</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CardCategoryCreate</span><span class="p">,</span> <span class="n">CardCategoryUpdate</span><span class="p">,</span> <span class="n">CardCategoryResponse</span><span class="p">,</span>
+    <span class="n">CardCreate</span><span class="p">,</span> <span class="n">CardUpdate</span><span class="p">,</span> <span class="n">CardResponse</span><span class="p">,</span> <span class="n">CardWithCategory</span><span class="p">,</span> <span class="n">CardStats</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.schemas.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResponseModel</span><span class="p">,</span> <span class="n">PaginatedResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.api.deps</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_current_user_required</span>
+
+<span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">()</span>
+
+
+<span class="c1"># 优先级类型名称映射</span>
+<span class="n">PRIORITY_NAMES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;重要紧急&quot;</span><span class="p">,</span>
+    <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;重要不紧急&quot;</span><span class="p">,</span>
+    <span class="mi">3</span><span class="p">:</span> <span class="s2">&quot;紧急不重要&quot;</span><span class="p">,</span>
+    <span class="mi">4</span><span class="p">:</span> <span class="s2">&quot;不重要不紧急&quot;</span>
+<span class="p">}</span>
+
+
+<span class="c1"># ==================== 分类管理 ====================</span>
+
+<div class="viewcode-block" id="get_categories">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.get_categories">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/categories&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">list</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_categories</span><span class="p">(</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取所有卡片分类</span>
+<span class="sd">    </span>
+<span class="sd">    获取当前用户的所有卡片分类，按排序字段和 ID 排序。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[list]: 分类列表</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">CardCategory</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">CardCategory</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">CardCategory</span><span class="o">.</span><span class="n">sort_order</span><span class="p">,</span> <span class="n">CardCategory</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+    
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+    <span class="n">categories</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">CardCategoryResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_category">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.create_category">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/categories&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_category</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">CardCategoryCreate</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    创建卡片分类</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        data: 分类创建数据</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 创建成功的分类信息</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">new_category</span> <span class="o">=</span> <span class="n">CardCategory</span><span class="p">(</span>
+        <span class="n">userid</span><span class="o">=</span><span class="n">current_user</span><span class="o">.</span><span class="n">userid</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
+        <span class="n">sort_order</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">sort_order</span><span class="p">,</span>
+        <span class="n">createtime</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+        <span class="n">updatetime</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_category</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">new_category</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;创建成功&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">CardCategoryResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">new_category</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="update_category">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.update_category">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;/categories/</span><span class="si">{category_id}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_category</span><span class="p">(</span>
+    <span class="n">category_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">CardCategoryUpdate</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    更新卡片分类</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        category_id: 分类 ID</span>
+<span class="sd">        data: 分类更新数据</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 更新后的分类信息</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 分类不存在</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">CardCategory</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">CardCategory</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">category_id</span><span class="p">,</span>
+            <span class="n">CardCategory</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">category</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">category</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;分类不存在&quot;</span><span class="p">)</span>
+    
+    <span class="n">update_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">exclude_unset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">update_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    
+    <span class="n">category</span><span class="o">.</span><span class="n">updatetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;更新成功&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">CardCategoryResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">category</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="delete_category">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.delete_category">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;/categories/</span><span class="si">{category_id}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_category</span><span class="p">(</span>
+    <span class="n">category_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    删除卡片分类</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        category_id: 分类 ID</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel: 成功消息</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 分类不存在</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">CardCategory</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">CardCategory</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">category_id</span><span class="p">,</span>
+            <span class="n">CardCategory</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">category</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">category</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;分类不存在&quot;</span><span class="p">)</span>
+    
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;删除成功&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ==================== 统计（放在动态路由之前） ====================</span>
+
+<div class="viewcode-block" id="get_stats">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.get_stats">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/stats/summary&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_stats</span><span class="p">(</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取卡片统计</span>
+<span class="sd">    </span>
+<span class="sd">    统计当前用户的卡片总数、已完成数、进行中数、总用时以及按优先级分类的未完成卡片数。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 统计数据</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">base_filter</span> <span class="o">=</span> <span class="n">Card</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+    
+    <span class="c1"># 总数</span>
+    <span class="n">total_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">Card</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">base_filter</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">total_result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
+    
+    <span class="c1"># 已完成</span>
+    <span class="n">done_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">Card</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">and_</span><span class="p">(</span><span class="n">base_filter</span><span class="p">,</span> <span class="n">Card</span><span class="o">.</span><span class="n">donetime</span><span class="o">.</span><span class="n">isnot</span><span class="p">(</span><span class="kc">None</span><span class="p">)))</span>
+    <span class="p">)</span>
+    <span class="n">done</span> <span class="o">=</span> <span class="n">done_result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
+    
+    <span class="c1"># 进行中</span>
+    <span class="n">in_progress_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">Card</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">and_</span><span class="p">(</span><span class="n">base_filter</span><span class="p">,</span> <span class="n">Card</span><span class="o">.</span><span class="n">begintime</span><span class="o">.</span><span class="n">isnot</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="n">Card</span><span class="o">.</span><span class="n">donetime</span><span class="o">.</span><span class="n">is_</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">in_progress</span> <span class="o">=</span> <span class="n">in_progress_result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
+    
+    <span class="c1"># 总用时</span>
+    <span class="n">time_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">Card</span><span class="o">.</span><span class="n">usedtime</span><span class="p">))</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">base_filter</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">total_time</span> <span class="o">=</span> <span class="n">time_result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
+    
+    <span class="c1"># 按优先级统计</span>
+    <span class="n">priority_stats</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">priority</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">PRIORITY_NAMES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">count_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">Card</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="n">and_</span><span class="p">(</span><span class="n">base_filter</span><span class="p">,</span> <span class="n">Card</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">priority</span><span class="p">,</span> <span class="n">Card</span><span class="o">.</span><span class="n">donetime</span><span class="o">.</span><span class="n">is_</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">priority_stats</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">count_result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="n">total</span><span class="p">,</span>
+            <span class="s2">&quot;done&quot;</span><span class="p">:</span> <span class="n">done</span><span class="p">,</span>
+            <span class="s2">&quot;pending&quot;</span><span class="p">:</span> <span class="n">total</span> <span class="o">-</span> <span class="n">done</span><span class="p">,</span>
+            <span class="s2">&quot;in_progress&quot;</span><span class="p">:</span> <span class="n">in_progress</span><span class="p">,</span>
+            <span class="s2">&quot;total_time&quot;</span><span class="p">:</span> <span class="n">total_time</span><span class="p">,</span>
+            <span class="s2">&quot;priority_stats&quot;</span><span class="p">:</span> <span class="n">priority_stats</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># ==================== 卡片管理 ====================</span>
+
+<div class="viewcode-block" id="get_cards">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.get_cards">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">PaginatedResponse</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_cards</span><span class="p">(</span>
+    <span class="n">category_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;分类 ID&quot;</span><span class="p">),</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;优先级类型&quot;</span><span class="p">),</span>
+    <span class="n">done</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;完成状态 (0:未完成, 1:已完成)&quot;</span><span class="p">),</span>
+    <span class="n">in_progress</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;是否进行中 (1:进行中)&quot;</span><span class="p">),</span>
+    <span class="n">page</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;页码&quot;</span><span class="p">),</span>
+    <span class="n">page_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;每页数量&quot;</span><span class="p">),</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取卡片列表</span>
+<span class="sd">    </span>
+<span class="sd">    分页获取卡片列表，支持多条件筛选。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        category_id: 分类 ID</span>
+<span class="sd">        type: 优先级类型</span>
+<span class="sd">        done: 完成状态</span>
+<span class="sd">        in_progress: 是否进行中</span>
+<span class="sd">        page: 页码</span>
+<span class="sd">        page_size: 每页数量</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        PaginatedResponse[dict]: 分页的卡片列表</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">conditions</span> <span class="o">=</span> <span class="p">[</span><span class="n">Card</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span><span class="p">]</span>
+    
+    <span class="k">if</span> <span class="n">category_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Card</span><span class="o">.</span><span class="n">category_id</span> <span class="o">==</span> <span class="n">category_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Card</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="nb">type</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">done</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">done</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Card</span><span class="o">.</span><span class="n">donetime</span><span class="o">.</span><span class="n">isnot</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Card</span><span class="o">.</span><span class="n">donetime</span><span class="o">.</span><span class="n">is_</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">in_progress</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Card</span><span class="o">.</span><span class="n">begintime</span><span class="o">.</span><span class="n">isnot</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
+        <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Card</span><span class="o">.</span><span class="n">donetime</span><span class="o">.</span><span class="n">is_</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
+    
+    <span class="n">query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">Card</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">and_</span><span class="p">(</span><span class="o">*</span><span class="n">conditions</span><span class="p">))</span>
+    
+    <span class="c1"># 获取总数</span>
+    <span class="n">count_query</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">subquery</span><span class="p">())</span>
+    <span class="n">total_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">count_query</span><span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">total_result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span>
+    
+    <span class="c1"># 分页并排序</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">page</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">page_size</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span>
+        <span class="n">Card</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>  <span class="c1"># 按优先级排序</span>
+        <span class="n">desc</span><span class="p">(</span><span class="n">Card</span><span class="o">.</span><span class="n">updatetime</span><span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">page_size</span><span class="p">)</span>
+    
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+    <span class="n">cards</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">PaginatedResponse</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">CardResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cards</span><span class="p">],</span>
+        <span class="n">total</span><span class="o">=</span><span class="n">total</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
+        <span class="n">page_size</span><span class="o">=</span><span class="n">page_size</span><span class="p">,</span>
+        <span class="n">total_pages</span><span class="o">=</span><span class="p">(</span><span class="n">total</span> <span class="o">+</span> <span class="n">page_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">page_size</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_card">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.create_card">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_card</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">CardCreate</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    创建卡片</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        data: 卡片创建数据</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 创建成功的卡片信息</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(400): 分类不存在或无权访问</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 验证分类归属</span>
+    <span class="n">category_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">CardCategory</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">CardCategory</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">data</span><span class="o">.</span><span class="n">category_id</span><span class="p">,</span>
+            <span class="n">CardCategory</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">category_result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;分类不存在或无权访问&quot;</span><span class="p">)</span>
+    
+    <span class="n">new_card</span> <span class="o">=</span> <span class="n">Card</span><span class="p">(</span>
+        <span class="n">userid</span><span class="o">=</span><span class="n">current_user</span><span class="o">.</span><span class="n">userid</span><span class="p">,</span>
+        <span class="n">category_id</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">category_id</span><span class="p">,</span>
+        <span class="n">headline</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">headline</span><span class="p">,</span>
+        <span class="n">content</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">content</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">type</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">is_repeat</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">is_repeat</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">createtime</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+        <span class="n">updatetime</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_card</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">new_card</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;创建成功&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">CardResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">new_card</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_card">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.get_card">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{card_id}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_card</span><span class="p">(</span>
+    <span class="n">card_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取卡片详情</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        card_id: 卡片 ID</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 卡片详情</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 卡片不存在</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Card</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">card_id</span><span class="p">,</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">card</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">card</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;卡片不存在&quot;</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">CardResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">card</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="update_card">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.update_card">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{card_id}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_card</span><span class="p">(</span>
+    <span class="n">card_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">CardUpdate</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    更新卡片</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        card_id: 卡片 ID</span>
+<span class="sd">        data: 卡片更新数据</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 更新后的卡片信息</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 卡片不存在</span>
+<span class="sd">        HTTPException(400): 目标分类不存在或无权访问</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Card</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">card_id</span><span class="p">,</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">card</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">card</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;卡片不存在&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># 如果更新分类，验证新分类归属</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">category_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data</span><span class="o">.</span><span class="n">category_id</span> <span class="o">!=</span> <span class="n">card</span><span class="o">.</span><span class="n">category_id</span><span class="p">:</span>
+        <span class="n">category_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="n">select</span><span class="p">(</span><span class="n">CardCategory</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="n">CardCategory</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">data</span><span class="o">.</span><span class="n">category_id</span><span class="p">,</span>
+                <span class="n">CardCategory</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">category_result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;目标分类不存在或无权访问&quot;</span><span class="p">)</span>
+    
+    <span class="n">update_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">exclude_unset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">update_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">card</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    
+    <span class="n">card</span><span class="o">.</span><span class="n">updatetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">card</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;更新成功&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">CardResponse</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">card</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="delete_card">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.delete_card">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{card_id}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_card</span><span class="p">(</span>
+    <span class="n">card_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    删除卡片</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        card_id: 卡片 ID</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel: 成功消息</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 卡片不存在</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Card</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">card_id</span><span class="p">,</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">card</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">card</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;卡片不存在&quot;</span><span class="p">)</span>
+    
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">card</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;删除成功&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ==================== 时间追踪 ====================</span>
+
+<div class="viewcode-block" id="start_card">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.start_card">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{card_id}</span><span class="s2">/start&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start_card</span><span class="p">(</span>
+    <span class="n">card_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    开始卡片任务（记录开始时间）</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        card_id: 卡片 ID</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 包含开始时间</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 卡片不存在</span>
+<span class="sd">        HTTPException(400): 任务已在进行中</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Card</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">card_id</span><span class="p">,</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">card</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">card</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;卡片不存在&quot;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">card</span><span class="o">.</span><span class="n">begintime</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;任务已在进行中&quot;</span><span class="p">)</span>
+    
+    <span class="n">card</span><span class="o">.</span><span class="n">begintime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="n">card</span><span class="o">.</span><span class="n">updatetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;任务已开始&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;begintime&quot;</span><span class="p">:</span> <span class="n">card</span><span class="o">.</span><span class="n">begintime</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="stop_card">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.stop_card">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{card_id}</span><span class="s2">/stop&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop_card</span><span class="p">(</span>
+    <span class="n">card_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    暂停卡片任务（记录用时但不完成）</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        card_id: 卡片 ID</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 包含本次用时和总用时</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 卡片不存在</span>
+<span class="sd">        HTTPException(400): 任务尚未开始</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Card</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">card_id</span><span class="p">,</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">card</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">card</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;卡片不存在&quot;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">card</span><span class="o">.</span><span class="n">begintime</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;任务尚未开始&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># 计算本次用时并累加</span>
+    <span class="n">elapsed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">card</span><span class="o">.</span><span class="n">begintime</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">())</span>
+    <span class="n">card</span><span class="o">.</span><span class="n">usedtime</span> <span class="o">=</span> <span class="p">(</span><span class="n">card</span><span class="o">.</span><span class="n">usedtime</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">elapsed</span>
+    <span class="n">card</span><span class="o">.</span><span class="n">endtime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="n">card</span><span class="o">.</span><span class="n">begintime</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># 重置开始时间，允许再次开始</span>
+    <span class="n">card</span><span class="o">.</span><span class="n">updatetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;任务已暂停&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;elapsed&quot;</span><span class="p">:</span> <span class="n">elapsed</span><span class="p">,</span>
+            <span class="s2">&quot;total_time&quot;</span><span class="p">:</span> <span class="n">card</span><span class="o">.</span><span class="n">usedtime</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="complete_card">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.complete_card">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{card_id}</span><span class="s2">/complete&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">complete_card</span><span class="p">(</span>
+    <span class="n">card_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    完成卡片任务</span>
+<span class="sd">    </span>
+<span class="sd">    如果任务正在进行，会先计算用时。如果是重复任务，会创建一个新的副本。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        card_id: 卡片 ID</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 包含完成时间和总用时</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 卡片不存在</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Card</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">card_id</span><span class="p">,</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">card</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">card</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;卡片不存在&quot;</span><span class="p">)</span>
+    
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    
+    <span class="c1"># 如果任务正在进行，先计算用时</span>
+    <span class="k">if</span> <span class="n">card</span><span class="o">.</span><span class="n">begintime</span><span class="p">:</span>
+        <span class="n">elapsed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">now</span> <span class="o">-</span> <span class="n">card</span><span class="o">.</span><span class="n">begintime</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">())</span>
+        <span class="n">card</span><span class="o">.</span><span class="n">usedtime</span> <span class="o">=</span> <span class="p">(</span><span class="n">card</span><span class="o">.</span><span class="n">usedtime</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">elapsed</span>
+        <span class="n">card</span><span class="o">.</span><span class="n">endtime</span> <span class="o">=</span> <span class="n">now</span>
+        <span class="n">card</span><span class="o">.</span><span class="n">begintime</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="n">card</span><span class="o">.</span><span class="n">donetime</span> <span class="o">=</span> <span class="n">now</span>
+    <span class="n">card</span><span class="o">.</span><span class="n">updatetime</span> <span class="o">=</span> <span class="n">now</span>
+    
+    <span class="c1"># 如果是重复任务，创建一个新的副本</span>
+    <span class="k">if</span> <span class="n">card</span><span class="o">.</span><span class="n">is_repeat</span><span class="p">:</span>
+        <span class="n">new_card</span> <span class="o">=</span> <span class="n">Card</span><span class="p">(</span>
+            <span class="n">userid</span><span class="o">=</span><span class="n">current_user</span><span class="o">.</span><span class="n">userid</span><span class="p">,</span>
+            <span class="n">category_id</span><span class="o">=</span><span class="n">card</span><span class="o">.</span><span class="n">category_id</span><span class="p">,</span>
+            <span class="n">headline</span><span class="o">=</span><span class="n">card</span><span class="o">.</span><span class="n">headline</span><span class="p">,</span>
+            <span class="n">content</span><span class="o">=</span><span class="n">card</span><span class="o">.</span><span class="n">content</span><span class="p">,</span>
+            <span class="nb">type</span><span class="o">=</span><span class="n">card</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
+            <span class="n">is_repeat</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">createtime</span><span class="o">=</span><span class="n">now</span><span class="p">,</span>
+            <span class="n">updatetime</span><span class="o">=</span><span class="n">now</span>
+        <span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_card</span><span class="p">)</span>
+    
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;任务已完成&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;donetime&quot;</span><span class="p">:</span> <span class="n">card</span><span class="o">.</span><span class="n">donetime</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+            <span class="s2">&quot;total_time&quot;</span><span class="p">:</span> <span class="n">card</span><span class="o">.</span><span class="n">usedtime</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="reopen_card">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.cards.reopen_card">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{card_id}</span><span class="s2">/reopen&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reopen_card</span><span class="p">(</span>
+    <span class="n">card_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user_required</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    重新打开已完成的卡片</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        card_id: 卡片 ID</span>
+<span class="sd">        current_user: 当前已认证用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel: 成功消息</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(404): 卡片不存在</span>
+<span class="sd">        HTTPException(400): 任务尚未完成</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Card</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">card_id</span><span class="p">,</span>
+            <span class="n">Card</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">current_user</span><span class="o">.</span><span class="n">userid</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">card</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">card</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;卡片不存在&quot;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">card</span><span class="o">.</span><span class="n">donetime</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;任务尚未完成&quot;</span><span class="p">)</span>
+    
+    <span class="n">card</span><span class="o">.</span><span class="n">donetime</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">card</span><span class="o">.</span><span class="n">updatetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;任务已重新打开&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># 统计路由已移动到文件顶部（动态路由之前）</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, WoniuNote Team。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

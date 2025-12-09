@@ -196,6 +196,12 @@
 </template>
 
 <script setup>
+/**
+ * @component Todo
+ * @description 待办事项管理页面组件
+ * 提供待办事项的增删改查功能，支持分类管理、优先级设置和状态筛选。
+ * 包含侧边栏分类统计和主内容区列表显示。
+ */
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { 

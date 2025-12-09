@@ -34,83 +34,110 @@ function processWord(file) {
 // 修复元宝表格格式
 function fixYuanbaoTable(text) {
     var result = text;
-    
-    // 1. 首先处理表格行被压缩成一行的情况
-    // 元宝格式: | 维度 | 分类树 | 回归树 |   |---|---|---|   | 任务目标 | xxx | yyy |
-    // 需要在两个或更多空格处分行
-    result = result.replace(/\|\s{2,}\|/g, '|\n|');
-    
-    // 2. 检测并修复分隔符行 |---|---|---|
-    // 分隔符行前后应该有换行
-    result = result.replace(/(\|[^|\n-]+\|[^|\n-]*\|[^\n]*)(\|[-:]+\|(?:[-:]+\|)+)/g, '$1\n$2');
-    result = result.replace(/(\|[-:]+\|(?:[-:]+\|)+)(\|[^|\n-]+)/g, '$1\n$2');
-    
-    // 3. 处理多列表格行被合并的情况
-    // 检测 | xxx | yyy | zzz |  后面跟着空格和另一个表格行
-    result = result.replace(/(\|(?:[^|\n]+\|){2,})\s{2,}(\|(?:[^|\n]+\|){2,})/g, '$1\n$2');
-    
-    // 4. 确保表格分隔符行独立
-    result = result.replace(/([^\n|])(\|[-:]+[-:|\s]+\|)/g, '$1\n$2');
-    result = result.replace(/(\|[-:]+[-:|\s]+\|)([^\n|])/g, '$1\n$2');
-    
-    // 5. 智能分行：检测完整的表格行模式
-    // 一个表格行通常是 | cell1 | cell2 | cell3 | 格式
-    // 计算每行应有的列数，然后分行
     var lines = result.split('\n');
     var processedLines = [];
+    var inTable = false;
+    var tableColumnCount = 0;
     
     for (var i = 0; i < lines.length; i++) {
-        var line = lines[i];
+        var line = lines[i].trim();
         
-        // 检查是否是被压缩的表格行
-        if (line.indexOf('|') !== -1 && (line.match(/\|/g) || []).length > 6) {
-            // 可能是多行被压缩，尝试分割
-            // 检测分隔符模式 |---|
-            var separatorMatch = line.match(/\|[-:]+\|(?:[-:]+\|)+/);
-            if (separatorMatch) {
-                var separator = separatorMatch[0];
-                var parts = line.split(separator);
-                if (parts.length >= 2) {
-                    // 头部 + 分隔符 + 数据行们
-                    var headerPart = parts[0].trim();
-                    var dataParts = parts.slice(1).join(separator).trim();
+        // 检查是否是表格行（以|开头和结尾，或只以|开头）
+        if (line.indexOf('|') !== -1) {
+            var pipeCount = (line.match(/\|/g) || []).length;
+            
+            // 检查是否是被压缩成一行的表格（包含分隔符 |---|）
+            var separatorPattern = /\|[-:]+\|/;
+            var hasSeparator = separatorPattern.test(line);
+            
+            if (hasSeparator && pipeCount > 6) {
+                // 这是被压缩的表格，需要智能分割
+                // 格式如: | 维度 | 逻辑回归 | 决策树 | |---|---|---| | 核心优势 | xxx | yyy |
+                
+                // 找到分隔符行 |---|---|---|
+                var sepMatch = line.match(/\|[-:]+(?:\|[-:]+)+\|/);
+                if (sepMatch) {
+                    var separator = sepMatch[0];
+                    var sepIndex = line.indexOf(separator);
                     
-                    if (headerPart) processedLines.push(headerPart);
+                    // 分隔符前是表头
+                    var beforeSep = line.substring(0, sepIndex).trim();
+                    // 分隔符后是数据行
+                    var afterSep = line.substring(sepIndex + separator.length).trim();
+                    
+                    // 计算列数（通过分隔符）
+                    tableColumnCount = (separator.match(/\|/g) || []).length - 1;
+                    
+                    if (beforeSep) {
+                        processedLines.push(beforeSep);
+                    }
                     processedLines.push(separator);
                     
-                    // 分割数据行
-                    if (dataParts) {
-                        // 数据行用多空格分隔
-                        var dataRows = dataParts.split(/\s{2,}/).filter(function(r) { return r.trim(); });
-                        dataRows.forEach(function(row) {
-                            if (row.trim()) processedLines.push(row.trim());
-                        });
+                    // 处理数据行 - 按列数分割
+                    if (afterSep && tableColumnCount > 0) {
+                        var remainingContent = afterSep;
+                        while (remainingContent.length > 0) {
+                            // 按管道符号数量分割行
+                            var pipes = 0;
+                            var endIndex = 0;
+                            for (var j = 0; j < remainingContent.length; j++) {
+                                if (remainingContent[j] === '|') {
+                                    pipes++;
+                                    if (pipes === tableColumnCount + 1) {
+                                        endIndex = j + 1;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (endIndex > 0) {
+                                processedLines.push(remainingContent.substring(0, endIndex).trim());
+                                remainingContent = remainingContent.substring(endIndex).trim();
+                            } else {
+                                // 剩余内容不足一行，可能是最后的不完整行
+                                if (remainingContent.trim().startsWith('|')) {
+                                    processedLines.push(remainingContent.trim());
+                                }
+                                break;
+                            }
+                        }
                     }
+                    inTable = true;
                     continue;
                 }
             }
             
-            // 尝试按多空格分割
-            var subLines = line.split(/\s{2,}/).filter(function(s) { return s.indexOf('|') !== -1; });
-            if (subLines.length > 1) {
-                subLines.forEach(function(sl) {
-                    if (sl.trim()) processedLines.push(sl.trim());
-                });
+            // 检查是否是分隔符行
+            if (/^\|[-:]+(?:\|[-:]+)*\|$/.test(line.replace(/\s/g, ''))) {
+                inTable = true;
+                tableColumnCount = pipeCount - 1;
+                processedLines.push(line);
+                continue;
+            }
+            
+            // 普通表格行
+            if (line.startsWith('|')) {
+                inTable = true;
+                processedLines.push(line);
                 continue;
             }
         }
         
+        // 非表格行
+        if (line.length === 0 && inTable) {
+            inTable = false;
+            tableColumnCount = 0;
+        }
         processedLines.push(line);
     }
     
     result = processedLines.join('\n');
     
-    // 6. 清理表格中多余的空行
-    result = result.replace(/\|\n\n+\|/g, '|\n|');
-    
-    // 7. 确保表格前后有空行（Markdown表格需要）
-    result = result.replace(/([^\n])\n(\|[^|]+\|)/g, '$1\n\n$2');
-    result = result.replace(/(\|[^|]+\|)\n([^\n|])/g, '$1\n\n$2');
+    // 确保表格前后有空行（Markdown表格需要）
+    result = result.replace(/([^\n])\n(\|[^\n]+\|)/g, function(match, before, tableStart) {
+        // 如果前一行也是表格行，不添加空行
+        if (before.indexOf('|') !== -1) return match;
+        return before + '\n\n' + tableStart;
+    });
     
     return result;
 }
@@ -127,14 +154,37 @@ function preprocessYuanbaoMarkdown(markdown) {
     result = result.replace(/[\u200B-\u200D\uFEFF]/g, '');
     
     // 1b. 修复元宝标题格式 - 标题后可能有多余的空格或特殊字符
-    // 处理标题：确保 # 号数量正确，去除末尾特殊字符
+    // 处理标题：限制 # 号数量最多2个（一级用##，二级用###不需要），去除末尾特殊字符
+    // 元宝的格式：### **一、相同点** 和 #### **1. 模型类型**
+    // 我们需要将 ### 转为 ##，将 #### 及以上转为 ###
     result = result.replace(/^(#{1,6})\s*(.*?)\s*$/gm, function(match, hashes, title) {
-        // 去除标题文本中的特殊字符
+        // 去除标题文本中的特殊字符和末尾空格
         title = title.replace(/[​\u200B-\u200D\uFEFF]/g, '').trim();
-        return hashes + ' ' + title;
+        // 去除末尾多余空格
+        title = title.replace(/\s+$/, '');
+        
+        // 标题级别映射：
+        // # -> # (保持)
+        // ## -> ## (保持)
+        // ### -> ## (元宝一级标题如"一、相同点")
+        // #### -> ### (元宝二级标题如"1. 模型类型")
+        // ##### 及以上 -> ### 
+        var hashCount = hashes.length;
+        var normalizedHashes;
+        if (hashCount <= 2) {
+            normalizedHashes = hashes;
+        } else if (hashCount === 3) {
+            normalizedHashes = '##';
+        } else {
+            normalizedHashes = '###';
+        }
+        return normalizedHashes + ' ' + title;
     });
     
-    // 1c. 处理元宝特有的表格格式（在同一行内的表格）
+    // 1c. 处理表格行末尾的多余空格（元宝表格每行末尾有空格）
+    result = result.replace(/^(\|.+\|)\s+$/gm, '$1');
+    
+    // 1d. 处理元宝特有的表格格式（在同一行内的表格）
     // 检测表格模式：| xxx |   | yyy |   | zzz |
     // 元宝会把表格行压缩成一行，用多个空格分隔
     result = result.replace(/(\|[^|\n]+\|)\s{2,}(\|[-:]+\|)/g, '$1\n$2');

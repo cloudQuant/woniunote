@@ -1,10 +1,12 @@
 """
-评论API
+评论 API 模块
+
+本模块提供评论的发布、删除、列表获取以及点赞/踩等接口。
 """
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, and_
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
@@ -16,7 +18,6 @@ from app.models.comment_vote import CommentVote
 from app.schemas.comment import CommentCreate, CommentUpdate, CommentResponse
 from app.schemas.common import ResponseModel, PaginatedResponse
 from app.api.deps import get_current_user_required, get_admin_user
-from sqlalchemy import and_
 
 router = APIRouter()
 
@@ -24,11 +25,27 @@ router = APIRouter()
 @router.get("/article/{articleid}", response_model=PaginatedResponse[dict])
 async def get_article_comments(
     articleid: int,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取文章的评论列表"""
+    """
+    获取文章的评论列表
+    
+    分页获取指定文章的评论列表。
+    
+    Args:
+        articleid: 文章 ID
+        page: 页码
+        page_size: 每页数量
+        db: 数据库会话
+        
+    Returns:
+        PaginatedResponse[dict]: 分页的评论列表
+        
+    Raises:
+        HTTPException(404): 文章不存在
+    """
     # 检查文章是否存在
     article_result = await db.execute(
         select(Article).where(Article.articleid == articleid)
@@ -77,7 +94,23 @@ async def create_comment(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """创建评论"""
+    """
+    创建评论
+    
+    发布新评论，并给予用户积分奖励。
+    
+    Args:
+        comment_data: 评论创建数据
+        request: 请求对象 (用于记录 IP)
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 创建成功的评论信息
+        
+    Raises:
+        HTTPException(404): 文章不存在
+    """
     # 检查文章是否存在
     article_result = await db.execute(
         select(Article).where(Article.articleid == comment_data.articleid)
@@ -142,7 +175,22 @@ async def update_comment(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """更新评论"""
+    """
+    更新评论
+    
+    Args:
+        commentid: 评论 ID
+        comment_data: 评论更新数据
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 更新后的评论信息
+        
+    Raises:
+        HTTPException(404): 评论不存在
+        HTTPException(403): 没有权限修改此评论
+    """
     result = await db.execute(
         select(Comment).where(Comment.commentid == commentid)
     )
@@ -181,7 +229,23 @@ async def delete_comment(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """删除评论"""
+    """
+    删除评论
+    
+    同时减少文章的评论数。
+    
+    Args:
+        commentid: 评论 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 成功消息
+        
+    Raises:
+        HTTPException(404): 评论不存在
+        HTTPException(403): 没有权限删除此评论
+    """
     result = await db.execute(
         select(Comment).where(Comment.commentid == commentid)
     )
@@ -220,7 +284,23 @@ async def agree_comment(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """点赞评论"""
+    """
+    点赞评论
+    
+    如果已经点过赞，则报错；如果之前是踩，则改为赞。
+    
+    Args:
+        commentid: 评论 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 包含新的点赞/踩数
+        
+    Raises:
+        HTTPException(404): 评论不存在
+        HTTPException(400): 已经点过赞了
+    """
     result = await db.execute(
         select(Comment).where(Comment.commentid == commentid)
     )
@@ -279,7 +359,23 @@ async def oppose_comment(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """踩评论"""
+    """
+    踩评论
+    
+    如果已经踩过，则报错；如果之前是赞，则改为踩。
+    
+    Args:
+        commentid: 评论 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 包含新的点赞/踩数
+        
+    Raises:
+        HTTPException(404): 评论不存在
+        HTTPException(400): 已经踩过了
+    """
     result = await db.execute(
         select(Comment).where(Comment.commentid == commentid)
     )
@@ -338,7 +434,17 @@ async def get_vote_status(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取当前用户对评论的投票状态"""
+    """
+    获取当前用户对评论的投票状态
+    
+    Args:
+        commentid: 评论 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 投票状态 (是否已投, 投票类型)
+    """
     vote_result = await db.execute(
         select(CommentVote).where(
             and_(
@@ -361,12 +467,23 @@ async def get_vote_status(
 
 @router.get("/my", response_model=PaginatedResponse[dict])
 async def get_my_comments(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取我的评论列表"""
+    """
+    获取我的评论列表
+    
+    Args:
+        page: 页码
+        page_size: 每页数量
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        PaginatedResponse[dict]: 分页的评论列表 (包含文章标题)
+    """
     # 获取评论总数
     count_query = select(func.count()).select_from(Comment).where(Comment.userid == current_user.userid)
     total_result = await db.execute(count_query)

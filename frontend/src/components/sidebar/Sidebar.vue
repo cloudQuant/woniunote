@@ -50,6 +50,11 @@
 </template>
 
 <script setup>
+/**
+ * @component Sidebar
+ * @description 侧边栏组件
+ * 包含搜索框、热门文章列表、推荐文章列表和回到顶部按钮。
+ */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowUp } from '@element-plus/icons-vue'
@@ -57,25 +62,40 @@ import { useArticleStore } from '@/stores/article'
 
 const router = useRouter()
 const articleStore = useArticleStore()
+
+// 状态
 const searchKeyword = ref('')
 const showBackToTop = ref(false)
 
+// 计算属性
 const hotArticles = computed(() => articleStore.hotArticles)
 
+/**
+ * 处理搜索
+ * 跳转到搜索结果页
+ */
 function handleSearch() {
   if (searchKeyword.value.trim()) {
     router.push({ name: 'Search', query: { keyword: searchKeyword.value } })
   }
 }
 
+/**
+ * 滚动到顶部
+ */
 function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
+/**
+ * 监听滚动事件
+ * 控制回到顶部按钮的显示/隐藏
+ */
 function handleScroll() {
   showBackToTop.value = window.scrollY > 300
 }
 
+// 生命周期钩子
 onMounted(async () => {
   await articleStore.fetchHotArticles()
   await articleStore.fetchArticleTypes()

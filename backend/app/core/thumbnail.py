@@ -1,6 +1,8 @@
 """
 缩略图生成工具模块
-参考 woniunote/common/utils.py 中的 create_thumb_png 函数实现
+
+本模块提供了生成随机渐变背景带文字的缩略图，以及图片压缩功能。
+参考 woniunote/common/utils.py 中的 create_thumb_png 函数实现。
 """
 import os
 import random
@@ -17,9 +19,12 @@ MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
 
 def get_system_font_path():
     """
-    获取系统默认字体路径，支持多平台
-    优先使用支持中文的字体
-    :return: 字体文件路径
+    获取系统默认字体路径
+    
+    支持 Windows 和 Linux/Mac 平台，优先使用支持中文的字体。
+    
+    Returns:
+        Optional[str]: 字体文件路径，如果未找到则返回 None
     """
     try:
         if os.name == 'nt':  # Windows
@@ -60,7 +65,12 @@ def get_system_font_path():
 
 
 def generate_random_color():
-    """生成随机RGB颜色"""
+    """
+    生成随机 RGB 颜色
+    
+    Returns:
+        Tuple[int, int, int]: RGB 颜色元组
+    """
     return (
         random.randint(50, 200),
         random.randint(50, 200),
@@ -71,9 +81,16 @@ def generate_random_color():
 def generate_gradient_background(width: int, height: int) -> Image.Image:
     """
     生成渐变背景图片
-    :param width: 宽度
-    :param height: 高度
-    :return: PIL Image对象
+    
+    Args:
+        width: 图片宽度
+        height: 图片高度
+        
+    Returns:
+        Image.Image: PIL Image 对象
+        
+    Raises:
+        ValueError: 当宽高无效时抛出
     """
     try:
         if not isinstance(width, int) or not isinstance(height, int):
@@ -108,10 +125,19 @@ def generate_gradient_background(width: int, height: int) -> Image.Image:
 def create_thumb_png(width: int = 200, height: int = 150, text: str = "WoniuNote") -> Image.Image:
     """
     创建带文字的缩略图
-    :param width: 宽度
-    :param height: 高度
-    :param text: 显示文字
-    :return: PIL Image对象
+    
+    生成一个带有随机渐变背景和居中文字的图片。
+    
+    Args:
+        width: 图片宽度
+        height: 图片高度
+        text: 显示的文字
+        
+    Returns:
+        Image.Image: PIL Image 对象
+        
+    Raises:
+        ValueError: 当参数无效时抛出
     """
     try:
         # 参数验证
@@ -172,11 +198,21 @@ def create_thumb_png(width: int = 200, height: int = 150, text: str = "WoniuNote
 def compress_image(source: str, dest: str, width: int, quality: int = 85) -> bool:
     """
     压缩图片
-    :param source: 源文件路径
-    :param dest: 目标文件路径
-    :param width: 目标宽度
-    :param quality: 压缩质量 (1-100)
-    :return: 是否成功
+    
+    调整图片大小并压缩质量。
+    
+    Args:
+        source: 源文件路径
+        dest: 目标文件路径
+        width: 目标宽度（高度按比例缩放）
+        quality: 压缩质量 (1-100)
+        
+    Returns:
+        bool: 是否成功
+        
+    Raises:
+        ValueError: 当参数无效或文件过大时抛出
+        FileNotFoundError: 当源文件不存在时抛出
     """
     try:
         # 验证参数

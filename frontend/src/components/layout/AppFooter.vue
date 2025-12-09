@@ -38,6 +38,11 @@
 </template>
 
 <script setup>
+/**
+ * @component AppFooter
+ * @description 应用底部组件
+ * 显示版权信息、备案号、友情链接和联系方式。
+ */
 </script>
 
 <style scoped>

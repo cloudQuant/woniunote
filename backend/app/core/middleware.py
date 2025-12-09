@@ -1,5 +1,7 @@
 """
-中间件配置
+中间件配置模块
+
+本模块定义了应用的中间件，用于处理请求和响应。
 """
 import time
 from fastapi import Request
@@ -9,9 +11,32 @@ from app.core.logger import log_info, log_error, log_warning
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
-    """请求日志中间件"""
+    """
+    请求日志中间件
+    
+    记录每个 HTTP 请求的详细信息，包括：
+    - 请求方法和路径
+    - 响应状态码
+    - 请求耗时
+    - 客户端 IP
+    
+    同时会根据响应状态码记录不同级别的日志：
+    - 2xx/3xx: INFO
+    - 4xx: WARNING
+    - 5xx: ERROR
+    """
     
     async def dispatch(self, request: Request, call_next) -> Response:
+        """
+        处理请求
+        
+        Args:
+            request: 请求对象
+            call_next: 下一个中间件或路由处理函数
+            
+        Returns:
+            Response: 响应对象
+        """
         start_time = time.time()
         
         # 获取请求信息

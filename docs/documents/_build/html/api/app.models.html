@@ -1,0 +1,3436 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.models package &mdash; WoniuNote 1.0.0 文档</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=34088549"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/translations.js?v=beaddf03"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="app.schemas package" href="app.schemas.html" />
+    <link rel="prev" title="app.core package" href="app.core.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            WoniuNote
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">app</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="app.html">app package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="app.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="app.api.html">app.api package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="app.core.html">app.core package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">app.models package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="app.schemas.html">app.schemas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="app.services.html">app.services package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="app.utils.html">app.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="app.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="app.html#module-app.main">app.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="app.html#module-app">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">WoniuNote</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">app</a></li>
+          <li class="breadcrumb-item"><a href="app.html">app package</a></li>
+      <li class="breadcrumb-item active">app.models package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/app.models.rst.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="app-models-package">
+<h1>app.models package<a class="headerlink" href="#app-models-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-app.models.article">
+<span id="app-models-article-module"></span><h2>app.models.article module<a class="headerlink" href="#module-app.models.article" title="Link to this heading"></a></h2>
+<p>文章模型模块</p>
+<p>本模块定义了文章相关的数据模型。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.article.Article">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.article.</span></span><span class="sig-name descname"><span class="pre">Article</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/article.html#Article"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.article.Article" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>文章表</p>
+<p>存储文章的基本信息，包括标题、内容、作者、分类等。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.articleid">
+<span class="sig-name descname"><span class="pre">articleid</span></span><a class="headerlink" href="#app.models.article.Article.articleid" title="Link to this definition"></a></dt>
+<dd><p>文章 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.article.Article.userid" title="Link to this definition"></a></dt>
+<dd><p>作者 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.type">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#app.models.article.Article.type" title="Link to this definition"></a></dt>
+<dd><p>文章分类 ID</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.headline">
+<span class="sig-name descname"><span class="pre">headline</span></span><a class="headerlink" href="#app.models.article.Article.headline" title="Link to this definition"></a></dt>
+<dd><p>文章标题</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.content">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#app.models.article.Article.content" title="Link to this definition"></a></dt>
+<dd><p>文章内容</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.thumbnail">
+<span class="sig-name descname"><span class="pre">thumbnail</span></span><a class="headerlink" href="#app.models.article.Article.thumbnail" title="Link to this definition"></a></dt>
+<dd><p>缩略图路径</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.credit">
+<span class="sig-name descname"><span class="pre">credit</span></span><a class="headerlink" href="#app.models.article.Article.credit" title="Link to this definition"></a></dt>
+<dd><p>阅读所需积分</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.readcount">
+<span class="sig-name descname"><span class="pre">readcount</span></span><a class="headerlink" href="#app.models.article.Article.readcount" title="Link to this definition"></a></dt>
+<dd><p>阅读次数</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.replycount">
+<span class="sig-name descname"><span class="pre">replycount</span></span><a class="headerlink" href="#app.models.article.Article.replycount" title="Link to this definition"></a></dt>
+<dd><p>回复次数</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.recommended">
+<span class="sig-name descname"><span class="pre">recommended</span></span><a class="headerlink" href="#app.models.article.Article.recommended" title="Link to this definition"></a></dt>
+<dd><p>是否推荐 (0: 否, 1: 是)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.hidden">
+<span class="sig-name descname"><span class="pre">hidden</span></span><a class="headerlink" href="#app.models.article.Article.hidden" title="Link to this definition"></a></dt>
+<dd><p>是否隐藏 (0: 否, 1: 是)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.drafted">
+<span class="sig-name descname"><span class="pre">drafted</span></span><a class="headerlink" href="#app.models.article.Article.drafted" title="Link to this definition"></a></dt>
+<dd><p>是否草稿 (0: 否, 1: 是)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.checked">
+<span class="sig-name descname"><span class="pre">checked</span></span><a class="headerlink" href="#app.models.article.Article.checked" title="Link to this definition"></a></dt>
+<dd><p>是否审核通过 (0: 待审核, 1: 通过)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.article.Article.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.article.Article.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">articleid</span></span><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.author">
+<span class="sig-name descname"><span class="pre">author</span></span><a class="headerlink" href="#app.models.article.Article.author" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">checked</span></span><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.comments">
+<span class="sig-name descname"><span class="pre">comments</span></span><a class="headerlink" href="#app.models.article.Article.comments" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#id2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">credit</span></span><a class="headerlink" href="#id4" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">drafted</span></span><a class="headerlink" href="#id5" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.article.Article.favorites">
+<span class="sig-name descname"><span class="pre">favorites</span></span><a class="headerlink" href="#app.models.article.Article.favorites" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">headline</span></span><a class="headerlink" href="#id6" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">hidden</span></span><a class="headerlink" href="#id7" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-name descname"><span class="pre">readcount</span></span><a class="headerlink" href="#id8" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-name descname"><span class="pre">recommended</span></span><a class="headerlink" href="#id9" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id10">
+<span class="sig-name descname"><span class="pre">replycount</span></span><a class="headerlink" href="#id10" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-name descname"><span class="pre">thumbnail</span></span><a class="headerlink" href="#id11" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#id12" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id13">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id13" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id14">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id14" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.models.card">
+<span id="app-models-card-module"></span><h2>app.models.card module<a class="headerlink" href="#module-app.models.card" title="Link to this heading"></a></h2>
+<p>卡片管理模型模块</p>
+<p>用于任务追踪和时间管理，包含卡片分类和卡片任务两个模型。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.card.Card">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.card.</span></span><span class="sig-name descname"><span class="pre">Card</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/card.html#Card"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.card.Card" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>卡片表 - 任务追踪</p>
+<p>记录具体的任务信息，包括内容、优先级、时间追踪等。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#app.models.card.Card.id" title="Link to this definition"></a></dt>
+<dd><p>卡片 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.card.Card.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.category_id">
+<span class="sig-name descname"><span class="pre">category_id</span></span><a class="headerlink" href="#app.models.card.Card.category_id" title="Link to this definition"></a></dt>
+<dd><p>分类 ID，外键关联 card_category 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.headline">
+<span class="sig-name descname"><span class="pre">headline</span></span><a class="headerlink" href="#app.models.card.Card.headline" title="Link to this definition"></a></dt>
+<dd><p>任务标题</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.content">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#app.models.card.Card.content" title="Link to this definition"></a></dt>
+<dd><p>任务详情</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.type">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#app.models.card.Card.type" title="Link to this definition"></a></dt>
+<dd><p>优先级 (1: 重要紧急, 2: 重要不紧急, 3: 紧急不重要, 4: 不重要不紧急)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.is_repeat">
+<span class="sig-name descname"><span class="pre">is_repeat</span></span><a class="headerlink" href="#app.models.card.Card.is_repeat" title="Link to this definition"></a></dt>
+<dd><p>是否重复任务</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.card.Card.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.card.Card.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.begintime">
+<span class="sig-name descname"><span class="pre">begintime</span></span><a class="headerlink" href="#app.models.card.Card.begintime" title="Link to this definition"></a></dt>
+<dd><p>开始时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.endtime">
+<span class="sig-name descname"><span class="pre">endtime</span></span><a class="headerlink" href="#app.models.card.Card.endtime" title="Link to this definition"></a></dt>
+<dd><p>结束时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.donetime">
+<span class="sig-name descname"><span class="pre">donetime</span></span><a class="headerlink" href="#app.models.card.Card.donetime" title="Link to this definition"></a></dt>
+<dd><p>完成时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.usedtime">
+<span class="sig-name descname"><span class="pre">usedtime</span></span><a class="headerlink" href="#app.models.card.Card.usedtime" title="Link to this definition"></a></dt>
+<dd><p>累计使用时间 (秒)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id15">
+<span class="sig-name descname"><span class="pre">begintime</span></span><a class="headerlink" href="#id15" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.category">
+<span class="sig-name descname"><span class="pre">category</span></span><a class="headerlink" href="#app.models.card.Card.category" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id16">
+<span class="sig-name descname"><span class="pre">category_id</span></span><a class="headerlink" href="#id16" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id17">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#id17" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id18">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id18" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id19">
+<span class="sig-name descname"><span class="pre">donetime</span></span><a class="headerlink" href="#id19" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id20">
+<span class="sig-name descname"><span class="pre">endtime</span></span><a class="headerlink" href="#id20" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id21">
+<span class="sig-name descname"><span class="pre">headline</span></span><a class="headerlink" href="#id21" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id22">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#id22" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id23">
+<span class="sig-name descname"><span class="pre">is_repeat</span></span><a class="headerlink" href="#id23" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id24">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#id24" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id25">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id25" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id26">
+<span class="sig-name descname"><span class="pre">usedtime</span></span><a class="headerlink" href="#id26" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.Card.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.card.Card.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id27">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id27" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.card.CardCategory">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.card.</span></span><span class="sig-name descname"><span class="pre">CardCategory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/card.html#CardCategory"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.card.CardCategory" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>卡片分类表</p>
+<p>用于对卡片任务进行分类管理。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.CardCategory.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#app.models.card.CardCategory.id" title="Link to this definition"></a></dt>
+<dd><p>分类 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.CardCategory.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.card.CardCategory.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.CardCategory.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#app.models.card.CardCategory.name" title="Link to this definition"></a></dt>
+<dd><p>分类名称</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.CardCategory.type">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#app.models.card.CardCategory.type" title="Link to this definition"></a></dt>
+<dd><p>分类类型 (0: 普通, 1: 时间类, 2: 优先级类)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.CardCategory.sort_order">
+<span class="sig-name descname"><span class="pre">sort_order</span></span><a class="headerlink" href="#app.models.card.CardCategory.sort_order" title="Link to this definition"></a></dt>
+<dd><p>排序权重</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.CardCategory.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.card.CardCategory.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.CardCategory.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.card.CardCategory.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.CardCategory.cards">
+<span class="sig-name descname"><span class="pre">cards</span></span><a class="headerlink" href="#app.models.card.CardCategory.cards" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id28">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id28" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id29">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#id29" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id30">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#id30" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id31">
+<span class="sig-name descname"><span class="pre">sort_order</span></span><a class="headerlink" href="#id31" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id32">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#id32" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id33">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id33" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.card.CardCategory.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.card.CardCategory.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id34">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id34" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.models.comment">
+<span id="app-models-comment-module"></span><h2>app.models.comment module<a class="headerlink" href="#module-app.models.comment" title="Link to this heading"></a></h2>
+<p>评论模型模块</p>
+<p>本模块定义了评论相关的数据模型。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.comment.Comment">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.comment.</span></span><span class="sig-name descname"><span class="pre">Comment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/comment.html#Comment"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.comment.Comment" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>评论表</p>
+<p>存储用户对文章的评论信息。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.commentid">
+<span class="sig-name descname"><span class="pre">commentid</span></span><a class="headerlink" href="#app.models.comment.Comment.commentid" title="Link to this definition"></a></dt>
+<dd><p>评论 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.comment.Comment.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.articleid">
+<span class="sig-name descname"><span class="pre">articleid</span></span><a class="headerlink" href="#app.models.comment.Comment.articleid" title="Link to this definition"></a></dt>
+<dd><p>文章 ID，外键关联 article 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.content">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#app.models.comment.Comment.content" title="Link to this definition"></a></dt>
+<dd><p>评论内容</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.ipaddr">
+<span class="sig-name descname"><span class="pre">ipaddr</span></span><a class="headerlink" href="#app.models.comment.Comment.ipaddr" title="Link to this definition"></a></dt>
+<dd><p>评论者 IP 地址</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.replyid">
+<span class="sig-name descname"><span class="pre">replyid</span></span><a class="headerlink" href="#app.models.comment.Comment.replyid" title="Link to this definition"></a></dt>
+<dd><p>回复的评论 ID (如果是回复)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.agreecount">
+<span class="sig-name descname"><span class="pre">agreecount</span></span><a class="headerlink" href="#app.models.comment.Comment.agreecount" title="Link to this definition"></a></dt>
+<dd><p>点赞数</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.opposecount">
+<span class="sig-name descname"><span class="pre">opposecount</span></span><a class="headerlink" href="#app.models.comment.Comment.opposecount" title="Link to this definition"></a></dt>
+<dd><p>反对数</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.hidden">
+<span class="sig-name descname"><span class="pre">hidden</span></span><a class="headerlink" href="#app.models.comment.Comment.hidden" title="Link to this definition"></a></dt>
+<dd><p>是否隐藏 (0: 否, 1: 是)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.comment.Comment.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.comment.Comment.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id35">
+<span class="sig-name descname"><span class="pre">agreecount</span></span><a class="headerlink" href="#id35" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.article">
+<span class="sig-name descname"><span class="pre">article</span></span><a class="headerlink" href="#app.models.comment.Comment.article" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id36">
+<span class="sig-name descname"><span class="pre">articleid</span></span><a class="headerlink" href="#id36" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id37">
+<span class="sig-name descname"><span class="pre">commentid</span></span><a class="headerlink" href="#id37" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id38">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#id38" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id39">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id39" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id40">
+<span class="sig-name descname"><span class="pre">hidden</span></span><a class="headerlink" href="#id40" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id41">
+<span class="sig-name descname"><span class="pre">ipaddr</span></span><a class="headerlink" href="#id41" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id42">
+<span class="sig-name descname"><span class="pre">opposecount</span></span><a class="headerlink" href="#id42" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id43">
+<span class="sig-name descname"><span class="pre">replyid</span></span><a class="headerlink" href="#id43" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id44">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id44" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment.Comment.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.comment.Comment.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id45">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id45" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.models.comment_vote">
+<span id="app-models-comment-vote-module"></span><h2>app.models.comment_vote module<a class="headerlink" href="#module-app.models.comment_vote" title="Link to this heading"></a></h2>
+<p>评论投票模型模块</p>
+<p>用于记录用户对评论的点赞/踩操作。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.comment_vote.CommentVote">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.comment_vote.</span></span><span class="sig-name descname"><span class="pre">CommentVote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/comment_vote.html#CommentVote"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.comment_vote.CommentVote" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>评论投票表</p>
+<p>记录用户对评论的评价（点赞或踩）。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment_vote.CommentVote.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#app.models.comment_vote.CommentVote.id" title="Link to this definition"></a></dt>
+<dd><p>投票 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment_vote.CommentVote.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.comment_vote.CommentVote.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment_vote.CommentVote.commentid">
+<span class="sig-name descname"><span class="pre">commentid</span></span><a class="headerlink" href="#app.models.comment_vote.CommentVote.commentid" title="Link to this definition"></a></dt>
+<dd><p>评论 ID，外键关联 comment 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment_vote.CommentVote.vote_type">
+<span class="sig-name descname"><span class="pre">vote_type</span></span><a class="headerlink" href="#app.models.comment_vote.CommentVote.vote_type" title="Link to this definition"></a></dt>
+<dd><p>投票类型 (1: 点赞, -1: 踩)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment_vote.CommentVote.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.comment_vote.CommentVote.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment_vote.CommentVote.comment">
+<span class="sig-name descname"><span class="pre">comment</span></span><a class="headerlink" href="#app.models.comment_vote.CommentVote.comment" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id46">
+<span class="sig-name descname"><span class="pre">commentid</span></span><a class="headerlink" href="#id46" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id47">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id47" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id48">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#id48" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.comment_vote.CommentVote.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.comment_vote.CommentVote.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id49">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id49" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id50">
+<span class="sig-name descname"><span class="pre">vote_type</span></span><a class="headerlink" href="#id50" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.models.credit">
+<span id="app-models-credit-module"></span><h2>app.models.credit module<a class="headerlink" href="#module-app.models.credit" title="Link to this heading"></a></h2>
+<p>积分模型模块</p>
+<p>本模块定义了用户积分相关的数据模型。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.credit.Credit">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.credit.</span></span><span class="sig-name descname"><span class="pre">Credit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/credit.html#Credit"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.credit.Credit" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>积分表</p>
+<p>记录用户的积分变动历史。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.credit.Credit.creditid">
+<span class="sig-name descname"><span class="pre">creditid</span></span><a class="headerlink" href="#app.models.credit.Credit.creditid" title="Link to this definition"></a></dt>
+<dd><p>积分记录 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.credit.Credit.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.credit.Credit.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.credit.Credit.category">
+<span class="sig-name descname"><span class="pre">category</span></span><a class="headerlink" href="#app.models.credit.Credit.category" title="Link to this definition"></a></dt>
+<dd><p>积分类型 (如: login, post, comment)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.credit.Credit.target">
+<span class="sig-name descname"><span class="pre">target</span></span><a class="headerlink" href="#app.models.credit.Credit.target" title="Link to this definition"></a></dt>
+<dd><p>关联目标 ID (如文章 ID)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.credit.Credit.credit">
+<span class="sig-name descname"><span class="pre">credit</span></span><a class="headerlink" href="#app.models.credit.Credit.credit" title="Link to this definition"></a></dt>
+<dd><p>变动积分数 (正数增加，负数减少)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.credit.Credit.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.credit.Credit.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.credit.Credit.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.credit.Credit.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id51">
+<span class="sig-name descname"><span class="pre">category</span></span><a class="headerlink" href="#id51" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id52">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id52" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id53">
+<span class="sig-name descname"><span class="pre">credit</span></span><a class="headerlink" href="#id53" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id54">
+<span class="sig-name descname"><span class="pre">creditid</span></span><a class="headerlink" href="#id54" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id55">
+<span class="sig-name descname"><span class="pre">target</span></span><a class="headerlink" href="#id55" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id56">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id56" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.credit.Credit.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.credit.Credit.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id57">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id57" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.models.favorite">
+<span id="app-models-favorite-module"></span><h2>app.models.favorite module<a class="headerlink" href="#module-app.models.favorite" title="Link to this heading"></a></h2>
+<p>收藏模型模块</p>
+<p>本模块定义了用户收藏文章的数据模型。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.favorite.Favorite">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.favorite.</span></span><span class="sig-name descname"><span class="pre">Favorite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/favorite.html#Favorite"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.favorite.Favorite" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>收藏表</p>
+<p>记录用户收藏的文章。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.favorite.Favorite.favoriteid">
+<span class="sig-name descname"><span class="pre">favoriteid</span></span><a class="headerlink" href="#app.models.favorite.Favorite.favoriteid" title="Link to this definition"></a></dt>
+<dd><p>收藏 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.favorite.Favorite.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.favorite.Favorite.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.favorite.Favorite.articleid">
+<span class="sig-name descname"><span class="pre">articleid</span></span><a class="headerlink" href="#app.models.favorite.Favorite.articleid" title="Link to this definition"></a></dt>
+<dd><p>文章 ID，外键关联 article 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.favorite.Favorite.canceled">
+<span class="sig-name descname"><span class="pre">canceled</span></span><a class="headerlink" href="#app.models.favorite.Favorite.canceled" title="Link to this definition"></a></dt>
+<dd><p>是否取消收藏 (0: 否, 1: 是)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.favorite.Favorite.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.favorite.Favorite.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.favorite.Favorite.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.favorite.Favorite.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.favorite.Favorite.article">
+<span class="sig-name descname"><span class="pre">article</span></span><a class="headerlink" href="#app.models.favorite.Favorite.article" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id58">
+<span class="sig-name descname"><span class="pre">articleid</span></span><a class="headerlink" href="#id58" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id59">
+<span class="sig-name descname"><span class="pre">canceled</span></span><a class="headerlink" href="#id59" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id60">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id60" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id61">
+<span class="sig-name descname"><span class="pre">favoriteid</span></span><a class="headerlink" href="#id61" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id62">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id62" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.favorite.Favorite.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.favorite.Favorite.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id63">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id63" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.models.todo">
+<span id="app-models-todo-module"></span><h2>app.models.todo module<a class="headerlink" href="#module-app.models.todo" title="Link to this heading"></a></h2>
+<p>待办事项模型模块</p>
+<p>本模块定义了待办事项相关的数据模型，包含分类和事项两个模型。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.todo.TodoCategory">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.todo.</span></span><span class="sig-name descname"><span class="pre">TodoCategory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/todo.html#TodoCategory"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.todo.TodoCategory" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>待办事项分类表</p>
+<p>用于对待办事项进行分类管理。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoCategory.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#app.models.todo.TodoCategory.id" title="Link to this definition"></a></dt>
+<dd><p>分类 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoCategory.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.todo.TodoCategory.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoCategory.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#app.models.todo.TodoCategory.name" title="Link to this definition"></a></dt>
+<dd><p>分类名称</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoCategory.sort_order">
+<span class="sig-name descname"><span class="pre">sort_order</span></span><a class="headerlink" href="#app.models.todo.TodoCategory.sort_order" title="Link to this definition"></a></dt>
+<dd><p>排序权重</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoCategory.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.todo.TodoCategory.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoCategory.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.todo.TodoCategory.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id64">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id64" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id65">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#id65" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoCategory.items">
+<span class="sig-name descname"><span class="pre">items</span></span><a class="headerlink" href="#app.models.todo.TodoCategory.items" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id66">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#id66" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id67">
+<span class="sig-name descname"><span class="pre">sort_order</span></span><a class="headerlink" href="#id67" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id68">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id68" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoCategory.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.todo.TodoCategory.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id69">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id69" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.todo.</span></span><span class="sig-name descname"><span class="pre">TodoItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/todo.html#TodoItem"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.todo.TodoItem" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>待办事项表</p>
+<p>记录具体的待办事项信息。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#app.models.todo.TodoItem.id" title="Link to this definition"></a></dt>
+<dd><p>事项 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.todo.TodoItem.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem.category_id">
+<span class="sig-name descname"><span class="pre">category_id</span></span><a class="headerlink" href="#app.models.todo.TodoItem.category_id" title="Link to this definition"></a></dt>
+<dd><p>分类 ID，外键关联 todo_category 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem.body">
+<span class="sig-name descname"><span class="pre">body</span></span><a class="headerlink" href="#app.models.todo.TodoItem.body" title="Link to this definition"></a></dt>
+<dd><p>事项内容</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem.done">
+<span class="sig-name descname"><span class="pre">done</span></span><a class="headerlink" href="#app.models.todo.TodoItem.done" title="Link to this definition"></a></dt>
+<dd><p>是否完成 (0: 未完成, 1: 已完成)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem.priority">
+<span class="sig-name descname"><span class="pre">priority</span></span><a class="headerlink" href="#app.models.todo.TodoItem.priority" title="Link to this definition"></a></dt>
+<dd><p>优先级 (0: 普通, 1: 重要, 2: 紧急)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem.due_date">
+<span class="sig-name descname"><span class="pre">due_date</span></span><a class="headerlink" href="#app.models.todo.TodoItem.due_date" title="Link to this definition"></a></dt>
+<dd><p>截止日期</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.todo.TodoItem.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.todo.TodoItem.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem.donetime">
+<span class="sig-name descname"><span class="pre">donetime</span></span><a class="headerlink" href="#app.models.todo.TodoItem.donetime" title="Link to this definition"></a></dt>
+<dd><p>完成时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id70">
+<span class="sig-name descname"><span class="pre">body</span></span><a class="headerlink" href="#id70" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem.category">
+<span class="sig-name descname"><span class="pre">category</span></span><a class="headerlink" href="#app.models.todo.TodoItem.category" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id71">
+<span class="sig-name descname"><span class="pre">category_id</span></span><a class="headerlink" href="#id71" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id72">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id72" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id73">
+<span class="sig-name descname"><span class="pre">done</span></span><a class="headerlink" href="#id73" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id74">
+<span class="sig-name descname"><span class="pre">donetime</span></span><a class="headerlink" href="#id74" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id75">
+<span class="sig-name descname"><span class="pre">due_date</span></span><a class="headerlink" href="#id75" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id76">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#id76" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id77">
+<span class="sig-name descname"><span class="pre">priority</span></span><a class="headerlink" href="#id77" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id78">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id78" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.todo.TodoItem.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.todo.TodoItem.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id79">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id79" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.models.user">
+<span id="app-models-user-module"></span><h2>app.models.user module<a class="headerlink" href="#module-app.models.user" title="Link to this heading"></a></h2>
+<p>用户模型模块</p>
+<p>本模块定义了用户相关的数据模型。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.user.User">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.user.</span></span><span class="sig-name descname"><span class="pre">User</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/user.html#User"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.user.User" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>用户表</p>
+<p>存储用户的基本信息。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.user.User.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.username">
+<span class="sig-name descname"><span class="pre">username</span></span><a class="headerlink" href="#app.models.user.User.username" title="Link to this definition"></a></dt>
+<dd><p>用户名，唯一</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.password">
+<span class="sig-name descname"><span class="pre">password</span></span><a class="headerlink" href="#app.models.user.User.password" title="Link to this definition"></a></dt>
+<dd><p>密码哈希</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.nickname">
+<span class="sig-name descname"><span class="pre">nickname</span></span><a class="headerlink" href="#app.models.user.User.nickname" title="Link to this definition"></a></dt>
+<dd><p>昵称</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.avatar">
+<span class="sig-name descname"><span class="pre">avatar</span></span><a class="headerlink" href="#app.models.user.User.avatar" title="Link to this definition"></a></dt>
+<dd><p>头像路径</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.qq">
+<span class="sig-name descname"><span class="pre">qq</span></span><a class="headerlink" href="#app.models.user.User.qq" title="Link to this definition"></a></dt>
+<dd><p>QQ 号</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.role">
+<span class="sig-name descname"><span class="pre">role</span></span><a class="headerlink" href="#app.models.user.User.role" title="Link to this definition"></a></dt>
+<dd><p>角色 (user, admin)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.credit">
+<span class="sig-name descname"><span class="pre">credit</span></span><a class="headerlink" href="#app.models.user.User.credit" title="Link to this definition"></a></dt>
+<dd><p>积分</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.user.User.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.user.User.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.articles">
+<span class="sig-name descname"><span class="pre">articles</span></span><a class="headerlink" href="#app.models.user.User.articles" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id80">
+<span class="sig-name descname"><span class="pre">avatar</span></span><a class="headerlink" href="#id80" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.comments">
+<span class="sig-name descname"><span class="pre">comments</span></span><a class="headerlink" href="#app.models.user.User.comments" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id81">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id81" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id82">
+<span class="sig-name descname"><span class="pre">credit</span></span><a class="headerlink" href="#id82" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.credits">
+<span class="sig-name descname"><span class="pre">credits</span></span><a class="headerlink" href="#app.models.user.User.credits" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.user.User.favorites">
+<span class="sig-name descname"><span class="pre">favorites</span></span><a class="headerlink" href="#app.models.user.User.favorites" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id83">
+<span class="sig-name descname"><span class="pre">nickname</span></span><a class="headerlink" href="#id83" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id84">
+<span class="sig-name descname"><span class="pre">password</span></span><a class="headerlink" href="#id84" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id85">
+<span class="sig-name descname"><span class="pre">qq</span></span><a class="headerlink" href="#id85" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id86">
+<span class="sig-name descname"><span class="pre">role</span></span><a class="headerlink" href="#id86" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id87">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id87" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id88">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id88" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id89">
+<span class="sig-name descname"><span class="pre">username</span></span><a class="headerlink" href="#id89" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.models">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-app.models" title="Link to this heading"></a></h2>
+<p>数据库模型</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.Article">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.</span></span><span class="sig-name descname"><span class="pre">Article</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/article.html#Article"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.Article" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>文章表</p>
+<p>存储文章的基本信息，包括标题、内容、作者、分类等。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.articleid">
+<span class="sig-name descname"><span class="pre">articleid</span></span><a class="headerlink" href="#app.models.Article.articleid" title="Link to this definition"></a></dt>
+<dd><p>文章 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.Article.userid" title="Link to this definition"></a></dt>
+<dd><p>作者 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.type">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#app.models.Article.type" title="Link to this definition"></a></dt>
+<dd><p>文章分类 ID</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.headline">
+<span class="sig-name descname"><span class="pre">headline</span></span><a class="headerlink" href="#app.models.Article.headline" title="Link to this definition"></a></dt>
+<dd><p>文章标题</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.content">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#app.models.Article.content" title="Link to this definition"></a></dt>
+<dd><p>文章内容</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.thumbnail">
+<span class="sig-name descname"><span class="pre">thumbnail</span></span><a class="headerlink" href="#app.models.Article.thumbnail" title="Link to this definition"></a></dt>
+<dd><p>缩略图路径</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.credit">
+<span class="sig-name descname"><span class="pre">credit</span></span><a class="headerlink" href="#app.models.Article.credit" title="Link to this definition"></a></dt>
+<dd><p>阅读所需积分</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.readcount">
+<span class="sig-name descname"><span class="pre">readcount</span></span><a class="headerlink" href="#app.models.Article.readcount" title="Link to this definition"></a></dt>
+<dd><p>阅读次数</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.replycount">
+<span class="sig-name descname"><span class="pre">replycount</span></span><a class="headerlink" href="#app.models.Article.replycount" title="Link to this definition"></a></dt>
+<dd><p>回复次数</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.recommended">
+<span class="sig-name descname"><span class="pre">recommended</span></span><a class="headerlink" href="#app.models.Article.recommended" title="Link to this definition"></a></dt>
+<dd><p>是否推荐 (0: 否, 1: 是)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.hidden">
+<span class="sig-name descname"><span class="pre">hidden</span></span><a class="headerlink" href="#app.models.Article.hidden" title="Link to this definition"></a></dt>
+<dd><p>是否隐藏 (0: 否, 1: 是)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.drafted">
+<span class="sig-name descname"><span class="pre">drafted</span></span><a class="headerlink" href="#app.models.Article.drafted" title="Link to this definition"></a></dt>
+<dd><p>是否草稿 (0: 否, 1: 是)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.checked">
+<span class="sig-name descname"><span class="pre">checked</span></span><a class="headerlink" href="#app.models.Article.checked" title="Link to this definition"></a></dt>
+<dd><p>是否审核通过 (0: 待审核, 1: 通过)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.Article.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.Article.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id90">
+<span class="sig-name descname"><span class="pre">articleid</span></span><a class="headerlink" href="#id90" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.author">
+<span class="sig-name descname"><span class="pre">author</span></span><a class="headerlink" href="#app.models.Article.author" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id91">
+<span class="sig-name descname"><span class="pre">checked</span></span><a class="headerlink" href="#id91" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.comments">
+<span class="sig-name descname"><span class="pre">comments</span></span><a class="headerlink" href="#app.models.Article.comments" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id92">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#id92" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id93">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id93" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id94">
+<span class="sig-name descname"><span class="pre">credit</span></span><a class="headerlink" href="#id94" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id95">
+<span class="sig-name descname"><span class="pre">drafted</span></span><a class="headerlink" href="#id95" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Article.favorites">
+<span class="sig-name descname"><span class="pre">favorites</span></span><a class="headerlink" href="#app.models.Article.favorites" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id96">
+<span class="sig-name descname"><span class="pre">headline</span></span><a class="headerlink" href="#id96" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id97">
+<span class="sig-name descname"><span class="pre">hidden</span></span><a class="headerlink" href="#id97" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id98">
+<span class="sig-name descname"><span class="pre">readcount</span></span><a class="headerlink" href="#id98" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id99">
+<span class="sig-name descname"><span class="pre">recommended</span></span><a class="headerlink" href="#id99" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id100">
+<span class="sig-name descname"><span class="pre">replycount</span></span><a class="headerlink" href="#id100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id101">
+<span class="sig-name descname"><span class="pre">thumbnail</span></span><a class="headerlink" href="#id101" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id102">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#id102" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id103">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id103" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id104">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id104" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.Card">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.</span></span><span class="sig-name descname"><span class="pre">Card</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/card.html#Card"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.Card" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>卡片表 - 任务追踪</p>
+<p>记录具体的任务信息，包括内容、优先级、时间追踪等。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#app.models.Card.id" title="Link to this definition"></a></dt>
+<dd><p>卡片 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.Card.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.category_id">
+<span class="sig-name descname"><span class="pre">category_id</span></span><a class="headerlink" href="#app.models.Card.category_id" title="Link to this definition"></a></dt>
+<dd><p>分类 ID，外键关联 card_category 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.headline">
+<span class="sig-name descname"><span class="pre">headline</span></span><a class="headerlink" href="#app.models.Card.headline" title="Link to this definition"></a></dt>
+<dd><p>任务标题</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.content">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#app.models.Card.content" title="Link to this definition"></a></dt>
+<dd><p>任务详情</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.type">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#app.models.Card.type" title="Link to this definition"></a></dt>
+<dd><p>优先级 (1: 重要紧急, 2: 重要不紧急, 3: 紧急不重要, 4: 不重要不紧急)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.is_repeat">
+<span class="sig-name descname"><span class="pre">is_repeat</span></span><a class="headerlink" href="#app.models.Card.is_repeat" title="Link to this definition"></a></dt>
+<dd><p>是否重复任务</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.Card.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.Card.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.begintime">
+<span class="sig-name descname"><span class="pre">begintime</span></span><a class="headerlink" href="#app.models.Card.begintime" title="Link to this definition"></a></dt>
+<dd><p>开始时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.endtime">
+<span class="sig-name descname"><span class="pre">endtime</span></span><a class="headerlink" href="#app.models.Card.endtime" title="Link to this definition"></a></dt>
+<dd><p>结束时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.donetime">
+<span class="sig-name descname"><span class="pre">donetime</span></span><a class="headerlink" href="#app.models.Card.donetime" title="Link to this definition"></a></dt>
+<dd><p>完成时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.usedtime">
+<span class="sig-name descname"><span class="pre">usedtime</span></span><a class="headerlink" href="#app.models.Card.usedtime" title="Link to this definition"></a></dt>
+<dd><p>累计使用时间 (秒)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id105">
+<span class="sig-name descname"><span class="pre">begintime</span></span><a class="headerlink" href="#id105" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.category">
+<span class="sig-name descname"><span class="pre">category</span></span><a class="headerlink" href="#app.models.Card.category" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id106">
+<span class="sig-name descname"><span class="pre">category_id</span></span><a class="headerlink" href="#id106" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id107">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#id107" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id108">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id108" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id109">
+<span class="sig-name descname"><span class="pre">donetime</span></span><a class="headerlink" href="#id109" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id110">
+<span class="sig-name descname"><span class="pre">endtime</span></span><a class="headerlink" href="#id110" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id111">
+<span class="sig-name descname"><span class="pre">headline</span></span><a class="headerlink" href="#id111" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id112">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#id112" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id113">
+<span class="sig-name descname"><span class="pre">is_repeat</span></span><a class="headerlink" href="#id113" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id114">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#id114" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id115">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id115" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id116">
+<span class="sig-name descname"><span class="pre">usedtime</span></span><a class="headerlink" href="#id116" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Card.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.Card.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id117">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id117" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.CardCategory">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.</span></span><span class="sig-name descname"><span class="pre">CardCategory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/card.html#CardCategory"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.CardCategory" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>卡片分类表</p>
+<p>用于对卡片任务进行分类管理。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CardCategory.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#app.models.CardCategory.id" title="Link to this definition"></a></dt>
+<dd><p>分类 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CardCategory.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.CardCategory.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CardCategory.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#app.models.CardCategory.name" title="Link to this definition"></a></dt>
+<dd><p>分类名称</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CardCategory.type">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#app.models.CardCategory.type" title="Link to this definition"></a></dt>
+<dd><p>分类类型 (0: 普通, 1: 时间类, 2: 优先级类)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CardCategory.sort_order">
+<span class="sig-name descname"><span class="pre">sort_order</span></span><a class="headerlink" href="#app.models.CardCategory.sort_order" title="Link to this definition"></a></dt>
+<dd><p>排序权重</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CardCategory.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.CardCategory.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CardCategory.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.CardCategory.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CardCategory.cards">
+<span class="sig-name descname"><span class="pre">cards</span></span><a class="headerlink" href="#app.models.CardCategory.cards" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id118">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id118" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id119">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#id119" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id120">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#id120" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id121">
+<span class="sig-name descname"><span class="pre">sort_order</span></span><a class="headerlink" href="#id121" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id122">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#id122" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id123">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id123" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CardCategory.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.CardCategory.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id124">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id124" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.Comment">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.</span></span><span class="sig-name descname"><span class="pre">Comment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/comment.html#Comment"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.Comment" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>评论表</p>
+<p>存储用户对文章的评论信息。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.commentid">
+<span class="sig-name descname"><span class="pre">commentid</span></span><a class="headerlink" href="#app.models.Comment.commentid" title="Link to this definition"></a></dt>
+<dd><p>评论 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.Comment.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.articleid">
+<span class="sig-name descname"><span class="pre">articleid</span></span><a class="headerlink" href="#app.models.Comment.articleid" title="Link to this definition"></a></dt>
+<dd><p>文章 ID，外键关联 article 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.content">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#app.models.Comment.content" title="Link to this definition"></a></dt>
+<dd><p>评论内容</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.ipaddr">
+<span class="sig-name descname"><span class="pre">ipaddr</span></span><a class="headerlink" href="#app.models.Comment.ipaddr" title="Link to this definition"></a></dt>
+<dd><p>评论者 IP 地址</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.replyid">
+<span class="sig-name descname"><span class="pre">replyid</span></span><a class="headerlink" href="#app.models.Comment.replyid" title="Link to this definition"></a></dt>
+<dd><p>回复的评论 ID (如果是回复)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.agreecount">
+<span class="sig-name descname"><span class="pre">agreecount</span></span><a class="headerlink" href="#app.models.Comment.agreecount" title="Link to this definition"></a></dt>
+<dd><p>点赞数</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.opposecount">
+<span class="sig-name descname"><span class="pre">opposecount</span></span><a class="headerlink" href="#app.models.Comment.opposecount" title="Link to this definition"></a></dt>
+<dd><p>反对数</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.hidden">
+<span class="sig-name descname"><span class="pre">hidden</span></span><a class="headerlink" href="#app.models.Comment.hidden" title="Link to this definition"></a></dt>
+<dd><p>是否隐藏 (0: 否, 1: 是)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.Comment.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.Comment.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id125">
+<span class="sig-name descname"><span class="pre">agreecount</span></span><a class="headerlink" href="#id125" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.article">
+<span class="sig-name descname"><span class="pre">article</span></span><a class="headerlink" href="#app.models.Comment.article" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id126">
+<span class="sig-name descname"><span class="pre">articleid</span></span><a class="headerlink" href="#id126" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id127">
+<span class="sig-name descname"><span class="pre">commentid</span></span><a class="headerlink" href="#id127" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id128">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#id128" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id129">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id129" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id130">
+<span class="sig-name descname"><span class="pre">hidden</span></span><a class="headerlink" href="#id130" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id131">
+<span class="sig-name descname"><span class="pre">ipaddr</span></span><a class="headerlink" href="#id131" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id132">
+<span class="sig-name descname"><span class="pre">opposecount</span></span><a class="headerlink" href="#id132" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id133">
+<span class="sig-name descname"><span class="pre">replyid</span></span><a class="headerlink" href="#id133" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id134">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id134" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Comment.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.Comment.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id135">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id135" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.CommentVote">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.</span></span><span class="sig-name descname"><span class="pre">CommentVote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/comment_vote.html#CommentVote"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.CommentVote" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>评论投票表</p>
+<p>记录用户对评论的评价（点赞或踩）。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CommentVote.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#app.models.CommentVote.id" title="Link to this definition"></a></dt>
+<dd><p>投票 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CommentVote.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.CommentVote.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CommentVote.commentid">
+<span class="sig-name descname"><span class="pre">commentid</span></span><a class="headerlink" href="#app.models.CommentVote.commentid" title="Link to this definition"></a></dt>
+<dd><p>评论 ID，外键关联 comment 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CommentVote.vote_type">
+<span class="sig-name descname"><span class="pre">vote_type</span></span><a class="headerlink" href="#app.models.CommentVote.vote_type" title="Link to this definition"></a></dt>
+<dd><p>投票类型 (1: 点赞, -1: 踩)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CommentVote.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.CommentVote.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CommentVote.comment">
+<span class="sig-name descname"><span class="pre">comment</span></span><a class="headerlink" href="#app.models.CommentVote.comment" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id136">
+<span class="sig-name descname"><span class="pre">commentid</span></span><a class="headerlink" href="#id136" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id137">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id137" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id138">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#id138" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.CommentVote.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.CommentVote.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id139">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id139" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id140">
+<span class="sig-name descname"><span class="pre">vote_type</span></span><a class="headerlink" href="#id140" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.Credit">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.</span></span><span class="sig-name descname"><span class="pre">Credit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/credit.html#Credit"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.Credit" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>积分表</p>
+<p>记录用户的积分变动历史。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Credit.creditid">
+<span class="sig-name descname"><span class="pre">creditid</span></span><a class="headerlink" href="#app.models.Credit.creditid" title="Link to this definition"></a></dt>
+<dd><p>积分记录 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Credit.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.Credit.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Credit.category">
+<span class="sig-name descname"><span class="pre">category</span></span><a class="headerlink" href="#app.models.Credit.category" title="Link to this definition"></a></dt>
+<dd><p>积分类型 (如: login, post, comment)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Credit.target">
+<span class="sig-name descname"><span class="pre">target</span></span><a class="headerlink" href="#app.models.Credit.target" title="Link to this definition"></a></dt>
+<dd><p>关联目标 ID (如文章 ID)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Credit.credit">
+<span class="sig-name descname"><span class="pre">credit</span></span><a class="headerlink" href="#app.models.Credit.credit" title="Link to this definition"></a></dt>
+<dd><p>变动积分数 (正数增加，负数减少)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Credit.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.Credit.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Credit.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.Credit.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id141">
+<span class="sig-name descname"><span class="pre">category</span></span><a class="headerlink" href="#id141" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id142">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id142" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id143">
+<span class="sig-name descname"><span class="pre">credit</span></span><a class="headerlink" href="#id143" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id144">
+<span class="sig-name descname"><span class="pre">creditid</span></span><a class="headerlink" href="#id144" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id145">
+<span class="sig-name descname"><span class="pre">target</span></span><a class="headerlink" href="#id145" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id146">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id146" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Credit.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.Credit.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id147">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id147" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.Favorite">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.</span></span><span class="sig-name descname"><span class="pre">Favorite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/favorite.html#Favorite"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.Favorite" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>收藏表</p>
+<p>记录用户收藏的文章。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Favorite.favoriteid">
+<span class="sig-name descname"><span class="pre">favoriteid</span></span><a class="headerlink" href="#app.models.Favorite.favoriteid" title="Link to this definition"></a></dt>
+<dd><p>收藏 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Favorite.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.Favorite.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Favorite.articleid">
+<span class="sig-name descname"><span class="pre">articleid</span></span><a class="headerlink" href="#app.models.Favorite.articleid" title="Link to this definition"></a></dt>
+<dd><p>文章 ID，外键关联 article 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Favorite.canceled">
+<span class="sig-name descname"><span class="pre">canceled</span></span><a class="headerlink" href="#app.models.Favorite.canceled" title="Link to this definition"></a></dt>
+<dd><p>是否取消收藏 (0: 否, 1: 是)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Favorite.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.Favorite.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Favorite.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.Favorite.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Favorite.article">
+<span class="sig-name descname"><span class="pre">article</span></span><a class="headerlink" href="#app.models.Favorite.article" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id148">
+<span class="sig-name descname"><span class="pre">articleid</span></span><a class="headerlink" href="#id148" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id149">
+<span class="sig-name descname"><span class="pre">canceled</span></span><a class="headerlink" href="#id149" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id150">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id150" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id151">
+<span class="sig-name descname"><span class="pre">favoriteid</span></span><a class="headerlink" href="#id151" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id152">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id152" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.Favorite.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.Favorite.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id153">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id153" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.TodoCategory">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.</span></span><span class="sig-name descname"><span class="pre">TodoCategory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/todo.html#TodoCategory"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.TodoCategory" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>待办事项分类表</p>
+<p>用于对待办事项进行分类管理。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoCategory.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#app.models.TodoCategory.id" title="Link to this definition"></a></dt>
+<dd><p>分类 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoCategory.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.TodoCategory.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoCategory.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#app.models.TodoCategory.name" title="Link to this definition"></a></dt>
+<dd><p>分类名称</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoCategory.sort_order">
+<span class="sig-name descname"><span class="pre">sort_order</span></span><a class="headerlink" href="#app.models.TodoCategory.sort_order" title="Link to this definition"></a></dt>
+<dd><p>排序权重</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoCategory.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.TodoCategory.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoCategory.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.TodoCategory.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id154">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id154" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id155">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#id155" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoCategory.items">
+<span class="sig-name descname"><span class="pre">items</span></span><a class="headerlink" href="#app.models.TodoCategory.items" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id156">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#id156" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id157">
+<span class="sig-name descname"><span class="pre">sort_order</span></span><a class="headerlink" href="#id157" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id158">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id158" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoCategory.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.TodoCategory.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id159">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id159" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.TodoItem">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.</span></span><span class="sig-name descname"><span class="pre">TodoItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/todo.html#TodoItem"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.TodoItem" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>待办事项表</p>
+<p>记录具体的待办事项信息。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoItem.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#app.models.TodoItem.id" title="Link to this definition"></a></dt>
+<dd><p>事项 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoItem.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.TodoItem.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，外键关联 users 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoItem.category_id">
+<span class="sig-name descname"><span class="pre">category_id</span></span><a class="headerlink" href="#app.models.TodoItem.category_id" title="Link to this definition"></a></dt>
+<dd><p>分类 ID，外键关联 todo_category 表</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoItem.body">
+<span class="sig-name descname"><span class="pre">body</span></span><a class="headerlink" href="#app.models.TodoItem.body" title="Link to this definition"></a></dt>
+<dd><p>事项内容</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoItem.done">
+<span class="sig-name descname"><span class="pre">done</span></span><a class="headerlink" href="#app.models.TodoItem.done" title="Link to this definition"></a></dt>
+<dd><p>是否完成 (0: 未完成, 1: 已完成)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoItem.priority">
+<span class="sig-name descname"><span class="pre">priority</span></span><a class="headerlink" href="#app.models.TodoItem.priority" title="Link to this definition"></a></dt>
+<dd><p>优先级 (0: 普通, 1: 重要, 2: 紧急)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoItem.due_date">
+<span class="sig-name descname"><span class="pre">due_date</span></span><a class="headerlink" href="#app.models.TodoItem.due_date" title="Link to this definition"></a></dt>
+<dd><p>截止日期</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoItem.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.TodoItem.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoItem.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.TodoItem.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoItem.donetime">
+<span class="sig-name descname"><span class="pre">donetime</span></span><a class="headerlink" href="#app.models.TodoItem.donetime" title="Link to this definition"></a></dt>
+<dd><p>完成时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id160">
+<span class="sig-name descname"><span class="pre">body</span></span><a class="headerlink" href="#id160" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoItem.category">
+<span class="sig-name descname"><span class="pre">category</span></span><a class="headerlink" href="#app.models.TodoItem.category" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id161">
+<span class="sig-name descname"><span class="pre">category_id</span></span><a class="headerlink" href="#id161" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id162">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id162" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id163">
+<span class="sig-name descname"><span class="pre">done</span></span><a class="headerlink" href="#id163" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id164">
+<span class="sig-name descname"><span class="pre">donetime</span></span><a class="headerlink" href="#id164" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id165">
+<span class="sig-name descname"><span class="pre">due_date</span></span><a class="headerlink" href="#id165" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id166">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#id166" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id167">
+<span class="sig-name descname"><span class="pre">priority</span></span><a class="headerlink" href="#id167" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id168">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id168" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.TodoItem.user">
+<span class="sig-name descname"><span class="pre">user</span></span><a class="headerlink" href="#app.models.TodoItem.user" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id169">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id169" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.models.User">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.models.</span></span><span class="sig-name descname"><span class="pre">User</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/app/models/user.html#User"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#app.models.User" title="Link to this definition"></a></dt>
+<dd><p>基类：<a class="reference internal" href="app.core.html#app.core.database.Base" title="app.core.database.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>用户表</p>
+<p>存储用户的基本信息。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.userid">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#app.models.User.userid" title="Link to this definition"></a></dt>
+<dd><p>用户 ID，主键</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.username">
+<span class="sig-name descname"><span class="pre">username</span></span><a class="headerlink" href="#app.models.User.username" title="Link to this definition"></a></dt>
+<dd><p>用户名，唯一</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.password">
+<span class="sig-name descname"><span class="pre">password</span></span><a class="headerlink" href="#app.models.User.password" title="Link to this definition"></a></dt>
+<dd><p>密码哈希</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.nickname">
+<span class="sig-name descname"><span class="pre">nickname</span></span><a class="headerlink" href="#app.models.User.nickname" title="Link to this definition"></a></dt>
+<dd><p>昵称</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.avatar">
+<span class="sig-name descname"><span class="pre">avatar</span></span><a class="headerlink" href="#app.models.User.avatar" title="Link to this definition"></a></dt>
+<dd><p>头像路径</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.qq">
+<span class="sig-name descname"><span class="pre">qq</span></span><a class="headerlink" href="#app.models.User.qq" title="Link to this definition"></a></dt>
+<dd><p>QQ 号</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.role">
+<span class="sig-name descname"><span class="pre">role</span></span><a class="headerlink" href="#app.models.User.role" title="Link to this definition"></a></dt>
+<dd><p>角色 (user, admin)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.credit">
+<span class="sig-name descname"><span class="pre">credit</span></span><a class="headerlink" href="#app.models.User.credit" title="Link to this definition"></a></dt>
+<dd><p>积分</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.createtime">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#app.models.User.createtime" title="Link to this definition"></a></dt>
+<dd><p>创建时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.updatetime">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#app.models.User.updatetime" title="Link to this definition"></a></dt>
+<dd><p>更新时间</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.articles">
+<span class="sig-name descname"><span class="pre">articles</span></span><a class="headerlink" href="#app.models.User.articles" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id170">
+<span class="sig-name descname"><span class="pre">avatar</span></span><a class="headerlink" href="#id170" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.comments">
+<span class="sig-name descname"><span class="pre">comments</span></span><a class="headerlink" href="#app.models.User.comments" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id171">
+<span class="sig-name descname"><span class="pre">createtime</span></span><a class="headerlink" href="#id171" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id172">
+<span class="sig-name descname"><span class="pre">credit</span></span><a class="headerlink" href="#id172" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.credits">
+<span class="sig-name descname"><span class="pre">credits</span></span><a class="headerlink" href="#app.models.User.credits" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.models.User.favorites">
+<span class="sig-name descname"><span class="pre">favorites</span></span><a class="headerlink" href="#app.models.User.favorites" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id173">
+<span class="sig-name descname"><span class="pre">nickname</span></span><a class="headerlink" href="#id173" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id174">
+<span class="sig-name descname"><span class="pre">password</span></span><a class="headerlink" href="#id174" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id175">
+<span class="sig-name descname"><span class="pre">qq</span></span><a class="headerlink" href="#id175" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id176">
+<span class="sig-name descname"><span class="pre">role</span></span><a class="headerlink" href="#id176" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id177">
+<span class="sig-name descname"><span class="pre">updatetime</span></span><a class="headerlink" href="#id177" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id178">
+<span class="sig-name descname"><span class="pre">userid</span></span><a class="headerlink" href="#id178" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id179">
+<span class="sig-name descname"><span class="pre">username</span></span><a class="headerlink" href="#id179" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="app.core.html" class="btn btn-neutral float-left" title="app.core package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="app.schemas.html" class="btn btn-neutral float-right" title="app.schemas package" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, WoniuNote Team。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

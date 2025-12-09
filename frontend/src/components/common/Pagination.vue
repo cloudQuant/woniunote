@@ -29,26 +29,51 @@
 </template>
 
 <script setup>
+/**
+ * @component Pagination
+ * @description 通用分页组件
+ * 支持显示页码范围、省略号以及上一页/下一页导航。
+ */
 import { computed } from 'vue'
 
 const props = defineProps({
+  /**
+   * 当前页码
+   */
   currentPage: {
     type: Number,
     required: true
   },
+  /**
+   * 总页数
+   */
   totalPages: {
     type: Number,
     required: true
   },
+  /**
+   * 最大显示的页码按钮数量
+   * @default 7
+   */
   maxVisible: {
     type: Number,
     default: 7
   }
 })
 
-const emit = defineEmits(['change'])
+const emit = defineEmits([
+  /**
+   * 页码改变事件
+   * @arg {number} page - 新的页码
+   */
+  'change'
+])
 
-// 计算要显示的页码
+/**
+ * 计算要显示的页码数组
+ * 包含页码数字和省略号 '...'
+ * @type {import('vue').ComputedRef<Array<number|string>>}
+ */
 const displayPages = computed(() => {
   const pages = []
   const total = props.totalPages
@@ -97,6 +122,10 @@ const displayPages = computed(() => {
   return pages
 })
 
+/**
+ * 切换页码
+ * @param {number|string} page - 目标页码
+ */
 function changePage(page) {
   if (page !== props.currentPage && page >= 1 && page <= props.totalPages) {
     emit('change', page)

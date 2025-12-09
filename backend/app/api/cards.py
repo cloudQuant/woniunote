@@ -1,5 +1,7 @@
 """
-卡片管理API - 任务追踪和时间管理
+卡片管理 API 模块
+
+本模块提供卡片（任务/笔记）的增删改查、分类管理、时间追踪以及统计功能。
 """
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -35,7 +37,18 @@ async def get_categories(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取所有卡片分类"""
+    """
+    获取所有卡片分类
+    
+    获取当前用户的所有卡片分类，按排序字段和 ID 排序。
+    
+    Args:
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[list]: 分类列表
+    """
     query = select(CardCategory).where(
         CardCategory.userid == current_user.userid
     ).order_by(CardCategory.sort_order, CardCategory.id)
@@ -56,7 +69,17 @@ async def create_category(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """创建卡片分类"""
+    """
+    创建卡片分类
+    
+    Args:
+        data: 分类创建数据
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 创建成功的分类信息
+    """
     new_category = CardCategory(
         userid=current_user.userid,
         name=data.name,
@@ -83,7 +106,21 @@ async def update_category(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """更新卡片分类"""
+    """
+    更新卡片分类
+    
+    Args:
+        category_id: 分类 ID
+        data: 分类更新数据
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 更新后的分类信息
+        
+    Raises:
+        HTTPException(404): 分类不存在
+    """
     result = await db.execute(
         select(CardCategory).where(
             CardCategory.id == category_id,
@@ -116,7 +153,20 @@ async def delete_category(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """删除卡片分类"""
+    """
+    删除卡片分类
+    
+    Args:
+        category_id: 分类 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 成功消息
+        
+    Raises:
+        HTTPException(404): 分类不存在
+    """
     result = await db.execute(
         select(CardCategory).where(
             CardCategory.id == category_id,
@@ -141,7 +191,18 @@ async def get_stats(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取卡片统计"""
+    """
+    获取卡片统计
+    
+    统计当前用户的卡片总数、已完成数、进行中数、总用时以及按优先级分类的未完成卡片数。
+    
+    Args:
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 统计数据
+    """
     base_filter = Card.userid == current_user.userid
     
     # 总数
@@ -198,16 +259,33 @@ async def get_stats(
 
 @router.get("/", response_model=PaginatedResponse[dict])
 async def get_cards(
-    category_id: int = Query(None),
-    type: int = Query(None),
-    done: int = Query(None),  # 0: 未完成, 1: 已完成
-    in_progress: int = Query(None),  # 1: 进行中的卡片
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    category_id: int = Query(None, description="分类 ID"),
+    type: int = Query(None, description="优先级类型"),
+    done: int = Query(None, description="完成状态 (0:未完成, 1:已完成)"),
+    in_progress: int = Query(None, description="是否进行中 (1:进行中)"),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(50, ge=1, le=100, description="每页数量"),
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取卡片列表"""
+    """
+    获取卡片列表
+    
+    分页获取卡片列表，支持多条件筛选。
+    
+    Args:
+        category_id: 分类 ID
+        type: 优先级类型
+        done: 完成状态
+        in_progress: 是否进行中
+        page: 页码
+        page_size: 每页数量
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        PaginatedResponse[dict]: 分页的卡片列表
+    """
     conditions = [Card.userid == current_user.userid]
     
     if category_id is not None:
@@ -257,7 +335,20 @@ async def create_card(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """创建卡片"""
+    """
+    创建卡片
+    
+    Args:
+        data: 卡片创建数据
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 创建成功的卡片信息
+        
+    Raises:
+        HTTPException(400): 分类不存在或无权访问
+    """
     # 验证分类归属
     category_result = await db.execute(
         select(CardCategory).where(
@@ -295,7 +386,20 @@ async def get_card(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取卡片详情"""
+    """
+    获取卡片详情
+    
+    Args:
+        card_id: 卡片 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 卡片详情
+        
+    Raises:
+        HTTPException(404): 卡片不存在
+    """
     result = await db.execute(
         select(Card).where(
             Card.id == card_id,
@@ -321,7 +425,22 @@ async def update_card(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """更新卡片"""
+    """
+    更新卡片
+    
+    Args:
+        card_id: 卡片 ID
+        data: 卡片更新数据
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 更新后的卡片信息
+        
+    Raises:
+        HTTPException(404): 卡片不存在
+        HTTPException(400): 目标分类不存在或无权访问
+    """
     result = await db.execute(
         select(Card).where(
             Card.id == card_id,
@@ -365,7 +484,20 @@ async def delete_card(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """删除卡片"""
+    """
+    删除卡片
+    
+    Args:
+        card_id: 卡片 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 成功消息
+        
+    Raises:
+        HTTPException(404): 卡片不存在
+    """
     result = await db.execute(
         select(Card).where(
             Card.id == card_id,
@@ -391,7 +523,21 @@ async def start_card(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """开始卡片任务（记录开始时间）"""
+    """
+    开始卡片任务（记录开始时间）
+    
+    Args:
+        card_id: 卡片 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 包含开始时间
+        
+    Raises:
+        HTTPException(404): 卡片不存在
+        HTTPException(400): 任务已在进行中
+    """
     result = await db.execute(
         select(Card).where(
             Card.id == card_id,
@@ -423,7 +569,21 @@ async def stop_card(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """暂停卡片任务（记录用时但不完成）"""
+    """
+    暂停卡片任务（记录用时但不完成）
+    
+    Args:
+        card_id: 卡片 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 包含本次用时和总用时
+        
+    Raises:
+        HTTPException(404): 卡片不存在
+        HTTPException(400): 任务尚未开始
+    """
     result = await db.execute(
         select(Card).where(
             Card.id == card_id,
@@ -462,7 +622,22 @@ async def complete_card(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """完成卡片任务"""
+    """
+    完成卡片任务
+    
+    如果任务正在进行，会先计算用时。如果是重复任务，会创建一个新的副本。
+    
+    Args:
+        card_id: 卡片 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 包含完成时间和总用时
+        
+    Raises:
+        HTTPException(404): 卡片不存在
+    """
     result = await db.execute(
         select(Card).where(
             Card.id == card_id,
@@ -518,7 +693,21 @@ async def reopen_card(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """重新打开已完成的卡片"""
+    """
+    重新打开已完成的卡片
+    
+    Args:
+        card_id: 卡片 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel: 成功消息
+        
+    Raises:
+        HTTPException(404): 卡片不存在
+        HTTPException(400): 任务尚未完成
+    """
     result = await db.execute(
         select(Card).where(
             Card.id == card_id,

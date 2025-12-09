@@ -80,7 +80,11 @@ ARTICLE_TYPE_NAMES = {
 def get_chinese_font_path():
     """
     获取支持中文的字体路径
-    按优先级尝试多个字体
+    
+    按优先级尝试多个系统字体路径（Windows/Linux/Mac）。
+    
+    Returns:
+        str | None: 字体文件路径，未找到则返回 None
     """
     if os.name == 'nt':  # Windows
         font_paths = [
@@ -115,7 +119,12 @@ def get_chinese_font_path():
 
 
 def generate_random_gradient():
-    """生成随机渐变色"""
+    """
+    生成随机渐变色
+    
+    Returns:
+        tuple: ((r1, g1, b1), (r2, g2, b2)) 起始颜色和结束颜色
+    """
     import random
     
     # 预定义一些好看的渐变色组合
@@ -136,7 +145,18 @@ def generate_random_gradient():
 
 
 def create_gradient_image(width, height, start_color, end_color):
-    """创建渐变背景图片"""
+    """
+    创建渐变背景图片
+    
+    Args:
+        width: 图片宽度
+        height: 图片高度
+        start_color: 起始颜色 (r, g, b)
+        end_color: 结束颜色 (r, g, b)
+        
+    Returns:
+        Image: PIL Image 对象
+    """
     image = Image.new('RGB', (width, height))
     
     for y in range(height):
@@ -162,7 +182,7 @@ def create_thumbnail(type_id, text, font_path=None, seed=None):
         seed: 随机种子（使相同type_id生成相同颜色）
     
     Returns:
-        PIL Image对象
+        Image: PIL Image对象
     """
     import random
     

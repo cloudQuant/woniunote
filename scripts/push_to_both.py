@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """
-同时推送到Gitee和GitHub的脚本
-使用方法: python push_to_both.py [commit_message]
+双端推送脚本
+
+用于将代码同时推送到 Gitee 和 GitHub 仓库。
+支持自动添加、提交和推送操作。
+
+使用方法:
+    python push_to_both.py [commit_message]
+
+参数:
+    commit_message: 提交信息（可选，默认为 Auto commit at YYYY-MM-DD HH:MM:SS）
 """
 
 import subprocess
@@ -9,8 +17,17 @@ import sys
 import os
 from datetime import datetime
 
-def run_command(command, description):
-    """执行命令并处理结果"""
+def run_command(command: str, description: str) -> bool:
+    """
+    执行命令并处理结果
+    
+    Args:
+        command: 要执行的 shell 命令
+        description: 命令描述（用于日志显示）
+        
+    Returns:
+        bool: 命令是否执行成功
+    """
     print(f"\n🔄 {description}...")
     print(f"执行命令: {command}")
     
@@ -33,7 +50,11 @@ def run_command(command, description):
     return True
 
 def main():
-    """主函数"""
+    """
+    主函数
+    
+    执行 git add, commit, push 流程。
+    """
     print("🚀 开始同时推送到Gitee和GitHub...")
     print(f"时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     

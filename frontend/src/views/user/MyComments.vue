@@ -51,6 +51,12 @@
 </template>
 
 <script setup>
+/**
+ * @component MyComments
+ * @description 我的评论列表组件
+ * 展示用户发布的所有评论，支持分页查看。
+ * 显示评论内容、所属文章（带链接）、发布时间及点赞/踩统计，并提供删除功能。
+ */
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { myCommentApi, commentApi } from '@/api'

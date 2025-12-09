@@ -1,0 +1,527 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.api.system &mdash; WoniuNote 1.0.0 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=34088549"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            WoniuNote
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">app</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">WoniuNote</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">app.api.system</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>app.api.system 源代码</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">系统监控 API 模块</span>
+
+<span class="sd">本模块提供系统资源、数据库状态、进程信息等监控功能。</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">Depends</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.ext.asyncio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncSession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">select</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">text</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.core.database</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_db</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.models.user</span><span class="w"> </span><span class="kn">import</span> <span class="n">User</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.models.article</span><span class="w"> </span><span class="kn">import</span> <span class="n">Article</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.models.comment</span><span class="w"> </span><span class="kn">import</span> <span class="n">Comment</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.schemas.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResponseModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.api.deps</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_admin_user</span>
+
+<span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">()</span>
+
+<span class="c1"># 尝试导入psutil</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+    <span class="n">HAS_PSUTIL</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">HAS_PSUTIL</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="get_size_format">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.system.get_size_format">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_size_format</span><span class="p">(</span><span class="n">bytes_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    格式化字节大小</span>
+<span class="sd">    </span>
+<span class="sd">    将字节数转换为人类可读的格式（B, KB, MB, GB, TB, PB）。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        bytes_size: 字节大小</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: 格式化后的字符串</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="s1">&#39;KB&#39;</span><span class="p">,</span> <span class="s1">&#39;MB&#39;</span><span class="p">,</span> <span class="s1">&#39;GB&#39;</span><span class="p">,</span> <span class="s1">&#39;TB&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">bytes_size</span> <span class="o">&lt;</span> <span class="mi">1024</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bytes_size</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">bytes_size</span> <span class="o">/=</span> <span class="mi">1024</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bytes_size</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> PB&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="get_size_bytes">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.system.get_size_bytes">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_size_bytes</span><span class="p">(</span><span class="n">bytes_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    返回字节大小的详细信息</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        bytes_size: 字节大小</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Dict[str, Any]: 包含原始字节数和格式化字符串的字典</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;bytes&quot;</span><span class="p">:</span> <span class="n">bytes_size</span><span class="p">,</span>
+        <span class="s2">&quot;formatted&quot;</span><span class="p">:</span> <span class="n">get_size_format</span><span class="p">(</span><span class="n">bytes_size</span><span class="p">)</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="get_time_format">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.system.get_time_format">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_time_format</span><span class="p">(</span><span class="n">seconds</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    格式化时间</span>
+<span class="sd">    </span>
+<span class="sd">    将秒数转换为天、小时、分钟的格式。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        seconds: 秒数</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: 格式化后的时间字符串</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">days</span> <span class="o">=</span> <span class="n">seconds</span> <span class="o">//</span> <span class="mi">86400</span>
+    <span class="n">hours</span> <span class="o">=</span> <span class="p">(</span><span class="n">seconds</span> <span class="o">%</span> <span class="mi">86400</span><span class="p">)</span> <span class="o">//</span> <span class="mi">3600</span>
+    <span class="n">minutes</span> <span class="o">=</span> <span class="p">(</span><span class="n">seconds</span> <span class="o">%</span> <span class="mi">3600</span><span class="p">)</span> <span class="o">//</span> <span class="mi">60</span>
+    
+    <span class="k">if</span> <span class="n">days</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">days</span><span class="si">}</span><span class="s2">天 </span><span class="si">{</span><span class="n">hours</span><span class="si">}</span><span class="s2">小时 </span><span class="si">{</span><span class="n">minutes</span><span class="si">}</span><span class="s2">分钟&quot;</span>
+    <span class="k">elif</span> <span class="n">hours</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">hours</span><span class="si">}</span><span class="s2">小时 </span><span class="si">{</span><span class="n">minutes</span><span class="si">}</span><span class="s2">分钟&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">minutes</span><span class="si">}</span><span class="s2">分钟&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="get_system_status">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.system.get_system_status">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/status&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_system_status</span><span class="p">(</span>
+    <span class="n">admin_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_admin_user</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取完整系统状态</span>
+<span class="sd">    </span>
+<span class="sd">    获取包括系统信息、CPU、内存、磁盘、网络、进程等在内的完整系统状态信息。</span>
+<span class="sd">    需要管理员权限。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        admin_user: 管理员用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 系统状态信息</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 基础系统信息</span>
+    <span class="n">system_info</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;platform&quot;</span><span class="p">:</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">(),</span>
+        <span class="s2">&quot;platform_release&quot;</span><span class="p">:</span> <span class="n">platform</span><span class="o">.</span><span class="n">release</span><span class="p">(),</span>
+        <span class="s2">&quot;platform_version&quot;</span><span class="p">:</span> <span class="n">platform</span><span class="o">.</span><span class="n">version</span><span class="p">(),</span>
+        <span class="s2">&quot;architecture&quot;</span><span class="p">:</span> <span class="n">platform</span><span class="o">.</span><span class="n">machine</span><span class="p">(),</span>
+        <span class="s2">&quot;hostname&quot;</span><span class="p">:</span> <span class="n">platform</span><span class="o">.</span><span class="n">node</span><span class="p">(),</span>
+        <span class="s2">&quot;python_version&quot;</span><span class="p">:</span> <span class="n">platform</span><span class="o">.</span><span class="n">python_version</span><span class="p">(),</span>
+        <span class="s2">&quot;current_time&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+    <span class="p">}</span>
+    
+    <span class="c1"># 资源信息</span>
+    <span class="n">resources</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;has_psutil&quot;</span><span class="p">:</span> <span class="n">HAS_PSUTIL</span>
+    <span class="p">}</span>
+    
+    <span class="k">if</span> <span class="n">HAS_PSUTIL</span><span class="p">:</span>
+        <span class="c1"># CPU信息</span>
+        <span class="n">cpu_freq</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_freq</span><span class="p">()</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s2">&quot;cpu&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;count_physical&quot;</span><span class="p">:</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(</span><span class="n">logical</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="s2">&quot;count_logical&quot;</span><span class="p">:</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(</span><span class="n">logical</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="s2">&quot;percent&quot;</span><span class="p">:</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(</span><span class="n">interval</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
+            <span class="s2">&quot;percent_per_cpu&quot;</span><span class="p">:</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(</span><span class="n">interval</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">percpu</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="s2">&quot;freq_current&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">cpu_freq</span><span class="o">.</span><span class="n">current</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="n">cpu_freq</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;freq_max&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">cpu_freq</span><span class="o">.</span><span class="n">max</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="n">cpu_freq</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># 内存信息</span>
+        <span class="n">memory</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span>
+        <span class="n">swap</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">swap_memory</span><span class="p">()</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s2">&quot;memory&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">memory</span><span class="o">.</span><span class="n">total</span><span class="p">),</span>
+            <span class="s2">&quot;used&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">memory</span><span class="o">.</span><span class="n">used</span><span class="p">),</span>
+            <span class="s2">&quot;available&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">memory</span><span class="o">.</span><span class="n">available</span><span class="p">),</span>
+            <span class="s2">&quot;percent&quot;</span><span class="p">:</span> <span class="n">memory</span><span class="o">.</span><span class="n">percent</span><span class="p">,</span>
+            <span class="s2">&quot;swap_total&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">swap</span><span class="o">.</span><span class="n">total</span><span class="p">),</span>
+            <span class="s2">&quot;swap_used&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">swap</span><span class="o">.</span><span class="n">used</span><span class="p">),</span>
+            <span class="s2">&quot;swap_percent&quot;</span><span class="p">:</span> <span class="n">swap</span><span class="o">.</span><span class="n">percent</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># 磁盘信息</span>
+        <span class="n">disk_path</span> <span class="o">=</span> <span class="s1">&#39;C:</span><span class="se">\\</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Windows&#39;</span> <span class="k">else</span> <span class="s1">&#39;/&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">disk</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">disk_usage</span><span class="p">(</span><span class="n">disk_path</span><span class="p">)</span>
+            <span class="n">disk_io</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">disk_io_counters</span><span class="p">()</span>
+            <span class="n">resources</span><span class="p">[</span><span class="s2">&quot;disk&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">disk_path</span><span class="p">,</span>
+                <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">disk</span><span class="o">.</span><span class="n">total</span><span class="p">),</span>
+                <span class="s2">&quot;used&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">disk</span><span class="o">.</span><span class="n">used</span><span class="p">),</span>
+                <span class="s2">&quot;free&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">disk</span><span class="o">.</span><span class="n">free</span><span class="p">),</span>
+                <span class="s2">&quot;percent&quot;</span><span class="p">:</span> <span class="n">disk</span><span class="o">.</span><span class="n">percent</span><span class="p">,</span>
+                <span class="s2">&quot;read_bytes&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">disk_io</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">)</span> <span class="k">if</span> <span class="n">disk_io</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;write_bytes&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">disk_io</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">)</span> <span class="k">if</span> <span class="n">disk_io</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">resources</span><span class="p">[</span><span class="s2">&quot;disk&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span>
+        
+        <span class="c1"># 网络信息</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">net_io</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">net_io_counters</span><span class="p">()</span>
+            <span class="n">resources</span><span class="p">[</span><span class="s2">&quot;network&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;bytes_sent&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">net_io</span><span class="o">.</span><span class="n">bytes_sent</span><span class="p">),</span>
+                <span class="s2">&quot;bytes_recv&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">net_io</span><span class="o">.</span><span class="n">bytes_recv</span><span class="p">),</span>
+                <span class="s2">&quot;packets_sent&quot;</span><span class="p">:</span> <span class="n">net_io</span><span class="o">.</span><span class="n">packets_sent</span><span class="p">,</span>
+                <span class="s2">&quot;packets_recv&quot;</span><span class="p">:</span> <span class="n">net_io</span><span class="o">.</span><span class="n">packets_recv</span><span class="p">,</span>
+                <span class="s2">&quot;errors_in&quot;</span><span class="p">:</span> <span class="n">net_io</span><span class="o">.</span><span class="n">errin</span><span class="p">,</span>
+                <span class="s2">&quot;errors_out&quot;</span><span class="p">:</span> <span class="n">net_io</span><span class="o">.</span><span class="n">errout</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">resources</span><span class="p">[</span><span class="s2">&quot;network&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;无法获取网络信息&quot;</span><span class="p">}</span>
+        
+        <span class="c1"># 系统运行时间</span>
+        <span class="n">boot_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">psutil</span><span class="o">.</span><span class="n">boot_time</span><span class="p">())</span>
+        <span class="n">uptime_seconds</span> <span class="o">=</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">boot_time</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s2">&quot;uptime&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;seconds&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">uptime_seconds</span><span class="p">),</span>
+            <span class="s2">&quot;formatted&quot;</span><span class="p">:</span> <span class="n">get_time_format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">uptime_seconds</span><span class="p">)),</span>
+            <span class="s2">&quot;boot_time&quot;</span><span class="p">:</span> <span class="n">boot_time</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># 当前进程信息</span>
+        <span class="n">current_process</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">()</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s2">&quot;process&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;pid&quot;</span><span class="p">:</span> <span class="n">current_process</span><span class="o">.</span><span class="n">pid</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">current_process</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span>
+            <span class="s2">&quot;cpu_percent&quot;</span><span class="p">:</span> <span class="n">current_process</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(),</span>
+            <span class="s2">&quot;memory_percent&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">current_process</span><span class="o">.</span><span class="n">memory_percent</span><span class="p">(),</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="s2">&quot;memory_used&quot;</span><span class="p">:</span> <span class="n">get_size_bytes</span><span class="p">(</span><span class="n">current_process</span><span class="o">.</span><span class="n">memory_info</span><span class="p">()</span><span class="o">.</span><span class="n">rss</span><span class="p">),</span>
+            <span class="s2">&quot;threads&quot;</span><span class="p">:</span> <span class="n">current_process</span><span class="o">.</span><span class="n">num_threads</span><span class="p">(),</span>
+            <span class="s2">&quot;create_time&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">current_process</span><span class="o">.</span><span class="n">create_time</span><span class="p">())</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">resources</span><span class="p">[</span><span class="s2">&quot;note&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;请安装 psutil 库以获取系统资源信息: pip install psutil&quot;</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;system&quot;</span><span class="p">:</span> <span class="n">system_info</span><span class="p">,</span>
+            <span class="s2">&quot;resources&quot;</span><span class="p">:</span> <span class="n">resources</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_realtime_metrics">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.system.get_realtime_metrics">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/metrics&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_realtime_metrics</span><span class="p">(</span>
+    <span class="n">admin_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_admin_user</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取实时监控指标</span>
+<span class="sd">    </span>
+<span class="sd">    获取轻量级的实时监控数据，适用于定时刷新。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        admin_user: 管理员用户</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 实时监控指标</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">HAS_PSUTIL</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+            <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;psutil not installed&quot;</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;请安装 psutil 库&quot;</span><span class="p">}</span>
+        <span class="p">)</span>
+    
+    <span class="n">memory</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span>
+    <span class="n">current_process</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+            <span class="s2">&quot;cpu_percent&quot;</span><span class="p">:</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(</span><span class="n">interval</span><span class="o">=</span><span class="mf">0.1</span><span class="p">),</span>
+            <span class="s2">&quot;memory_percent&quot;</span><span class="p">:</span> <span class="n">memory</span><span class="o">.</span><span class="n">percent</span><span class="p">,</span>
+            <span class="s2">&quot;memory_used_gb&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">memory</span><span class="o">.</span><span class="n">used</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="s2">&quot;memory_total_gb&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">memory</span><span class="o">.</span><span class="n">total</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">3</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="s2">&quot;process_cpu&quot;</span><span class="p">:</span> <span class="n">current_process</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(),</span>
+            <span class="s2">&quot;process_memory_mb&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">current_process</span><span class="o">.</span><span class="n">memory_info</span><span class="p">()</span><span class="o">.</span><span class="n">rss</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_top_processes">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.system.get_top_processes">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/processes&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_top_processes</span><span class="p">(</span>
+    <span class="n">admin_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_admin_user</span><span class="p">),</span>
+    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取占用资源最多的进程</span>
+<span class="sd">    </span>
+<span class="sd">    获取 CPU 或内存占用率最高的进程列表。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        admin_user: 管理员用户</span>
+<span class="sd">        limit: 返回的进程数量限制</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 进程列表</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">HAS_PSUTIL</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+            <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;psutil not installed&quot;</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;请安装 psutil 库&quot;</span><span class="p">}</span>
+        <span class="p">)</span>
+    
+    <span class="n">processes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="n">psutil</span><span class="o">.</span><span class="n">process_iter</span><span class="p">([</span><span class="s1">&#39;pid&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;cpu_percent&#39;</span><span class="p">,</span> <span class="s1">&#39;memory_percent&#39;</span><span class="p">]):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pinfo</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">info</span>
+            <span class="n">processes</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s2">&quot;pid&quot;</span><span class="p">:</span> <span class="n">pinfo</span><span class="p">[</span><span class="s1">&#39;pid&#39;</span><span class="p">],</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">pinfo</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span>
+                <span class="s2">&quot;cpu_percent&quot;</span><span class="p">:</span> <span class="n">pinfo</span><span class="p">[</span><span class="s1">&#39;cpu_percent&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="s2">&quot;memory_percent&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">pinfo</span><span class="p">[</span><span class="s1">&#39;memory_percent&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="p">})</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">psutil</span><span class="o">.</span><span class="n">NoSuchProcess</span><span class="p">,</span> <span class="n">psutil</span><span class="o">.</span><span class="n">AccessDenied</span><span class="p">):</span>
+            <span class="k">pass</span>
+    
+    <span class="c1"># 按CPU使用率排序</span>
+    <span class="n">top_by_cpu</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">processes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;cpu_percent&#39;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="n">limit</span><span class="p">]</span>
+    <span class="c1"># 按内存使用率排序</span>
+    <span class="n">top_by_memory</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">processes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;memory_percent&#39;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="n">limit</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;top_by_cpu&quot;</span><span class="p">:</span> <span class="n">top_by_cpu</span><span class="p">,</span>
+            <span class="s2">&quot;top_by_memory&quot;</span><span class="p">:</span> <span class="n">top_by_memory</span><span class="p">,</span>
+            <span class="s2">&quot;total_processes&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">processes</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_database_status">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.system.get_database_status">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/database&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_database_status</span><span class="p">(</span>
+    <span class="n">admin_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_admin_user</span><span class="p">),</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取数据库状态</span>
+<span class="sd">    </span>
+<span class="sd">    统计数据库中的表记录数及今日新增数据。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        admin_user: 管理员用户</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 数据库统计信息</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 表统计</span>
+    <span class="n">tables_stats</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="c1"># 用户数</span>
+    <span class="n">user_count</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">User</span><span class="p">))</span>
+    <span class="n">tables_stats</span><span class="p">[</span><span class="s2">&quot;users&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">user_count</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
+    
+    <span class="c1"># 文章数</span>
+    <span class="n">article_count</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">Article</span><span class="p">))</span>
+    <span class="n">tables_stats</span><span class="p">[</span><span class="s2">&quot;articles&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">article_count</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
+    
+    <span class="c1"># 评论数</span>
+    <span class="n">comment_count</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">Comment</span><span class="p">))</span>
+    <span class="n">tables_stats</span><span class="p">[</span><span class="s2">&quot;comments&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">comment_count</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
+    
+    <span class="c1"># 今日新增</span>
+    <span class="n">today</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="n">today_users</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">createtime</span> <span class="o">&gt;=</span> <span class="n">today</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">today_articles</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">Article</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Article</span><span class="o">.</span><span class="n">createtime</span> <span class="o">&gt;=</span> <span class="n">today</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">today_comments</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">())</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">Comment</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Comment</span><span class="o">.</span><span class="n">createtime</span> <span class="o">&gt;=</span> <span class="n">today</span><span class="p">)</span>
+    <span class="p">)</span>
+    
+    <span class="n">today_stats</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;users&quot;</span><span class="p">:</span> <span class="n">today_users</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;articles&quot;</span><span class="p">:</span> <span class="n">today_articles</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;comments&quot;</span><span class="p">:</span> <span class="n">today_comments</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">0</span>
+    <span class="p">}</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;tables&quot;</span><span class="p">:</span> <span class="n">tables_stats</span><span class="p">,</span>
+            <span class="s2">&quot;today&quot;</span><span class="p">:</span> <span class="n">today_stats</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="health_check">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.system.health_check">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/health&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">ResponseModel</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">health_check</span><span class="p">(</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    健康检查</span>
+<span class="sd">    </span>
+<span class="sd">    检查系统和数据库连接状态。不需要管理员权限。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        db: 数据库会话</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        ResponseModel[dict]: 健康状态信息</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">health_status</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;healthy&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+        <span class="s2">&quot;checks&quot;</span><span class="p">:</span> <span class="p">{}</span>
+    <span class="p">}</span>
+    
+    <span class="c1"># 数据库连接检查</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="s2">&quot;SELECT 1&quot;</span><span class="p">))</span>
+        <span class="n">health_status</span><span class="p">[</span><span class="s2">&quot;checks&quot;</span><span class="p">][</span><span class="s2">&quot;database&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;ok&quot;</span><span class="p">}</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">health_status</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;unhealthy&quot;</span>
+        <span class="n">health_status</span><span class="p">[</span><span class="s2">&quot;checks&quot;</span><span class="p">][</span><span class="s2">&quot;database&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span>
+    
+    <span class="k">return</span> <span class="n">ResponseModel</span><span class="p">(</span>
+        <span class="n">code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">health_status</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, WoniuNote Team。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

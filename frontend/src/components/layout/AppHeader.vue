@@ -201,6 +201,11 @@
 </template>
 
 <script setup>
+/**
+ * @component AppHeader
+ * @description 应用顶部导航组件
+ * 包含 Logo、Slogan、导航菜单、用户登录/信息展示以及登录弹窗。
+ */
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowDown } from '@element-plus/icons-vue'
@@ -212,6 +217,7 @@ const router = useRouter()
 const userStore = useUserStore()
 const articleStore = useArticleStore()
 
+// 状态
 const searchKeyword = ref('')
 const showLoginModal = ref(false)
 const loginLoading = ref(false)
@@ -220,6 +226,7 @@ const activeTab = ref('login')
 const captchaImage = ref('')
 const captchaId = ref('')
 
+// 表单数据
 const loginForm = reactive({
   username: '',
   password: '',
@@ -230,6 +237,7 @@ const forgotForm = reactive({
   email: ''
 })
 
+// 表单验证规则
 const loginRules = {
   username: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
@@ -244,7 +252,10 @@ const loginRules = {
   ]
 }
 
-// 获取带子分类的分类列表
+/**
+ * 计算带子分类的分类列表
+ * 将扁平的分类数据转换为层级结构（主分类 -> 子分类）
+ */
 const categoriesWithSubs = computed(() => {
   const types = articleStore.articleTypes
   const result = []
@@ -276,11 +287,14 @@ const categoriesWithSubs = computed(() => {
   return result
 })
 
+// 初始化
 onMounted(async () => {
   await articleStore.fetchArticleTypes()
 })
 
-// 刷新验证码
+/**
+ * 刷新验证码
+ */
 async function refreshCaptcha() {
   try {
     const response = await fetch('/api/captcha/generate')
@@ -301,16 +315,26 @@ watch(showLoginModal, (newVal) => {
   }
 })
 
+/**
+ * 处理搜索
+ */
 function handleSearch() {
   if (searchKeyword.value.trim()) {
     router.push({ name: 'Search', query: { keyword: searchKeyword.value } })
   }
 }
 
+/**
+ * 处理分类点击
+ * @param {number} typeId - 分类ID
+ */
 function handleCategoryClick(typeId) {
   router.push({ name: 'Category', params: { type: typeId, page: 1 } })
 }
 
+/**
+ * 处理登录提交
+ */
 async function handleLogin() {
   if (!loginFormRef.value) return
   
@@ -341,6 +365,9 @@ async function handleLogin() {
   })
 }
 
+/**
+ * 处理忘记密码
+ */
 function handleForgotPassword() {
   if (!forgotForm.email) {
     ElMessage.warning('请输入注册邮箱')
@@ -349,6 +376,10 @@ function handleForgotPassword() {
   ElMessage.info('密码重置功能开发中')
 }
 
+/**
+ * 处理用户下拉菜单命令
+ * @param {string} command - 菜单命令
+ */
 function handleUserCommand(command) {
   switch (command) {
     case 'write':

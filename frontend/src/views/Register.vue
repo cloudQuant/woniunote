@@ -67,6 +67,11 @@
 </template>
 
 <script setup>
+/**
+ * @component Register
+ * @description 用户注册页面组件
+ * 提供用户注册表单，包含用户名、昵称、密码及确认密码的验证逻辑。
+ */
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'

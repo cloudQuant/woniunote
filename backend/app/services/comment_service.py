@@ -1,5 +1,7 @@
 """
-评论服务层 - 处理评论相关业务逻辑
+评论服务层模块
+
+本模块处理评论相关的业务逻辑，包括评论的发布、删除、列表获取、点赞/踩等操作。
 """
 from typing import Optional, List, Tuple
 from datetime import datetime
@@ -21,13 +23,25 @@ from app.core.exceptions import (
 
 
 class CommentService:
-    """评论服务类"""
+    """
+    评论服务类
+    
+    提供评论管理的业务逻辑接口。
+    """
     
     def __init__(self, db: AsyncSession):
         self.db = db
     
     async def get_comment_by_id(self, comment_id: int) -> Optional[Comment]:
-        """根据ID获取评论"""
+        """
+        根据 ID 获取评论
+        
+        Args:
+            comment_id: 评论 ID
+            
+        Returns:
+            Optional[Comment]: 评论对象，如果不存在则返回 None
+        """
         result = await self.db.execute(
             select(Comment).where(Comment.commentid == comment_id)
         )
@@ -44,13 +58,13 @@ class CommentService:
         获取文章评论列表
         
         Args:
-            article_id: 文章ID
-            page: 页码
+            article_id: 文章 ID
+            page: 页码，从 1 开始
             page_size: 每页数量
             include_hidden: 是否包含隐藏评论
             
         Returns:
-            (评论列表, 总数)
+            Tuple[List[Comment], int]: (评论列表, 总记录数)
         """
         conditions = [Comment.articleid == article_id]
         if not include_hidden:
@@ -83,15 +97,17 @@ class CommentService:
         """
         创建评论
         
+        同时会更新文章的回复数，并给予用户积分奖励。
+        
         Args:
-            user: 评论用户
-            article_id: 文章ID
+            user: 评论用户对象
+            article_id: 文章 ID
             content: 评论内容
-            reply_id: 回复的评论ID（0表示不是回复）
-            ip_addr: 客户端IP
+            reply_id: 回复的评论 ID（0 表示不是回复）
+            ip_addr: 客户端 IP 地址
             
         Returns:
-            新创建的评论
+            Comment: 新创建的评论对象
             
         Raises:
             NotFoundException: 文章不存在
@@ -154,16 +170,18 @@ class CommentService:
         """
         删除评论
         
+        同时会减少文章的回复数。
+        
         Args:
-            comment_id: 评论ID
-            user: 当前用户
+            comment_id: 评论 ID
+            user: 当前用户对象 (用于权限检查)
             
         Returns:
-            是否成功
+            bool: 是否删除成功
             
         Raises:
             NotFoundException: 评论不存在
-            ForbiddenException: 没有权限
+            ForbiddenException: 没有权限删除此评论
         """
         comment = await self.get_comment_by_id(comment_id)
         
@@ -199,16 +217,16 @@ class CommentService:
         对评论投票（点赞/踩）
         
         Args:
-            comment_id: 评论ID
-            user: 投票用户
-            vote_type: 投票类型
+            comment_id: 评论 ID
+            user: 投票用户对象
+            vote_type: 投票类型 (1: 赞, -1: 踩)
             
         Returns:
-            (点赞数, 踩数)
+            Tuple[int, int]: (新的点赞数, 新的反对数)
             
         Raises:
             NotFoundException: 评论不存在
-            BadRequestException: 重复投票
+            BadRequestException: 已经投过相同的票
         """
         comment = await self.get_comment_by_id(comment_id)
         

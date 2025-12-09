@@ -21,6 +21,11 @@
 </template>
 
 <script setup>
+/**
+ * @component Search
+ * @description 搜索结果页面组件
+ * 展示根据关键字搜索到的文章列表。
+ */
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ArticleList from '@/components/article/ArticleList.vue'

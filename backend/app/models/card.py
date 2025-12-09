@@ -1,5 +1,7 @@
 """
-卡片管理模型 - 用于任务追踪和时间管理
+卡片管理模型模块
+
+用于任务追踪和时间管理，包含卡片分类和卡片任务两个模型。
 """
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
@@ -8,7 +10,20 @@ from app.core.database import Base
 
 
 class CardCategory(Base):
-    """卡片分类表"""
+    """
+    卡片分类表
+    
+    用于对卡片任务进行分类管理。
+    
+    Attributes:
+        id (int): 分类 ID，主键
+        userid (int): 用户 ID，外键关联 users 表
+        name (str): 分类名称
+        type (int): 分类类型 (0: 普通, 1: 时间类, 2: 优先级类)
+        sort_order (int): 排序权重
+        createtime (datetime): 创建时间
+        updatetime (datetime): 更新时间
+    """
     __tablename__ = "card_category"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -28,7 +43,26 @@ class CardCategory(Base):
 
 
 class Card(Base):
-    """卡片表 - 任务追踪"""
+    """
+    卡片表 - 任务追踪
+    
+    记录具体的任务信息，包括内容、优先级、时间追踪等。
+    
+    Attributes:
+        id (int): 卡片 ID，主键
+        userid (int): 用户 ID，外键关联 users 表
+        category_id (int): 分类 ID，外键关联 card_category 表
+        headline (str): 任务标题
+        content (str): 任务详情
+        type (int): 优先级 (1: 重要紧急, 2: 重要不紧急, 3: 紧急不重要, 4: 不重要不紧急)
+        is_repeat (int): 是否重复任务
+        createtime (datetime): 创建时间
+        updatetime (datetime): 更新时间
+        begintime (datetime): 开始时间
+        endtime (datetime): 结束时间
+        donetime (datetime): 完成时间
+        usedtime (int): 累计使用时间 (秒)
+    """
     __tablename__ = "card"
     
     id = Column(Integer, primary_key=True, autoincrement=True)

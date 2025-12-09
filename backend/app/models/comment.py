@@ -1,5 +1,7 @@
 """
-评论模型
+评论模型模块
+
+本模块定义了评论相关的数据模型。
 """
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
@@ -8,7 +10,24 @@ from app.core.database import Base
 
 
 class Comment(Base):
-    """评论表"""
+    """
+    评论表
+    
+    存储用户对文章的评论信息。
+    
+    Attributes:
+        commentid (int): 评论 ID，主键
+        userid (int): 用户 ID，外键关联 users 表
+        articleid (int): 文章 ID，外键关联 article 表
+        content (str): 评论内容
+        ipaddr (str): 评论者 IP 地址
+        replyid (int): 回复的评论 ID (如果是回复)
+        agreecount (int): 点赞数
+        opposecount (int): 反对数
+        hidden (int): 是否隐藏 (0: 否, 1: 是)
+        createtime (datetime): 创建时间
+        updatetime (datetime): 更新时间
+    """
     __tablename__ = "comment"
     
     commentid = Column(Integer, primary_key=True, autoincrement=True)

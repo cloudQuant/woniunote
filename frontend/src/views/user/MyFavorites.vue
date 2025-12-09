@@ -46,6 +46,12 @@
 </template>
 
 <script setup>
+/**
+ * @component MyFavorites
+ * @description 我的收藏列表组件
+ * 展示用户收藏的文章，提供跳转到文章详情和取消收藏的功能。
+ * 显示文章标题、收藏时间和文章的阅读量。
+ */
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { favoriteApi } from '@/api'

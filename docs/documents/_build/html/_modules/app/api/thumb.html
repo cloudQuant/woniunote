@@ -1,0 +1,318 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.api.thumb &mdash; WoniuNote 1.0.0 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=34088549"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            WoniuNote
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">app</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">WoniuNote</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">app.api.thumb</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>app.api.thumb 源代码</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">缩略图资源 API 模块</span>
+
+<span class="sd">本模块提供文章类型缩略图的自动生成和获取功能。</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">HTTPException</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileResponse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.core.thumbnail</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_thumb_png</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+
+<span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">()</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># 文章类型映射 (与 articles.py 中的 ARTICLE_TYPES 保持一致)</span>
+<span class="n">ARTICLE_TYPE_NAMES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;交易策略&#39;</span><span class="p">,</span>
+    <span class="mi">101</span><span class="p">:</span> <span class="s1">&#39;CTA策略&#39;</span><span class="p">,</span> <span class="mi">102</span><span class="p">:</span> <span class="s1">&#39;统计套利&#39;</span><span class="p">,</span> <span class="mi">103</span><span class="p">:</span> <span class="s1">&#39;高频交易&#39;</span><span class="p">,</span> <span class="mi">104</span><span class="p">:</span> <span class="s1">&#39;因子策略&#39;</span><span class="p">,</span>
+    <span class="mi">105</span><span class="p">:</span> <span class="s1">&#39;选股与择时&#39;</span><span class="p">,</span> <span class="mi">106</span><span class="p">:</span> <span class="s1">&#39;机器学习&#39;</span><span class="p">,</span> <span class="mi">107</span><span class="p">:</span> <span class="s1">&#39;深度学习&#39;</span><span class="p">,</span>
+    <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;量化框架&#39;</span><span class="p">,</span>
+    <span class="mi">201</span><span class="p">:</span> <span class="s1">&#39;backtrader&#39;</span><span class="p">,</span> <span class="mi">202</span><span class="p">:</span> <span class="s1">&#39;wondertrader&#39;</span><span class="p">,</span> <span class="mi">203</span><span class="p">:</span> <span class="s1">&#39;wtpy&#39;</span><span class="p">,</span>
+    <span class="mi">204</span><span class="p">:</span> <span class="s1">&#39;pyfolio&#39;</span><span class="p">,</span> <span class="mi">205</span><span class="p">:</span> <span class="s1">&#39;alphalens&#39;</span><span class="p">,</span>
+    <span class="mi">3</span><span class="p">:</span> <span class="s1">&#39;投资&#39;</span><span class="p">,</span>
+    <span class="mi">301</span><span class="p">:</span> <span class="s1">&#39;股票&#39;</span><span class="p">,</span> <span class="mi">302</span><span class="p">:</span> <span class="s1">&#39;期货&#39;</span><span class="p">,</span> <span class="mi">303</span><span class="p">:</span> <span class="s1">&#39;期权&#39;</span><span class="p">,</span> <span class="mi">304</span><span class="p">:</span> <span class="s1">&#39;外汇&#39;</span><span class="p">,</span>
+    <span class="mi">305</span><span class="p">:</span> <span class="s1">&#39;crypto&#39;</span><span class="p">,</span> <span class="mi">306</span><span class="p">:</span> <span class="s1">&#39;黄金&#39;</span><span class="p">,</span> <span class="mi">307</span><span class="p">:</span> <span class="s1">&#39;债券&#39;</span><span class="p">,</span>
+    <span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;理财&#39;</span><span class="p">,</span>
+    <span class="mi">401</span><span class="p">:</span> <span class="s1">&#39;基金&#39;</span><span class="p">,</span> <span class="mi">402</span><span class="p">:</span> <span class="s1">&#39;保险&#39;</span><span class="p">,</span> <span class="mi">403</span><span class="p">:</span> <span class="s1">&#39;信托&#39;</span><span class="p">,</span> <span class="mi">404</span><span class="p">:</span> <span class="s1">&#39;银行理财&#39;</span><span class="p">,</span> <span class="mi">405</span><span class="p">:</span> <span class="s1">&#39;存款&#39;</span><span class="p">,</span>
+    <span class="mi">5</span><span class="p">:</span> <span class="s1">&#39;区块链与defi&#39;</span><span class="p">,</span>
+    <span class="mi">501</span><span class="p">:</span> <span class="s1">&#39;去中心化交易所&#39;</span><span class="p">,</span> <span class="mi">502</span><span class="p">:</span> <span class="s1">&#39;去中心化金融&#39;</span><span class="p">,</span> <span class="mi">503</span><span class="p">:</span> <span class="s1">&#39;去中心化借贷&#39;</span><span class="p">,</span>
+    <span class="mi">504</span><span class="p">:</span> <span class="s1">&#39;去中心化治理&#39;</span><span class="p">,</span> <span class="mi">505</span><span class="p">:</span> <span class="s1">&#39;其他defi&#39;</span><span class="p">,</span> <span class="mi">506</span><span class="p">:</span> <span class="s1">&#39;区块链&#39;</span><span class="p">,</span>
+    <span class="mi">507</span><span class="p">:</span> <span class="s1">&#39;比特币&#39;</span><span class="p">,</span> <span class="mi">508</span><span class="p">:</span> <span class="s1">&#39;以太坊&#39;</span><span class="p">,</span>
+    <span class="mi">6</span><span class="p">:</span> <span class="s1">&#39;机器学习&#39;</span><span class="p">,</span>
+    <span class="mi">601</span><span class="p">:</span> <span class="s1">&#39;tensorflow&#39;</span><span class="p">,</span> <span class="mi">602</span><span class="p">:</span> <span class="s1">&#39;pytorch&#39;</span><span class="p">,</span> <span class="mi">603</span><span class="p">:</span> <span class="s1">&#39;keras&#39;</span><span class="p">,</span>
+    <span class="mi">604</span><span class="p">:</span> <span class="s1">&#39;scikit-learn&#39;</span><span class="p">,</span> <span class="mi">605</span><span class="p">:</span> <span class="s1">&#39;机器学习与交易&#39;</span><span class="p">,</span> <span class="mi">606</span><span class="p">:</span> <span class="s1">&#39;深度学习与交易&#39;</span><span class="p">,</span>
+    <span class="mi">7</span><span class="p">:</span> <span class="s1">&#39;编程&#39;</span><span class="p">,</span>
+    <span class="mi">701</span><span class="p">:</span> <span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="mi">702</span><span class="p">:</span> <span class="s1">&#39;c++&#39;</span><span class="p">,</span> <span class="mi">703</span><span class="p">:</span> <span class="s1">&#39;cython&#39;</span><span class="p">,</span> <span class="mi">704</span><span class="p">:</span> <span class="s1">&#39;java&#39;</span><span class="p">,</span>
+    <span class="mi">705</span><span class="p">:</span> <span class="s1">&#39;javascript&#39;</span><span class="p">,</span> <span class="mi">706</span><span class="p">:</span> <span class="s1">&#39;swing&#39;</span><span class="p">,</span> <span class="mi">707</span><span class="p">:</span> <span class="s1">&#39;pybind11&#39;</span><span class="p">,</span>
+    <span class="mi">8</span><span class="p">:</span> <span class="s1">&#39;笔记&#39;</span><span class="p">,</span>
+    <span class="mi">801</span><span class="p">:</span> <span class="s1">&#39;幸福&#39;</span><span class="p">,</span> <span class="mi">802</span><span class="p">:</span> <span class="s1">&#39;金融&#39;</span><span class="p">,</span> <span class="mi">803</span><span class="p">:</span> <span class="s1">&#39;经济&#39;</span><span class="p">,</span> <span class="mi">804</span><span class="p">:</span> <span class="s1">&#39;哲学&#39;</span><span class="p">,</span> <span class="mi">805</span><span class="p">:</span> <span class="s1">&#39;历史&#39;</span><span class="p">,</span>
+    <span class="mi">806</span><span class="p">:</span> <span class="s1">&#39;科技&#39;</span><span class="p">,</span> <span class="mi">807</span><span class="p">:</span> <span class="s1">&#39;读书笔记&#39;</span><span class="p">,</span> <span class="mi">808</span><span class="p">:</span> <span class="s1">&#39;其他笔记&#39;</span><span class="p">,</span> <span class="mi">809</span><span class="p">:</span> <span class="s1">&#39;个人知识库&#39;</span><span class="p">,</span>
+    <span class="mi">9</span><span class="p">:</span> <span class="s1">&#39;教程&#39;</span><span class="p">,</span>
+    <span class="mi">901</span><span class="p">:</span> <span class="s1">&#39;woniunote入门&#39;</span><span class="p">,</span> <span class="mi">902</span><span class="p">:</span> <span class="s1">&#39;backtrader教程&#39;</span><span class="p">,</span> <span class="mi">903</span><span class="p">:</span> <span class="s1">&#39;airflow教程&#39;</span><span class="p">,</span>
+    <span class="mi">904</span><span class="p">:</span> <span class="s1">&#39;arrow教程&#39;</span><span class="p">,</span> <span class="mi">905</span><span class="p">:</span> <span class="s1">&#39;量化交易入门&#39;</span><span class="p">,</span> <span class="mi">906</span><span class="p">:</span> <span class="s1">&#39;机器学习入门&#39;</span><span class="p">,</span> <span class="mi">907</span><span class="p">:</span> <span class="s1">&#39;ib_tws_api教程&#39;</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="get_thumb_root">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.thumb.get_thumb_root">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_thumb_root</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取缩略图根目录</span>
+<span class="sd">    </span>
+<span class="sd">    支持多种路径查找策略：</span>
+<span class="sd">    1. 配置中的 RESOURCE_DIR</span>
+<span class="sd">    2. 自动推断 backend/resource/thumb</span>
+<span class="sd">    3. 当前工作目录下的 resource/thumb</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: 缩略图根目录的绝对路径</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 1. 如果配置了 RESOURCE_DIR，优先使用</span>
+    <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">RESOURCE_DIR</span><span class="p">:</span>
+        <span class="n">thumb_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">RESOURCE_DIR</span><span class="p">,</span> <span class="s2">&quot;thumb&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">thumb_dir</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">thumb_dir</span>
+    
+    <span class="c1"># 2. 尝试从当前文件位置推断 backend 目录</span>
+    <span class="c1"># backend/app/api/thumb.py -&gt; app/api -&gt; app -&gt; backend</span>
+    <span class="n">current_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+    <span class="n">backend_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">current_file</span><span class="p">)))</span>
+    
+    <span class="c1"># 优先使用 backend/resource/thumb（新架构）</span>
+    <span class="n">possible_paths</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">backend_dir</span><span class="p">,</span> <span class="s2">&quot;resource&quot;</span><span class="p">,</span> <span class="s2">&quot;thumb&quot;</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">&quot;resource&quot;</span><span class="p">,</span> <span class="s2">&quot;thumb&quot;</span><span class="p">),</span>
+    <span class="p">]</span>
+    
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">possible_paths</span><span class="p">:</span>
+        <span class="n">abs_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">abs_path</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found thumb directory at: </span><span class="si">{</span><span class="n">abs_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">abs_path</span>
+    
+    <span class="c1"># 3. 如果都不存在，返回第一个路径并尝试创建</span>
+    <span class="n">default_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">possible_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Thumb directory not found, will create at: </span><span class="si">{</span><span class="n">default_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">default_path</span></div>
+
+
+
+<div class="viewcode-block" id="get_type_text">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.thumb.get_type_text">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_type_text</span><span class="p">(</span><span class="n">type_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    根据类型 ID 获取显示文字</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        type_id: 文章类型 ID</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: 类型名称或默认格式</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 直接查找完整类型ID</span>
+    <span class="k">if</span> <span class="n">type_id</span> <span class="ow">in</span> <span class="n">ARTICLE_TYPE_NAMES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ARTICLE_TYPE_NAMES</span><span class="p">[</span><span class="n">type_id</span><span class="p">]</span>
+    
+    <span class="c1"># 尝试查找父类型 (子类型 &gt;= 100, 父类型 = 子类型 // 100)</span>
+    <span class="k">if</span> <span class="n">type_id</span> <span class="o">&gt;=</span> <span class="mi">100</span><span class="p">:</span>
+        <span class="n">parent_id</span> <span class="o">=</span> <span class="n">type_id</span> <span class="o">//</span> <span class="mi">100</span>
+        <span class="k">if</span> <span class="n">parent_id</span> <span class="ow">in</span> <span class="n">ARTICLE_TYPE_NAMES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ARTICLE_TYPE_NAMES</span><span class="p">[</span><span class="n">parent_id</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;类型</span><span class="si">{</span><span class="n">type_id</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="thumb_resources">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.thumb.thumb_resources">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/thumb/{filename:path}&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">thumb_resources</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取缩略图资源</span>
+<span class="sd">    </span>
+<span class="sd">    获取指定文件名的缩略图。如果文件不存在，尝试根据文件名（假设为类型 ID）自动生成。</span>
+<span class="sd">    如果生成失败，则尝试查找最接近的现有缩略图或返回默认缩略图。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        filename: 缩略图文件名 (例如 &quot;101.png&quot;)</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        FileResponse: 图片文件响应</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        HTTPException(500): 无法准备缩略图目录</span>
+<span class="sd">        HTTPException(404): 缩略图未找到且无法生成</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">thumb_root</span> <span class="o">=</span> <span class="n">get_thumb_root</span><span class="p">()</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">thumb_root</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+
+    <span class="c1"># 已存在的文件直接返回</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">FileResponse</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="s2">&quot;image/png&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 不存在则尝试自动创建目录</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">thumb_root</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to create thumb directory: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Failed to prepare thumbnail directory&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 仅处理 .png 文件</span>
+    <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.png&quot;</span><span class="p">):</span>
+        <span class="n">base_name</span> <span class="o">=</span> <span class="n">filename</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">type_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">base_name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">type_id</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">type_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">get_type_text</span><span class="p">(</span><span class="n">type_id</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">image</span> <span class="o">=</span> <span class="n">create_thumb_png</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">226</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">136</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">)</span>
+                <span class="n">image</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;PNG&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">FileResponse</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="s2">&quot;image/png&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c1"># 生成失败则继续走降级逻辑</span>
+                <span class="k">pass</span>
+
+    <span class="c1"># 找最近的现有缩略图</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">existing</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">thumb_root</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.png&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">f_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">f</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">existing</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">f_id</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">existing</span><span class="p">:</span>
+            <span class="n">existing</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">target_id</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.png&quot;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">target_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">filename</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">])</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="n">target_id</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">target_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">closest</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">min_diff</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">f_id</span><span class="p">,</span> <span class="n">f_name</span> <span class="ow">in</span> <span class="n">existing</span><span class="p">:</span>
+                    <span class="n">diff</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">f_id</span> <span class="o">-</span> <span class="n">target_id</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="n">min_diff</span><span class="p">:</span>
+                        <span class="n">min_diff</span> <span class="o">=</span> <span class="n">diff</span>
+                        <span class="n">closest</span> <span class="o">=</span> <span class="n">f_name</span>
+                <span class="k">if</span> <span class="n">closest</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">FileResponse</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">thumb_root</span><span class="p">,</span> <span class="n">closest</span><span class="p">),</span> <span class="n">media_type</span><span class="o">=</span><span class="s2">&quot;image/png&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># 默认缩略图：1.png</span>
+    <span class="n">default_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">thumb_root</span><span class="p">,</span> <span class="s2">&quot;1.png&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">default_path</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">image</span> <span class="o">=</span> <span class="n">create_thumb_png</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">226</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">136</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;WoniuNote&quot;</span><span class="p">)</span>
+            <span class="n">image</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">default_path</span><span class="p">,</span> <span class="s2">&quot;PNG&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Thumbnail not found&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">FileResponse</span><span class="p">(</span><span class="n">default_path</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="s2">&quot;image/png&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, WoniuNote Team。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

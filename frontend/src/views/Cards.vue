@@ -206,6 +206,12 @@
 </template>
 
 <script setup>
+/**
+ * @component Cards
+ * @description 任务卡片管理页面组件
+ * 提供看板式的任务管理功能，支持按分类、优先级筛选。
+ * 包含任务计时、重复任务设置和统计看板功能。
+ */
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { 

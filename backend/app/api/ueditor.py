@@ -1,6 +1,7 @@
 """
-UEditor 富文本编辑器 API 接口
-支持配置获取、图片上传、图片列表等功能
+UEditor 富文本编辑器 API 模块
+
+本模块提供 UEditor 的后端接口，支持配置获取、图片上传、文件上传、涂鸦上传、视频上传以及文件列表管理等功能。
 """
 import os
 import time
@@ -87,7 +88,14 @@ UEDITOR_CONFIG = {
 
 # 上传目录
 def get_upload_dir() -> str:
-    """获取上传目录"""
+    """
+    获取上传目录
+    
+    尝试从多个可能的位置查找上传目录，如果不存在则创建。
+    
+    Returns:
+        str: 上传目录的绝对路径
+    """
     # 尝试多个可能的位置
     current_file = os.path.abspath(__file__)
     backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
@@ -111,7 +119,19 @@ def get_upload_dir() -> str:
 
 
 def compress_image(source: str, dest: str, max_width: int = 1600) -> bool:
-    """压缩图片"""
+    """
+    压缩图片
+    
+    将图片宽度调整为指定最大宽度，并转换为 JPEG 格式以减小文件大小。
+    
+    Args:
+        source: 源文件路径
+        dest: 目标文件路径
+        max_width: 最大宽度
+        
+    Returns:
+        bool: 是否压缩成功
+    """
     try:
         with Image.open(source) as img:
             # 如果图片宽度大于最大宽度，则压缩
@@ -143,7 +163,15 @@ async def ueditor_handler(
 ):
     """
     UEditor 统一处理接口
-    支持 config, uploadimage, listimage 等操作
+    
+    处理 UEditor 的所有请求，包括配置获取、文件上传、文件列表等。
+    
+    Args:
+        action: 操作类型 (config, uploadimage, listimage, uploadscrawl, uploadvideo, uploadfile)
+        upfile: 上传的文件对象
+        
+    Returns:
+        JSONResponse: UEditor 格式的响应数据
     """
     logger.info(f"UEditor request: action={action}")
     
@@ -351,7 +379,18 @@ async def ueditor_handler(
 
 @router.get("/uploads/{filename:path}")
 async def serve_upload(filename: str):
-    """提供上传文件的访问"""
+    """
+    提供上传文件的访问
+    
+    Args:
+        filename: 文件名
+        
+    Returns:
+        FileResponse: 文件响应
+        
+    Raises:
+        HTTPException(404): 文件未找到
+    """
     from fastapi.responses import FileResponse
     
     upload_dir = get_upload_dir()

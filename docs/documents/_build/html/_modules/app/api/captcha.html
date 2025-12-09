@@ -1,0 +1,375 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.api.captcha &mdash; WoniuNote 1.0.0 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=34088549"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            WoniuNote
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">app</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">WoniuNote</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">app.api.captcha</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>app.api.captcha 源代码</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">验证码 API 模块</span>
+
+<span class="sd">本模块提供图片验证码的生成、验证以及内部验证工具函数。</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <span class="n">BytesIO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">Response</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageDraw</span><span class="p">,</span> <span class="n">ImageFont</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">()</span>
+
+<span class="c1"># 存储验证码 (简化版，生产环境应使用Redis)</span>
+<span class="c1"># 格式: {captcha_id: (code, expire_time)}</span>
+<span class="n">captcha_store</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">captcha_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+
+<span class="c1"># 验证码有效期（秒）</span>
+<span class="n">CAPTCHA_EXPIRE_SECONDS</span> <span class="o">=</span> <span class="mi">300</span>  <span class="c1"># 5分钟</span>
+
+
+<div class="viewcode-block" id="cleanup_expired_captchas">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.captcha.cleanup_expired_captchas">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cleanup_expired_captchas</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    清理过期的验证码</span>
+<span class="sd">    </span>
+<span class="sd">    遍历内存中的验证码存储，删除已过期的条目。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">captcha_lock</span><span class="p">:</span>
+        <span class="n">expired_keys</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">key</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">expire_time</span><span class="p">)</span> <span class="ow">in</span> <span class="n">captcha_store</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">expire_time</span> <span class="o">&lt;</span> <span class="n">now</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">expired_keys</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">captcha_store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="get_system_font">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.captcha.get_system_font">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_system_font</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    获取系统字体</span>
+<span class="sd">    </span>
+<span class="sd">    尝试获取系统中可用的字体路径，用于生成验证码图片。</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str | None: 字体文件路径，如果未找到则返回 None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">font_paths</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;C:</span><span class="se">\\</span><span class="s2">Windows</span><span class="se">\\</span><span class="s2">Fonts</span><span class="se">\\</span><span class="s2">arial.ttf&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;C:</span><span class="se">\\</span><span class="s2">Windows</span><span class="se">\\</span><span class="s2">Fonts</span><span class="se">\\</span><span class="s2">Arial.ttf&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;/System/Library/Fonts/Helvetica.ttc&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">font_paths</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">path</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="generate_captcha_image">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.captcha.generate_captcha_image">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_captcha_image</span><span class="p">(</span><span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">120</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    生成验证码图片</span>
+<span class="sd">    </span>
+<span class="sd">    根据验证码字符串生成对应的图片对象。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        code: 验证码字符串</span>
+<span class="sd">        width: 图片宽度</span>
+<span class="sd">        height: 图片高度</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Image: PIL Image 对象</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 创建白色背景图片</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;RGB&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+    <span class="n">draw</span> <span class="o">=</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    
+    <span class="c1"># 加载字体</span>
+    <span class="n">font_path</span> <span class="o">=</span> <span class="n">get_system_font</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">font_path</span><span class="p">:</span>
+            <span class="n">font</span> <span class="o">=</span> <span class="n">ImageFont</span><span class="o">.</span><span class="n">truetype</span><span class="p">(</span><span class="n">font_path</span><span class="p">,</span> <span class="mi">36</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">font</span> <span class="o">=</span> <span class="n">ImageFont</span><span class="o">.</span><span class="n">load_default</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">font</span> <span class="o">=</span> <span class="n">ImageFont</span><span class="o">.</span><span class="n">load_default</span><span class="p">()</span>
+    
+    <span class="c1"># 为每个字符生成随机颜色并绘制</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mi">66</span><span class="p">,</span> <span class="mi">133</span><span class="p">,</span> <span class="mi">244</span><span class="p">),</span>   <span class="c1"># 蓝色</span>
+        <span class="p">(</span><span class="mi">219</span><span class="p">,</span> <span class="mi">68</span><span class="p">,</span> <span class="mi">55</span><span class="p">),</span>    <span class="c1"># 红色</span>
+        <span class="p">(</span><span class="mi">244</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>    <span class="c1"># 黄色</span>
+        <span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">157</span><span class="p">,</span> <span class="mi">88</span><span class="p">),</span>    <span class="c1"># 绿色</span>
+        <span class="p">(</span><span class="mi">171</span><span class="p">,</span> <span class="mi">71</span><span class="p">,</span> <span class="mi">188</span><span class="p">),</span>   <span class="c1"># 紫色</span>
+    <span class="p">]</span>
+    
+    <span class="n">char_width</span> <span class="o">=</span> <span class="n">width</span> <span class="o">//</span> <span class="nb">len</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">char</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">code</span><span class="p">):</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">colors</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">+</span> <span class="n">char_width</span> <span class="o">*</span> <span class="n">i</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="n">draw</span><span class="o">.</span><span class="n">text</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">char</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="n">font</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">image</span></div>
+
+
+
+<div class="viewcode-block" id="generate_code">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.captcha.generate_code">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_code</span><span class="p">(</span><span class="n">length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    生成随机数字验证码</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        length: 验证码长度</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: 随机数字字符串</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choices</span><span class="p">(</span><span class="s1">&#39;0123456789&#39;</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">length</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="generate_captcha">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.captcha.generate_captcha">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/generate&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">generate_captcha</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    生成验证码图片</span>
+<span class="sd">    </span>
+<span class="sd">    生成一个新的验证码，存储在内存中，并返回 Base64 编码的图片数据。</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: 包含验证码 ID 和 Base64 图片数据</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 先清理过期验证码（每次生成时清理，避免内存泄漏）</span>
+    <span class="n">cleanup_expired_captchas</span><span class="p">()</span>
+    
+    <span class="c1"># 生成验证码</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">generate_code</span><span class="p">()</span>
+    
+    <span class="c1"># 生成唯一ID</span>
+    <span class="n">captcha_id</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choices</span><span class="p">(</span><span class="s1">&#39;abcdefghijklmnopqrstuvwxyz0123456789&#39;</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">16</span><span class="p">))</span>
+    
+    <span class="c1"># 存储验证码（带过期时间）</span>
+    <span class="n">expire_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">CAPTCHA_EXPIRE_SECONDS</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">captcha_lock</span><span class="p">:</span>
+        <span class="n">captcha_store</span><span class="p">[</span><span class="n">captcha_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">expire_time</span><span class="p">)</span>
+    
+    <span class="c1"># 生成图片</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">generate_captcha_image</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+    
+    <span class="c1"># 转换为base64</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">image</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;PNG&#39;</span><span class="p">)</span>
+    <span class="n">image_base64</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;captcha_id&quot;</span><span class="p">:</span> <span class="n">captcha_id</span><span class="p">,</span>
+            <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;data:image/png;base64,</span><span class="si">{</span><span class="n">image_base64</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">}</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="verify_captcha">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.captcha.verify_captcha">[文档]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/verify&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">verify_captcha</span><span class="p">(</span><span class="n">captcha_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">captcha_code</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    验证验证码</span>
+<span class="sd">    </span>
+<span class="sd">    验证用户输入的验证码是否正确。验证后会删除已使用的验证码。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        captcha_id: 验证码 ID</span>
+<span class="sd">        captcha_code: 用户输入的验证码</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: 验证结果</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">captcha_lock</span><span class="p">:</span>
+        <span class="n">stored</span> <span class="o">=</span> <span class="n">captcha_store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">captcha_id</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">stored</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="mi">400</span><span class="p">,</span>
+                <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;验证码已过期&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;valid&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+            <span class="p">}</span>
+        
+        <span class="n">stored_code</span><span class="p">,</span> <span class="n">expire_time</span> <span class="o">=</span> <span class="n">stored</span>
+        
+        <span class="c1"># 检查是否过期</span>
+        <span class="k">if</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">expire_time</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">captcha_store</span><span class="p">[</span><span class="n">captcha_id</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="mi">400</span><span class="p">,</span>
+                <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;验证码已过期&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;valid&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+            <span class="p">}</span>
+        
+        <span class="c1"># 验证后删除</span>
+        <span class="k">del</span> <span class="n">captcha_store</span><span class="p">[</span><span class="n">captcha_id</span><span class="p">]</span>
+    
+    <span class="k">if</span> <span class="n">stored_code</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">captcha_code</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
+            <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;验证成功&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;valid&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+        <span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="mi">400</span><span class="p">,</span>
+            <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;验证码错误&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;valid&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+        <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="validate_captcha">
+<a class="viewcode-back" href="../../../api/app.api.html#app.api.captcha.validate_captcha">[文档]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_captcha</span><span class="p">(</span><span class="n">captcha_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">captcha_code</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    内部验证函数，供其他模块调用</span>
+<span class="sd">    </span>
+<span class="sd">    验证验证码并返回布尔值和错误信息。</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        captcha_id: 验证码 ID</span>
+<span class="sd">        captcha_code: 用户输入的验证码</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple[bool, str]: (是否验证通过, 错误信息)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">captcha_id</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">captcha_code</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;请输入验证码&quot;</span>
+    
+    <span class="k">with</span> <span class="n">captcha_lock</span><span class="p">:</span>
+        <span class="n">stored</span> <span class="o">=</span> <span class="n">captcha_store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">captcha_id</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">stored</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;验证码已过期，请点击刷新&quot;</span>
+        
+        <span class="n">stored_code</span><span class="p">,</span> <span class="n">expire_time</span> <span class="o">=</span> <span class="n">stored</span>
+        
+        <span class="c1"># 检查是否过期</span>
+        <span class="k">if</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">expire_time</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">captcha_store</span><span class="p">[</span><span class="n">captcha_id</span><span class="p">]</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;验证码已过期，请点击刷新&quot;</span>
+        
+        <span class="c1"># 验证后删除</span>
+        <span class="k">del</span> <span class="n">captcha_store</span><span class="p">[</span><span class="n">captcha_id</span><span class="p">]</span>
+    
+    <span class="k">if</span> <span class="n">stored_code</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">captcha_code</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;验证码错误&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, WoniuNote Team。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

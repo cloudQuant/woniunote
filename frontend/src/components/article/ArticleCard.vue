@@ -27,11 +27,21 @@
 </template>
 
 <script setup>
+/**
+ * @component ArticleCard
+ * @description 文章卡片组件
+ * 展示文章的缩略图、标题、元数据（作者、分类、日期等）和摘要。
+ * 支持缩略图自动回退机制（后端缩略图 -> 类型默认图 -> SVG 占位图）。
+ */
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useArticleStore } from '@/stores/article'
 
 const props = defineProps({
+  /**
+   * 文章对象
+   * @type {Object}
+   */
   article: {
     type: Object,
     required: true
@@ -47,6 +57,12 @@ const colors = ['#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399', '#6f7ad3'
 // 缓存破坏版本号（更新缩略图后递增此值）
 const THUMB_VERSION = 'v2'
 
+/**
+ * 计算缩略图 URL
+ * 1. 如果有 thumbnail 字段，使用后端缩略图服务
+ * 2. 如果有 type 字段，使用类型默认缩略图
+ * 3. 兜底使用 SVG 占位图
+ */
 const thumbnailUrl = computed(() => {
   // 1. 如果后端返回了具体的 thumbnail 字段，认为是 thumb 文件名，例如 "101.png"
   if (props.article.thumbnail) {
@@ -74,10 +90,17 @@ const thumbnailUrl = computed(() => {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
 })
 
+/**
+ * 获取文章分类名称
+ */
 const typeName = computed(() => {
   return articleStore.getTypeName(props.article.type) || '未分类'
 })
 
+/**
+ * 生成文章摘要
+ * 移除 HTML 标签并截取前 150 个字符
+ */
 const excerpt = computed(() => {
   // 从content中提取纯文本摘要
   if (!props.article.content) return ''
@@ -89,6 +112,11 @@ const excerpt = computed(() => {
   return text.length > 150 ? text.slice(0, 150) + '...' : text
 })
 
+/**
+ * 格式化日期
+ * @param {string} dateStr - ISO 日期字符串
+ * @returns {string} 格式化后的日期字符串 (YYYY-MM-DD HH:mm:ss)
+ */
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const date = new Date(dateStr)
@@ -101,11 +129,17 @@ function formatDate(dateStr) {
   return `${year}-${month}-${day} ${hour}:${minute}:${second}`
 }
 
+/**
+ * 跳转到文章详情页
+ */
 function goToDetail() {
   router.push({ name: 'ArticleDetail', params: { id: props.article.articleid } })
 }
 
-// 图片加载失败时使用 SVG 占位图
+/**
+ * 图片加载失败处理
+ * 使用 SVG 占位图替换
+ */
 function handleImageError(event) {
   const colorIndex = (props.article.articleid || 0) % colors.length
   const color = colors[colorIndex]

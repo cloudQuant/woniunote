@@ -1,5 +1,7 @@
 """
-积分API
+积分 API 模块
+
+本模块提供积分的查询、统计以及积分支付文章等功能。
 """
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -45,7 +47,19 @@ async def add_credit(
     target: int = None,
     credit: int = None
 ) -> Credit:
-    """添加积分记录并更新用户积分"""
+    """
+    添加积分记录并更新用户积分
+    
+    Args:
+        db: 数据库会话
+        userid: 用户 ID
+        category: 积分类型/分类
+        target: 关联目标 ID (如文章 ID)
+        credit: 积分值 (如果不提供，则根据分类自动获取)
+        
+    Returns:
+        Credit: 新创建的积分记录
+    """
     # 如果未指定积分值，从配置中获取
     if credit is None:
         credit = CREDIT_VALUES.get(category, 0)
@@ -77,7 +91,17 @@ async def check_payed_article(
     userid: int,
     articleid: int
 ) -> bool:
-    """检查用户是否已支付阅读该文章"""
+    """
+    检查用户是否已支付阅读该文章
+    
+    Args:
+        db: 数据库会话
+        userid: 用户 ID
+        articleid: 文章 ID
+        
+    Returns:
+        bool: 是否已支付
+    """
     result = await db.execute(
         select(Credit).where(
             Credit.userid == userid,
@@ -90,12 +114,25 @@ async def check_payed_article(
 
 @router.get("/", response_model=PaginatedResponse[dict])
 async def get_my_credits(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取我的积分记录"""
+    """
+    获取我的积分记录
+    
+    分页获取当前用户的积分变动记录。
+    
+    Args:
+        page: 页码
+        page_size: 每页数量
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        PaginatedResponse[dict]: 分页的积分记录
+    """
     # 获取总数
     count_query = select(func.count()).select_from(Credit).where(Credit.userid == current_user.userid)
     total_result = await db.execute(count_query)
@@ -126,7 +163,18 @@ async def get_credit_summary(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取积分汇总"""
+    """
+    获取积分汇总
+    
+    获取当前用户的总积分、最近变动记录以及按类型统计的积分数据。
+    
+    Args:
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 积分汇总数据
+    """
     # 获取当前积分
     total_credit = current_user.credit or 0
     
@@ -167,7 +215,21 @@ async def pay_for_article(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """支付积分阅读文章"""
+    """
+    支付积分阅读文章
+    
+    Args:
+        articleid: 文章 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 支付结果
+        
+    Raises:
+        HTTPException(404): 文章不存在
+        HTTPException(400): 积分不足
+    """
     from app.models.article import Article
     
     # 检查文章是否存在
@@ -229,7 +291,20 @@ async def check_article_payment(
     current_user: User = Depends(get_current_user_required),
     db: AsyncSession = Depends(get_db)
 ):
-    """检查是否已支付文章"""
+    """
+    检查是否已支付文章
+    
+    Args:
+        articleid: 文章 ID
+        current_user: 当前已认证用户
+        db: 数据库会话
+        
+    Returns:
+        ResponseModel[dict]: 支付状态信息
+        
+    Raises:
+        HTTPException(404): 文章不存在
+    """
     from app.models.article import Article
     
     # 检查文章

@@ -53,6 +53,12 @@
 </template>
 
 <script setup>
+/**
+ * @component MyCredits
+ * @description 我的积分记录组件
+ * 展示用户的积分概览（总积分、各类型统计）和详细积分变动记录。
+ * 积分记录支持分页显示，并按正负值区分颜色。
+ */
 import { ref, reactive, onMounted } from 'vue'
 import { creditApi } from '@/api'
 

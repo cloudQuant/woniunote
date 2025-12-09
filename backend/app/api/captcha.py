@@ -1,5 +1,7 @@
 """
-验证码API
+验证码 API 模块
+
+本模块提供图片验证码的生成、验证以及内部验证工具函数。
 """
 import random
 import base64
@@ -22,7 +24,11 @@ CAPTCHA_EXPIRE_SECONDS = 300  # 5分钟
 
 
 def cleanup_expired_captchas():
-    """清理过期的验证码"""
+    """
+    清理过期的验证码
+    
+    遍历内存中的验证码存储，删除已过期的条目。
+    """
     now = datetime.now()
     with captcha_lock:
         expired_keys = [
@@ -34,7 +40,14 @@ def cleanup_expired_captchas():
 
 
 def get_system_font():
-    """获取系统字体"""
+    """
+    获取系统字体
+    
+    尝试获取系统中可用的字体路径，用于生成验证码图片。
+    
+    Returns:
+        str | None: 字体文件路径，如果未找到则返回 None
+    """
     font_paths = [
         "C:\\Windows\\Fonts\\arial.ttf",
         "C:\\Windows\\Fonts\\Arial.ttf",
@@ -48,7 +61,19 @@ def get_system_font():
 
 
 def generate_captcha_image(code: str, width: int = 120, height: int = 50):
-    """生成验证码图片"""
+    """
+    生成验证码图片
+    
+    根据验证码字符串生成对应的图片对象。
+    
+    Args:
+        code: 验证码字符串
+        width: 图片宽度
+        height: 图片高度
+        
+    Returns:
+        Image: PIL Image 对象
+    """
     # 创建白色背景图片
     image = Image.new('RGB', (width, height), (255, 255, 255))
     draw = ImageDraw.Draw(image)
@@ -83,13 +108,28 @@ def generate_captcha_image(code: str, width: int = 120, height: int = 50):
 
 
 def generate_code(length: int = 4) -> str:
-    """生成随机数字验证码"""
+    """
+    生成随机数字验证码
+    
+    Args:
+        length: 验证码长度
+        
+    Returns:
+        str: 随机数字字符串
+    """
     return ''.join(random.choices('0123456789', k=length))
 
 
 @router.get("/generate")
 async def generate_captcha():
-    """生成验证码图片"""
+    """
+    生成验证码图片
+    
+    生成一个新的验证码，存储在内存中，并返回 Base64 编码的图片数据。
+    
+    Returns:
+        dict: 包含验证码 ID 和 Base64 图片数据
+    """
     # 先清理过期验证码（每次生成时清理，避免内存泄漏）
     cleanup_expired_captchas()
     
@@ -124,7 +164,18 @@ async def generate_captcha():
 
 @router.post("/verify")
 async def verify_captcha(captcha_id: str, captcha_code: str):
-    """验证验证码"""
+    """
+    验证验证码
+    
+    验证用户输入的验证码是否正确。验证后会删除已使用的验证码。
+    
+    Args:
+        captcha_id: 验证码 ID
+        captcha_code: 用户输入的验证码
+        
+    Returns:
+        dict: 验证结果
+    """
     with captcha_lock:
         stored = captcha_store.get(captcha_id)
         
@@ -166,7 +217,15 @@ async def verify_captcha(captcha_id: str, captcha_code: str):
 def validate_captcha(captcha_id: str, captcha_code: str) -> tuple[bool, str]:
     """
     内部验证函数，供其他模块调用
-    返回: (是否验证通过, 错误信息)
+    
+    验证验证码并返回布尔值和错误信息。
+    
+    Args:
+        captcha_id: 验证码 ID
+        captcha_code: 用户输入的验证码
+        
+    Returns:
+        tuple[bool, str]: (是否验证通过, 错误信息)
     """
     if not captcha_id or not captcha_code:
         return False, "请输入验证码"

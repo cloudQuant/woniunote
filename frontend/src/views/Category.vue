@@ -36,6 +36,12 @@
 </template>
 
 <script setup>
+/**
+ * @component Category
+ * @description 文章分类页面组件
+ * 展示指定分类下的文章列表。
+ * 支持主分类和子分类的筛选，点击子分类可快速切换。
+ */
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useArticleStore } from '@/stores/article'

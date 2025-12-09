@@ -26,40 +26,73 @@
 </template>
 
 <script setup>
+/**
+ * @component ArticleList
+ * @description 文章列表组件
+ * 负责获取和展示文章列表，支持分页、分类筛选和关键字搜索。
+ */
 import { ref, watch, onMounted, computed } from 'vue'
 import ArticleCard from './ArticleCard.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import { articleApi } from '@/api'
 
 const props = defineProps({
+  /**
+   * 文章分类 ID
+   */
   type: {
     type: [Number, String],
     default: null
   },
+  /**
+   * 搜索关键字
+   */
   keyword: {
     type: String,
     default: ''
   },
+  /**
+   * 当前页码
+   */
   page: {
     type: Number,
     default: 1
   }
 })
 
-const emit = defineEmits(['loaded', 'page-change'])
+const emit = defineEmits([
+  /**
+   * 列表加载完成事件
+   * @arg {Object} data - 包含总条数等信息
+   */
+  'loaded', 
+  /**
+   * 页码改变事件
+   * @arg {number} page - 新的页码
+   */
+  'page-change'
+])
 
+// 状态
 const articles = ref([])
 const loading = ref(true)
 const pageSize = ref(10)
 const total = ref(0)
 const totalPages = ref(0)
 
-// 使用计算属性同步页码
+/**
+ * 当前页码计算属性
+ * 同步 props 和 emit
+ */
 const currentPage = computed({
   get: () => props.page,
   set: (val) => emit('page-change', val)
 })
 
+/**
+ * 获取文章列表数据
+ * 根据 props 中的筛选条件请求 API
+ */
 async function fetchArticles() {
   loading.value = true
   try {
@@ -89,11 +122,15 @@ async function fetchArticles() {
   }
 }
 
+/**
+ * 处理页码变更
+ * @param {number} page - 新页码
+ */
 function handlePageChange(page) {
   emit('page-change', page)
 }
 
-// 监听所有相关属性变化
+// 监听筛选条件变化，重新获取数据
 watch([() => props.type, () => props.keyword, () => props.page], () => {
   fetchArticles()
 }, { immediate: false })

@@ -10,6 +10,11 @@
 </template>
 
 <script setup>
+/**
+ * @component NotFound
+ * @description 404 页面未找到组件
+ * 当路由匹配失败时显示，提供返回首页的按钮。
+ */
 import { useRouter } from 'vue-router'
 
 const router = useRouter()

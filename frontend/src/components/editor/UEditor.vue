@@ -5,24 +5,51 @@
 </template>
 
 <script setup>
+/**
+ * @component UEditor
+ * @description 百度 UEditor 富文本编辑器组件封装
+ * 支持 v-model 双向绑定、自定义配置、动态加载脚本以及 PDF 上传处理。
+ */
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 
 const props = defineProps({
+  /**
+   * 编辑器内容 (v-model)
+   */
   modelValue: {
     type: String,
     default: ''
   },
+  /**
+   * UEditor 配置对象
+   * 会与默认配置合并
+   */
   config: {
     type: Object,
     default: () => ({})
   },
+  /**
+   * 编辑器容器 ID
+   * 默认为随机生成的唯一 ID
+   */
   editorId: {
     type: String,
     default: () => `editor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'ready'])
+const emit = defineEmits([
+  /**
+   * 内容更新事件
+   * @arg {string} content - 新的 HTML 内容
+   */
+  'update:modelValue', 
+  /**
+   * 编辑器就绪事件
+   * @arg {Object} editor - UEditor 实例
+   */
+  'ready'
+])
 
 let editor = null
 const isReady = ref(false)
@@ -37,7 +64,11 @@ const defaultConfig = {
   UEDITOR_HOME_URL: '/ueditor/'
 }
 
-// 加载 UEditor 脚本
+/**
+ * 动态加载脚本
+ * @param {string} src - 脚本 URL
+ * @returns {Promise<void>}
+ */
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     // 检查是否已加载
@@ -55,7 +86,10 @@ function loadScript(src) {
   })
 }
 
-// 初始化编辑器
+/**
+ * 初始化编辑器
+ * 加载脚本 -> 创建实例 -> 绑定事件
+ */
 async function initEditor() {
   try {
     // 设置 UEditor 根路径
@@ -125,7 +159,7 @@ async function initEditor() {
   }
 }
 
-// 监听 modelValue 变化
+// 监听 modelValue 变化，同步到编辑器
 watch(() => props.modelValue, (newVal) => {
   if (isReady.value && editor) {
     const currentContent = editor.getContent()
@@ -152,10 +186,15 @@ onBeforeUnmount(() => {
 
 // 暴露方法供父组件调用
 defineExpose({
+  /** 获取编辑器实例 */
   getEditor: () => editor,
+  /** 获取内容 */
   getContent: () => editor?.getContent() || '',
+  /** 设置内容 */
   setContent: (content) => editor?.setContent(content || ''),
+  /** 插入 HTML */
   insertHtml: (html) => editor?.execCommand('insertHtml', html),
+  /** 聚焦编辑器 */
   focus: () => editor?.focus()
 })
 </script>
