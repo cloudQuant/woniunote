@@ -11,12 +11,27 @@ find_package(Drogon CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
 
+# jwt-cpp is header-only, just need include path
+# Install via: vcpkg install jwt-cpp
+find_path(JWT_CPP_INCLUDE_DIRS "jwt-cpp/jwt.h")
+
 # Source files
 set(CORE_SOURCES
     core/config.cc
     core/database.cc
     core/security.cc
     core/logger.cc
+)
+
+set(MODEL_SOURCES
+    models/User.cc
+    models/Article.cc
+    models/Comment.cc
+    models/Favorite.cc
+    models/Credit.cc
+    models/Todo.cc
+    models/Card.cc
+    models/CommentVote.cc
 )
 
 set(CONTROLLER_SOURCES
@@ -26,11 +41,6 @@ set(CONTROLLER_SOURCES
     controllers/FavoriteController.cc
     controllers/UserController.cc
     controllers/CreditController.cc
-    controllers/UploadController.cc
-    controllers/CaptchaController.cc
-    controllers/ThumbController.cc
-    controllers/UEditorController.cc
-    controllers/AdminController.cc
     controllers/TodoController.cc
     controllers/CardController.cc
     controllers/SystemController.cc
@@ -38,7 +48,6 @@ set(CONTROLLER_SOURCES
 
 set(FILTER_SOURCES
     filters/AuthFilter.cc
-    filters/AdminFilter.cc
     filters/RateLimitFilter.cc
 )
 
@@ -46,9 +55,9 @@ set(FILTER_SOURCES
 add_executable(${PROJECT_NAME}
     main.cc
     ${CORE_SOURCES}
-    # Controllers and filters will be added as implemented
-    # ${CONTROLLER_SOURCES}
-    # ${FILTER_SOURCES}
+    ${MODEL_SOURCES}
+    ${CONTROLLER_SOURCES}
+    ${FILTER_SOURCES}
 )
 
 # Link libraries
@@ -66,6 +75,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/controllers
     ${CMAKE_CURRENT_SOURCE_DIR}/filters
     ${CMAKE_CURRENT_SOURCE_DIR}/models
+    ${JWT_CPP_INCLUDE_DIRS}
 )
 
 # Copy config.json to build directory
@@ -82,3 +92,4 @@ endif()
 # Installation
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 install(FILES config.json DESTINATION etc/woniunote)
+
