@@ -44,11 +44,15 @@ set(CONTROLLER_SOURCES
     controllers/TodoController.cc
     controllers/CardController.cc
     controllers/SystemController.cc
+    controllers/UploadController.cc
+    controllers/CaptchaController.cc
+    controllers/AdminController.cc
 )
 
 set(FILTER_SOURCES
     filters/AuthFilter.cc
     filters/RateLimitFilter.cc
+    filters/AdminFilter.cc
 )
 
 # Main executable

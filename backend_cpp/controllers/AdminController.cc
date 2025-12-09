@@ -1,0 +1,289 @@
+/**
+ * @file AdminController.cc
+ * @brief Admin API Controller Implementation
+ */
+
+#include "AdminController.h"
+#include "core/database.h"
+#include "core/logger.h"
+#include "models/User.h"
+#include "models/Article.h"
+#include "models/Comment.h"
+#include <drogon/HttpResponse.h>
+
+using namespace drogon;
+
+namespace woniunote {
+namespace controllers {
+
+void AdminController::getStats(const HttpRequestPtr& req,
+                               std::function<void(const HttpResponsePtr&)>&& callback)
+{
+    auto dbClient = Database::getClient();
+
+    // Get counts of users, articles, comments
+    dbClient->execSqlAsync(
+        "SELECT "
+        "(SELECT COUNT(*) FROM users) as user_count, "
+        "(SELECT COUNT(*) FROM article) as article_count, "
+        "(SELECT COUNT(*) FROM comment) as comment_count, "
+        "(SELECT COUNT(*) FROM article WHERE createtime > DATE_SUB(NOW(), INTERVAL 7 DAY)) as articles_week, "
+        "(SELECT COUNT(*) FROM users WHERE createtime > DATE_SUB(NOW(), INTERVAL 7 DAY)) as users_week",
+        [callback](const orm::Result& result) {
+            Json::Value data;
+            data["user_count"] = result[0]["user_count"].as<int>();
+            data["article_count"] = result[0]["article_count"].as<int>();
+            data["comment_count"] = result[0]["comment_count"].as<int>();
+            data["articles_week"] = result[0]["articles_week"].as<int>();
+            data["users_week"] = result[0]["users_week"].as<int>();
+
+            Json::Value ret;
+            ret["code"] = 200;
+            ret["message"] = "success";
+            ret["data"] = data;
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        [callback](const orm::DrogonDbException& e) {
+            Logger::error("DB error: " + std::string(e.base().what()));
+            Json::Value ret;
+            ret["code"] = 500;
+            ret["message"] = "数据库错误";
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        }
+    );
+}
+
+void AdminController::listUsers(const HttpRequestPtr& req,
+                                std::function<void(const HttpResponsePtr&)>&& callback)
+{
+    int page = 1, pageSize = 20;
+    if (req->getParameter("page").length() > 0) {
+        page = std::stoi(req->getParameter("page"));
+    }
+    if (req->getParameter("page_size").length() > 0) {
+        pageSize = std::stoi(req->getParameter("page_size"));
+    }
+    int offset = (page - 1) * pageSize;
+
+    auto dbClient = Database::getClient();
+
+    dbClient->execSqlAsync(
+        "SELECT * FROM users ORDER BY createtime DESC LIMIT ? OFFSET ?",
+        [callback](const orm::Result& result) {
+            Json::Value users(Json::arrayValue);
+            for (const auto& row : result) {
+                models::User user(row);
+                users.append(user.toJsonWithoutPassword());
+            }
+
+            Json::Value ret;
+            ret["code"] = 200;
+            ret["message"] = "success";
+            ret["data"] = users;
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        [callback](const orm::DrogonDbException& e) {
+            Logger::error("DB error: " + std::string(e.base().what()));
+            Json::Value ret;
+            ret["code"] = 500;
+            ret["message"] = "数据库错误";
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        pageSize, offset
+    );
+}
+
+void AdminController::updateUser(const HttpRequestPtr& req,
+                                 std::function<void(const HttpResponsePtr&)>&& callback,
+                                 int64_t id)
+{
+    auto json = req->getJsonObject();
+    if (!json) {
+        Json::Value ret;
+        ret["code"] = 400;
+        ret["message"] = "请求格式错误";
+        callback(HttpResponse::newHttpJsonResponse(ret));
+        return;
+    }
+
+    std::string role = json->get("role", "user").asString();
+    int credit = json->get("credit", 0).asInt();
+
+    auto dbClient = Database::getClient();
+
+    dbClient->execSqlAsync(
+        "UPDATE users SET role = ?, credit = ?, updatetime = NOW() WHERE userid = ?",
+        [callback](const orm::Result&) {
+            Json::Value ret;
+            ret["code"] = 200;
+            ret["message"] = "更新成功";
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        [callback](const orm::DrogonDbException& e) {
+            Logger::error("Update error: " + std::string(e.base().what()));
+            Json::Value ret;
+            ret["code"] = 500;
+            ret["message"] = "更新失败";
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        role, credit, id
+    );
+}
+
+void AdminController::deleteUser(const HttpRequestPtr& req,
+                                 std::function<void(const HttpResponsePtr&)>&& callback,
+                                 int64_t id)
+{
+    auto dbClient = Database::getClient();
+
+    dbClient->execSqlAsync(
+        "DELETE FROM users WHERE userid = ?",
+        [callback](const orm::Result&) {
+            Json::Value ret;
+            ret["code"] = 200;
+            ret["message"] = "删除成功";
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        [callback](const orm::DrogonDbException& e) {
+            Logger::error("Delete error: " + std::string(e.base().what()));
+            Json::Value ret;
+            ret["code"] = 500;
+            ret["message"] = "删除失败";
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        id
+    );
+}
+
+void AdminController::listArticles(const HttpRequestPtr& req,
+                                   std::function<void(const HttpResponsePtr&)>&& callback)
+{
+    int page = 1, pageSize = 20;
+    if (req->getParameter("page").length() > 0) {
+        page = std::stoi(req->getParameter("page"));
+    }
+    if (req->getParameter("page_size").length() > 0) {
+        pageSize = std::stoi(req->getParameter("page_size"));
+    }
+    int offset = (page - 1) * pageSize;
+
+    auto dbClient = Database::getClient();
+
+    dbClient->execSqlAsync(
+        "SELECT * FROM article ORDER BY createtime DESC LIMIT ? OFFSET ?",
+        [callback](const orm::Result& result) {
+            Json::Value articles(Json::arrayValue);
+            for (const auto& row : result) {
+                models::Article article(row);
+                articles.append(article.toJsonBrief());
+            }
+
+            Json::Value ret;
+            ret["code"] = 200;
+            ret["message"] = "success";
+            ret["data"] = articles;
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        [callback](const orm::DrogonDbException& e) {
+            Logger::error("DB error: " + std::string(e.base().what()));
+            Json::Value ret;
+            ret["code"] = 500;
+            ret["message"] = "数据库错误";
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        pageSize, offset
+    );
+}
+
+void AdminController::deleteArticle(const HttpRequestPtr& req,
+                                    std::function<void(const HttpResponsePtr&)>&& callback,
+                                    int64_t id)
+{
+    auto dbClient = Database::getClient();
+
+    dbClient->execSqlAsync(
+        "DELETE FROM article WHERE articleid = ?",
+        [callback](const orm::Result&) {
+            Json::Value ret;
+            ret["code"] = 200;
+            ret["message"] = "删除成功";
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        [callback](const orm::DrogonDbException& e) {
+            Logger::error("Delete error: " + std::string(e.base().what()));
+            Json::Value ret;
+            ret["code"] = 500;
+            ret["message"] = "删除失败";
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        id
+    );
+}
+
+void AdminController::listComments(const HttpRequestPtr& req,
+                                   std::function<void(const HttpResponsePtr&)>&& callback)
+{
+    int page = 1, pageSize = 20;
+    if (req->getParameter("page").length() > 0) {
+        page = std::stoi(req->getParameter("page"));
+    }
+    if (req->getParameter("page_size").length() > 0) {
+        pageSize = std::stoi(req->getParameter("page_size"));
+    }
+    int offset = (page - 1) * pageSize;
+
+    auto dbClient = Database::getClient();
+
+    dbClient->execSqlAsync(
+        "SELECT * FROM comment ORDER BY createtime DESC LIMIT ? OFFSET ?",
+        [callback](const orm::Result& result) {
+            Json::Value comments(Json::arrayValue);
+            for (const auto& row : result) {
+                models::Comment comment(row);
+                comments.append(comment.toJson());
+            }
+
+            Json::Value ret;
+            ret["code"] = 200;
+            ret["message"] = "success";
+            ret["data"] = comments;
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        [callback](const orm::DrogonDbException& e) {
+            Logger::error("DB error: " + std::string(e.base().what()));
+            Json::Value ret;
+            ret["code"] = 500;
+            ret["message"] = "数据库错误";
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        pageSize, offset
+    );
+}
+
+void AdminController::deleteComment(const HttpRequestPtr& req,
+                                    std::function<void(const HttpResponsePtr&)>&& callback,
+                                    int64_t id)
+{
+    auto dbClient = Database::getClient();
+
+    dbClient->execSqlAsync(
+        "DELETE FROM comment WHERE commentid = ?",
+        [callback](const orm::Result&) {
+            Json::Value ret;
+            ret["code"] = 200;
+            ret["message"] = "删除成功";
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        [callback](const orm::DrogonDbException& e) {
+            Logger::error("Delete error: " + std::string(e.base().what()));
+            Json::Value ret;
+            ret["code"] = 500;
+            ret["message"] = "删除失败";
+            callback(HttpResponse::newHttpJsonResponse(ret));
+        },
+        id
+    );
+}
+
+} // namespace controllers
+} // namespace woniunote
