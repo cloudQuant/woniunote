@@ -1,7 +1,22 @@
 #!/bin/bash
 
+# Parse command line arguments
+# Usage: start_app.sh [python|cpp]
+# Default: cpp
+
+BACKEND_TYPE="cpp"
+case "${1,,}" in
+    python|py)
+        BACKEND_TYPE="python"
+        ;;
+    cpp|c++)
+        BACKEND_TYPE="cpp"
+        ;;
+esac
+
 echo "========================================"
 echo "  WoniuNote 应用启动脚本"
+echo "  后端类型: $BACKEND_TYPE"
 echo "========================================"
 echo ""
 
@@ -33,15 +48,42 @@ echo "     端口 5173 已清理"
 sleep 1
 
 # 启动后端
-echo "[3/4] 启动后端服务..."
-cd "$SCRIPT_DIR/backend"
-if [ ! -f "app/main.py" ]; then
-    echo "[错误] 未找到后端入口文件 backend/app/main.py"
-    exit 1
+echo "[3/4] 启动后端服务 ($BACKEND_TYPE)..."
+
+if [ "$BACKEND_TYPE" == "cpp" ]; then
+    # 启动C++后端
+    # 查找可执行文件
+    CPP_DIR=""
+    CPP_EXE=""
+    if [ -f "$SCRIPT_DIR/backend_cpp/build/woniunote_backend" ]; then
+        CPP_DIR="$SCRIPT_DIR/backend_cpp/build"
+        CPP_EXE="woniunote_backend"
+    elif [ -f "$SCRIPT_DIR/backend_cpp/build/Release/woniunote_backend" ]; then
+        CPP_DIR="$SCRIPT_DIR/backend_cpp/build/Release"
+        CPP_EXE="woniunote_backend"
+    else
+        echo "[错误] C++后端未编译. 请先运行:"
+        echo "       cd backend_cpp && ./build.sh"
+        exit 1
+    fi
+    
+    echo "     启动C++后端从: $CPP_DIR"
+    # 切换到可执行文件目录以便找到config.json
+    cd "$CPP_DIR"
+    nohup "./$CPP_EXE" > "$SCRIPT_DIR/backend.log" 2>&1 &
+    BACKEND_PID=$!
+else
+    # 启动Python后端
+    cd "$SCRIPT_DIR/backend"
+    if [ ! -f "app/main.py" ]; then
+        echo "[错误] 未找到后端入口文件 backend/app/main.py"
+        exit 1
+    fi
+    
+    nohup uvicorn app.main:app --host 0.0.0.0 --port 8888 > ../backend.log 2>&1 &
+    BACKEND_PID=$!
 fi
 
-nohup uvicorn app.main:app --host 0.0.0.0 --port 8888 > ../backend.log 2>&1 &
-BACKEND_PID=$!
 echo "     后端服务已启动 (PID: $BACKEND_PID)"
 
 # 等待后端启动
@@ -76,7 +118,7 @@ echo ""
 echo "========================================"
 echo "  启动成功!"
 echo "========================================"
-echo "  后端地址: http://localhost:8888"
+echo "  后端地址 ($BACKEND_TYPE): http://localhost:8888"
 echo "  前端地址: http://localhost:5173"
 echo "  API文档:  http://localhost:8888/docs"
 echo "========================================"
@@ -87,6 +129,10 @@ echo "========================================"
 echo "  进程ID:"
 echo "  - 后端: $BACKEND_PID"
 echo "  - 前端: $FRONTEND_PID"
+echo "========================================"
+echo ""
+echo "  用法: ./start_app.sh [python|cpp]"
+echo "  默认后端: cpp"
 echo "========================================"
 
 cd "$SCRIPT_DIR"

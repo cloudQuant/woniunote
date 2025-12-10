@@ -19,6 +19,7 @@ namespace controllers {
 void AdminController::getStats(const HttpRequestPtr& req,
                                std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[Admin] Get stats request");
     auto dbClient = Database::getClient();
 
     // Get counts of users, articles, comments
@@ -56,6 +57,7 @@ void AdminController::getStats(const HttpRequestPtr& req,
 void AdminController::listUsers(const HttpRequestPtr& req,
                                 std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[Admin] List users request");
     int page = 1, pageSize = 20;
     if (req->getParameter("page").length() > 0) {
         page = std::stoi(req->getParameter("page"));
@@ -97,8 +99,10 @@ void AdminController::updateUser(const HttpRequestPtr& req,
                                  std::function<void(const HttpResponsePtr&)>&& callback,
                                  int64_t id)
 {
+    Logger::info("[Admin] Update user", {{"userid", std::to_string(id)}});
     auto json = req->getJsonObject();
     if (!json) {
+        Logger::warning("[Admin] Update user failed: invalid JSON");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "请求格式错误";
@@ -134,11 +138,13 @@ void AdminController::deleteUser(const HttpRequestPtr& req,
                                  std::function<void(const HttpResponsePtr&)>&& callback,
                                  int64_t id)
 {
+    Logger::warning("[Admin] Delete user", {{"userid", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
         "DELETE FROM users WHERE userid = ?",
-        [callback](const orm::Result&) {
+        [callback, id](const orm::Result&) {
+            Logger::info("[Admin] User deleted", {{"userid", std::to_string(id)}});
             Json::Value ret;
             ret["code"] = 200;
             ret["message"] = "删除成功";
@@ -158,6 +164,7 @@ void AdminController::deleteUser(const HttpRequestPtr& req,
 void AdminController::listArticles(const HttpRequestPtr& req,
                                    std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[Admin] List articles request");
     int page = 1, pageSize = 20;
     if (req->getParameter("page").length() > 0) {
         page = std::stoi(req->getParameter("page"));
@@ -199,11 +206,13 @@ void AdminController::deleteArticle(const HttpRequestPtr& req,
                                     std::function<void(const HttpResponsePtr&)>&& callback,
                                     int64_t id)
 {
+    Logger::warning("[Admin] Delete article", {{"articleid", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
         "DELETE FROM article WHERE articleid = ?",
-        [callback](const orm::Result&) {
+        [callback, id](const orm::Result&) {
+            Logger::info("[Admin] Article deleted", {{"articleid", std::to_string(id)}});
             Json::Value ret;
             ret["code"] = 200;
             ret["message"] = "删除成功";
@@ -223,6 +232,7 @@ void AdminController::deleteArticle(const HttpRequestPtr& req,
 void AdminController::listComments(const HttpRequestPtr& req,
                                    std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[Admin] List comments request");
     int page = 1, pageSize = 20;
     if (req->getParameter("page").length() > 0) {
         page = std::stoi(req->getParameter("page"));
@@ -264,11 +274,13 @@ void AdminController::deleteComment(const HttpRequestPtr& req,
                                     std::function<void(const HttpResponsePtr&)>&& callback,
                                     int64_t id)
 {
+    Logger::warning("[Admin] Delete comment", {{"commentid", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
         "DELETE FROM comment WHERE commentid = ?",
-        [callback](const orm::Result&) {
+        [callback, id](const orm::Result&) {
+            Logger::info("[Admin] Comment deleted", {{"commentid", std::to_string(id)}});
             Json::Value ret;
             ret["code"] = 200;
             ret["message"] = "删除成功";

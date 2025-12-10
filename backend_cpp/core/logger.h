@@ -10,7 +10,8 @@
 
 #include <string>
 #include <map>
-#include <drogon/drogon.h>
+#include <memory>
+#include <spdlog/spdlog.h>
 
 namespace woniunote {
 
@@ -25,7 +26,17 @@ public:
     /**
      * @brief Initialize logging system
      */
-    static void init();
+    static void init(const std::string& logDir = "logs");
+
+    /**
+     * @brief Shutdown logging system
+     */
+    static void shutdown();
+
+    /**
+     * @brief Set global log level
+     */
+    static void setLevel(spdlog::level::level_enum level);
 
     /**
      * @brief Log info message
@@ -60,7 +71,11 @@ public:
                       const std::map<std::string, std::string>& context = {});
 
 private:
+    static void ensureInitialized();
     static std::string formatContext(const std::map<std::string, std::string>& context);
+    static std::shared_ptr<spdlog::logger> logger_;
+    static inline constexpr std::size_t kRotateSizeBytes = 128 * 1024 * 1024; // 128MB
+    static inline constexpr std::size_t kRotateFiles = 30; // Keep 30 days of logs
 };
 
 } // namespace woniunote

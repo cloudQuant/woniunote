@@ -4,6 +4,7 @@
  */
 
 #include "Comment.h"
+#include "core/logger.h"
 
 namespace woniunote {
 namespace models {
@@ -11,6 +12,7 @@ namespace models {
 Comment::Comment(const drogon::orm::Row& row)
 {
     if (!row["commentid"].isNull()) commentid_ = row["commentid"].as<int64_t>();
+    Logger::debug("[Model] Comment loaded", {{"commentid", std::to_string(commentid_)}});
     if (!row["userid"].isNull()) userid_ = row["userid"].as<int64_t>();
     if (!row["articleid"].isNull()) articleid_ = row["articleid"].as<int64_t>();
     if (!row["content"].isNull()) content_ = row["content"].as<std::string>();

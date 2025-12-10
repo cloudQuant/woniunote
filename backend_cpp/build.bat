@@ -8,16 +8,32 @@ echo ========================================
 echo WoniuNote C++ Backend Builder
 echo ========================================
 
-REM Check if VCPKG_ROOT is set
+REM Get script directory
+set "SCRIPT_DIR=%~dp0"
+
+REM Check if VCPKG_ROOT is set, if not try to find vcpkg
 if not defined VCPKG_ROOT (
-    echo [ERROR] VCPKG_ROOT environment variable is not set.
-    echo Please install vcpkg and set VCPKG_ROOT to its path.
-    echo.
-    echo Example:
-    echo   git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
-    echo   C:\vcpkg\bootstrap-vcpkg.bat
-    echo   set VCPKG_ROOT=C:\vcpkg
-    exit /b 1
+    echo [INFO] VCPKG_ROOT not set, searching for vcpkg...
+    
+    REM Check common locations in order: E:, D:, C:, user home
+    if exist "E:\vcpkg\vcpkg.exe" (
+        set "VCPKG_ROOT=E:\vcpkg"
+    ) else if exist "D:\vcpkg\vcpkg.exe" (
+        set "VCPKG_ROOT=D:\vcpkg"
+    ) else if exist "C:\vcpkg\vcpkg.exe" (
+        set "VCPKG_ROOT=C:\vcpkg"
+    ) else if exist "%USERPROFILE%\vcpkg\vcpkg.exe" (
+        set "VCPKG_ROOT=%USERPROFILE%\vcpkg"
+    ) else (
+        echo [ERROR] vcpkg not found!
+        echo Please run setup_vcpkg.bat first to install vcpkg.
+        echo Or set VCPKG_ROOT environment variable manually.
+        echo.
+        echo Example:
+        echo   %SCRIPT_DIR%setup_vcpkg.bat
+        exit /b 1
+    )
+    echo [INFO] Found vcpkg at: !VCPKG_ROOT!
 )
 
 echo [INFO] Using vcpkg from: %VCPKG_ROOT%

@@ -1,8 +1,19 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 
+REM Parse command line arguments
+REM Usage: start_app.bat [python|cpp]
+REM Default: cpp
+
+set "BACKEND_TYPE=cpp"
+if /i "%~1"=="python" set "BACKEND_TYPE=python"
+if /i "%~1"=="py" set "BACKEND_TYPE=python"
+if /i "%~1"=="cpp" set "BACKEND_TYPE=cpp"
+if /i "%~1"=="c++" set "BACKEND_TYPE=cpp"
+
 echo ========================================
 echo   WoniuNote start script (Windows)
+echo   Backend: %BACKEND_TYPE%
 echo ========================================
 echo.
 
@@ -26,14 +37,43 @@ REM small delay
 timeout /t 2 /nobreak >nul
 
 REM Step 3: start backend
-echo [3/4] Start backend ...
-cd /d "%~dp0backend" || goto error
-if not exist "app\main.py" (
-    echo [ERROR] backend\app\main.py not found.
-    goto error
+echo [3/4] Start backend (%BACKEND_TYPE%) ...
+
+if "%BACKEND_TYPE%"=="cpp" (
+    REM Start C++ backend
+    REM Check if executable exists
+    if exist "%~dp0backend_cpp\build\Release\woniunote_backend.exe" (
+        set "CPP_DIR=%~dp0backend_cpp\build\Release"
+        set "CPP_EXE=woniunote_backend.exe"
+    ) else if exist "%~dp0backend_cpp\build\woniunote_backend.exe" (
+        set "CPP_DIR=%~dp0backend_cpp\build"
+        set "CPP_EXE=woniunote_backend.exe"
+    ) else (
+        echo [ERROR] C++ backend not built. Please run:
+        echo         cd backend_cpp ^&^& build.bat
+        goto error
+    )
+    
+    echo       Starting C++ backend from: !CPP_DIR!
+    REM Copy config.json to build directory
+    if exist "%~dp0backend_cpp\config.json" (
+        copy /y "%~dp0backend_cpp\config.json" "!CPP_DIR!\config.json" >nul 2>&1
+        echo       Copied config.json to build directory
+    )
+    REM Run from the executable directory so it can find config.json
+    cd /d "!CPP_DIR!" || goto error
+    start "" /b cmd /c "!CPP_EXE! > "%~dp0backend.log" 2>&1"
+) else (
+    REM Start Python backend
+    cd /d "%~dp0backend" || goto error
+    if not exist "app\main.py" (
+        echo [ERROR] backend\app\main.py not found.
+        goto error
+    )
+    
+    start "" /b cmd /c "uvicorn app.main:app --host 0.0.0.0 --port 8888 > ..\backend.log 2>&1"
 )
 
-start "" /b cmd /c "uvicorn app.main:app --host 0.0.0.0 --port 8888 > ..\backend.log 2>&1"
 echo       Backend starting, waiting 3s ...
 timeout /t 3 /nobreak >nul
 
@@ -65,10 +105,14 @@ echo.
 echo ========================================
 echo   Start OK
 echo ========================================
-echo   Backend: http://localhost:8888
+echo   Backend (%BACKEND_TYPE%): http://localhost:8888
 echo   Frontend: http://localhost:5173
 echo   Docs:    http://localhost:8888/docs
 echo   Logs: backend.log / frontend.log
+echo ========================================
+echo.
+echo   Usage: start_app.bat [python^|cpp]
+echo   Default backend: cpp
 echo ========================================
 goto end
 

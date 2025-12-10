@@ -7,6 +7,7 @@
 #include "core/logger.h"
 #include <drogon/HttpResponse.h>
 #include <drogon/drogon.h>
+#include <memory>
 
 using namespace drogon;
 
@@ -18,6 +19,7 @@ void RateLimitFilter::doFilter(const HttpRequestPtr& req,
 {
     // Get client IP
     std::string clientIp = req->getPeerAddr().toIp();
+    Logger::debug("[RateLimit] Check", {{"ip", clientIp}, {"path", req->getPath()}});
     
     // Get Redis client
     auto redisClient = app().getRedisClient("default");
@@ -30,13 +32,16 @@ void RateLimitFilter::doFilter(const HttpRequestPtr& req,
 
     std::string key = "rate_limit:" + clientIp;
 
+    // Use shared_ptr for callbacks that need to be used in both success and error paths
+    auto sharedChainCallback = std::make_shared<FilterChainCallback>(std::move(chainCallback));
+    
     // Use Redis INCR with expiration for simple rate limiting
     redisClient->execCommandAsync(
-        [req, callback = std::move(callback), chainCallback = std::move(chainCallback), key]
+        [req, callback = std::move(callback), sharedChainCallback, key]
         (const nosql::RedisResult& result) mutable {
             if (result.isNil() || result.type() == nosql::RedisResultType::kError) {
                 // Redis error, allow request
-                chainCallback();
+                (*sharedChainCallback)();
                 return;
             }
 
@@ -47,6 +52,7 @@ void RateLimitFilter::doFilter(const HttpRequestPtr& req,
                 auto redis = app().getRedisClient("default");
                 redis->execCommandAsync(
                     [](const nosql::RedisResult&) {},
+                    [](const nosql::RedisException&) {},
                     "EXPIRE %s 60", key.c_str()
                 );
             }
@@ -64,7 +70,11 @@ void RateLimitFilter::doFilter(const HttpRequestPtr& req,
                 return;
             }
 
-            chainCallback();
+            (*sharedChainCallback)();
+        },
+        [sharedChainCallback](const nosql::RedisException&) {
+            // Redis error, allow request through
+            (*sharedChainCallback)();
         },
         "INCR %s", key.c_str()
     );

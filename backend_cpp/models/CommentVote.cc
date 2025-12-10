@@ -4,6 +4,7 @@
  */
 
 #include "CommentVote.h"
+#include "core/logger.h"
 
 namespace woniunote {
 namespace models {
@@ -11,6 +12,7 @@ namespace models {
 CommentVote::CommentVote(const drogon::orm::Row& row)
 {
     if (!row["id"].isNull()) id_ = row["id"].as<int64_t>();
+    Logger::debug("[Model] CommentVote loaded", {{"id", std::to_string(id_)}});
     if (!row["userid"].isNull()) userid_ = row["userid"].as<int64_t>();
     if (!row["commentid"].isNull()) commentid_ = row["commentid"].as<int64_t>();
     if (!row["vote_type"].isNull()) voteType_ = row["vote_type"].as<int>();

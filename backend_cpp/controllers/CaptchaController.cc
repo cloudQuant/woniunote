@@ -51,6 +51,7 @@ static std::string generateCaptchaCode(int length = 4)
 void CaptchaController::generate(const HttpRequestPtr& req,
                                  std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[Captcha] Generate request", {{"ip", req->getPeerAddr().toIp()}});
     std::string captchaId = generateCaptchaId();
     std::string captchaCode = generateCaptchaCode();
     
@@ -59,6 +60,7 @@ void CaptchaController::generate(const HttpRequestPtr& req,
     if (redisClient) {
         redisClient->execCommandAsync(
             [captchaId, captchaCode, callback](const drogon::nosql::RedisResult& r) {
+                Logger::debug("[Captcha] Generated", {{"captcha_id", captchaId}});
                 Json::Value ret;
                 ret["code"] = 200;
                 ret["message"] = "success";
@@ -91,8 +93,10 @@ void CaptchaController::generate(const HttpRequestPtr& req,
 void CaptchaController::verify(const HttpRequestPtr& req,
                                std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[Captcha] Verify request");
     auto json = req->getJsonObject();
     if (!json || !json->isMember("captcha_id") || !json->isMember("captcha_code")) {
+        Logger::warning("[Captcha] Verify failed: missing fields");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "请提供验证码ID和验证码";
@@ -121,6 +125,12 @@ void CaptchaController::verify(const HttpRequestPtr& req,
                 
                 std::string storedCode = r.asString();
                 bool valid = (storedCode == captchaCode);
+                
+                if (valid) {
+                    Logger::debug("[Captcha] Verified successfully", {{"captcha_id", captchaId}});
+                } else {
+                    Logger::debug("[Captcha] Verification failed", {{"captcha_id", captchaId}});
+                }
                 
                 Json::Value ret;
                 ret["code"] = valid ? 200 : 400;

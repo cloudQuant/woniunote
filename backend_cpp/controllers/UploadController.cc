@@ -19,18 +19,16 @@ using namespace drogon;
 namespace woniunote {
 namespace controllers {
 
-static const std::set<std::string> ALLOWED_IMAGE_TYPES = {
-    "image/jpeg", "image/png", "image/gif", "image/webp"
+// Allowed image file types using Drogon's FileType enum
+static const std::set<drogon::FileType> ALLOWED_IMAGE_TYPES = {
+    drogon::FileType::FT_IMAGE
 };
 
-static const std::set<std::string> ALLOWED_FILE_TYPES = {
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "text/plain",
-    "application/zip"
+// For file uploads, we'll be more permissive
+static const std::set<drogon::FileType> ALLOWED_FILE_TYPES = {
+    drogon::FileType::FT_DOCUMENT,
+    drogon::FileType::FT_ARCHIVE,
+    drogon::FileType::FT_CUSTOM
 };
 
 std::string UploadController::generateFilename(const std::string& originalName)
@@ -54,23 +52,25 @@ std::string UploadController::generateFilename(const std::string& originalName)
     return std::to_string(timestamp) + "_" + std::to_string(dis(gen)) + ext;
 }
 
-bool UploadController::isAllowedImageType(const std::string& contentType)
+bool UploadController::isAllowedImageType(drogon::FileType fileType)
 {
-    return ALLOWED_IMAGE_TYPES.count(contentType) > 0;
+    return fileType == drogon::FileType::FT_IMAGE;
 }
 
-bool UploadController::isAllowedFileType(const std::string& contentType)
+bool UploadController::isAllowedFileType(drogon::FileType fileType)
 {
-    return ALLOWED_FILE_TYPES.count(contentType) > 0;
+    return ALLOWED_FILE_TYPES.count(fileType) > 0 || fileType == drogon::FileType::FT_DOCUMENT;
 }
 
 void UploadController::uploadImage(const HttpRequestPtr& req,
                                    std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::info("[Upload] Image upload request", {{"ip", req->getPeerAddr().toIp()}});
     auto& config = Config::instance();
     
     MultiPartParser fileParser;
     if (fileParser.parse(req) != 0) {
+        Logger::warning("[Upload] Image upload failed: parse error");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "解析文件失败";
@@ -91,6 +91,7 @@ void UploadController::uploadImage(const HttpRequestPtr& req,
     
     // Check file type
     if (!isAllowedImageType(file.getFileType())) {
+        Logger::warning("[Upload] Image upload failed: invalid type", {{"filename", file.getFileName()}});
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "不支持的图片格式";
@@ -129,6 +130,8 @@ void UploadController::uploadImage(const HttpRequestPtr& req,
     // Return URL
     std::string url = "/static/" + relativePath + "/" + filename;
     
+    Logger::info("[Upload] Image uploaded", {{"filename", filename}, {"size", std::to_string(file.fileLength())}});
+    
     Json::Value ret;
     ret["code"] = 200;
     ret["message"] = "上传成功";
@@ -140,10 +143,12 @@ void UploadController::uploadImage(const HttpRequestPtr& req,
 void UploadController::uploadFile(const HttpRequestPtr& req,
                                   std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::info("[Upload] File upload request", {{"ip", req->getPeerAddr().toIp()}});
     auto& config = Config::instance();
     
     MultiPartParser fileParser;
     if (fileParser.parse(req) != 0) {
+        Logger::warning("[Upload] File upload failed: parse error");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "解析文件失败";
@@ -164,6 +169,7 @@ void UploadController::uploadFile(const HttpRequestPtr& req,
     
     // Check file size (max 50MB)
     if (file.fileLength() > 50 * 1024 * 1024) {
+        Logger::warning("[Upload] File upload failed: size exceeded", {{"size", std::to_string(file.fileLength())}});
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "文件大小不能超过50MB";
@@ -191,6 +197,8 @@ void UploadController::uploadFile(const HttpRequestPtr& req,
     
     std::string url = "/static/" + relativePath + "/" + filename;
     
+    Logger::info("[Upload] File uploaded", {{"filename", filename}, {"size", std::to_string(file.fileLength())}});
+    
     Json::Value ret;
     ret["code"] = 200;
     ret["message"] = "上传成功";
@@ -203,10 +211,12 @@ void UploadController::uploadAvatar(const HttpRequestPtr& req,
                                     std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Upload] Avatar upload request", {{"userid", userId}});
     auto& config = Config::instance();
     
     MultiPartParser fileParser;
     if (fileParser.parse(req) != 0) {
+        Logger::warning("[Upload] Avatar upload failed: parse error", {{"userid", userId}});
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "解析文件失败";
@@ -226,6 +236,7 @@ void UploadController::uploadAvatar(const HttpRequestPtr& req,
     auto& file = files[0];
     
     if (!isAllowedImageType(file.getFileType())) {
+        Logger::warning("[Upload] Avatar upload failed: invalid type", {{"userid", userId}});
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "不支持的图片格式";
@@ -235,6 +246,7 @@ void UploadController::uploadAvatar(const HttpRequestPtr& req,
     
     // Max 2MB for avatars
     if (file.fileLength() > 2 * 1024 * 1024) {
+        Logger::warning("[Upload] Avatar upload failed: size exceeded", {{"userid", userId}, {"size", std::to_string(file.fileLength())}});
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "头像大小不能超过2MB";
@@ -260,6 +272,8 @@ void UploadController::uploadAvatar(const HttpRequestPtr& req,
     file.saveAs(fullPath);
     
     std::string url = "/static/uploads/avatars/" + filename;
+    
+    Logger::info("[Upload] Avatar uploaded", {{"userid", userId}, {"filename", filename}});
     
     Json::Value ret;
     ret["code"] = 200;

@@ -52,22 +52,6 @@ public:
                   drogon::FilterChainCallback&& chainCallback) override;
 };
 
-/**
- * @class AdminFilter
- * @brief Admin role check filter
- * 
- * Requires user to be authenticated AND have admin role.
- */
-class AdminFilter : public drogon::HttpFilter<AdminFilter>
-{
-public:
-    AdminFilter() = default;
-
-    void doFilter(const drogon::HttpRequestPtr& req,
-                  drogon::FilterCallback&& callback,
-                  drogon::FilterChainCallback&& chainCallback) override;
-};
-
 } // namespace woniunote
 
 #endif // WONIUNOTE_FILTERS_AUTH_FILTER_H

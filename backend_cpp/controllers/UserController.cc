@@ -19,12 +19,14 @@ void UserController::getUser(const HttpRequestPtr& req,
                              std::function<void(const HttpResponsePtr&)>&& callback,
                              int64_t id)
 {
+    Logger::debug("[User] Get user", {{"userid", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
         "SELECT * FROM users WHERE userid = ?",
-        [callback](const orm::Result& result) {
+        [callback, id](const orm::Result& result) {
             if (result.size() == 0) {
+                Logger::debug("[User] Not found", {{"userid", std::to_string(id)}});
                 Json::Value ret;
                 ret["code"] = 404;
                 ret["message"] = "用户不存在";
@@ -35,6 +37,7 @@ void UserController::getUser(const HttpRequestPtr& req,
             }
 
             models::User user(result[0]);
+            Logger::debug("[User] Found", {{"userid", std::to_string(id)}, {"username", user.getUsername()}});
             Json::Value ret;
             ret["code"] = 200;
             ret["message"] = "success";
@@ -58,9 +61,11 @@ void UserController::updateProfile(const HttpRequestPtr& req,
                                    std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[User] Update profile", {{"userid", userId}});
     auto json = req->getJsonObject();
 
     if (!json) {
+        Logger::warning("[User] Update failed: invalid JSON");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "请求格式错误";
@@ -81,9 +86,10 @@ void UserController::updateProfile(const HttpRequestPtr& req,
         [callback, userId, dbClient](const orm::Result& result) {
             dbClient->execSqlAsync(
                 "SELECT * FROM users WHERE userid = ?",
-                [callback](const orm::Result& userResult) {
+                [callback, userId](const orm::Result& userResult) {
                     if (userResult.size() > 0) {
                         models::User user(userResult[0]);
+                        Logger::info("[User] Profile updated", {{"userid", userId}});
                         Json::Value ret;
                         ret["code"] = 200;
                         ret["message"] = "更新成功";
@@ -114,9 +120,11 @@ void UserController::changePassword(const HttpRequestPtr& req,
                                     std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[User] Change password request", {{"userid", userId}});
     auto json = req->getJsonObject();
 
     if (!json || !json->isMember("old_password") || !json->isMember("new_password")) {
+        Logger::warning("[User] Change password failed: missing fields");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "请提供旧密码和新密码";
@@ -146,6 +154,7 @@ void UserController::changePassword(const HttpRequestPtr& req,
 
             std::string currentHash = result[0]["password"].as<std::string>();
             if (!Security::verifyPassword(oldPassword, currentHash)) {
+                Logger::warning("[User] Password change failed: wrong old password", {{"userid", userId}});
                 Json::Value ret;
                 ret["code"] = 400;
                 ret["message"] = "旧密码错误";
@@ -158,7 +167,8 @@ void UserController::changePassword(const HttpRequestPtr& req,
             std::string newHash = Security::hashPassword(newPassword);
             dbClient->execSqlAsync(
                 "UPDATE users SET password = ?, updatetime = NOW() WHERE userid = ?",
-                [callback](const orm::Result&) {
+                [callback, userId](const orm::Result&) {
+                    Logger::info("[User] Password changed", {{"userid", userId}});
                     Json::Value ret;
                     ret["code"] = 200;
                     ret["message"] = "密码修改成功";

@@ -32,6 +32,8 @@ static const std::map<int, std::string> ARTICLE_TYPES = {
 void ArticleController::list(const HttpRequestPtr& req,
                              std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[Article] List request", {{"path", req->getPath()}});
+    
     int page = 1, pageSize = 10;
     int type = 0;
     std::string keyword;
@@ -47,7 +49,7 @@ void ArticleController::list(const HttpRequestPtr& req,
     }
     keyword = req->getParameter("keyword");
 
-    pageSize = std::min(pageSize, 100);
+    pageSize = (std::min)(pageSize, 100);
     int offset = (page - 1) * pageSize;
 
     auto dbClient = Database::getClient();
@@ -68,6 +70,8 @@ void ArticleController::list(const HttpRequestPtr& req,
     dataSql += " ORDER BY createtime DESC LIMIT " + std::to_string(pageSize) + 
                " OFFSET " + std::to_string(offset);
 
+    Logger::debug("[Article] Executing list query", {{"page", std::to_string(page)}, {"pageSize", std::to_string(pageSize)}, {"type", std::to_string(type)}});
+    
     dbClient->execSqlAsync(
         countSql,
         [callback, dataSql, page, pageSize, dbClient](const orm::Result& countResult) {
@@ -92,10 +96,11 @@ void ArticleController::list(const HttpRequestPtr& req,
                     ret["page_size"] = pageSize;
                     ret["total_pages"] = totalPages;
 
+                    Logger::debug("[Article] List returned", {{"total", std::to_string(total)}, {"count", std::to_string(static_cast<int>(dataResult.size()))}});
                     callback(HttpResponse::newHttpJsonResponse(ret));
                 },
                 [callback](const orm::DrogonDbException& e) {
-                    Logger::error("Query error: " + std::string(e.base().what()));
+                    Logger::error("[Article] Query error: " + std::string(e.base().what()));
                     Json::Value ret;
                     ret["code"] = 500;
                     ret["message"] = "数据库错误";
@@ -116,6 +121,7 @@ void ArticleController::list(const HttpRequestPtr& req,
 void ArticleController::getTypes(const HttpRequestPtr& req,
                                  std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[Article] GetTypes request");
     Json::Value types(Json::objectValue);
     for (const auto& [id, name] : ARTICLE_TYPES) {
         types[std::to_string(id)] = name;
@@ -131,6 +137,7 @@ void ArticleController::getTypes(const HttpRequestPtr& req,
 void ArticleController::getHot(const HttpRequestPtr& req,
                                std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[Article] GetHot request");
     auto dbClient = Database::getClient();
 
     // Get latest, most read, and recommended articles
@@ -166,6 +173,7 @@ void ArticleController::getHot(const HttpRequestPtr& req,
                             data["most"] = most;
                             data["recommended"] = recommended;
 
+                            Logger::debug("[Article] GetHot returned", {{"latest", std::to_string(static_cast<int>(latest.size()))}, {"most", std::to_string(static_cast<int>(most.size()))}, {"recommended", std::to_string(static_cast<int>(recommended.size()))}});
                             Json::Value ret;
                             ret["code"] = 200;
                             ret["message"] = "success";
@@ -196,12 +204,14 @@ void ArticleController::get(const HttpRequestPtr& req,
                             std::function<void(const HttpResponsePtr&)>&& callback,
                             int64_t id)
 {
+    Logger::debug("[Article] Get request", {{"articleid", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
         "SELECT * FROM article WHERE articleid = ?",
         [callback, id, dbClient](const orm::Result& result) {
             if (result.size() == 0) {
+                Logger::debug("[Article] Not found", {{"articleid", std::to_string(id)}});
                 Json::Value ret;
                 ret["code"] = 404;
                 ret["message"] = "文章不存在";
@@ -212,6 +222,7 @@ void ArticleController::get(const HttpRequestPtr& req,
             }
 
             models::Article article(result[0]);
+            Logger::debug("[Article] Found", {{"articleid", std::to_string(id)}, {"headline", article.getHeadline()}});
 
             // Increment read count
             dbClient->execSqlAsync(
@@ -242,6 +253,7 @@ void ArticleController::myArticles(const HttpRequestPtr& req,
                                    std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::debug("[Article] MyArticles request", {{"userid", userId}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
@@ -274,9 +286,11 @@ void ArticleController::create(const HttpRequestPtr& req,
                                std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Article] Create request", {{"userid", userId}});
     auto json = req->getJsonObject();
 
     if (!json || !json->isMember("headline") || !json->isMember("type")) {
+        Logger::warning("[Article] Create failed: missing fields");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "标题和类型不能为空";
@@ -298,10 +312,11 @@ void ArticleController::create(const HttpRequestPtr& req,
         "VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())",
         [callback, dbClient](const orm::Result& result) {
             int64_t articleId = result.insertId();
+            Logger::info("[Article] Created", {{"articleid", std::to_string(articleId)}});
 
             dbClient->execSqlAsync(
                 "SELECT * FROM article WHERE articleid = ?",
-                [callback](const orm::Result& articleResult) {
+                [callback, articleId](const orm::Result& articleResult) {
                     if (articleResult.size() > 0) {
                         models::Article article(articleResult[0]);
                         Json::Value ret;
@@ -331,9 +346,11 @@ void ArticleController::update(const HttpRequestPtr& req,
                                int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Article] Update request", {{"articleid", std::to_string(id)}, {"userid", userId}});
     auto json = req->getJsonObject();
 
     if (!json) {
+        Logger::warning("[Article] Update failed: invalid JSON");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "请求格式错误";
@@ -402,6 +419,7 @@ void ArticleController::remove(const HttpRequestPtr& req,
                                int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Article] Delete request", {{"articleid", std::to_string(id)}, {"userid", userId}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
@@ -426,7 +444,8 @@ void ArticleController::remove(const HttpRequestPtr& req,
 
             dbClient->execSqlAsync(
                 "DELETE FROM article WHERE articleid = ?",
-                [callback](const orm::Result&) {
+                [callback, id](const orm::Result&) {
+                    Logger::info("[Article] Deleted successfully", {{"articleid", std::to_string(id)}});
                     Json::Value ret;
                     ret["code"] = 200;
                     ret["message"] = "删除成功";
@@ -457,6 +476,7 @@ void ArticleController::toggleRecommend(const HttpRequestPtr& req,
                                         std::function<void(const HttpResponsePtr&)>&& callback,
                                         int64_t id)
 {
+    Logger::info("[Article] Toggle recommend", {{"articleid", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
@@ -464,8 +484,9 @@ void ArticleController::toggleRecommend(const HttpRequestPtr& req,
         [callback, id, dbClient](const orm::Result&) {
             dbClient->execSqlAsync(
                 "SELECT recommended FROM article WHERE articleid = ?",
-                [callback](const orm::Result& result) {
+                [callback, id](const orm::Result& result) {
                     int recommended = result[0]["recommended"].as<int>();
+                    Logger::info("[Article] Recommend toggled", {{"articleid", std::to_string(id)}, {"recommended", std::to_string(recommended)}});
                     Json::Value ret;
                     ret["code"] = 200;
                     ret["message"] = recommended ? "已推荐" : "已取消推荐";
@@ -491,6 +512,7 @@ void ArticleController::toggleHide(const HttpRequestPtr& req,
                                    std::function<void(const HttpResponsePtr&)>&& callback,
                                    int64_t id)
 {
+    Logger::info("[Article] Toggle hide", {{"articleid", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
@@ -498,8 +520,9 @@ void ArticleController::toggleHide(const HttpRequestPtr& req,
         [callback, id, dbClient](const orm::Result&) {
             dbClient->execSqlAsync(
                 "SELECT hidden FROM article WHERE articleid = ?",
-                [callback](const orm::Result& result) {
+                [callback, id](const orm::Result& result) {
                     int hidden = result[0]["hidden"].as<int>();
+                    Logger::info("[Article] Hide toggled", {{"articleid", std::to_string(id)}, {"hidden", std::to_string(hidden)}});
                     Json::Value ret;
                     ret["code"] = 200;
                     ret["message"] = hidden ? "已隐藏" : "已显示";

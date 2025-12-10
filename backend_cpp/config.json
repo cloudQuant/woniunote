@@ -2,8 +2,23 @@
     "listeners": [
         {
             "address": "0.0.0.0",
-            "port": 8080,
+            "port": 8888,
             "https": false
+        }
+    ],
+    "plugins": [
+        {
+            "name": "drogon::plugin::AccessLogger",
+            "dependencies": [],
+            "config": {
+                "use_spdlog": true,
+                "log_path": "./logs",
+                "log_file": "access.log",
+                "log_size_limit": 134217728,
+                "max_files": 30,
+                "use_local_time": true,
+                "log_format": "[%Y-%m-%d %H:%M:%S.%e] %v"
+            }
         }
     ],
     "app": {
@@ -28,10 +43,13 @@
         "gzip_static": true,
         "br_static": true,
         "log": {
-            "use_local_time": true,
+            "use_spdlog": true,
             "log_path": "./logs",
+            "logfile_base_name": "drogon",
             "log_level": "DEBUG",
-            "log_size_limit": 104857600
+            "log_size_limit": 134217728,
+            "max_files": 30,
+            "use_local_time": true
         },
         "run_as_daemon": false,
         "relaunch_on_error": false,
@@ -39,33 +57,31 @@
         "use_gzip": true,
         "use_brotli": true
     },
-    "db": {
-        "connectors": [
-            {
-                "name": "mysql",
-                "rdbms": "mysql",
-                "host": "127.0.0.1",
-                "port": 3306,
-                "dbname": "woniunote",
-                "user": "woniunote_user",
-                "password": "Woniunote_password1!",
-                "connection_number": 10,
-                "is_fast": false,
-                "client_encoding": "utf8mb4",
-                "auto_batch": false
-            }
-        ]
-    },
-    "redis": [
+    "db_clients": [
+        {
+            "name": "mysql",
+            "rdbms": "mysql",
+            "host": "localhost",
+            "port": 3306,
+            "dbname": "woniunote",
+            "user": "woniunote_user",
+            "passwd": "Woniunote_password1!",
+            "number_of_connections": 10,
+            "is_fast": false,
+            "client_encoding": "utf8mb4",
+            "timeout": -1.0
+        }
+    ],
+    "redis_clients": [
         {
             "name": "default",
             "host": "127.0.0.1",
             "port": 6379,
-            "password": "",
+            "passwd": "",
             "db": 0,
-            "connection_number": 5,
+            "number_of_connections": 5,
             "is_fast": false,
-            "timeout": 10.0
+            "timeout": -1.0
         }
     ],
     "custom_config": {

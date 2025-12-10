@@ -4,6 +4,7 @@
  */
 
 #include "Article.h"
+#include "core/logger.h"
 
 namespace woniunote {
 namespace models {
@@ -11,6 +12,7 @@ namespace models {
 Article::Article(const drogon::orm::Row& row)
 {
     if (!row["articleid"].isNull()) articleid_ = row["articleid"].as<int64_t>();
+    Logger::debug("[Model] Article loaded", {{"articleid", std::to_string(articleid_)}});
     if (!row["userid"].isNull()) userid_ = row["userid"].as<int64_t>();
     if (!row["type"].isNull()) type_ = row["type"].as<int>();
     if (!row["headline"].isNull()) headline_ = row["headline"].as<std::string>();
@@ -27,6 +29,7 @@ Article::Article(const drogon::orm::Row& row)
 
 Json::Value Article::toJson() const
 {
+    Logger::debug("[Model] Article toJson", {{"articleid", std::to_string(articleid_)}, {"headline", headline_}});
     Json::Value ret;
     ret["articleid"] = static_cast<Json::Int64>(articleid_);
     ret["userid"] = static_cast<Json::Int64>(userid_);

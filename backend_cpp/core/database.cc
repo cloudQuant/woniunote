@@ -17,9 +17,10 @@ DbClientPtr Database::getClient(const std::string& name)
 {
     auto client = drogon::app().getDbClient(name);
     if (!client) {
-        Logger::error("Database client not found: " + name);
+        Logger::error("[Database] Client not found", {{"name", name}});
         throw std::runtime_error("Database client '" + name + "' not configured");
     }
+    Logger::debug("[Database] Client acquired", {{"name", name}});
     return client;
 }
 

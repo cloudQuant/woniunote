@@ -16,6 +16,7 @@ namespace controllers {
 void SystemController::health(const HttpRequestPtr& req,
                               std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[System] Health check");
     Json::Value ret;
     ret["code"] = 200;
     ret["message"] = "success";
@@ -31,6 +32,7 @@ void SystemController::health(const HttpRequestPtr& req,
 void SystemController::status(const HttpRequestPtr& req,
                               std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[System] Status check");
     Json::Value ret;
     ret["code"] = 200;
     ret["message"] = "success";
@@ -48,6 +50,7 @@ void SystemController::status(const HttpRequestPtr& req,
 void SystemController::dbStatus(const HttpRequestPtr& req,
                                 std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[System] DB status check");
     auto dbClient = Database::getClient();
     
     dbClient->execSqlAsync(
@@ -65,6 +68,7 @@ void SystemController::dbStatus(const HttpRequestPtr& req,
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
+            Logger::error("[System] Database connection failed: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "数据库连接失败";

@@ -4,12 +4,19 @@ project(woniunote_backend CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# MSVC specific: Use UTF-8 for source and execution charset
+if(MSVC)
+    add_compile_options(/utf-8)
+    add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
+endif()
+
 # Find Drogon package
 find_package(Drogon CONFIG REQUIRED)
 
 # Find additional packages
 find_package(OpenSSL REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 # jwt-cpp is header-only, just need include path
 # Install via: vcpkg install jwt-cpp
@@ -70,6 +77,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     OpenSSL::SSL
     OpenSSL::Crypto
     JsonCpp::JsonCpp
+    spdlog::spdlog
 )
 
 # Include directories

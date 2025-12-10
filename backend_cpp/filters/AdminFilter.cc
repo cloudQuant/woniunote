@@ -19,7 +19,10 @@ void AdminFilter::doFilter(const HttpRequestPtr& req,
 {
     // Extract token from Authorization header
     auto authHeader = req->getHeader("Authorization");
+    Logger::debug("[AdminFilter] Check admin access", {{"path", req->getPath()}});
+    
     if (authHeader.empty() || authHeader.substr(0, 7) != "Bearer ") {
+        Logger::warning("[AdminFilter] No token provided", {{"path", req->getPath()}});
         Json::Value ret;
         ret["code"] = 401;
         ret["message"] = "未提供认证令牌";
@@ -73,6 +76,7 @@ void AdminFilter::doFilter(const HttpRequestPtr& req,
 
             std::string role = result[0]["role"].as<std::string>();
             if (role != "admin") {
+                Logger::warning("[AdminFilter] Access denied: not admin", {{"userid", userId}, {"role", role}});
                 Json::Value ret;
                 ret["code"] = 403;
                 ret["message"] = "需要管理员权限";
@@ -86,6 +90,7 @@ void AdminFilter::doFilter(const HttpRequestPtr& req,
             req->getAttributes()->insert("user_id", userId);
             req->getAttributes()->insert("is_admin", true);
 
+            Logger::info("[AdminFilter] Admin access granted", {{"userid", userId}});
             // Continue to next filter/controller
             fccb();
         },

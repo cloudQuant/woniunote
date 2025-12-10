@@ -42,8 +42,11 @@ HttpResponsePtr AuthController::makeErrorResponse(int httpCode,
 void AuthController::registerUser(const HttpRequestPtr& req,
                                    std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::info("[Auth] Register request received", {{"ip", req->getPeerAddr().toIp()}});
+    
     auto json = req->getJsonObject();
     if (!json) {
+        Logger::warning("[Auth] Register failed: invalid JSON");
         callback(makeErrorResponse(400, "请求格式错误"));
         return;
     }
@@ -60,10 +63,12 @@ void AuthController::registerUser(const HttpRequestPtr& req,
     std::string qq = json->get("qq", "").asString();
 
     if (username.empty() || password.empty()) {
+        Logger::warning("[Auth] Register failed: empty username or password");
         callback(makeErrorResponse(400, "用户名和密码不能为空"));
         return;
     }
 
+    Logger::debug("[Auth] Checking if username exists", {{"username", username}});
     auto dbClient = Database::getClient();
 
     // Check if username exists
@@ -72,9 +77,12 @@ void AuthController::registerUser(const HttpRequestPtr& req,
         [this, callback, username, password, nickname, qq, dbClient]
         (const orm::Result& result) {
             if (result.size() > 0) {
+                Logger::warning("[Auth] Register failed: username exists", {{"username", username}});
                 callback(makeErrorResponse(400, "用户名已存在"));
                 return;
             }
+            
+            Logger::debug("[Auth] Creating new user", {{"username", username}});
 
             // Create new user
             std::string hashedPassword = Security::hashPassword(password);
@@ -82,7 +90,7 @@ void AuthController::registerUser(const HttpRequestPtr& req,
             dbClient->execSqlAsync(
                 "INSERT INTO users (username, password, nickname, qq, role, credit, createtime, updatetime) "
                 "VALUES (?, ?, ?, ?, 'user', 50, NOW(), NOW())",
-                [this, callback, dbClient](const orm::Result& insertResult) {
+                [this, callback, dbClient, username](const orm::Result& insertResult) {
                     int64_t userId = insertResult.insertId();
                     
                     // Add credit record for registration
@@ -99,9 +107,10 @@ void AuthController::registerUser(const HttpRequestPtr& req,
                     // Fetch created user
                     dbClient->execSqlAsync(
                         "SELECT * FROM users WHERE userid = ?",
-                        [this, callback](const orm::Result& userResult) {
+                        [this, callback, username](const orm::Result& userResult) {
                             if (userResult.size() > 0) {
                                 models::User user(userResult[0]);
+                                Logger::info("[Auth] User registered successfully", {{"userid", std::to_string(user.getUserid())}, {"username", username}});
                                 callback(makeJsonResponse(200, "注册成功", user.toJsonWithoutPassword()));
                             } else {
                                 callback(makeErrorResponse(500, "注册失败"));
@@ -132,8 +141,11 @@ void AuthController::registerUser(const HttpRequestPtr& req,
 void AuthController::login(const HttpRequestPtr& req,
                            std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::info("[Auth] Login request received", {{"ip", req->getPeerAddr().toIp()}});
+    
     auto json = req->getJsonObject();
     if (!json) {
+        Logger::warning("[Auth] Login failed: invalid JSON");
         callback(makeErrorResponse(400, "请求格式错误"));
         return;
     }
@@ -142,9 +154,12 @@ void AuthController::login(const HttpRequestPtr& req,
     std::string password = json->get("password", "").asString();
 
     if (username.empty() || password.empty()) {
+        Logger::warning("[Auth] Login failed: empty credentials");
         callback(makeErrorResponse(400, "用户名和密码不能为空"));
         return;
     }
+    
+    Logger::debug("[Auth] Attempting login", {{"username", username}});
 
     // TODO: Validate captcha if provided
     // std::string captchaId = json->get("captcha_id", "").asString();
@@ -154,8 +169,9 @@ void AuthController::login(const HttpRequestPtr& req,
 
     dbClient->execSqlAsync(
         "SELECT * FROM users WHERE username = ?",
-        [this, callback, password](const orm::Result& result) {
+        [this, callback, password, username](const orm::Result& result) {
             if (result.size() == 0) {
+                Logger::warning("[Auth] Login failed: user not found", {{"username", username}});
                 callback(makeErrorResponse(401, "用户名或密码错误"));
                 return;
             }
@@ -164,9 +180,12 @@ void AuthController::login(const HttpRequestPtr& req,
 
             // Verify password
             if (!Security::verifyPassword(password, user.getPassword())) {
+                Logger::warning("[Auth] Login failed: wrong password", {{"username", username}});
                 callback(makeErrorResponse(401, "用户名或密码错误"));
                 return;
             }
+            
+            Logger::info("[Auth] Login successful", {{"userid", std::to_string(user.getUserid())}, {"username", username}});
 
             // Generate tokens
             std::string userId = std::to_string(user.getUserid());
@@ -192,8 +211,10 @@ void AuthController::login(const HttpRequestPtr& req,
 void AuthController::refresh(const HttpRequestPtr& req,
                              std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    Logger::debug("[Auth] Token refresh request");
     auto json = req->getJsonObject();
     if (!json || !json->isMember("refresh_token")) {
+        Logger::warning("[Auth] Refresh failed: missing token");
         callback(makeErrorResponse(400, "刷新令牌缺失"));
         return;
     }
@@ -202,6 +223,7 @@ void AuthController::refresh(const HttpRequestPtr& req,
     auto payload = Security::decodeToken(refreshToken);
 
     if (!payload.has_value() || payload->type != "refresh") {
+        Logger::warning("[Auth] Refresh failed: invalid token");
         callback(makeErrorResponse(401, "无效的刷新令牌"));
         return;
     }
@@ -220,6 +242,8 @@ void AuthController::refresh(const HttpRequestPtr& req,
             // Generate new tokens
             std::string newAccessToken = Security::createAccessToken(userId);
             std::string newRefreshToken = Security::createRefreshToken(userId);
+
+            Logger::info("[Auth] Token refreshed", {{"userid", userId}});
 
             Json::Value data;
             data["access_token"] = newAccessToken;
@@ -241,6 +265,7 @@ void AuthController::me(const HttpRequestPtr& req,
 {
     // User ID is injected by AuthFilter
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::debug("[Auth] Get current user", {{"userid", userId}});
     
     if (userId.empty()) {
         callback(makeErrorResponse(401, "认证失败"));
@@ -270,6 +295,8 @@ void AuthController::me(const HttpRequestPtr& req,
 void AuthController::logout(const HttpRequestPtr& req,
                             std::function<void(const HttpResponsePtr&)>&& callback)
 {
+    auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Auth] User logged out", {{"userid", userId}});
     // Client should clear tokens; server just returns success
     callback(makeJsonResponse(200, "登出成功"));
 }

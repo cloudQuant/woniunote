@@ -8,16 +8,30 @@ echo "========================================"
 echo "WoniuNote C++ Backend Builder"
 echo "========================================"
 
-# Check if VCPKG_ROOT is set
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check if VCPKG_ROOT is set, if not try to find vcpkg
 if [ -z "$VCPKG_ROOT" ]; then
-    echo "[ERROR] VCPKG_ROOT environment variable is not set."
-    echo "Please install vcpkg and set VCPKG_ROOT to its path."
-    echo ""
-    echo "Example:"
-    echo "  git clone https://github.com/microsoft/vcpkg.git ~/vcpkg"
-    echo "  ~/vcpkg/bootstrap-vcpkg.sh"
-    echo "  export VCPKG_ROOT=~/vcpkg"
-    exit 1
+    echo "[INFO] VCPKG_ROOT not set, searching for vcpkg..."
+    
+    # Check common locations
+    if [ -f "$HOME/vcpkg/vcpkg" ]; then
+        export VCPKG_ROOT="$HOME/vcpkg"
+    elif [ -f "/opt/vcpkg/vcpkg" ]; then
+        export VCPKG_ROOT="/opt/vcpkg"
+    elif [ -f "/usr/local/vcpkg/vcpkg" ]; then
+        export VCPKG_ROOT="/usr/local/vcpkg"
+    else
+        echo "[ERROR] vcpkg not found!"
+        echo "Please run setup_vcpkg.sh first to install vcpkg."
+        echo "Or set VCPKG_ROOT environment variable manually."
+        echo ""
+        echo "Example:"
+        echo "  $SCRIPT_DIR/setup_vcpkg.sh"
+        exit 1
+    fi
+    echo "[INFO] Found vcpkg at: $VCPKG_ROOT"
 fi
 
 echo "[INFO] Using vcpkg from: $VCPKG_ROOT"

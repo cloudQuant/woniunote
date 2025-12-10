@@ -41,6 +41,9 @@ public:
     int getRefreshTokenExpireDays() const { return refreshTokenExpireDays_; }
     const std::vector<std::string>& getCorsOrigins() const { return corsOrigins_; }
 
+    // Upload path
+    std::string getUploadPath() const { return uploadPath_; }
+
     // Database shortcuts
     std::string getDbName() const { return "mysql"; }
 
@@ -52,6 +55,7 @@ private:
     std::string appName_;
     std::string jwtSecret_;
     std::string jwtAlgorithm_;
+    std::string uploadPath_ = "./uploads";
     int accessTokenExpireMinutes_ = 1440;  // 24 hours
     int refreshTokenExpireDays_ = 7;
     std::vector<std::string> corsOrigins_;

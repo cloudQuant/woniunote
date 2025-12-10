@@ -31,8 +31,8 @@ public:
 
 private:
     static std::string generateFilename(const std::string& originalName);
-    static bool isAllowedImageType(const std::string& contentType);
-    static bool isAllowedFileType(const std::string& contentType);
+    static bool isAllowedImageType(drogon::FileType fileType);
+    static bool isAllowedFileType(drogon::FileType fileType);
 };
 
 } // namespace controllers

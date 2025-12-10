@@ -18,11 +18,12 @@ void CreditController::getBalance(const HttpRequestPtr& req,
                                   std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::debug("[Credit] Get balance", {{"userid", userId}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
         "SELECT credit FROM users WHERE userid = ?",
-        [callback](const orm::Result& result) {
+        [callback, userId](const orm::Result& result) {
             if (result.size() == 0) {
                 Json::Value ret;
                 ret["code"] = 404;
@@ -32,6 +33,7 @@ void CreditController::getBalance(const HttpRequestPtr& req,
             }
 
             int credit = result[0]["credit"].as<int>();
+            Logger::debug("[Credit] Balance retrieved", {{"userid", userId}, {"balance", std::to_string(credit)}});
             Json::Value ret;
             ret["code"] = 200;
             ret["message"] = "success";
@@ -39,7 +41,7 @@ void CreditController::getBalance(const HttpRequestPtr& req,
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
-            Logger::error("Database error: " + std::string(e.base().what()));
+            Logger::error("[Credit] Database error: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "数据库错误";
@@ -53,6 +55,7 @@ void CreditController::getHistory(const HttpRequestPtr& req,
                                   std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::debug("[Credit] Get history", {{"userid", userId}});
     int page = 1, pageSize = 20;
 
     if (req->getParameter("page").length() > 0) {
@@ -78,10 +81,11 @@ void CreditController::getHistory(const HttpRequestPtr& req,
             ret["code"] = 200;
             ret["message"] = "success";
             ret["data"] = history;
+            Logger::debug("[Credit] History returned", {{"count", std::to_string(static_cast<int>(result.size()))}});
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
-            Logger::error("Database error: " + std::string(e.base().what()));
+            Logger::error("[Credit] Database error: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "数据库错误";

@@ -18,6 +18,7 @@ void TodoController::listCategories(const HttpRequestPtr& req,
                                     std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::debug("[Todo] List categories", {{"userid", userId}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
@@ -32,10 +33,11 @@ void TodoController::listCategories(const HttpRequestPtr& req,
             ret["code"] = 200;
             ret["message"] = "success";
             ret["data"] = categories;
+            Logger::debug("[Todo] Categories returned", {{"count", std::to_string(static_cast<int>(result.size()))}});
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
-            Logger::error("DB error: " + std::string(e.base().what()));
+            Logger::error("[Todo] DB error: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "数据库错误";
@@ -49,8 +51,10 @@ void TodoController::createCategory(const HttpRequestPtr& req,
                                     std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Todo] Create category", {{"userid", userId}});
     auto json = req->getJsonObject();
     if (!json || !json->isMember("name")) {
+        Logger::warning("[Todo] Create category failed: missing name");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "分类名称不能为空";
@@ -63,7 +67,8 @@ void TodoController::createCategory(const HttpRequestPtr& req,
 
     dbClient->execSqlAsync(
         "INSERT INTO todo_category (userid, name, createtime, updatetime) VALUES (?, ?, NOW(), NOW())",
-        [callback](const orm::Result& result) {
+        [callback, userId, name](const orm::Result& result) {
+            Logger::info("[Todo] Category created", {{"userid", userId}, {"name", name}, {"id", std::to_string(result.insertId())}});
             Json::Value ret;
             ret["code"] = 200;
             ret["message"] = "创建成功";
@@ -71,7 +76,7 @@ void TodoController::createCategory(const HttpRequestPtr& req,
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
-            Logger::error("Insert error: " + std::string(e.base().what()));
+            Logger::error("[Todo] Insert error: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "创建失败";
@@ -86,18 +91,20 @@ void TodoController::deleteCategory(const HttpRequestPtr& req,
                                     int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Todo] Delete category", {{"userid", userId}, {"id", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
         "DELETE FROM todo_category WHERE id = ? AND userid = ?",
-        [callback](const orm::Result&) {
+        [callback, userId, id](const orm::Result&) {
+            Logger::info("[Todo] Category deleted", {{"id", std::to_string(id)}});
             Json::Value ret;
             ret["code"] = 200;
             ret["message"] = "删除成功";
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
-            Logger::error("Delete error: " + std::string(e.base().what()));
+            Logger::error("[Todo] Delete error: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "删除失败";
@@ -112,6 +119,7 @@ void TodoController::listItems(const HttpRequestPtr& req,
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
     std::string categoryId = req->getParameter("category_id");
+    Logger::debug("[Todo] List items", {{"userid", userId}, {"category_id", categoryId.empty() ? "all" : categoryId}});
     auto dbClient = Database::getClient();
 
     std::string sql = "SELECT * FROM todo_item WHERE userid = ?";
@@ -132,10 +140,11 @@ void TodoController::listItems(const HttpRequestPtr& req,
             ret["code"] = 200;
             ret["message"] = "success";
             ret["data"] = items;
+            Logger::debug("[Todo] Items returned", {{"count", std::to_string(static_cast<int>(result.size()))}});
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
-            Logger::error("DB error: " + std::string(e.base().what()));
+            Logger::error("[Todo] DB error: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "数据库错误";
@@ -149,8 +158,10 @@ void TodoController::createItem(const HttpRequestPtr& req,
                                 std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Todo] Create item", {{"userid", userId}});
     auto json = req->getJsonObject();
     if (!json || !json->isMember("body") || !json->isMember("category_id")) {
+        Logger::warning("[Todo] Create item failed: missing fields");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "内容和分类不能为空";
@@ -166,7 +177,8 @@ void TodoController::createItem(const HttpRequestPtr& req,
     dbClient->execSqlAsync(
         "INSERT INTO todo_item (userid, category_id, body, priority, createtime, updatetime) "
         "VALUES (?, ?, ?, ?, NOW(), NOW())",
-        [callback](const orm::Result& result) {
+        [callback, userId](const orm::Result& result) {
+            Logger::info("[Todo] Item created", {{"userid", userId}, {"id", std::to_string(result.insertId())}});
             Json::Value ret;
             ret["code"] = 200;
             ret["message"] = "创建成功";
@@ -174,7 +186,7 @@ void TodoController::createItem(const HttpRequestPtr& req,
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
-            Logger::error("Insert error: " + std::string(e.base().what()));
+            Logger::error("[Todo] Insert error: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "创建失败";
@@ -189,8 +201,10 @@ void TodoController::updateItem(const HttpRequestPtr& req,
                                 int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Todo] Update item", {{"userid", userId}, {"id", std::to_string(id)}});
     auto json = req->getJsonObject();
     if (!json) {
+        Logger::warning("[Todo] Update item failed: invalid JSON");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "请求格式错误";
@@ -204,14 +218,15 @@ void TodoController::updateItem(const HttpRequestPtr& req,
 
     dbClient->execSqlAsync(
         "UPDATE todo_item SET body = ?, priority = ?, updatetime = NOW() WHERE id = ? AND userid = ?",
-        [callback](const orm::Result&) {
+        [callback, id](const orm::Result&) {
+            Logger::info("[Todo] Item updated", {{"id", std::to_string(id)}});
             Json::Value ret;
             ret["code"] = 200;
             ret["message"] = "更新成功";
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
-            Logger::error("Update error: " + std::string(e.base().what()));
+            Logger::error("[Todo] Update error: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "更新失败";
@@ -226,18 +241,20 @@ void TodoController::deleteItem(const HttpRequestPtr& req,
                                 int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Todo] Delete item", {{"userid", userId}, {"id", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
         "DELETE FROM todo_item WHERE id = ? AND userid = ?",
-        [callback](const orm::Result&) {
+        [callback, id](const orm::Result&) {
+            Logger::info("[Todo] Item deleted", {{"id", std::to_string(id)}});
             Json::Value ret;
             ret["code"] = 200;
             ret["message"] = "删除成功";
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
-            Logger::error("Delete error: " + std::string(e.base().what()));
+            Logger::error("[Todo] Delete error: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "删除失败";
@@ -252,6 +269,7 @@ void TodoController::toggleDone(const HttpRequestPtr& req,
                                 int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Todo] Toggle done", {{"userid", userId}, {"id", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(

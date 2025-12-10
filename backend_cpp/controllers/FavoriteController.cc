@@ -19,6 +19,7 @@ void FavoriteController::list(const HttpRequestPtr& req,
                               std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::debug("[Favorite] List request", {{"userid", userId}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
@@ -37,10 +38,11 @@ void FavoriteController::list(const HttpRequestPtr& req,
             ret["code"] = 200;
             ret["message"] = "success";
             ret["data"] = articles;
+            Logger::debug("[Favorite] List returned", {{"count", std::to_string(static_cast<int>(result.size()))}});
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
-            Logger::error("Database error: " + std::string(e.base().what()));
+            Logger::error("[Favorite] Database error: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "数据库错误";
@@ -54,9 +56,11 @@ void FavoriteController::add(const HttpRequestPtr& req,
                              std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Favorite] Add request", {{"userid", userId}});
     auto json = req->getJsonObject();
 
     if (!json || !json->isMember("articleid")) {
+        Logger::warning("[Favorite] Add failed: missing articleid");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "文章ID不能为空";
@@ -83,9 +87,11 @@ void FavoriteController::add(const HttpRequestPtr& req,
 
                 // Re-activate canceled favorite
                 int64_t favId = result[0]["favoriteid"].as<int64_t>();
+                Logger::debug("[Favorite] Reactivating", {{"favoriteid", std::to_string(favId)}});
                 dbClient->execSqlAsync(
                     "UPDATE favorite SET canceled = 0, updatetime = NOW() WHERE favoriteid = ?",
-                    [callback](const orm::Result&) {
+                    [callback, favId, userId, articleId](const orm::Result&) {
+                        Logger::info("[Favorite] Reactivated", {{"userid", userId}, {"articleid", std::to_string(articleId)}});
                         Json::Value ret;
                         ret["code"] = 200;
                         ret["message"] = "收藏成功";
@@ -104,9 +110,11 @@ void FavoriteController::add(const HttpRequestPtr& req,
             }
 
             // Create new favorite
+            Logger::debug("[Favorite] Creating new", {{"userid", userId}, {"articleid", std::to_string(articleId)}});
             dbClient->execSqlAsync(
                 "INSERT INTO favorite (userid, articleid, createtime, updatetime) VALUES (?, ?, NOW(), NOW())",
-                [callback](const orm::Result&) {
+                [callback, userId, articleId](const orm::Result&) {
+                    Logger::info("[Favorite] Created", {{"userid", userId}, {"articleid", std::to_string(articleId)}});
                     Json::Value ret;
                     ret["code"] = 200;
                     ret["message"] = "收藏成功";
@@ -138,11 +146,13 @@ void FavoriteController::remove(const HttpRequestPtr& req,
                                 int64_t articleId)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Favorite] Remove request", {{"userid", userId}, {"articleid", std::to_string(articleId)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
         "UPDATE favorite SET canceled = 1, updatetime = NOW() WHERE userid = ? AND articleid = ?",
-        [callback](const orm::Result&) {
+        [callback, userId, articleId](const orm::Result&) {
+            Logger::info("[Favorite] Removed", {{"userid", userId}, {"articleid", std::to_string(articleId)}});
             Json::Value ret;
             ret["code"] = 200;
             ret["message"] = "取消收藏成功";
@@ -164,6 +174,7 @@ void FavoriteController::check(const HttpRequestPtr& req,
                                int64_t articleId)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::debug("[Favorite] Check request", {{"userid", userId}, {"articleid", std::to_string(articleId)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(

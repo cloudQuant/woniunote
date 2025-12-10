@@ -127,7 +127,7 @@ export const authApi = {
  */
 export const articleApi = {
   /** 获取文章列表 */
-  getList: (params) => api.get('/articles/', { params }),
+  getList: (params) => api.get('/articles', { params }),
   /** 获取我的文章列表 */
   getMyList: (params) => api.get('/articles/my', { params }),
   /** 获取文章详情 */
@@ -137,7 +137,7 @@ export const articleApi = {
   /** 获取文章分类 */
   getTypes: () => api.get('/articles/types'),
   /** 创建文章 */
-  create: (data) => api.post('/articles/', data),
+  create: (data) => api.post('/articles', data),
   /** 更新文章 */
   update: (id, data) => api.put(`/articles/${id}`, data),
   /** 删除文章 */
@@ -153,7 +153,7 @@ export const commentApi = {
   /** 获取文章评论 */
   getByArticle: (articleId, params) => api.get(`/comments/article/${articleId}`, { params }),
   /** 发表评论 */
-  create: (data) => api.post('/comments/', data),
+  create: (data) => api.post('/comments', data),
   /** 更新评论 */
   update: (id, data) => api.put(`/comments/${id}`, data),
   /** 删除评论 */
@@ -169,9 +169,9 @@ export const commentApi = {
  */
 export const favoriteApi = {
   /** 获取收藏列表 */
-  getList: (params) => api.get('/favorites/', { params }),
+  getList: (params) => api.get('/favorites', { params }),
   /** 添加收藏 */
-  add: (articleId) => api.post('/favorites/', { articleid: articleId }),
+  add: (articleId) => api.post('/favorites', { articleid: articleId }),
   /** 取消收藏 */
   remove: (articleId) => api.delete(`/favorites/${articleId}`),
   /** 检查是否已收藏 */
@@ -225,7 +225,7 @@ export const uploadApi = {
  */
 export const creditApi = {
   /** 获取积分记录 */
-  getList: (params) => api.get('/credits/', { params }),
+  getList: (params) => api.get('/credits', { params }),
   /** 获取积分概况 */
   getSummary: () => api.get('/credits/summary'),
   /** 支付文章积分 */
@@ -311,11 +311,11 @@ export const cardApi = {
   
   // 卡片
   /** 获取卡片列表 */
-  getCards: (params) => api.get('/cards/', { params }),
+  getCards: (params) => api.get('/cards', { params }),
   /** 获取卡片详情 */
   getCard: (id) => api.get(`/cards/${id}`),
   /** 创建卡片 */
-  createCard: (data) => api.post('/cards/', data),
+  createCard: (data) => api.post('/cards', data),
   /** 更新卡片 */
   updateCard: (id, data) => api.put(`/cards/${id}`, data),
   /** 删除卡片 */

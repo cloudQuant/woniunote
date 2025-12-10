@@ -4,6 +4,7 @@
  */
 
 #include "User.h"
+#include "core/logger.h"
 #include <trantor/utils/Date.h>
 
 namespace woniunote {
@@ -13,6 +14,7 @@ User::User(const drogon::orm::Row& row)
 {
     if (!row["userid"].isNull()) {
         userid_ = row["userid"].as<int64_t>();
+        Logger::debug("[Model] User loaded", {{"userid", std::to_string(userid_)}});
     }
     if (!row["username"].isNull()) {
         username_ = row["username"].as<std::string>();
@@ -54,6 +56,7 @@ Json::Value User::toJson() const
 
 Json::Value User::toJsonWithoutPassword() const
 {
+    Logger::debug("[Model] User toJson", {{"userid", std::to_string(userid_)}, {"username", username_}});
     Json::Value ret;
     ret["userid"] = static_cast<Json::Int64>(userid_);
     ret["username"] = username_;

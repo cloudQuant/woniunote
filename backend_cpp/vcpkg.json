@@ -8,30 +8,17 @@
     "dependencies": [
         {
             "name": "drogon",
-            "version>=": "1.9.0"
+            "features": ["mysql", "redis"]
         },
-        {
-            "name": "openssl",
-            "version>=": "3.0.0"
-        },
-        {
-            "name": "jsoncpp",
-            "version>=": "1.9.5"
-        },
-        {
-            "name": "jwt-cpp",
-            "version>=": "0.7.0"
-        },
-        {
-            "name": "hiredis",
-            "version>=": "1.1.0"
-        },
-        {
-            "name": "libmysql",
-            "version>=": "8.0.0"
-        }
+        "openssl",
+        "jsoncpp",
+        "jwt-cpp",
+        "picojson",
+        "hiredis",
+        "libmariadb",
+        "spdlog"
     ],
-    "builtin-baseline": "2024.01.12",
+    "builtin-baseline": "b83220a8325549a2acc026a698a2b23a5a90f403",
     "overrides": [],
     "features": {
         "tests": {

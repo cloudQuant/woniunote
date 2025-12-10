@@ -4,6 +4,7 @@
  */
 
 #include "Credit.h"
+#include "core/logger.h"
 
 namespace woniunote {
 namespace models {
@@ -11,6 +12,7 @@ namespace models {
 Credit::Credit(const drogon::orm::Row& row)
 {
     if (!row["creditid"].isNull()) creditid_ = row["creditid"].as<int64_t>();
+    Logger::debug("[Model] Credit loaded", {{"creditid", std::to_string(creditid_)}});
     if (!row["userid"].isNull()) userid_ = row["userid"].as<int64_t>();
     if (!row["category"].isNull()) category_ = row["category"].as<std::string>();
     if (!row["target"].isNull()) target_ = row["target"].as<int64_t>();

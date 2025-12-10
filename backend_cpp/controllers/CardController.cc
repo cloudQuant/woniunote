@@ -18,6 +18,7 @@ void CardController::listCategories(const HttpRequestPtr& req,
                                     std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::debug("[Card] List categories", {{"userid", userId}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
@@ -49,8 +50,10 @@ void CardController::createCategory(const HttpRequestPtr& req,
                                     std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Card] Create category", {{"userid", userId}});
     auto json = req->getJsonObject();
     if (!json || !json->isMember("name")) {
+        Logger::warning("[Card] Create category failed: missing name");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "分类名称不能为空";
@@ -87,6 +90,7 @@ void CardController::deleteCategory(const HttpRequestPtr& req,
                                     int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Card] Delete category", {{"userid", userId}, {"id", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
@@ -113,6 +117,7 @@ void CardController::listCards(const HttpRequestPtr& req,
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
     std::string categoryId = req->getParameter("category_id");
+    Logger::debug("[Card] List cards", {{"userid", userId}, {"category_id", categoryId.empty() ? "all" : categoryId}});
     auto dbClient = Database::getClient();
 
     std::string sql = "SELECT * FROM card WHERE userid = ?";
@@ -150,8 +155,10 @@ void CardController::createCard(const HttpRequestPtr& req,
                                 std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Card] Create card", {{"userid", userId}});
     auto json = req->getJsonObject();
     if (!json || !json->isMember("headline") || !json->isMember("category_id")) {
+        Logger::warning("[Card] Create card failed: missing fields");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "标题和分类不能为空";
@@ -191,8 +198,10 @@ void CardController::updateCard(const HttpRequestPtr& req,
                                 int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Card] Update card", {{"userid", userId}, {"id", std::to_string(id)}});
     auto json = req->getJsonObject();
     if (!json) {
+        Logger::warning("[Card] Update card failed: invalid JSON");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "请求格式错误";
@@ -229,6 +238,7 @@ void CardController::deleteCard(const HttpRequestPtr& req,
                                 int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Card] Delete card", {{"userid", userId}, {"id", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
@@ -255,6 +265,7 @@ void CardController::startTimer(const HttpRequestPtr& req,
                                 int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Card] Start timer", {{"userid", userId}, {"cardid", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
@@ -281,6 +292,7 @@ void CardController::stopTimer(const HttpRequestPtr& req,
                                int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Card] Stop timer", {{"userid", userId}, {"cardid", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     // Calculate elapsed time and add to usedtime

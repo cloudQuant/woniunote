@@ -18,6 +18,7 @@ void CommentController::listByArticle(const HttpRequestPtr& req,
                                       std::function<void(const HttpResponsePtr&)>&& callback,
                                       int64_t articleId)
 {
+    Logger::debug("[Comment] List by article", {{"articleid", std::to_string(articleId)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
@@ -42,10 +43,11 @@ void CommentController::listByArticle(const HttpRequestPtr& req,
             ret["code"] = 200;
             ret["message"] = "success";
             ret["data"] = comments;
+            Logger::debug("[Comment] List returned", {{"count", std::to_string(static_cast<int>(result.size()))}});
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
-            Logger::error("Database error: " + std::string(e.base().what()));
+            Logger::error("[Comment] Database error: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "数据库错误";
@@ -59,9 +61,11 @@ void CommentController::create(const HttpRequestPtr& req,
                                std::function<void(const HttpResponsePtr&)>&& callback)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Comment] Create request", {{"userid", userId}});
     auto json = req->getJsonObject();
 
     if (!json || !json->isMember("articleid") || !json->isMember("content")) {
+        Logger::warning("[Comment] Create failed: missing fields");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "文章ID和内容不能为空";
@@ -79,7 +83,9 @@ void CommentController::create(const HttpRequestPtr& req,
     dbClient->execSqlAsync(
         "INSERT INTO comment (userid, articleid, content, ipaddr, replyid, createtime, updatetime) "
         "VALUES (?, ?, ?, ?, ?, NOW(), NOW())",
-        [callback, articleId, dbClient](const orm::Result& result) {
+        [callback, articleId, dbClient, userId](const orm::Result& result) {
+            int64_t commentId = result.insertId();
+            Logger::info("[Comment] Created", {{"commentid", std::to_string(commentId)}, {"articleid", std::to_string(articleId)}, {"userid", userId}});
             // Update reply count
             dbClient->execSqlAsync(
                 "UPDATE article SET replycount = replycount + 1 WHERE articleid = ?",
@@ -91,11 +97,11 @@ void CommentController::create(const HttpRequestPtr& req,
             Json::Value ret;
             ret["code"] = 200;
             ret["message"] = "评论成功";
-            ret["data"]["commentid"] = static_cast<Json::Int64>(result.insertId());
+            ret["data"]["commentid"] = static_cast<Json::Int64>(commentId);
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
         [callback](const orm::DrogonDbException& e) {
-            Logger::error("Insert error: " + std::string(e.base().what()));
+            Logger::error("[Comment] Insert error: " + std::string(e.base().what()));
             Json::Value ret;
             ret["code"] = 500;
             ret["message"] = "评论失败";
@@ -110,12 +116,14 @@ void CommentController::remove(const HttpRequestPtr& req,
                                int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::info("[Comment] Delete request", {{"userid", userId}, {"commentid", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
         "SELECT userid, articleid FROM comment WHERE commentid = ?",
         [callback, id, userId, dbClient](const orm::Result& result) {
             if (result.size() == 0) {
+                Logger::debug("[Comment] Not found", {{"commentid", std::to_string(id)}});
                 Json::Value ret;
                 ret["code"] = 404;
                 ret["message"] = "评论不存在";
@@ -127,6 +135,7 @@ void CommentController::remove(const HttpRequestPtr& req,
             int64_t articleId = result[0]["articleid"].as<int64_t>();
             
             if (ownerId != std::stoll(userId)) {
+                Logger::warning("[Comment] Delete denied: not owner", {{"commentid", std::to_string(id)}, {"userid", userId}});
                 Json::Value ret;
                 ret["code"] = 403;
                 ret["message"] = "没有权限删除此评论";
@@ -136,7 +145,8 @@ void CommentController::remove(const HttpRequestPtr& req,
 
             dbClient->execSqlAsync(
                 "DELETE FROM comment WHERE commentid = ?",
-                [callback, articleId, dbClient](const orm::Result&) {
+                [callback, articleId, dbClient, id](const orm::Result&) {
+                    Logger::info("[Comment] Deleted", {{"commentid", std::to_string(id)}, {"articleid", std::to_string(articleId)}});
                     // Update reply count
                     dbClient->execSqlAsync(
                         "UPDATE article SET replycount = replycount - 1 WHERE articleid = ? AND replycount > 0",
@@ -176,9 +186,11 @@ void CommentController::vote(const HttpRequestPtr& req,
                              int64_t id)
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
+    Logger::debug("[Comment] Vote request", {{"userid", userId}, {"commentid", std::to_string(id)}});
     auto json = req->getJsonObject();
 
     if (!json || !json->isMember("vote_type")) {
+        Logger::warning("[Comment] Vote failed: missing vote_type");
         Json::Value ret;
         ret["code"] = 400;
         ret["message"] = "请指定投票类型";
@@ -195,6 +207,7 @@ void CommentController::vote(const HttpRequestPtr& req,
         "SELECT id FROM comment_vote WHERE userid = ? AND commentid = ?",
         [callback, id, userId, voteType, dbClient](const orm::Result& result) {
             if (result.size() > 0) {
+                Logger::debug("[Comment] Vote failed: already voted", {{"userid", userId}, {"commentid", std::to_string(id)}});
                 Json::Value ret;
                 ret["code"] = 400;
                 ret["message"] = "您已经投过票了";
@@ -205,14 +218,15 @@ void CommentController::vote(const HttpRequestPtr& req,
             // Insert vote record
             dbClient->execSqlAsync(
                 "INSERT INTO comment_vote (userid, commentid, vote_type, createtime) VALUES (?, ?, ?, NOW())",
-                [callback, id, voteType, dbClient](const orm::Result&) {
+                [callback, id, voteType, dbClient, userId](const orm::Result&) {
                     // Update comment vote count
                     std::string field = voteType > 0 ? "agreecount" : "opposecount";
                     std::string sql = "UPDATE comment SET " + field + " = " + field + " + 1 WHERE commentid = ?";
                     
                     dbClient->execSqlAsync(
                         sql,
-                        [callback, voteType](const orm::Result&) {
+                        [callback, voteType, id, userId](const orm::Result&) {
+                            Logger::info("[Comment] Voted", {{"commentid", std::to_string(id)}, {"userid", userId}, {"type", voteType > 0 ? "agree" : "oppose"}});
                             Json::Value ret;
                             ret["code"] = 200;
                             ret["message"] = voteType > 0 ? "点赞成功" : "踩成功";
