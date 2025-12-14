@@ -1,6 +1,6 @@
 <template>
   <div class="article-detail-page">
-    <div class="container">
+    <div class="article-detail-container">
       <el-row :gutter="20">
         <el-col :span="17" :xs="24">
         <div class="article-container" v-loading="loading">
@@ -446,10 +446,12 @@ onBeforeUnmount(() => {
   min-height: calc(100vh - 200px);
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+.article-detail-container {
+  /* 文章详情页使用全宽容器，让右侧侧边栏尽量贴近屏幕右侧 */
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .article-container {

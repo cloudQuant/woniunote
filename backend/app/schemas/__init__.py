@@ -7,3 +7,4 @@ from app.schemas.comment import *
 from app.schemas.favorite import *
 from app.schemas.credit import *
 from app.schemas.common import *
+from app.schemas.math_training import *

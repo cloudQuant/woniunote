@@ -324,7 +324,10 @@ function convertMarkdownToHtml(markdown) {
         return placeholder;
     });
     
-    // 转换标题
+    // 转换标题（支持 1~6 级）
+    html = html.replace(/^###### (.*?)$/gm, '<h6>$1</h6>');
+    html = html.replace(/^##### (.*?)$/gm, '<h5>$1</h5>');
+    html = html.replace(/^#### (.*?)$/gm, '<h4>$1</h4>');
     html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
     html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
     html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
@@ -344,6 +347,53 @@ function convertMarkdownToHtml(markdown) {
     html = html.replace(/(<li>.*?<\/li>\n?)+/g, function(match) {
         return '<ul>' + match + '</ul>';
     });
+
+    // 转换表格（Markdown 表格语法）
+    // 识别连续的以 | 开头并包含 | 的行，其中第二行为分隔行
+    html = html.replace(/((?:^\|.*\|\s*\n)+)/gm, function(match) {
+        var lines = match.trim().split('\n');
+        if (lines.length < 2) return match;
+
+        var headerLine = lines[0].trim();
+        var separatorLine = lines[1].trim();
+
+        // 判断第二行是否是形如 |---|---| 的分隔行
+        var sepNoSpace = separatorLine.replace(/\s/g, '');
+        if (!/^\|[-:]+(?:\|[-:]+)*\|$/.test(sepNoSpace)) {
+            return match;
+        }
+
+        function splitRow(row) {
+            var cells = row.trim();
+            if (cells[0] === '|') cells = cells.substring(1);
+            if (cells[cells.length - 1] === '|') cells = cells.slice(0, -1);
+            return cells.split('|').map(function(cell) { return cell.trim(); });
+        }
+
+        var headerCells = splitRow(headerLine);
+        var bodyLines = lines.slice(2);
+        var bodyRows = bodyLines
+            .map(function(line) { return line.trim(); })
+            .filter(function(line) { return line.length > 0; })
+            .map(splitRow);
+
+        var tableHtml = '<table><thead><tr>' +
+            headerCells.map(function(text) { return '<th>' + text + '</th>'; }).join('') +
+            '</tr></thead>';
+
+        if (bodyRows.length > 0) {
+            tableHtml += '<tbody>';
+            bodyRows.forEach(function(cells) {
+                tableHtml += '<tr>' +
+                    cells.map(function(text) { return '<td>' + text + '</td>'; }).join('') +
+                    '</tr>';
+            });
+            tableHtml += '</tbody>';
+        }
+
+        tableHtml += '</table>';
+        return tableHtml + '\n';
+    });
     
     // 转换链接和图片
     html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;" />');
@@ -355,12 +405,16 @@ function convertMarkdownToHtml(markdown) {
     // 转换水平线
     html = html.replace(/^---$/gm, '<hr style="border:none; border-top:1px solid #ccc; margin:20px 0;">');
     html = html.replace(/^\*\*\*$/gm, '<hr style="border:none; border-top:1px solid #ccc; margin:20px 0;">');
-    
+
+    // 处理 Markdown 行内换行：两个空格 + 换行 -> <br>
+    // 例如："- 定义：...␣␣\\n- 目标：..." 会在同一条目中换行显示
+    html = html.replace(/ {2}\n/g, '<br>\n');
+
     // 转换段落
     html = html.replace(/\n\n/g, '</p><p>');
     html = '<p>' + html + '</p>';
     
-    // 清理多余的标签
+    // 清理多余的标签（标题、列表、引用、分割线、表格不被 <p> 包裹）
     html = html.replace(/<p><\/p>/g, '');
     html = html.replace(/<p>(<h[1-6]>)/g, '$1');
     html = html.replace(/(<\/h[1-6]>)<\/p>/g, '$1');
@@ -370,6 +424,8 @@ function convertMarkdownToHtml(markdown) {
     html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
     html = html.replace(/<p>(<hr)/g, '$1');
     html = html.replace(/(<hr[^>]*>)<\/p>/g, '$1');
+    html = html.replace(/<p>(<table>)/g, '$1');
+    html = html.replace(/(<\/table>)<\/p>/g, '$1');
     
     // 还原代码块
     codeBlocks.forEach(function(block, index) {

@@ -13,7 +13,7 @@ from app.core.logger import log_info, log_error
 from app.core.middleware import LoggingMiddleware
 from app.core.rate_limit import rate_limit_middleware
 from app.core.exceptions import register_exception_handlers
-from app.api import auth, articles, comments, favorites, users, upload, captcha, thumb, ueditor, credits, admin, todos, cards, system
+from app.api import auth, articles, comments, favorites, users, upload, captcha, thumb, ueditor, credits, admin, system, math_training
 
 
 @asynccontextmanager
@@ -60,16 +60,6 @@ WoniuNote 是一个功能完整的量化交易知识分享平台，提供文章�
 ### 💰 积分系统
 - 积分获取（注册、评论等）
 - 积分消费（阅读付费文章）
-
-### ✅ 待办事项
-- 分类管理
-- 事项CRUD
-- 完成状态切换
-
-### 📋 任务卡片
-- 优先级管理
-- 时间追踪
-- 重复任务
 
 ## 认证方式
 
@@ -126,9 +116,8 @@ app = FastAPI(
         {"name": "缩略图", "description": "文章缩略图"},
         {"name": "UEditor", "description": "富文本编辑器接口"},
         {"name": "管理员", "description": "管理员专用接口"},
-        {"name": "待办事项", "description": "待办事项管理"},
-        {"name": "卡片管理", "description": "任务卡片和时间追踪"},
         {"name": "系统监控", "description": "系统状态监控"},
+        {"name": "math-training", "description": "数学训练"},
     ]
 )
 
@@ -164,9 +153,8 @@ app.include_router(thumb.router, prefix="/api", tags=["缩略图"])
 app.include_router(ueditor.router, prefix="/api", tags=["UEditor"])
 app.include_router(credits.router, prefix="/api/credits", tags=["积分"])
 app.include_router(admin.router, prefix="/api/admin", tags=["管理员"])
-app.include_router(todos.router, prefix="/api/todos", tags=["待办事项"])
-app.include_router(cards.router, prefix="/api/cards", tags=["卡片管理"])
 app.include_router(system.router, prefix="/api/system", tags=["系统监控"])
+app.include_router(math_training.router, prefix="/api", tags=["math-training"])
 
 
 @app.get("/")

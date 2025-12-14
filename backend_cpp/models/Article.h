@@ -77,8 +77,9 @@ private:
     int hidden_ = 0;
     int drafted_ = 0;
     int checked_ = 1;
-    std::chrono::system_clock::time_point createtime_;
-    std::chrono::system_clock::time_point updatetime_;
+    std::string createtime_;
+    std::string updatetime_;
+    std::string nickname_;  // From JOIN with users table
 };
 
 } // namespace models

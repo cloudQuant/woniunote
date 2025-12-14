@@ -177,7 +177,8 @@ void AdminController::listArticles(const HttpRequestPtr& req,
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
-        "SELECT * FROM article ORDER BY createtime DESC LIMIT ? OFFSET ?",
+        "SELECT a.*, u.nickname FROM article a LEFT JOIN users u ON a.userid = u.userid "
+        "ORDER BY a.createtime DESC LIMIT ? OFFSET ?",
         [callback](const orm::Result& result) {
             Json::Value articles(Json::arrayValue);
             for (const auto& row : result) {

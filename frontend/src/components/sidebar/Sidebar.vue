@@ -110,7 +110,8 @@ onUnmounted(() => {
 <style scoped>
 .sidebar {
   position: sticky;
-  top: 120px;
+  top: 80px;
+  width: 100%;
 }
 
 .sidebar-card {

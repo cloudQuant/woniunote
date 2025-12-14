@@ -19,14 +19,24 @@ namespace controllers {
 static const std::map<int, std::string> ARTICLE_TYPES = {
     {1, "交易策略"}, {101, "CTA策略"}, {102, "统计套利"}, {103, "高频交易"},
     {104, "因子策略"}, {105, "选股与择时"}, {106, "机器学习"}, {107, "深度学习"},
-    {2, "量化框架"}, {201, "backtrader"}, {202, "vnpy"}, {203, "wtpy"},
-    {3, "数据处理"}, {301, "数据获取"}, {302, "数据存储"}, {303, "数据清洗"},
-    {4, "交易接口"}, {401, "CTP"}, {402, "IB"}, {403, "掘金"},
-    {5, "系统运维"}, {501, "Linux"}, {502, "Docker"}, {503, "监控"},
-    {6, "交流讨论"}, {601, "策略交流"}, {602, "问题求助"}, {603, "资源分享"},
-    {7, "公告通知"}, {701, "网站公告"}, {702, "更新日志"},
-    {8, "读书笔记"}, {801, "金融"}, {802, "投资"}, {803, "经济"},
-    {9, "教程"}, {901, "woniunote入门教程"}, {902, "backtrader基础教程"}
+    {2, "量化框架"}, {201, "backtrader"}, {202, "wondertrader"}, {203, "wtpy"},
+    {204, "pyfolio"}, {205, "alphalens"},
+    {3, "投资"}, {301, "股票"}, {302, "期货"}, {303, "期权"},
+    {304, "外汇"}, {305, "crypto"}, {306, "黄金"}, {307, "债券"},
+    {4, "理财"}, {401, "基金"}, {402, "保险"}, {403, "信托"},
+    {404, "银行理财"}, {405, "存款"},
+    {5, "区块链与defi"}, {501, "去中心化交易所"}, {502, "去中心化金融"}, {503, "去中心化借贷"},
+    {504, "去中心化治理"}, {505, "其他defi"}, {506, "区块链"}, {507, "比特币"}, {508, "以太坊"},
+    {6, "机器学习"}, {601, "tensorflow"}, {602, "pytorch"}, {603, "keras"},
+    {604, "scikit-learn"}, {605, "机器学习与交易"}, {606, "深度学习与交易"},
+    {7, "编程"}, {701, "python"}, {702, "c++"}, {703, "cython"},
+    {704, "java"}, {705, "javascript"}, {706, "swing"}, {707, "pybind11"},
+    {8, "笔记"}, {801, "幸福"}, {802, "金融"}, {803, "经济"},
+    {804, "哲学"}, {805, "历史"}, {806, "科技"}, {807, "读书笔记"},
+    {808, "其他笔记"}, {809, "个人知识库"},
+    {9, "教程"}, {901, "woniunote入门教程"}, {902, "backtrader基础教程"},
+    {903, "airflow入门教程"}, {904, "arrow入门教程"}, {905, "量化交易入门教程"},
+    {906, "机器学习入门教程"}, {907, "ib_tws_api入门教程"}
 };
 
 void ArticleController::list(const HttpRequestPtr& req,
@@ -56,18 +66,18 @@ void ArticleController::list(const HttpRequestPtr& req,
 
     // Build query
     std::string countSql = "SELECT COUNT(*) as total FROM article WHERE hidden = 0 AND drafted = 0";
-    std::string dataSql = "SELECT * FROM article WHERE hidden = 0 AND drafted = 0";
+    std::string dataSql = "SELECT a.*, u.nickname FROM article a LEFT JOIN users u ON a.userid = u.userid WHERE a.hidden = 0 AND a.drafted = 0";
     
     if (type > 0) {
         countSql += " AND type = " + std::to_string(type);
-        dataSql += " AND type = " + std::to_string(type);
+        dataSql += " AND a.type = " + std::to_string(type);
     }
     if (!keyword.empty()) {
         countSql += " AND headline LIKE '%" + keyword + "%'";
-        dataSql += " AND headline LIKE '%" + keyword + "%'";
+        dataSql += " AND a.headline LIKE '%" + keyword + "%'";
     }
     
-    dataSql += " ORDER BY createtime DESC LIMIT " + std::to_string(pageSize) + 
+    dataSql += " ORDER BY a.createtime DESC LIMIT " + std::to_string(pageSize) + 
                " OFFSET " + std::to_string(offset);
 
     Logger::debug("[Article] Executing list query", {{"page", std::to_string(page)}, {"pageSize", std::to_string(pageSize)}, {"type", std::to_string(type)}});
@@ -127,10 +137,13 @@ void ArticleController::getTypes(const HttpRequestPtr& req,
         types[std::to_string(id)] = name;
     }
 
+    Json::Value data;
+    data["types"] = types;
+    
     Json::Value ret;
     ret["code"] = 200;
     ret["message"] = "success";
-    ret["data"] = types;
+    ret["data"] = data;
     callback(HttpResponse::newHttpJsonResponse(ret));
 }
 
@@ -142,7 +155,7 @@ void ArticleController::getHot(const HttpRequestPtr& req,
 
     // Get latest, most read, and recommended articles
     dbClient->execSqlAsync(
-        "SELECT * FROM article WHERE hidden = 0 AND drafted = 0 ORDER BY createtime DESC LIMIT 10",
+        "SELECT a.*, u.nickname FROM article a LEFT JOIN users u ON a.userid = u.userid WHERE a.hidden = 0 AND a.drafted = 0 ORDER BY a.createtime DESC LIMIT 10",
         [callback, dbClient](const orm::Result& latestResult) {
             Json::Value latest(Json::arrayValue);
             for (const auto& row : latestResult) {
@@ -151,7 +164,7 @@ void ArticleController::getHot(const HttpRequestPtr& req,
             }
 
             dbClient->execSqlAsync(
-                "SELECT * FROM article WHERE hidden = 0 AND drafted = 0 ORDER BY readcount DESC LIMIT 10",
+                "SELECT a.*, u.nickname FROM article a LEFT JOIN users u ON a.userid = u.userid WHERE a.hidden = 0 AND a.drafted = 0 ORDER BY a.readcount DESC LIMIT 10",
                 [callback, dbClient, latest](const orm::Result& mostResult) {
                     Json::Value most(Json::arrayValue);
                     for (const auto& row : mostResult) {
@@ -160,7 +173,7 @@ void ArticleController::getHot(const HttpRequestPtr& req,
                     }
 
                     dbClient->execSqlAsync(
-                        "SELECT * FROM article WHERE hidden = 0 AND drafted = 0 AND recommended = 1 ORDER BY createtime DESC LIMIT 10",
+                        "SELECT a.*, u.nickname FROM article a LEFT JOIN users u ON a.userid = u.userid WHERE a.hidden = 0 AND a.drafted = 0 AND a.recommended = 1 ORDER BY a.createtime DESC LIMIT 10",
                         [callback, latest, most](const orm::Result& recResult) {
                             Json::Value recommended(Json::arrayValue);
                             for (const auto& row : recResult) {
@@ -208,7 +221,7 @@ void ArticleController::get(const HttpRequestPtr& req,
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
-        "SELECT * FROM article WHERE articleid = ?",
+        "SELECT a.*, u.nickname FROM article a LEFT JOIN users u ON a.userid = u.userid WHERE a.articleid = ?",
         [callback, id, dbClient](const orm::Result& result) {
             if (result.size() == 0) {
                 Logger::debug("[Article] Not found", {{"articleid", std::to_string(id)}});
@@ -257,7 +270,8 @@ void ArticleController::myArticles(const HttpRequestPtr& req,
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
-        "SELECT * FROM article WHERE userid = ? ORDER BY createtime DESC",
+        "SELECT a.*, u.nickname FROM article a LEFT JOIN users u ON a.userid = u.userid "
+        "WHERE a.userid = ? ORDER BY a.createtime DESC",
         [callback](const orm::Result& result) {
             Json::Value articles(Json::arrayValue);
             for (const auto& row : result) {
@@ -315,7 +329,8 @@ void ArticleController::create(const HttpRequestPtr& req,
             Logger::info("[Article] Created", {{"articleid", std::to_string(articleId)}});
 
             dbClient->execSqlAsync(
-                "SELECT * FROM article WHERE articleid = ?",
+                "SELECT a.*, u.nickname FROM article a LEFT JOIN users u ON a.userid = u.userid "
+                "WHERE a.articleid = ?",
                 [callback, articleId](const orm::Result& articleResult) {
                     if (articleResult.size() > 0) {
                         models::Article article(articleResult[0]);

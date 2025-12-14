@@ -1,7 +1,7 @@
 <template>
   <div class="home-page">
-    <div class="container">
-      <el-row :gutter="20">
+    <div class="home-container">
+      <el-row :gutter="24">
         <el-col :span="17" :xs="24">
           <div class="main-content">
             <ArticleList :page="currentPage" @page-change="handlePageChange" />
@@ -58,19 +58,26 @@ function handlePageChange(page) {
   min-height: calc(100vh - 200px);
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+.home-container {
+  /* 首页全宽容器，让文章和侧边栏尽量贴近屏幕两侧 */
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .main-content {
-  min-height: 400px;
+  padding: 20px;
 }
 
-@media (max-width: 768px) {
-  .el-col-xs-24 {
-    margin-bottom: 20px;
+.sidebar-wrapper {
+  width: 280px;
+  padding: 20px;
+}
+
+@media (max-width: 992px) {
+  .sidebar-wrapper {
+    width: 100%;
   }
 }
 </style>

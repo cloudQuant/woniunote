@@ -267,74 +267,6 @@ export const draftApi = {
 }
 
 /**
- * 待办事项 API
- */
-export const todoApi = {
-  // 分类
-  /** 获取待办分类 */
-  getCategories: () => api.get('/todos/categories'),
-  /** 创建待办分类 */
-  createCategory: (data) => api.post('/todos/categories', data),
-  /** 更新待办分类 */
-  updateCategory: (id, data) => api.put(`/todos/categories/${id}`, data),
-  /** 删除待办分类 */
-  deleteCategory: (id) => api.delete(`/todos/categories/${id}`),
-  
-  // 事项
-  /** 获取待办事项列表 */
-  getItems: (params) => api.get('/todos/items', { params }),
-  /** 创建待办事项 */
-  createItem: (data) => api.post('/todos/items', data),
-  /** 更新待办事项 */
-  updateItem: (id, data) => api.put(`/todos/items/${id}`, data),
-  /** 切换待办事项完成状态 */
-  toggleItem: (id) => api.post(`/todos/items/${id}/toggle`),
-  /** 删除待办事项 */
-  deleteItem: (id) => api.delete(`/todos/items/${id}`),
-  /** 获取待办统计 */
-  getStats: () => api.get('/todos/stats')
-}
-
-/**
- * 卡片管理 API
- */
-export const cardApi = {
-  // 分类
-  /** 获取卡片分类 */
-  getCategories: () => api.get('/cards/categories'),
-  /** 创建卡片分类 */
-  createCategory: (data) => api.post('/cards/categories', data),
-  /** 更新卡片分类 */
-  updateCategory: (id, data) => api.put(`/cards/categories/${id}`, data),
-  /** 删除卡片分类 */
-  deleteCategory: (id) => api.delete(`/cards/categories/${id}`),
-  
-  // 卡片
-  /** 获取卡片列表 */
-  getCards: (params) => api.get('/cards', { params }),
-  /** 获取卡片详情 */
-  getCard: (id) => api.get(`/cards/${id}`),
-  /** 创建卡片 */
-  createCard: (data) => api.post('/cards', data),
-  /** 更新卡片 */
-  updateCard: (id, data) => api.put(`/cards/${id}`, data),
-  /** 删除卡片 */
-  deleteCard: (id) => api.delete(`/cards/${id}`),
-  
-  // 时间追踪
-  /** 开始卡片计时 */
-  startCard: (id) => api.post(`/cards/${id}/start`),
-  /** 停止卡片计时 */
-  stopCard: (id) => api.post(`/cards/${id}/stop`),
-  /** 完成卡片 */
-  completeCard: (id) => api.post(`/cards/${id}/complete`),
-  /** 重开卡片 */
-  reopenCard: (id) => api.post(`/cards/${id}/reopen`),
-  /** 获取卡片统计 */
-  getStats: () => api.get('/cards/stats/summary')
-}
-
-/**
  * 系统监控 API
  */
 export const systemApi = {
@@ -348,4 +280,20 @@ export const systemApi = {
   getProcesses: (limit = 10) => api.get(`/system/processes?limit=${limit}`),
   /** 健康检查 */
   healthCheck: () => api.get('/system/health')
+}
+
+/**
+ * 数学训练 API
+ */
+export const mathTrainingApi = {
+  /** 创建训练记录 */
+  createRecord: (data) => api.post('/math-training/records', data),
+  /** 获取训练记录列表 */
+  getRecords: (params) => api.get('/math-training/records', { params }),
+  /** 获取训练记录详情 */
+  getRecordDetail: (id) => api.get(`/math-training/records/${id}`),
+  /** 获取错题列表 */
+  getWrongAnswers: (params) => api.get('/math-training/wrong-answers', { params }),
+  /** 获取训练统计摘要 */
+  getSummary: () => api.get('/math-training/summary')
 }

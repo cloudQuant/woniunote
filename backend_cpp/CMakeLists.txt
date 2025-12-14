@@ -36,9 +36,8 @@ set(MODEL_SOURCES
     models/Comment.cc
     models/Favorite.cc
     models/Credit.cc
-    models/Todo.cc
-    models/Card.cc
     models/CommentVote.cc
+    models/MathTraining.cc
 )
 
 set(CONTROLLER_SOURCES
@@ -48,12 +47,13 @@ set(CONTROLLER_SOURCES
     controllers/FavoriteController.cc
     controllers/UserController.cc
     controllers/CreditController.cc
-    controllers/TodoController.cc
-    controllers/CardController.cc
     controllers/SystemController.cc
     controllers/UploadController.cc
     controllers/CaptchaController.cc
     controllers/AdminController.cc
+    controllers/ThumbController.cc
+    controllers/MathTrainingController.cc
+    controllers/UEditorController.cc
 )
 
 set(FILTER_SOURCES
@@ -77,7 +77,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     OpenSSL::SSL
     OpenSSL::Crypto
     JsonCpp::JsonCpp
-    spdlog::spdlog
+    spdlog::spdlog_header_only
 )
 
 # Include directories

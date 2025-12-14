@@ -48,6 +48,12 @@ const routes = [
     meta: { title: '搜索' }
   },
   {
+    path: '/math-training',
+    name: 'MathTraining',
+    component: () => import('@/views/MathTraining.vue'),
+    meta: { title: '数学训练', requiresAuth: true }
+  },
+  {
     path: '/login',
     name: 'Login',
     component: () => import('@/views/Login.vue'),
@@ -114,18 +120,6 @@ const routes = [
     name: 'AdminDashboard',
     component: () => import('@/views/admin/AdminDashboard.vue'),
     meta: { title: '系统管理', requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/todo',
-    name: 'Todo',
-    component: () => import('@/views/Todo.vue'),
-    meta: { title: '待办事项', requiresAuth: true }
-  },
-  {
-    path: '/cards',
-    name: 'Cards',
-    component: () => import('@/views/Cards.vue'),
-    meta: { title: '任务卡片', requiresAuth: true }
   },
   {
     path: '/edit/:id',

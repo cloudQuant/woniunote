@@ -17,6 +17,21 @@ ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
 MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
 
 
+# 预定义的渐变色方案（参考原网站风格）
+GRADIENT_COLORS = [
+    ((88, 86, 214), (155, 89, 182)),    # 紫色渐变
+    ((52, 152, 219), (41, 128, 185)),   # 蓝色渐变
+    ((46, 204, 113), (39, 174, 96)),    # 绿色渐变
+    ((231, 76, 60), (192, 57, 43)),     # 红色渐变
+    ((241, 196, 15), (243, 156, 18)),   # 黄色渐变
+    ((26, 188, 156), (22, 160, 133)),   # 青色渐变
+    ((155, 89, 182), (142, 68, 173)),   # 深紫渐变
+    ((52, 73, 94), (44, 62, 80)),       # 深蓝灰渐变
+    ((230, 126, 34), (211, 84, 0)),     # 橙色渐变
+    ((149, 165, 166), (127, 140, 141)), # 灰色渐变
+]
+
+
 def get_system_font_path():
     """
     获取系统默认字体路径
@@ -33,18 +48,22 @@ def get_system_font_path():
                 "C:\\Windows\\Fonts\\simhei.ttf",     # 黑体
                 "C:\\Windows\\Fonts\\simsun.ttc",     # 宋体
                 "C:\\Windows\\Fonts\\arial.ttf",
-                "C:\\Windows\\Fonts\\Arial.ttf",
-                "C:\\Windows\\Fonts\\calibri.ttf"
             ]
         elif os.name == 'posix':  # Linux/Mac
             common_fonts = [
-                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-                "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+                # macOS 中文字体（优先）
+                "/System/Library/Fonts/PingFang.ttc",           # 苹方
+                "/System/Library/Fonts/STHeiti Light.ttc",      # 华文黑体
+                "/System/Library/Fonts/STHeiti Medium.ttc",     # 华文黑体
+                "/Library/Fonts/Arial Unicode.ttf",              # Arial Unicode
+                "/System/Library/Fonts/Hiragino Sans GB.ttc",   # 冬青黑体
+                # Linux 中文字体
                 "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",  # 文泉驿微米黑
                 "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",  # Noto CJK
+                "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+                # 备选
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
                 "/System/Library/Fonts/Helvetica.ttc",
-                "/Library/Fonts/Arial.ttf",
-                "/usr/share/fonts/TTF/arial.ttf",
             ]
         else:
             logger.warning("Unknown operating system")
@@ -64,27 +83,31 @@ def get_system_font_path():
         return None
 
 
-def generate_random_color():
+def get_gradient_colors(seed: int = None):
     """
-    生成随机 RGB 颜色
+    根据种子值获取固定的渐变颜色
     
+    Args:
+        seed: 种子值，用于确定使用哪个颜色方案
+        
     Returns:
-        Tuple[int, int, int]: RGB 颜色元组
+        Tuple[Tuple, Tuple]: (起始颜色, 结束颜色)
     """
-    return (
-        random.randint(50, 200),
-        random.randint(50, 200),
-        random.randint(50, 200)
-    )
+    if seed is not None:
+        index = seed % len(GRADIENT_COLORS)
+    else:
+        index = random.randint(0, len(GRADIENT_COLORS) - 1)
+    return GRADIENT_COLORS[index]
 
 
-def generate_gradient_background(width: int, height: int) -> Image.Image:
+def generate_gradient_background(width: int, height: int, seed: int = None) -> Image.Image:
     """
     生成渐变背景图片
     
     Args:
         width: 图片宽度
         height: 图片高度
+        seed: 颜色种子，用于生成固定颜色
         
     Returns:
         Image.Image: PIL Image 对象
@@ -102,9 +125,8 @@ def generate_gradient_background(width: int, height: int) -> Image.Image:
         # 创建渐变图片
         image = Image.new('RGB', (width, height))
         
-        # 生成渐变色
-        start_color = generate_random_color()
-        end_color = generate_random_color()
+        # 获取渐变色（基于种子值的固定颜色）
+        start_color, end_color = get_gradient_colors(seed)
         
         for y in range(height):
             ratio = y / height
@@ -122,16 +144,17 @@ def generate_gradient_background(width: int, height: int) -> Image.Image:
         raise
 
 
-def create_thumb_png(width: int = 200, height: int = 150, text: str = "WoniuNote") -> Image.Image:
+def create_thumb_png(width: int = 200, height: int = 150, text: str = "WoniuNote", seed: int = None) -> Image.Image:
     """
     创建带文字的缩略图
     
-    生成一个带有随机渐变背景和居中文字的图片。
+    生成一个带有固定渐变背景和居中文字的图片。
     
     Args:
         width: 图片宽度
         height: 图片高度
         text: 显示的文字
+        seed: 颜色种子，用于生成固定颜色（通常使用文章类型ID）
         
     Returns:
         Image.Image: PIL Image 对象
@@ -153,21 +176,23 @@ def create_thumb_png(width: int = 200, height: int = 150, text: str = "WoniuNote
         else:
             text = "WoniuNote"
         
-        # 生成渐变背景
-        image = generate_gradient_background(width, height)
+        # 生成渐变背景（使用种子确保颜色固定）
+        image = generate_gradient_background(width, height, seed)
         draw = ImageDraw.Draw(image)
         
         # 获取字体
         font_path = get_system_font_path()
         try:
             if font_path:
-                # 根据文字长度调整字体大小
-                font_size = min(24, int(width / len(text) * 1.2))
-                font_size = max(12, font_size)  # 最小12px
+                # 根据文字长度调整字体大小，确保较大的字体
+                base_size = min(width, height) // 4  # 基础大小为短边的1/4
+                font_size = min(base_size, int(width / max(len(text), 1) * 1.5))
+                font_size = max(20, min(font_size, 48))  # 限制在20-48px之间
                 font = ImageFont.truetype(font_path, font_size)
             else:
                 font = ImageFont.load_default()
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to load font: {e}")
             font = ImageFont.load_default()
         
         # 计算文字位置（居中）
@@ -178,16 +203,17 @@ def create_thumb_png(width: int = 200, height: int = 150, text: str = "WoniuNote
         x = (width - text_width) // 2
         y = (height - text_height) // 2
         
-        # 绘制文字（带阴影效果）
-        shadow_color = (0, 0, 0, 128)
+        # 绘制文字（带阴影效果增强可读性）
+        shadow_color = (0, 0, 0)
         text_color = (255, 255, 255)
         
-        # 绘制阴影
-        draw.text((x + 2, y + 2), text, font=font, fill=shadow_color)
-        # 绘制文字
+        # 绘制阴影（多层阴影增强效果）
+        for offset in [(2, 2), (1, 1)]:
+            draw.text((x + offset[0], y + offset[1]), text, font=font, fill=shadow_color)
+        # 绘制白色文字
         draw.text((x, y), text, font=font, fill=text_color)
         
-        logger.info(f"Thumbnail created: {width}x{height}, text: {text}")
+        logger.info(f"Thumbnail created: {width}x{height}, text: {text}, seed: {seed}")
         return image
         
     except Exception as e:

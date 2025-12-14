@@ -25,6 +25,28 @@ Article::Article(const drogon::orm::Row& row)
     if (!row["hidden"].isNull()) hidden_ = row["hidden"].as<int>();
     if (!row["drafted"].isNull()) drafted_ = row["drafted"].as<int>();
     if (!row["checked"].isNull()) checked_ = row["checked"].as<int>();
+    if (!row["createtime"].isNull()) createtime_ = row["createtime"].as<std::string>();
+    if (!row["updatetime"].isNull()) updatetime_ = row["updatetime"].as<std::string>();
+    // Join field from users table
+    if (!row["nickname"].isNull()) nickname_ = row["nickname"].as<std::string>();
+}
+
+// Helper function to generate stable thumbnail filename based on article type
+// Returns just the filename (e.g., "906.png"), NOT the full path
+// Frontend will prepend "/api/thumb/" prefix
+static std::string getStableThumbnail(const std::string& thumbnail, int type)
+{
+    // If thumbnail is already set and valid (just filename), use it
+    if (!thumbnail.empty() && thumbnail.find(".png") != std::string::npos) {
+        // If it's a full path starting with /api/thumb/, extract just the filename
+        size_t pos = thumbnail.rfind('/');
+        if (pos != std::string::npos) {
+            return thumbnail.substr(pos + 1);
+        }
+        return thumbnail;
+    }
+    // Generate thumbnail filename based on article type (e.g., "906.png")
+    return std::to_string(type) + ".png";
 }
 
 Json::Value Article::toJson() const
@@ -36,7 +58,7 @@ Json::Value Article::toJson() const
     ret["type"] = type_;
     ret["headline"] = headline_;
     ret["content"] = content_;
-    ret["thumbnail"] = thumbnail_;
+    ret["thumbnail"] = getStableThumbnail(thumbnail_, type_);
     ret["credit"] = credit_;
     ret["readcount"] = readcount_;
     ret["replycount"] = replycount_;
@@ -44,6 +66,13 @@ Json::Value Article::toJson() const
     ret["hidden"] = hidden_;
     ret["drafted"] = drafted_;
     ret["checked"] = checked_;
+    ret["createtime"] = createtime_;
+    ret["updatetime"] = updatetime_;
+    // Wrap author info in author object for frontend compatibility
+    Json::Value author;
+    author["nickname"] = nickname_;
+    author["userid"] = static_cast<Json::Int64>(userid_);
+    ret["author"] = author;
     return ret;
 }
 
@@ -54,11 +83,18 @@ Json::Value Article::toJsonBrief() const
     ret["userid"] = static_cast<Json::Int64>(userid_);
     ret["type"] = type_;
     ret["headline"] = headline_;
-    ret["thumbnail"] = thumbnail_;
+    ret["thumbnail"] = getStableThumbnail(thumbnail_, type_);
     ret["credit"] = credit_;
     ret["readcount"] = readcount_;
     ret["replycount"] = replycount_;
     ret["recommended"] = recommended_;
+    ret["createtime"] = createtime_;
+    ret["content"] = content_;  // For excerpt generation
+    // Wrap author info in author object for frontend compatibility
+    Json::Value author;
+    author["nickname"] = nickname_;
+    author["userid"] = static_cast<Json::Int64>(userid_);
+    ret["author"] = author;
     return ret;
 }
 

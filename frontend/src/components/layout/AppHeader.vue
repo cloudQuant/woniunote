@@ -56,8 +56,7 @@
                   <el-dropdown-item command="profile">个人中心</el-dropdown-item>
                   <el-dropdown-item command="articles">我的文章</el-dropdown-item>
                   <el-dropdown-item command="favorites">我的收藏</el-dropdown-item>
-                  <el-dropdown-item command="todo" divided>待办事项</el-dropdown-item>
-                  <el-dropdown-item command="cards">任务卡片</el-dropdown-item>
+                  <el-dropdown-item command="mathTraining">数学训练</el-dropdown-item>
                   <el-dropdown-item v-if="userStore.isAdmin" command="admin" divided>系统管理</el-dropdown-item>
                   <el-dropdown-item :divided="!userStore.isAdmin" command="logout">退出登录</el-dropdown-item>
                 </el-dropdown-menu>
@@ -385,6 +384,9 @@ function handleUserCommand(command) {
     case 'write':
       router.push({ name: 'WriteArticle' })
       break
+    case 'mathTraining':
+      router.push({ name: 'MathTraining' })
+      break
     case 'profile':
       router.push({ name: 'UserProfile' })
       break
@@ -393,12 +395,6 @@ function handleUserCommand(command) {
       break
     case 'favorites':
       router.push({ name: 'UserFavorites' })
-      break
-    case 'todo':
-      router.push({ name: 'Todo' })
-      break
-    case 'cards':
-      router.push({ name: 'Cards' })
       break
     case 'admin':
       router.push({ name: 'AdminDashboard' })

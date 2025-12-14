@@ -23,8 +23,9 @@ void FavoriteController::list(const HttpRequestPtr& req,
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
-        "SELECT a.* FROM favorite f "
+        "SELECT a.*, u.nickname FROM favorite f "
         "JOIN article a ON f.articleid = a.articleid "
+        "LEFT JOIN users u ON a.userid = u.userid "
         "WHERE f.userid = ? AND f.canceled = 0 "
         "ORDER BY f.createtime DESC",
         [callback](const orm::Result& result) {

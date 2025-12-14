@@ -16,9 +16,10 @@
         "picojson",
         "hiredis",
         "libmariadb",
+        "fmt",
         "spdlog"
     ],
-    "builtin-baseline": "b83220a8325549a2acc026a698a2b23a5a90f403",
+    "builtin-baseline": "e7b524242c8a5d718a7afa26794c3c19bb8b0c71",
     "overrides": [],
     "features": {
         "tests": {

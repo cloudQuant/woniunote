@@ -109,7 +109,8 @@ const excerpt = computed(() => {
     .replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-  return text.length > 150 ? text.slice(0, 150) + '...' : text
+  const MAX_EXCERPT_LENGTH = 80
+  return text.length > MAX_EXCERPT_LENGTH ? text.slice(0, MAX_EXCERPT_LENGTH) + '...' : text
 })
 
 /**

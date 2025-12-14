@@ -62,7 +62,7 @@ if "%BACKEND_TYPE%"=="cpp" (
     )
     REM Run from the executable directory so it can find config.json
     cd /d "!CPP_DIR!" || goto error
-    start "" /b cmd /c "!CPP_EXE! > "%~dp0backend.log" 2>&1"
+    start "" /b cmd /c ""!CPP_EXE! >> "%~dp0backend.log" 2>&1""
 ) else (
     REM Start Python backend
     cd /d "%~dp0backend" || goto error
@@ -71,7 +71,7 @@ if "%BACKEND_TYPE%"=="cpp" (
         goto error
     )
     
-    start "" /b cmd /c "uvicorn app.main:app --host 0.0.0.0 --port 8888 > ..\backend.log 2>&1"
+    start "" /b cmd /c "uvicorn app.main:app --host 0.0.0.0 --port 8888 >> ..\backend.log 2>&1"
 )
 
 echo       Backend starting, waiting 3s ...
@@ -91,7 +91,7 @@ if not exist "package.json" (
     goto error
 )
 
-start "" /b cmd /c "npm run dev > ..\frontend.log 2>&1"
+start "" /b cmd /c "npm run dev >> ..\frontend.log 2>&1"
 echo       Frontend starting, waiting 5s ...
 timeout /t 5 /nobreak >nul
 
