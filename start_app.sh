@@ -13,7 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # 检查并关闭占用端口8888的进程（后端）
-echo "[1/4] 检查后端端口 8888..."
+echo "[1/5] 检查后端端口 8888..."
 PID_8888=$(lsof -ti:8888 2>/dev/null)
 if [ -n "$PID_8888" ]; then
     echo "     发现进程 $PID_8888 占用端口 8888，正在关闭..."
@@ -23,7 +23,7 @@ fi
 echo "     端口 8888 已清理"
 
 # 检查并关闭占用端口5173的进程（前端）
-echo "[2/4] 检查前端端口 5173..."
+echo "[2/5] 检查前端端口 5173..."
 PID_5173=$(lsof -ti:5173 2>/dev/null)
 if [ -n "$PID_5173" ]; then
     echo "     发现进程 $PID_5173 占用端口 5173，正在关闭..."
@@ -35,8 +35,17 @@ echo "     端口 5173 已清理"
 # 等待端口释放
 sleep 1
 
+# 生成缩略图
+echo "[3/5] 生成文章缩略图..."
+if [ -f "$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py" ]; then
+    python3 "$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py" > /dev/null 2>&1
+    echo "     缩略图生成完成"
+else
+    echo "     跳过缩略图生成（脚本不存在）"
+fi
+
 # 启动C++后端
-echo "[3/4] 启动后端服务..."
+echo "[4/5] 启动后端服务..."
 
 # 先自动编译
 echo "     正在编译C++后端..."
@@ -82,7 +91,7 @@ if ! lsof -ti:8888 >/dev/null 2>&1; then
 fi
 
 # 启动前端
-echo "[4/4] 启动前端服务..."
+echo "[5/5] 启动前端服务..."
 cd "$SCRIPT_DIR/frontend"
 if [ ! -f "package.json" ]; then
     echo "[错误] 未找到前端配置文件 frontend/package.json"

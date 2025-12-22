@@ -8,11 +8,36 @@
 #include "core/logger.h"
 #include "models/MathTraining.h"
 #include <drogon/HttpResponse.h>
+#include <string>
+#include <algorithm>
+#include <ctime>
 
 using namespace drogon;
 
 namespace woniunote {
 namespace controllers {
+
+// Convert ISO 8601 datetime (e.g., "2025-12-14T11:57:38.713Z") to MySQL format
+static std::string isoToMysqlDatetime(const std::string& isoTime) {
+    if (isoTime.empty()) return "";
+    std::string result = isoTime;
+    // Replace 'T' with space
+    size_t tPos = result.find('T');
+    if (tPos != std::string::npos) {
+        result[tPos] = ' ';
+    }
+    // Remove 'Z' suffix and milliseconds
+    size_t zPos = result.find('Z');
+    if (zPos != std::string::npos) {
+        result = result.substr(0, zPos);
+    }
+    // Remove milliseconds if present (after the dot)
+    size_t dotPos = result.find('.');
+    if (dotPos != std::string::npos) {
+        result = result.substr(0, dotPos);
+    }
+    return result;
+}
 
 void MathTrainingController::createRecord(const HttpRequestPtr& req,
                                           std::function<void(const HttpResponsePtr&)>&& callback)
@@ -34,8 +59,8 @@ void MathTrainingController::createRecord(const HttpRequestPtr& req,
     int correctCount = (*json)["correct_count"].asInt();
     int wrongCount = (*json)["wrong_count"].asInt();
     double accuracy = (*json)["accuracy"].asDouble();
-    std::string startTime = (*json)["start_time"].asString();
-    std::string endTime = (*json)["end_time"].asString();
+    std::string startTime = isoToMysqlDatetime((*json)["start_time"].asString());
+    std::string endTime = isoToMysqlDatetime((*json)["end_time"].asString());
     int durationSeconds = (*json)["duration_seconds"].asInt();
 
     auto dbClient = Database::getClient();
@@ -119,10 +144,12 @@ void MathTrainingController::getRecords(const HttpRequestPtr& req,
     }
     dataSql += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
 
+    int64_t userIdInt = std::stoll(userId);
+    
     // First get total count
     dbClient->execSqlAsync(
         countSql,
-        [callback, dataSql, dbClient, page, pageSize, offset](const orm::Result& countResult) {
+        [callback, dataSql, dbClient, page, pageSize, offset, userIdInt](const orm::Result& countResult) {
             int total = countResult[0]["total"].as<int>();
 
             dbClient->execSqlAsync(
@@ -150,7 +177,7 @@ void MathTrainingController::getRecords(const HttpRequestPtr& req,
                     ret["message"] = "数据库错误";
                     callback(HttpResponse::newHttpJsonResponse(ret));
                 },
-                pageSize, offset
+                userIdInt, pageSize, offset
             );
         },
         [callback](const orm::DrogonDbException& e) {
@@ -160,7 +187,7 @@ void MathTrainingController::getRecords(const HttpRequestPtr& req,
             ret["message"] = "数据库错误";
             callback(HttpResponse::newHttpJsonResponse(ret));
         },
-        std::stoll(userId)
+        userIdInt
     );
 }
 

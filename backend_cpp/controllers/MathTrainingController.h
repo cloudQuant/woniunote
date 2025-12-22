@@ -18,23 +18,23 @@ public:
     ADD_METHOD_TO(MathTrainingController::createRecord,
                   "/api/math-training/records",
                   drogon::Post,
-                  "woniunote::filters::AuthFilter");
+                  "woniunote::AuthFilter");
     ADD_METHOD_TO(MathTrainingController::getRecords,
                   "/api/math-training/records",
                   drogon::Get,
-                  "woniunote::filters::AuthFilter");
+                  "woniunote::AuthFilter");
     ADD_METHOD_TO(MathTrainingController::getRecordDetail,
                   "/api/math-training/records/{record_id}",
                   drogon::Get,
-                  "woniunote::filters::AuthFilter");
+                  "woniunote::AuthFilter");
     ADD_METHOD_TO(MathTrainingController::getWrongAnswers,
                   "/api/math-training/wrong-answers",
                   drogon::Get,
-                  "woniunote::filters::AuthFilter");
+                  "woniunote::AuthFilter");
     ADD_METHOD_TO(MathTrainingController::getSummary,
                   "/api/math-training/summary",
                   drogon::Get,
-                  "woniunote::filters::AuthFilter");
+                  "woniunote::AuthFilter");
     METHOD_LIST_END
 
     void createRecord(const drogon::HttpRequestPtr& req,

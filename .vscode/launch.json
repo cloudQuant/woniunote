@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/yunjinqi/Documents/woniunote/backend_cpp/controllers",
+      "program": "/Users/yunjinqi/Documents/woniunote/backend_cpp/controllers/build/Debug/outDebug"
+    }
+  ]
+}
