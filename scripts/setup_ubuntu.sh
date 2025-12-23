@@ -104,21 +104,46 @@ apt-get install -y \
     libbrotli-dev \
     libossp-uuid-dev
 
+# 本地源码包目录 (优先使用本地包，避免联网下载)
+REPOS_DIR="$PROJECT_DIR/repos"
+
+# 辅助函数: 解压源码包 (支持 .tar.gz 和 .tar)
+extract_package() {
+    local file="$1"
+    if [[ "$file" == *.tar.gz ]]; then
+        tar -xzf "$file"
+    elif [[ "$file" == *.tar ]]; then
+        tar -xf "$file"
+    fi
+}
+
 # 编译安装 c-ares (Ubuntu 20.04 自带版本太旧，不支持 ares_getaddrinfo)
-CARES_VERSION="1.27.0"
+CARES_VERSION="1.34.6"
 if ! pkg-config --atleast-version=1.16.0 libcares 2>/dev/null; then
     log_info "编译 c-ares $CARES_VERSION (系统版本太旧)..."
     cd /tmp
     rm -rf c-ares-*
     
-    wget -q https://github.com/c-ares/c-ares/releases/download/v${CARES_VERSION}/c-ares-${CARES_VERSION}.tar.gz -O c-ares.tar.gz || {
-        log_error "无法下载 c-ares，请手动下载"
-        log_error "下载地址: https://github.com/c-ares/c-ares/releases/download/v${CARES_VERSION}/c-ares-${CARES_VERSION}.tar.gz"
-        exit 1
-    }
-    tar -xzf c-ares.tar.gz
-    cd c-ares-${CARES_VERSION}
+    # 优先使用本地源码包
+    if [ -f "$REPOS_DIR/c-ares-${CARES_VERSION}.tar.gz" ]; then
+        log_info "使用本地源码包: repos/c-ares-${CARES_VERSION}.tar.gz"
+        cp "$REPOS_DIR/c-ares-${CARES_VERSION}.tar.gz" .
+        tar -xzf c-ares-${CARES_VERSION}.tar.gz
+    elif [ -f "$REPOS_DIR/c-ares-${CARES_VERSION}.tar" ]; then
+        log_info "使用本地源码包: repos/c-ares-${CARES_VERSION}.tar"
+        cp "$REPOS_DIR/c-ares-${CARES_VERSION}.tar" .
+        tar -xf c-ares-${CARES_VERSION}.tar
+    else
+        log_info "尝试从网络下载 c-ares..."
+        wget -q https://github.com/c-ares/c-ares/releases/download/v${CARES_VERSION}/c-ares-${CARES_VERSION}.tar.gz || {
+            log_error "无法下载 c-ares，请手动下载到 repos 目录"
+            log_error "下载地址: https://github.com/c-ares/c-ares/releases/download/v${CARES_VERSION}/c-ares-${CARES_VERSION}.tar.gz"
+            exit 1
+        }
+        tar -xzf c-ares-${CARES_VERSION}.tar.gz
+    fi
     
+    cd c-ares-${CARES_VERSION}
     mkdir -p build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
     make -j$(nproc)
@@ -126,61 +151,99 @@ if ! pkg-config --atleast-version=1.16.0 libcares 2>/dev/null; then
     ldconfig
     
     cd /tmp
-    rm -rf c-ares-* c-ares.tar.gz
+    rm -rf c-ares-*
     log_info "c-ares 安装完成"
 else
     log_info "c-ares 版本满足要求"
 fi
 
 # 安装 jwt-cpp (header-only)
+JWT_CPP_VERSION="0.7.0"
 JWT_CPP_DIR="/usr/local/include/jwt-cpp"
 if [ ! -d "$JWT_CPP_DIR" ]; then
-    log_info "安装 jwt-cpp..."
+    log_info "安装 jwt-cpp $JWT_CPP_VERSION..."
     cd /tmp
-    wget -q https://github.com/Thalhammer/jwt-cpp/archive/refs/tags/v0.7.0.tar.gz -O jwt-cpp.tar.gz || {
-        log_warn "无法下载 jwt-cpp，尝试从项目目录复制..."
-    }
-    if [ -f jwt-cpp.tar.gz ]; then
-        tar -xzf jwt-cpp.tar.gz
-        cp -r jwt-cpp-0.7.0/include/jwt-cpp /usr/local/include/
-        rm -rf jwt-cpp.tar.gz jwt-cpp-0.7.0
+    rm -rf jwt-cpp-*
+    
+    # 优先使用本地源码包
+    if [ -f "$REPOS_DIR/jwt-cpp-${JWT_CPP_VERSION}.tar.gz" ]; then
+        log_info "使用本地源码包: repos/jwt-cpp-${JWT_CPP_VERSION}.tar.gz"
+        cp "$REPOS_DIR/jwt-cpp-${JWT_CPP_VERSION}.tar.gz" .
+        tar -xzf jwt-cpp-${JWT_CPP_VERSION}.tar.gz
+    elif [ -f "$REPOS_DIR/jwt-cpp-${JWT_CPP_VERSION}.tar" ]; then
+        log_info "使用本地源码包: repos/jwt-cpp-${JWT_CPP_VERSION}.tar"
+        cp "$REPOS_DIR/jwt-cpp-${JWT_CPP_VERSION}.tar" .
+        tar -xf jwt-cpp-${JWT_CPP_VERSION}.tar
+    else
+        log_info "尝试从网络下载 jwt-cpp..."
+        wget -q https://github.com/Thalhammer/jwt-cpp/archive/refs/tags/v${JWT_CPP_VERSION}.tar.gz -O jwt-cpp-${JWT_CPP_VERSION}.tar.gz || {
+            log_warn "无法下载 jwt-cpp"
+            exit 1
+        }
+        tar -xzf jwt-cpp-${JWT_CPP_VERSION}.tar.gz
     fi
+    
+    cp -r jwt-cpp-${JWT_CPP_VERSION}/include/jwt-cpp /usr/local/include/
+    rm -rf jwt-cpp-*
+    log_info "jwt-cpp 安装完成"
 else
     log_info "jwt-cpp 已安装"
 fi
 
 # 编译安装 Drogon
-DROGON_VERSION="v1.9.8"
+DROGON_VERSION="1.9.8"
+TRANTOR_VERSION="1.5.21"
 DROGON_DIR="/tmp/drogon"
+
 if ! pkg-config --exists drogon 2>/dev/null; then
-    log_info "编译 Drogon $DROGON_VERSION ..."
+    log_info "编译 Drogon v$DROGON_VERSION ..."
     cd /tmp
     rm -rf drogon drogon-*
     
-    # 尝试下载，如果失败则提示用户手动下载
-    wget -q https://github.com/drogonframework/drogon/archive/refs/tags/$DROGON_VERSION.tar.gz -O drogon.tar.gz || {
-        log_error "无法下载 Drogon，请手动下载并放到 /tmp/drogon 目录"
-        log_error "下载地址: https://github.com/drogonframework/drogon/archive/refs/tags/$DROGON_VERSION.tar.gz"
-        exit 1
-    }
-    tar -xzf drogon.tar.gz
-    mv drogon-${DROGON_VERSION#v} drogon
-    rm -f drogon.tar.gz
+    # 优先使用本地源码包
+    if [ -f "$REPOS_DIR/drogon-${DROGON_VERSION}.tar.gz" ]; then
+        log_info "使用本地源码包: repos/drogon-${DROGON_VERSION}.tar.gz"
+        cp "$REPOS_DIR/drogon-${DROGON_VERSION}.tar.gz" .
+        tar -xzf drogon-${DROGON_VERSION}.tar.gz
+    elif [ -f "$REPOS_DIR/drogon-${DROGON_VERSION}.tar" ]; then
+        log_info "使用本地源码包: repos/drogon-${DROGON_VERSION}.tar"
+        cp "$REPOS_DIR/drogon-${DROGON_VERSION}.tar" .
+        tar -xf drogon-${DROGON_VERSION}.tar
+    else
+        log_info "尝试从网络下载 Drogon..."
+        wget -q https://github.com/drogonframework/drogon/archive/refs/tags/v${DROGON_VERSION}.tar.gz -O drogon-${DROGON_VERSION}.tar.gz || {
+            log_error "无法下载 Drogon，请手动下载到 repos 目录"
+            log_error "下载地址: https://github.com/drogonframework/drogon/archive/refs/tags/v${DROGON_VERSION}.tar.gz"
+            exit 1
+        }
+        tar -xzf drogon-${DROGON_VERSION}.tar.gz
+    fi
+    mv drogon-${DROGON_VERSION} drogon
     
     cd "$DROGON_DIR"
-    
-    # 手动下载 trantor (匹配的版本)
-    TRANTOR_VERSION="v1.5.21"
-    log_info "下载 Trantor $TRANTOR_VERSION ..."
-    wget -q https://github.com/an-tao/trantor/archive/refs/tags/$TRANTOR_VERSION.tar.gz -O trantor.tar.gz || {
-        log_error "无法下载 trantor"
-        log_error "下载地址: https://github.com/an-tao/trantor/archive/refs/tags/$TRANTOR_VERSION.tar.gz"
-        exit 1
-    }
-    tar -xzf trantor.tar.gz
     rm -rf trantor
-    mv trantor-${TRANTOR_VERSION#v} trantor
-    rm -f trantor.tar.gz
+    
+    # 优先使用本地 trantor 源码包
+    if [ -f "$REPOS_DIR/trantor-${TRANTOR_VERSION}.tar.gz" ]; then
+        log_info "使用本地源码包: repos/trantor-${TRANTOR_VERSION}.tar.gz"
+        cp "$REPOS_DIR/trantor-${TRANTOR_VERSION}.tar.gz" .
+        tar -xzf trantor-${TRANTOR_VERSION}.tar.gz
+        mv trantor-${TRANTOR_VERSION} trantor
+    elif [ -f "$REPOS_DIR/trantor-${TRANTOR_VERSION}.tar" ]; then
+        log_info "使用本地源码包: repos/trantor-${TRANTOR_VERSION}.tar"
+        cp "$REPOS_DIR/trantor-${TRANTOR_VERSION}.tar" .
+        tar -xf trantor-${TRANTOR_VERSION}.tar
+        mv trantor-${TRANTOR_VERSION} trantor
+    else
+        log_info "尝试从网络下载 Trantor..."
+        wget -q https://github.com/an-tao/trantor/archive/refs/tags/v${TRANTOR_VERSION}.tar.gz -O trantor.tar.gz || {
+            log_error "无法下载 trantor，请手动下载到 repos 目录"
+            log_error "下载地址: https://github.com/an-tao/trantor/archive/refs/tags/v${TRANTOR_VERSION}.tar.gz"
+            exit 1
+        }
+        tar -xzf trantor.tar.gz
+        mv trantor-${TRANTOR_VERSION} trantor
+    fi
     
     mkdir -p build && cd build
     cmake .. \
