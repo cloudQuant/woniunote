@@ -137,8 +137,8 @@ docker-compose -f docker-compose.new.yml up -d
 
 # 访问
 # 前端: http://localhost
-# 后端 API: http://localhost:8888
-# API 文档: http://localhost:8888/docs
+# 后端 API: http://localhost:5173
+# API 文档: http://localhost:5173/docs
 ```
 
 ### 方式二：本地开发
@@ -163,9 +163,9 @@ cp .env.example .env
 # 编辑 .env 文件配置数据库连接等
 
 # 启动开发服务器
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8888
+uvicorn app.main:app --reload --host 0.0.0.0 --port 5173
 
-# API 文档: http://localhost:8888/docs
+# API 文档: http://localhost:5173/docs
 ```
 
 #### 2. 启动前端
@@ -179,7 +179,7 @@ npm install
 # 启动开发服务器
 npm run dev
 
-# 访问: http://localhost:5173
+# 访问: http://localhost:8888
 ```
 
 ### 方式三：传统一键启动
@@ -191,6 +191,88 @@ start_app.bat
 # Linux/Mac
 chmod +x start_app.sh && ./start_app.sh
 ```
+
+### 方式四：生产环境部署 (Ubuntu 22.04 + HTTPS)
+
+#### 1. 配置生产环境
+
+```bash
+# 运行环境配置脚本 (需要 root 权限)
+sudo bash scripts/setup_ubuntu.sh
+```
+
+此脚本会自动安装:
+- 系统依赖 (build-essential, cmake, nginx 等)
+- MySQL 8.0 和 Redis
+- Node.js 18.x
+- vcpkg 和 C++ 依赖包
+- 编译 C++ 后端
+
+#### 2. 配置数据库
+
+```bash
+# 登录 MySQL
+mysql -u root -p
+
+# 创建数据库和用户
+CREATE DATABASE woniunote CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'woniunote_user'@'localhost' IDENTIFIED BY 'your_secure_password';
+GRANT ALL PRIVILEGES ON woniunote.* TO 'woniunote_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+#### 3. 配置 SSL 证书 (HTTPS)
+
+```bash
+# 使用 Let's Encrypt 获取免费证书
+sudo apt install certbot python3-certbot-nginx
+sudo certbot certonly --nginx -d yunjinqi.top -d www.yunjinqi.top
+```
+
+#### 4. 配置 Nginx
+
+```bash
+# 复制生产环境 Nginx 配置
+sudo cp configs/woniunote_nginx_prod.conf /etc/nginx/sites-available/woniunote
+sudo ln -s /etc/nginx/sites-available/woniunote /etc/nginx/sites-enabled/
+
+# 测试并重载配置
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+#### 5. 修改生产配置
+
+```bash
+# 编辑生产配置文件
+nano backend_cpp/config.prod.json
+# 修改数据库密码、JWT 密钥等敏感信息
+```
+
+#### 6. 构建前端
+
+```bash
+cd frontend
+npm install
+npm run build
+# 将 dist 目录部署到 /var/www/woniunote/frontend/dist
+sudo mkdir -p /var/www/woniunote/frontend
+sudo cp -r dist /var/www/woniunote/frontend/
+```
+
+#### 7. 启动服务
+
+```bash
+# 启动生产服务
+sudo bash scripts/start_prod.sh
+
+# 停止服务
+sudo bash scripts/stop_prod.sh
+
+# 重启服务
+sudo bash scripts/restart_prod.sh
+```
+
+**访问地址**: https://www.yunjinqi.top
 
 ---
 
@@ -281,8 +363,8 @@ pytest tests/ --cov=backend --cov-report=html
 
 后端启动后自动生成交互式 API 文档：
 
-- **Swagger UI**: http://localhost:8888/docs
-- **ReDoc**: http://localhost:8888/redoc
+- **Swagger UI**: http://localhost:5173/docs
+- **ReDoc**: http://localhost:5173/redoc
 
 ### 主要 API 端点
 
@@ -364,16 +446,16 @@ cd woniunote
 # Option 1: Docker (Recommended)
 docker-compose -f docker-compose.new.yml up -d
 # Frontend: http://localhost
-# API Docs: http://localhost:8888/docs
+# API Docs: http://localhost:5173/docs
 
 # Option 2: Local Development
 # Backend
 cd backend && pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8888
+uvicorn app.main:app --reload --port 5173
 
 # Frontend (new terminal)
 cd frontend && npm install && npm run dev
-# Visit: http://localhost:5173
+# Visit: http://localhost:8888
 ```
 
 ### Tech Stack

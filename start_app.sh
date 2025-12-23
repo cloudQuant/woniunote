@@ -12,18 +12,8 @@ echo ""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# 检查并关闭占用端口8888的进程（后端）
-echo "[1/5] 检查后端端口 8888..."
-PID_8888=$(lsof -ti:8888 2>/dev/null)
-if [ -n "$PID_8888" ]; then
-    echo "     发现进程 $PID_8888 占用端口 8888，正在关闭..."
-    kill -9 $PID_8888 2>/dev/null
-    sleep 1
-fi
-echo "     端口 8888 已清理"
-
-# 检查并关闭占用端口5173的进程（前端）
-echo "[2/5] 检查前端端口 5173..."
+# 检查并关闭占用端口5173的进程（后端）
+echo "[1/5] 检查后端端口 5173..."
 PID_5173=$(lsof -ti:5173 2>/dev/null)
 if [ -n "$PID_5173" ]; then
     echo "     发现进程 $PID_5173 占用端口 5173，正在关闭..."
@@ -31,6 +21,16 @@ if [ -n "$PID_5173" ]; then
     sleep 1
 fi
 echo "     端口 5173 已清理"
+
+# 检查并关闭占用端口8888的进程（前端）
+echo "[2/5] 检查前端端口 8888..."
+PID_8888=$(lsof -ti:8888 2>/dev/null)
+if [ -n "$PID_8888" ]; then
+    echo "     发现进程 $PID_8888 占用端口 8888，正在关闭..."
+    kill -9 $PID_8888 2>/dev/null
+    sleep 1
+fi
+echo "     端口 8888 已清理"
 
 # 等待端口释放
 sleep 1
@@ -86,7 +86,7 @@ echo "     后端服务已启动 (PID: $BACKEND_PID)"
 sleep 3
 
 # 检查后端是否成功启动
-if ! lsof -ti:8888 >/dev/null 2>&1; then
+if ! lsof -ti:5173 >/dev/null 2>&1; then
     echo "[警告] 后端可能未成功启动，请检查 backend.log"
 fi
 
@@ -106,7 +106,7 @@ echo "     前端服务已启动 (PID: $FRONTEND_PID)"
 sleep 5
 
 # 检查前端是否成功启动
-if ! lsof -ti:5173 >/dev/null 2>&1; then
+if ! lsof -ti:8888 >/dev/null 2>&1; then
     echo "[警告] 前端可能未成功启动，请检查 frontend.log"
 fi
 
@@ -114,8 +114,8 @@ echo ""
 echo "========================================"
 echo "  启动成功!"
 echo "========================================"
-echo "  后端地址: http://localhost:8888"
-echo "  前端地址: http://localhost:5173"
+echo "  后端地址: http://localhost:5173"
+echo "  前端地址: http://localhost:8888"
 echo "========================================"
 echo "  日志文件:"
 echo "  - backend.log  (后端日志)"

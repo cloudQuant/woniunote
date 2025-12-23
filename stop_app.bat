@@ -20,30 +20,30 @@ if not "%BACKEND_TYPE%"=="all" (
 echo ========================================
 echo.
 
-REM Stop backend on port 8888
-echo [1/2] Stop backend (port 8888)...
+REM Stop backend on port 5173
+echo [1/2] Stop backend (port 5173)...
 set "BACKEND_STOPPED=0"
-for /f "tokens=5" %%P in ('netstat -ano ^| findstr ":8888" ^| findstr "LISTENING"') do (
-    echo    Killing PID %%P on port 8888 ...
+for /f "tokens=5" %%P in ('netstat -ano ^| findstr ":5173" ^| findstr "LISTENING"') do (
+    echo    Killing PID %%P on port 5173 ...
     taskkill /F /PID %%P >nul 2>&1
     set "BACKEND_STOPPED=1"
 )
 if "!BACKEND_STOPPED!"=="0" (
-    echo    No backend running on port 8888.
+    echo    No backend running on port 5173.
 ) else (
     echo    Done.
 )
 
-REM Stop frontend on port 5173
-echo [2/2] Stop frontend (port 5173)...
+REM Stop frontend on port 8888
+echo [2/2] Stop frontend (port 8888)...
 set "FRONTEND_STOPPED=0"
-for /f "tokens=5" %%P in ('netstat -ano ^| findstr ":5173" ^| findstr "LISTENING"') do (
-    echo    Killing PID %%P on port 5173 ...
+for /f "tokens=5" %%P in ('netstat -ano ^| findstr ":8888" ^| findstr "LISTENING"') do (
+    echo    Killing PID %%P on port 8888 ...
     taskkill /F /PID %%P >nul 2>&1
     set "FRONTEND_STOPPED=1"
 )
 if "!FRONTEND_STOPPED!"=="0" (
-    echo    No frontend running on port 5173.
+    echo    No frontend running on port 8888.
 ) else (
     echo    Done.
 )
@@ -54,7 +54,7 @@ echo   All services stopped.
 echo ========================================
 echo.
 echo   Usage: stop_app.bat [python^|cpp^|all]
-echo   (Note: All backends use port 8888)
+echo   (Note: All backends use port 5173)
 echo ========================================
 
 endlocal

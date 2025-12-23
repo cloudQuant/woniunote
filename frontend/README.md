@@ -25,7 +25,7 @@ npm install
 npm run dev
 ```
 
-开发服务器将在 http://localhost:5173 启动
+开发服务器将在 http://localhost:8888 启动
 
 ## 构建
 

@@ -17,21 +17,21 @@ echo   Backend: %BACKEND_TYPE%
 echo ========================================
 echo.
 
-REM Step 1: kill processes on port 8888 (backend)
-echo [1/4] Check backend port 8888 ...
-for /f "tokens=5" %%P in ('netstat -ano 2^>nul ^| findstr ":8888" ^| findstr "LISTENING"') do (
-    echo       Found PID %%P on port 8888, killing ...
-    taskkill /F /PID %%P >nul 2>&1
-)
-echo       Port 8888 cleared.
-
-REM Step 2: kill processes on port 5173 (frontend)
-echo [2/4] Check frontend port 5173 ...
+REM Step 1: kill processes on port 5173 (backend)
+echo [1/4] Check backend port 5173 ...
 for /f "tokens=5" %%P in ('netstat -ano 2^>nul ^| findstr ":5173" ^| findstr "LISTENING"') do (
     echo       Found PID %%P on port 5173, killing ...
     taskkill /F /PID %%P >nul 2>&1
 )
 echo       Port 5173 cleared.
+
+REM Step 2: kill processes on port 8888 (frontend)
+echo [2/4] Check frontend port 8888 ...
+for /f "tokens=5" %%P in ('netstat -ano 2^>nul ^| findstr ":8888" ^| findstr "LISTENING"') do (
+    echo       Found PID %%P on port 8888, killing ...
+    taskkill /F /PID %%P >nul 2>&1
+)
+echo       Port 8888 cleared.
 
 REM small delay
 timeout /t 2 /nobreak >nul
@@ -71,14 +71,14 @@ if "%BACKEND_TYPE%"=="cpp" (
         goto error
     )
     
-    start "" /b cmd /c "uvicorn app.main:app --host 0.0.0.0 --port 8888 >> ..\backend.log 2>&1"
+    start "" /b cmd /c "uvicorn app.main:app --host 0.0.0.0 --port 5173 >> ..\backend.log 2>&1"
 )
 
 echo       Backend starting, waiting 3s ...
 timeout /t 3 /nobreak >nul
 
 REM verify backend
-netstat -ano ^| findstr ":8888" ^| findstr "LISTENING" >nul 2>&1
+netstat -ano ^| findstr ":5173" ^| findstr "LISTENING" >nul 2>&1
 if errorlevel 1 (
     echo [WARN] Backend may NOT be running, please check backend.log
 )
@@ -96,7 +96,7 @@ echo       Frontend starting, waiting 5s ...
 timeout /t 5 /nobreak >nul
 
 REM verify frontend
-netstat -ano ^| findstr ":5173" ^| findstr "LISTENING" >nul 2>&1
+netstat -ano ^| findstr ":8888" ^| findstr "LISTENING" >nul 2>&1
 if errorlevel 1 (
     echo [WARN] Frontend may NOT be running, please check frontend.log
 )
@@ -105,9 +105,9 @@ echo.
 echo ========================================
 echo   Start OK
 echo ========================================
-echo   Backend (%BACKEND_TYPE%): http://localhost:8888
-echo   Frontend: http://localhost:5173
-echo   Docs:    http://localhost:8888/docs
+echo   Backend (%BACKEND_TYPE%): http://localhost:5173
+echo   Frontend: http://localhost:8888
+echo   Docs:    http://localhost:5173/docs
 echo   Logs: backend.log / frontend.log
 echo ========================================
 echo.

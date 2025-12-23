@@ -46,13 +46,13 @@
             "use_spdlog": true,
             "log_path": "./logs",
             "logfile_base_name": "drogon",
-            "log_level": "DEBUG",
+            "log_level": "INFO",
             "log_size_limit": 134217728,
             "max_files": 30,
             "use_local_time": true
         },
         "run_as_daemon": false,
-        "relaunch_on_error": false,
+        "relaunch_on_error": true,
         "use_sendfile": true,
         "use_gzip": true,
         "use_brotli": true
@@ -65,11 +65,11 @@
             "port": 3306,
             "dbname": "woniunote",
             "user": "woniunote_user",
-            "passwd": "Woniunote_password1!",
-            "number_of_connections": 10,
+            "passwd": "YOUR_SECURE_PASSWORD_HERE",
+            "number_of_connections": 20,
             "is_fast": false,
             "client_encoding": "utf8mb4",
-            "timeout": -1.0
+            "timeout": 30.0
         }
     ],
     "redis_clients": [
@@ -79,21 +79,20 @@
             "port": 6379,
             "passwd": "",
             "db": 0,
-            "number_of_connections": 5,
+            "number_of_connections": 10,
             "is_fast": false,
-            "timeout": -1.0
+            "timeout": 10.0
         }
     ],
     "custom_config": {
         "app_name": "WoniuNote",
-        "jwt_secret": "jwt-secret-key-change-in-production",
+        "jwt_secret": "YOUR_SECURE_JWT_SECRET_CHANGE_IN_PRODUCTION",
         "jwt_algorithm": "HS256",
         "access_token_expire_minutes": 1440,
         "refresh_token_expire_days": 7,
         "cors_origins": [
-            "http://localhost:3000",
-            "http://localhost:8888",
-            "http://127.0.0.1:8888"
+            "https://www.yunjinqi.top",
+            "https://yunjinqi.top"
         ]
     }
 }
