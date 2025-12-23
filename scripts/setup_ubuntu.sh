@@ -102,8 +102,35 @@ apt-get install -y \
     libfmt-dev \
     libspdlog-dev \
     libbrotli-dev \
-    libc-ares-dev \
     libossp-uuid-dev
+
+# 编译安装 c-ares (Ubuntu 20.04 自带版本太旧，不支持 ares_getaddrinfo)
+CARES_VERSION="1.27.0"
+if ! pkg-config --atleast-version=1.16.0 libcares 2>/dev/null; then
+    log_info "编译 c-ares $CARES_VERSION (系统版本太旧)..."
+    cd /tmp
+    rm -rf c-ares-*
+    
+    wget -q https://github.com/c-ares/c-ares/releases/download/v${CARES_VERSION}/c-ares-${CARES_VERSION}.tar.gz -O c-ares.tar.gz || {
+        log_error "无法下载 c-ares，请手动下载"
+        log_error "下载地址: https://github.com/c-ares/c-ares/releases/download/v${CARES_VERSION}/c-ares-${CARES_VERSION}.tar.gz"
+        exit 1
+    }
+    tar -xzf c-ares.tar.gz
+    cd c-ares-${CARES_VERSION}
+    
+    mkdir -p build && cd build
+    cmake .. -DCMAKE_BUILD_TYPE=Release
+    make -j$(nproc)
+    make install
+    ldconfig
+    
+    cd /tmp
+    rm -rf c-ares-* c-ares.tar.gz
+    log_info "c-ares 安装完成"
+else
+    log_info "c-ares 版本满足要求"
+fi
 
 # 安装 jwt-cpp (header-only)
 JWT_CPP_DIR="/usr/local/include/jwt-cpp"
@@ -128,34 +155,32 @@ DROGON_DIR="/tmp/drogon"
 if ! pkg-config --exists drogon 2>/dev/null; then
     log_info "编译 Drogon $DROGON_VERSION ..."
     cd /tmp
+    rm -rf drogon drogon-*
     
     # 尝试下载，如果失败则提示用户手动下载
-    if [ ! -d "$DROGON_DIR" ]; then
-        wget -q https://github.com/drogonframework/drogon/archive/refs/tags/$DROGON_VERSION.tar.gz -O drogon.tar.gz || {
-            log_error "无法下载 Drogon，请手动下载并放到 /tmp/drogon 目录"
-            log_error "下载地址: https://github.com/drogonframework/drogon/archive/refs/tags/$DROGON_VERSION.tar.gz"
-            exit 1
-        }
-        tar -xzf drogon.tar.gz
-        mv drogon-${DROGON_VERSION#v} drogon
-        rm -f drogon.tar.gz
-    fi
+    wget -q https://github.com/drogonframework/drogon/archive/refs/tags/$DROGON_VERSION.tar.gz -O drogon.tar.gz || {
+        log_error "无法下载 Drogon，请手动下载并放到 /tmp/drogon 目录"
+        log_error "下载地址: https://github.com/drogonframework/drogon/archive/refs/tags/$DROGON_VERSION.tar.gz"
+        exit 1
+    }
+    tar -xzf drogon.tar.gz
+    mv drogon-${DROGON_VERSION#v} drogon
+    rm -f drogon.tar.gz
     
     cd "$DROGON_DIR"
     
-    # 初始化子模块 (trantor)
-    if [ ! -f "trantor/CMakeLists.txt" ]; then
-        # 手动下载 trantor
-        TRANTOR_VERSION="v1.5.21"
-        wget -q https://github.com/an-tao/trantor/archive/refs/tags/$TRANTOR_VERSION.tar.gz -O trantor.tar.gz || {
-            log_error "无法下载 trantor"
-            exit 1
-        }
-        tar -xzf trantor.tar.gz
-        rm -rf trantor
-        mv trantor-${TRANTOR_VERSION#v} trantor
-        rm -f trantor.tar.gz
-    fi
+    # 手动下载 trantor (匹配的版本)
+    TRANTOR_VERSION="v1.5.21"
+    log_info "下载 Trantor $TRANTOR_VERSION ..."
+    wget -q https://github.com/an-tao/trantor/archive/refs/tags/$TRANTOR_VERSION.tar.gz -O trantor.tar.gz || {
+        log_error "无法下载 trantor"
+        log_error "下载地址: https://github.com/an-tao/trantor/archive/refs/tags/$TRANTOR_VERSION.tar.gz"
+        exit 1
+    }
+    tar -xzf trantor.tar.gz
+    rm -rf trantor
+    mv trantor-${TRANTOR_VERSION#v} trantor
+    rm -f trantor.tar.gz
     
     mkdir -p build && cd build
     cmake .. \
