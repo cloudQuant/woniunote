@@ -17,6 +17,8 @@ StandardError=append:/var/www/woniunote/logs/backend_error.log
 # 环境变量
 Environment=LANG=en_US.UTF-8
 Environment=LC_ALL=en_US.UTF-8
+# 清除 anaconda 的库路径，使用系统库避免 GLIBCXX 版本冲突
+Environment=LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/local/lib
 
 # 资源限制
 LimitNOFILE=65536

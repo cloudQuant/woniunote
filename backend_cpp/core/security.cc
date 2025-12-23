@@ -12,11 +12,14 @@
 #include "config.h"
 #include "logger.h"
 
-// OpenSSL for MD5 (legacy compatibility) and bcrypt
+// OpenSSL for MD5 (legacy compatibility)
 #include <openssl/md5.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+
+// System crypt for bcrypt support
+#include <crypt.h>
 
 // jwt-cpp header
 #include <jwt-cpp/jwt.h>
@@ -65,61 +68,43 @@ std::string generateSalt(int workFactor) {
     return oss.str();
 }
 
-// Simple bcrypt-compatible hash using PBKDF2 with SHA-256
-// Note: This is a simplified implementation. For production,
-// use a proper bcrypt library like libbcrypt.
+// Use system crypt() for bcrypt - it properly supports $2b$ format
 std::string bcryptHash(const std::string& password, const std::string& salt) {
-    // Extract work factor and raw salt from full salt string
-    // Format: $2b$XX$<22-char-salt>
-    if (salt.length() < 29 || salt.substr(0, 4) != "$2b$") {
+    // Use crypt_r for thread safety
+    struct crypt_data data;
+    memset(&data, 0, sizeof(data));
+    
+    char* result = crypt_r(password.c_str(), salt.c_str(), &data);
+    if (result == nullptr) {
         return "";
     }
-    
-    int workFactor = std::stoi(salt.substr(4, 2));
-    std::string rawSalt = salt.substr(7, 22);
-    
-    // Number of iterations = 2^workFactor
-    int iterations = 1 << workFactor;
-    
-    // Use PBKDF2-HMAC-SHA256 as bcrypt substitute
-    unsigned char derivedKey[32];
-    PKCS5_PBKDF2_HMAC(
-        password.c_str(), password.length(),
-        reinterpret_cast<const unsigned char*>(rawSalt.c_str()), rawSalt.length(),
-        iterations,
-        EVP_sha256(),
-        32, derivedKey
-    );
-    
-    // Encode to base64-like string (31 chars for bcrypt hash)
-    std::string encoded;
-    encoded.reserve(31);
-    
-    for (int i = 0; i < 24; i += 3) {
-        unsigned int val = derivedKey[i] << 16;
-        if (i + 1 < 24) val |= derivedKey[i + 1] << 8;
-        if (i + 2 < 24) val |= derivedKey[i + 2];
-        
-        encoded += BCRYPT_BASE64[(val >> 18) & 0x3f];
-        encoded += BCRYPT_BASE64[(val >> 12) & 0x3f];
-        if (i + 1 < 24) encoded += BCRYPT_BASE64[(val >> 6) & 0x3f];
-        if (i + 2 < 24) encoded += BCRYPT_BASE64[val & 0x3f];
-    }
-    
-    // Return full hash: salt + hash
-    return salt + encoded;
+    return std::string(result);
 }
 
 bool bcryptVerify(const std::string& password, const std::string& hash) {
-    if (hash.length() < 60 || hash.substr(0, 4) != "$2b$") {
+    if (hash.length() < 60) {
         return false;
     }
     
-    // Extract salt (first 29 chars) and recompute hash
-    std::string salt = hash.substr(0, 29);
-    std::string computedHash = bcryptHash(password, salt);
+    // Verify using system crypt which supports bcrypt ($2a$, $2b$, $2y$)
+    struct crypt_data data;
+    memset(&data, 0, sizeof(data));
     
-    return computedHash == hash;
+    char* result = crypt_r(password.c_str(), hash.c_str(), &data);
+    if (result == nullptr) {
+        return false;
+    }
+    
+    // Constant-time comparison to prevent timing attacks
+    if (strlen(result) != hash.length()) {
+        return false;
+    }
+    
+    int diff = 0;
+    for (size_t i = 0; i < hash.length(); ++i) {
+        diff |= result[i] ^ hash[i];
+    }
+    return diff == 0;
 }
 
 } // anonymous namespace
@@ -136,18 +121,28 @@ std::string Security::hashPassword(const std::string& password)
 
 bool Security::verifyPassword(const std::string& password, const std::string& hash)
 {
+    Logger::debug("[Security] verifyPassword called", {
+        {"hash_length", std::to_string(hash.length())},
+        {"hash_prefix", hash.length() >= 4 ? hash.substr(0, 4) : hash}
+    });
+    
     // Check for MD5 format (32 hex chars) - legacy compatibility
     if (isMd5Password(hash)) {
+        Logger::debug("[Security] Using MD5 verification");
         return getMd5Hash(password) == hash;
     }
     
-    // Check for bcrypt format ($2b$...)
-    if (hash.length() >= 60 && hash.substr(0, 4) == "$2b$") {
+    // Check for bcrypt format ($2a$, $2b$, $2y$)
+    if (hash.length() >= 60 && hash.substr(0, 2) == "$2") {
+        Logger::debug("[Security] Using bcrypt verification");
         return bcryptVerify(password, hash);
     }
     
     // Unknown format
-    Logger::warning("Unknown password hash format");
+    Logger::warning("Unknown password hash format", {
+        {"hash_length", std::to_string(hash.length())},
+        {"hash_prefix", hash.length() >= 10 ? hash.substr(0, 10) : hash}
+    });
     return false;
 }
 

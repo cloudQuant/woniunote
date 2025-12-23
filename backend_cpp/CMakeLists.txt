@@ -15,10 +15,9 @@ endif()
 
 # Find Drogon package
 if(USE_SYSTEM_LIBS)
-    # 系统库模式: 使用 pkg-config 查找 Drogon
+    # 系统库模式: 使用 CMake find_package 查找 Drogon
+    find_package(Drogon CONFIG REQUIRED)
     find_package(PkgConfig REQUIRED)
-    pkg_check_modules(DROGON REQUIRED drogon)
-    pkg_check_modules(TRANTOR REQUIRED trantor)
     pkg_check_modules(JSONCPP REQUIRED jsoncpp)
     
     # OpenSSL
@@ -94,23 +93,18 @@ add_executable(${PROJECT_NAME}
 if(USE_SYSTEM_LIBS)
     # 系统库模式
     target_include_directories(${PROJECT_NAME} PRIVATE
-        ${DROGON_INCLUDE_DIRS}
-        ${TRANTOR_INCLUDE_DIRS}
         ${JSONCPP_INCLUDE_DIRS}
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE
-        ${DROGON_LIBRARIES}
-        ${TRANTOR_LIBRARIES}
+        Drogon::Drogon
         ${JSONCPP_LIBRARIES}
         OpenSSL::SSL
         OpenSSL::Crypto
         spdlog::spdlog
         fmt::fmt
+        crypt
         pthread
         dl
-    )
-    target_compile_options(${PROJECT_NAME} PRIVATE
-        ${DROGON_CFLAGS_OTHER}
     )
 else()
     # vcpkg 模式
@@ -130,6 +124,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/controllers
     ${CMAKE_CURRENT_SOURCE_DIR}/filters
     ${CMAKE_CURRENT_SOURCE_DIR}/models
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party
     ${JWT_CPP_INCLUDE_DIRS}
 )
 

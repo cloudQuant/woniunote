@@ -61,11 +61,12 @@ apt-get install -y \
     python3-venv
 
 echo "[3/10] 安装 C++ 编译依赖..."
-# 注意: libmysqlclient-dev 和 libmariadb-dev 互相冲突，只能选择其一
-# 这里选择 libmysqlclient-dev (MySQL 官方客户端库)
+# 注意: 使用 MariaDB 客户端库 (支持 Drogon 需要的非阻塞 MySQL API)
+# libmysqlclient-dev 不支持 mysql_real_connect_start 等异步函数
 apt-get install -y \
     libssl-dev \
-    libmysqlclient-dev \
+    libmariadb-dev \
+    libmariadb-dev-compat \
     libhiredis-dev \
     libjsoncpp-dev \
     zlib1g-dev \
@@ -73,7 +74,13 @@ apt-get install -y \
     libsqlite3-dev \
     uuid-dev \
     libpq-dev \
-    libbrotli-dev
+    libbrotli-dev \
+    libcrypt-dev
+
+# 创建 mysqlclient_r 符号链接 (Drogon FindMySQL 需要)
+if [ ! -f /usr/lib/x86_64-linux-gnu/libmysqlclient_r.so ]; then
+    ln -sf /usr/lib/x86_64-linux-gnu/libmariadb.so /usr/lib/x86_64-linux-gnu/libmysqlclient_r.so
+fi
 
 echo "[4/10] 安装 MySQL..."
 apt-get install -y mysql-server mysql-client
@@ -102,7 +109,8 @@ apt-get install -y \
     libfmt-dev \
     libspdlog-dev \
     libbrotli-dev \
-    libossp-uuid-dev
+    libossp-uuid-dev \
+    libyaml-cpp-dev
 
 # 本地源码包目录 (优先使用本地包，避免联网下载)
 REPOS_DIR="$PROJECT_DIR/repos"
@@ -158,6 +166,7 @@ else
 fi
 
 # 安装 jwt-cpp (header-only)
+# 注: picojson 已包含在项目 backend_cpp/third_party/picojson/ 目录中
 JWT_CPP_VERSION="0.7.0"
 JWT_CPP_DIR="/usr/local/include/jwt-cpp"
 if [ ! -d "$JWT_CPP_DIR" ]; then
@@ -195,7 +204,8 @@ DROGON_VERSION="1.9.8"
 TRANTOR_VERSION="1.5.21"
 DROGON_DIR="/tmp/drogon"
 
-if ! pkg-config --exists drogon 2>/dev/null; then
+# Drogon 使用 CMake 配置文件，不是 pkg-config
+if [ ! -f "/usr/local/lib/cmake/Drogon/DrogonConfig.cmake" ]; then
     log_info "编译 Drogon v$DROGON_VERSION ..."
     cd /tmp
     rm -rf drogon drogon-*
@@ -294,9 +304,48 @@ n
 EOF
 
 echo "配置 Nginx..."
-cp "$PROJECT_DIR/configs/woniunote_nginx_prod.conf" /etc/nginx/sites-available/woniunote
+# 使用初始配置 (HTTP-only)，SSL 证书需要后续配置
+if [ -f "$PROJECT_DIR/configs/woniunote_nginx_initial.conf" ]; then
+    cp "$PROJECT_DIR/configs/woniunote_nginx_initial.conf" /etc/nginx/sites-available/woniunote
+else
+    cp "$PROJECT_DIR/configs/woniunote_nginx_prod.conf" /etc/nginx/sites-available/woniunote
+fi
 ln -sf /etc/nginx/sites-available/woniunote /etc/nginx/sites-enabled/
-nginx -t && systemctl reload nginx
+nginx -t && systemctl reload nginx || log_warn "Nginx 配置测试失败，请手动检查"
+
+echo ""
+echo "========================================"
+echo "  初始化数据库表..."
+echo "========================================"
+
+# 数据库初始化函数
+init_database_tables() {
+    local DB_NAME="woniunote"
+    local SQL_DIR="$PROJECT_DIR/scripts/sql"
+    
+    # 检查数据库是否存在
+    if ! mysql -e "USE $DB_NAME" 2>/dev/null; then
+        log_warn "数据库 $DB_NAME 不存在，跳过表初始化"
+        log_warn "请先创建数据库后再运行: bash $PROJECT_DIR/scripts/init_db.sh"
+        return 1
+    fi
+    
+    # 执行所有 SQL 文件
+    if [ -d "$SQL_DIR" ]; then
+        for sql_file in "$SQL_DIR"/*.sql; do
+            if [ -f "$sql_file" ]; then
+                log_info "执行 SQL 文件: $(basename $sql_file)"
+                mysql "$DB_NAME" < "$sql_file" 2>/dev/null || log_warn "SQL 文件执行失败: $sql_file"
+            fi
+        done
+        log_info "数据库表初始化完成"
+    else
+        log_warn "SQL 目录不存在: $SQL_DIR"
+    fi
+}
+
+# 尝试初始化数据库表 (如果数据库已存在)
+init_database_tables || true
 
 echo ""
 echo "========================================"
@@ -305,13 +354,16 @@ echo "========================================"
 echo ""
 echo "后续步骤:"
 echo ""
-echo "1. 配置 MySQL 数据库:"
+echo "1. 配置 MySQL 数据库 (如尚未配置):"
 echo "   sudo mysql"
 echo "   CREATE DATABASE woniunote CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 echo "   CREATE USER 'woniunote'@'localhost' IDENTIFIED BY 'your_password';"
 echo "   GRANT ALL PRIVILEGES ON woniunote.* TO 'woniunote'@'localhost';"
 echo "   FLUSH PRIVILEGES;"
 echo "   EXIT;"
+echo ""
+echo "   然后初始化数据库表:"
+echo "   sudo bash $PROJECT_DIR/scripts/init_db.sh"
 echo ""
 echo "2. 修改生产环境配置文件:"
 echo "   cp $DEPLOY_DIR/backend_cpp/config.json $DEPLOY_DIR/backend_cpp/config.prod.json"
