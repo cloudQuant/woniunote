@@ -298,6 +298,21 @@ rsync -av --exclude='.git' \
           --exclude='*.pyc' \
           "$PROJECT_DIR/" "$DEPLOY_DIR/"
 
+# 安装前端依赖
+log_info "安装前端依赖..."
+cd "$DEPLOY_DIR/frontend"
+if [ -f "package.json" ]; then
+    npm install --production=false 2>&1 | tail -5
+    if [ $? -eq 0 ]; then
+        log_info "前端依赖安装完成"
+    else
+        log_warn "前端依赖安装可能有问题，请检查"
+    fi
+else
+    log_warn "未找到 package.json，跳过前端依赖安装"
+fi
+cd "$PROJECT_DIR"
+
 # 安装 systemd 服务
 bash "$PROJECT_DIR/scripts/install_service.sh" << EOF
 n
