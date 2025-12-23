@@ -4,6 +4,9 @@ project(woniunote_backend CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 选项: 使用系统库而不是 vcpkg
+option(USE_SYSTEM_LIBS "使用系统安装的库而不是 vcpkg" OFF)
+
 # MSVC specific: Use UTF-8 for source and execution charset
 if(MSVC)
     add_compile_options(/utf-8)
@@ -11,16 +14,32 @@ if(MSVC)
 endif()
 
 # Find Drogon package
-find_package(Drogon CONFIG REQUIRED)
-
-# Find additional packages
-find_package(OpenSSL REQUIRED)
-find_package(jsoncpp CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
-
-# jwt-cpp is header-only, just need include path
-# Install via: vcpkg install jwt-cpp
-find_path(JWT_CPP_INCLUDE_DIRS "jwt-cpp/jwt.h")
+if(USE_SYSTEM_LIBS)
+    # 系统库模式: 使用 pkg-config 查找 Drogon
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(DROGON REQUIRED drogon)
+    pkg_check_modules(TRANTOR REQUIRED trantor)
+    pkg_check_modules(JSONCPP REQUIRED jsoncpp)
+    
+    # OpenSSL
+    find_package(OpenSSL REQUIRED)
+    
+    # spdlog 和 fmt
+    find_package(spdlog REQUIRED)
+    find_package(fmt REQUIRED)
+    
+    # jwt-cpp header-only
+    find_path(JWT_CPP_INCLUDE_DIRS "jwt-cpp/jwt.h"
+        PATHS /usr/local/include /usr/include
+    )
+else()
+    # vcpkg 模式
+    find_package(Drogon CONFIG REQUIRED)
+    find_package(OpenSSL REQUIRED)
+    find_package(jsoncpp CONFIG REQUIRED)
+    find_package(spdlog CONFIG REQUIRED)
+    find_path(JWT_CPP_INCLUDE_DIRS "jwt-cpp/jwt.h")
+endif()
 
 # Source files
 set(CORE_SOURCES
@@ -72,13 +91,37 @@ add_executable(${PROJECT_NAME}
 )
 
 # Link libraries
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    Drogon::Drogon
-    OpenSSL::SSL
-    OpenSSL::Crypto
-    JsonCpp::JsonCpp
-    spdlog::spdlog_header_only
-)
+if(USE_SYSTEM_LIBS)
+    # 系统库模式
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        ${DROGON_INCLUDE_DIRS}
+        ${TRANTOR_INCLUDE_DIRS}
+        ${JSONCPP_INCLUDE_DIRS}
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        ${DROGON_LIBRARIES}
+        ${TRANTOR_LIBRARIES}
+        ${JSONCPP_LIBRARIES}
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        spdlog::spdlog
+        fmt::fmt
+        pthread
+        dl
+    )
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        ${DROGON_CFLAGS_OTHER}
+    )
+else()
+    # vcpkg 模式
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        Drogon::Drogon
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        JsonCpp::JsonCpp
+        spdlog::spdlog_header_only
+    )
+endif()
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE

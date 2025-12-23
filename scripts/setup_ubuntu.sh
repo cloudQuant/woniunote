@@ -35,11 +35,11 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo "[1/12] 更新系统包..."
+echo "[1/10] 更新系统包..."
 apt-get update -y
 apt-get upgrade -y
 
-echo "[2/12] 安装基础依赖..."
+echo "[2/10] 安装基础依赖..."
 apt-get install -y \
     build-essential \
     cmake \
@@ -60,7 +60,7 @@ apt-get install -y \
     python3-pip \
     python3-venv
 
-echo "[3/12] 安装 C++ 编译依赖..."
+echo "[3/10] 安装 C++ 编译依赖..."
 # 注意: libmysqlclient-dev 和 libmariadb-dev 互相冲突，只能选择其一
 # 这里选择 libmysqlclient-dev (MySQL 官方客户端库)
 apt-get install -y \
@@ -75,72 +75,120 @@ apt-get install -y \
     libpq-dev \
     libbrotli-dev
 
-echo "[4/12] 安装 MySQL..."
+echo "[4/10] 安装 MySQL..."
 apt-get install -y mysql-server mysql-client
 systemctl enable mysql
 systemctl start mysql
 
-echo "[5/12] 安装 Redis..."
+echo "[5/10] 安装 Redis..."
 apt-get install -y redis-server
 systemctl enable redis-server
 systemctl start redis-server
 
-echo "[6/12] 安装 Nginx..."
+echo "[6/10] 安装 Nginx..."
 apt-get install -y nginx
 systemctl enable nginx
 
-echo "[7/12] 安装 Node.js 18.x..."
-curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+echo "[7/10] 安装 Node.js 22.x (LTS)..."
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 apt-get install -y nodejs
+log_info "Node.js 版本: $(node -v)"
+log_info "npm 版本: $(npm -v)"
 
-echo "[8/12] 安装 vcpkg..."
-VCPKG_DIR="$HOME/vcpkg"
-if [ ! -d "$VCPKG_DIR" ]; then
-    git clone https://github.com/microsoft/vcpkg.git "$VCPKG_DIR"
-    cd "$VCPKG_DIR"
-    ./bootstrap-vcpkg.sh
+echo "[8/10] 安装 Drogon 框架及 C++ 依赖 (从源码编译)..."
+# 安装 Drogon 编译所需的额外依赖
+apt-get install -y \
+    libjsoncpp-dev \
+    libfmt-dev \
+    libspdlog-dev \
+    libbrotli-dev \
+    libc-ares-dev \
+    libossp-uuid-dev
+
+# 安装 jwt-cpp (header-only)
+JWT_CPP_DIR="/usr/local/include/jwt-cpp"
+if [ ! -d "$JWT_CPP_DIR" ]; then
+    log_info "安装 jwt-cpp..."
+    cd /tmp
+    wget -q https://github.com/Thalhammer/jwt-cpp/archive/refs/tags/v0.7.0.tar.gz -O jwt-cpp.tar.gz || {
+        log_warn "无法下载 jwt-cpp，尝试从项目目录复制..."
+    }
+    if [ -f jwt-cpp.tar.gz ]; then
+        tar -xzf jwt-cpp.tar.gz
+        cp -r jwt-cpp-0.7.0/include/jwt-cpp /usr/local/include/
+        rm -rf jwt-cpp.tar.gz jwt-cpp-0.7.0
+    fi
 else
-    echo "     vcpkg 已存在，跳过安装"
-    cd "$VCPKG_DIR"
-    git pull
-    ./bootstrap-vcpkg.sh
+    log_info "jwt-cpp 已安装"
 fi
 
-# 添加 vcpkg 到 PATH
-echo 'export VCPKG_ROOT="$HOME/vcpkg"' >> ~/.bashrc
-echo 'export PATH="$VCPKG_ROOT:$PATH"' >> ~/.bashrc
-export VCPKG_ROOT="$HOME/vcpkg"
-export PATH="$VCPKG_ROOT:$PATH"
+# 编译安装 Drogon
+DROGON_VERSION="v1.9.8"
+DROGON_DIR="/tmp/drogon"
+if ! pkg-config --exists drogon 2>/dev/null; then
+    log_info "编译 Drogon $DROGON_VERSION ..."
+    cd /tmp
+    
+    # 尝试下载，如果失败则提示用户手动下载
+    if [ ! -d "$DROGON_DIR" ]; then
+        wget -q https://github.com/drogonframework/drogon/archive/refs/tags/$DROGON_VERSION.tar.gz -O drogon.tar.gz || {
+            log_error "无法下载 Drogon，请手动下载并放到 /tmp/drogon 目录"
+            log_error "下载地址: https://github.com/drogonframework/drogon/archive/refs/tags/$DROGON_VERSION.tar.gz"
+            exit 1
+        }
+        tar -xzf drogon.tar.gz
+        mv drogon-${DROGON_VERSION#v} drogon
+        rm -f drogon.tar.gz
+    fi
+    
+    cd "$DROGON_DIR"
+    
+    # 初始化子模块 (trantor)
+    if [ ! -f "trantor/CMakeLists.txt" ]; then
+        # 手动下载 trantor
+        TRANTOR_VERSION="v1.5.21"
+        wget -q https://github.com/an-tao/trantor/archive/refs/tags/$TRANTOR_VERSION.tar.gz -O trantor.tar.gz || {
+            log_error "无法下载 trantor"
+            exit 1
+        }
+        tar -xzf trantor.tar.gz
+        rm -rf trantor
+        mv trantor-${TRANTOR_VERSION#v} trantor
+        rm -f trantor.tar.gz
+    fi
+    
+    mkdir -p build && cd build
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_MYSQL=ON \
+        -DBUILD_REDIS=ON \
+        -DBUILD_POSTGRESQL=OFF \
+        -DBUILD_SQLITE=OFF
+    
+    make -j$(nproc)
+    make install
+    ldconfig
+    
+    log_info "Drogon 安装完成"
+    rm -rf "$DROGON_DIR"
+else
+    log_info "Drogon 已安装"
+fi
 
-echo "[9/12] 安装 vcpkg 依赖包 (这可能需要较长时间)..."
-cd "$VCPKG_DIR"
-
-# 安装项目所需的依赖
-./vcpkg install drogon[mysql,redis]
-./vcpkg install openssl
-./vcpkg install jsoncpp
-./vcpkg install jwt-cpp
-./vcpkg install picojson
-./vcpkg install hiredis
-./vcpkg install libmariadb
-./vcpkg install fmt
-./vcpkg install spdlog
-
-echo "[10/12] 编译 WoniuNote C++ 后端..."
+echo "[9/10] 编译 WoniuNote C++ 后端..."
 cd "$PROJECT_DIR/backend_cpp"
 
-# 创建 build 目录
 mkdir -p build
 cd build
 
-# 使用 vcpkg 工具链编译
+# 使用系统库编译 (不使用 vcpkg)
 cmake .. \
-    -DCMAKE_TOOLCHAIN_FILE="$VCPKG_DIR/scripts/buildsystems/vcpkg.cmake" \
-    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_BUILD_TYPE=Release \
+    -DUSE_SYSTEM_LIBS=ON
 
 cmake --build . --config Release -j$(nproc)
 
-echo "[11/12] 安装 systemd 服务..."
+echo "[10/10] 安装 systemd 服务并部署..."
 DEPLOY_DIR="/var/www/woniunote"
 mkdir -p "$DEPLOY_DIR"
 mkdir -p "$DEPLOY_DIR/logs"
@@ -157,7 +205,7 @@ bash "$PROJECT_DIR/scripts/install_service.sh" << EOF
 n
 EOF
 
-echo "[12/12] 配置 Nginx..."
+echo "配置 Nginx..."
 cp "$PROJECT_DIR/configs/woniunote_nginx_prod.conf" /etc/nginx/sites-available/woniunote
 ln -sf /etc/nginx/sites-available/woniunote /etc/nginx/sites-enabled/
 nginx -t && systemctl reload nginx

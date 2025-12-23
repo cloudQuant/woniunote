@@ -165,15 +165,11 @@ build_project() {
     mkdir -p build
     cd build
     
-    # 检测 vcpkg
-    VCPKG_ROOT="${VCPKG_ROOT:-$HOME/vcpkg}"
-    if [ -f "$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" ]; then
-        cmake .. \
-            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
-            -DCMAKE_BUILD_TYPE=Release
-    else
-        cmake .. -DCMAKE_BUILD_TYPE=Release
-    fi
+    # 生产环境使用系统库编译
+    USE_SYSTEM_LIBS="${USE_SYSTEM_LIBS:-ON}"
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DUSE_SYSTEM_LIBS=$USE_SYSTEM_LIBS
     
     cmake --build . --config Release -j$(nproc)
     

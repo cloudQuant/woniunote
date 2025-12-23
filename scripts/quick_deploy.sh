@@ -17,7 +17,9 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 DEPLOY_DIR="${DEPLOY_DIR:-/var/www/woniunote}"
-VCPKG_ROOT="${VCPKG_ROOT:-$HOME/vcpkg}"
+
+# 是否使用系统库 (生产环境默认使用系统库)
+USE_SYSTEM_LIBS="${USE_SYSTEM_LIBS:-ON}"
 
 echo "========================================"
 echo "  WoniuNote 快速部署"
@@ -53,15 +55,10 @@ cd "$PROJECT_DIR/backend_cpp"
 mkdir -p build
 cd build
 
-if [ -f "$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" ]; then
-    cmake .. \
-        -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
-        -DCMAKE_BUILD_TYPE=Release \
-        -G "Unix Makefiles"
-else
-    log_warn "未找到 vcpkg，使用系统库"
-    cmake .. -DCMAKE_BUILD_TYPE=Release
-fi
+# 生产环境使用系统库编译
+cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DUSE_SYSTEM_LIBS=$USE_SYSTEM_LIBS
 
 cmake --build . --config Release -j$(nproc)
 log_info "后端构建完成"
