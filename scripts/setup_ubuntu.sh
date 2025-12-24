@@ -302,11 +302,22 @@ rsync -av --exclude='.git' \
 log_info "安装前端依赖..."
 cd "$DEPLOY_DIR/frontend"
 if [ -f "package.json" ]; then
-    npm install --production=false 2>&1 | tail -5
-    if [ $? -eq 0 ]; then
+    # 清理可能损坏的 node_modules
+    if [ -d "node_modules" ]; then
+        log_info "清理旧的 node_modules..."
+        rm -rf node_modules package-lock.json
+    fi
+    
+    # 清理 npm 缓存
+    npm cache clean --force 2>/dev/null || true
+    
+    # 安装依赖
+    log_info "执行 npm install..."
+    if npm install 2>&1 | tail -10; then
         log_info "前端依赖安装完成"
     else
-        log_warn "前端依赖安装可能有问题，请检查"
+        log_warn "前端依赖安装可能有问题，尝试使用 npm ci..."
+        npm ci 2>&1 | tail -10 || log_warn "npm ci 也失败，请手动检查"
     fi
 else
     log_warn "未找到 package.json，跳过前端依赖安装"
@@ -330,37 +341,148 @@ nginx -t && systemctl reload nginx || log_warn "Nginx 配置测试失败，请�
 
 echo ""
 echo "========================================"
-echo "  初始化数据库表..."
+echo "  初始化数据库..."
 echo "========================================"
 
 # 数据库初始化函数
-init_database_tables() {
+init_database() {
     local DB_NAME="woniunote"
+    local DB_USER="woniunote"
+    local DB_PASS="woniunote_password"  # 默认密码，生产环境应修改
     local SQL_DIR="$PROJECT_DIR/scripts/sql"
     
-    # 检查数据库是否存在
-    if ! mysql -e "USE $DB_NAME" 2>/dev/null; then
-        log_warn "数据库 $DB_NAME 不存在，跳过表初始化"
-        log_warn "请先创建数据库后再运行: bash $PROJECT_DIR/scripts/init_db.sh"
-        return 1
+    log_info "检查 MySQL 服务状态..."
+    if ! systemctl is-active --quiet mysql; then
+        log_warn "MySQL 服务未运行，正在启动..."
+        systemctl start mysql
     fi
     
-    # 执行所有 SQL 文件
+    # 检查数据库是否存在，不存在则创建
+    if ! mysql -e "USE $DB_NAME" 2>/dev/null; then
+        log_info "创建数据库 $DB_NAME..."
+        mysql -e "CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+        
+        # 创建数据库用户
+        log_info "创建数据库用户 $DB_USER..."
+        mysql -e "CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';"
+        mysql -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';"
+        mysql -e "FLUSH PRIVILEGES;"
+        
+        log_info "数据库和用户创建成功"
+        log_warn "默认密码: $DB_PASS (请在生产环境中修改)"
+    else
+        log_info "数据库 $DB_NAME 已存在"
+    fi
+    
+    # 执行所有 SQL 文件 (按文件名排序)
     if [ -d "$SQL_DIR" ]; then
-        for sql_file in "$SQL_DIR"/*.sql; do
+        log_info "执行 SQL 初始化脚本..."
+        for sql_file in $(ls "$SQL_DIR"/*.sql 2>/dev/null | sort); do
             if [ -f "$sql_file" ]; then
-                log_info "执行 SQL 文件: $(basename $sql_file)"
-                mysql "$DB_NAME" < "$sql_file" 2>/dev/null || log_warn "SQL 文件执行失败: $sql_file"
+                log_info "  执行: $(basename $sql_file)"
+                mysql "$DB_NAME" < "$sql_file" 2>/dev/null || log_warn "  警告: $(basename $sql_file) 执行时有警告"
             fi
         done
-        log_info "数据库表初始化完成"
+        log_info "SQL 脚本执行完成"
     else
         log_warn "SQL 目录不存在: $SQL_DIR"
     fi
 }
 
-# 尝试初始化数据库表 (如果数据库已存在)
-init_database_tables || true
+# 数据库表结构核对函数
+verify_database_schema() {
+    local DB_NAME="woniunote"
+    local LOG_DIR="$PROJECT_DIR/logs"
+    local LOG_FILE="$LOG_DIR/db_schema_verify_$(date +%Y%m%d_%H%M%S).log"
+    
+    # 检查数据库是否存在
+    if ! mysql -e "USE $DB_NAME" 2>/dev/null; then
+        log_warn "数据库不存在，跳过表结构核对"
+        return 1
+    fi
+    
+    log_info "核对数据库表结构..."
+    mkdir -p "$LOG_DIR"
+    
+    # 预期的表和列定义
+    declare -A EXPECTED_TABLES
+    EXPECTED_TABLES=(
+        ["users"]="userid,username,password,nickname,avatar,qq,role,credit,createtime,updatetime"
+        ["article"]="articleid,userid,type,headline,content,thumbnail,credit,readcount,replycount,recommended,hidden,drafted,checked,createtime,updatetime"
+        ["comment"]="commentid,userid,articleid,content,ipaddr,replyid,agreecount,opposecount,hidden,createtime,updatetime"
+        ["favorite"]="favoriteid,userid,articleid,canceled,createtime,updatetime"
+        ["credit"]="creditid,userid,category,target,credit,createtime,updatetime"
+        ["category"]="id,name"
+        ["cardcategory"]="id,name"
+        ["card"]="id,type,headline,content,createtime,updatetime,donetime,usedtime,begintime,endtime,cardcategory_id"
+        ["item"]="id,body,category_id"
+        ["math_training_records"]="id,user_id,difficulty,total_questions,correct_count,wrong_count,accuracy,start_time,end_time,duration_seconds,created_at"
+        ["math_training_wrong_answers"]="id,record_id,user_id,question,correct_answer,user_answer,operation,difficulty,created_at"
+    )
+    
+    local TOTAL_ISSUES=0
+    
+    # 写入日志头
+    {
+        echo "=========================================="
+        echo "WoniuNote 数据库表结构核对报告"
+        echo "时间: $(date)"
+        echo "数据库: $DB_NAME"
+        echo "=========================================="
+        echo ""
+    } > "$LOG_FILE"
+    
+    # 获取实际表列表
+    local ACTUAL_TABLES=$(mysql -N -e "USE $DB_NAME; SHOW TABLES;" 2>/dev/null)
+    
+    for table in "${!EXPECTED_TABLES[@]}"; do
+        if ! echo "$ACTUAL_TABLES" | grep -q "^${table}$"; then
+            echo "[缺失表] $table" >> "$LOG_FILE"
+            ((TOTAL_ISSUES++))
+            continue
+        fi
+        
+        # 获取实际列
+        local ACTUAL_COLUMNS=$(mysql -N -e "USE $DB_NAME; SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$DB_NAME' AND TABLE_NAME='$table' ORDER BY ORDINAL_POSITION;" 2>/dev/null | tr '\n' ',' | sed 's/,$//')
+        local EXPECTED_COLUMNS="${EXPECTED_TABLES[$table]}"
+        
+        IFS=',' read -ra EXPECTED_ARR <<< "$EXPECTED_COLUMNS"
+        IFS=',' read -ra ACTUAL_ARR <<< "$ACTUAL_COLUMNS"
+        
+        # 检查缺失的列
+        for col in "${EXPECTED_ARR[@]}"; do
+            if [[ ! " ${ACTUAL_ARR[*]} " =~ " ${col} " ]]; then
+                echo "[缺失列] $table.$col" >> "$LOG_FILE"
+                ((TOTAL_ISSUES++))
+            fi
+        done
+        
+        # 检查额外的列
+        for col in "${ACTUAL_ARR[@]}"; do
+            if [[ ! " ${EXPECTED_ARR[*]} " =~ " ${col} " ]]; then
+                echo "[额外列] $table.$col" >> "$LOG_FILE"
+            fi
+        done
+    done
+    
+    if [ $TOTAL_ISSUES -eq 0 ]; then
+        log_info "表结构核对通过"
+    else
+        log_warn "发现 $TOTAL_ISSUES 个差异，详见日志: $LOG_FILE"
+    fi
+    
+    return $TOTAL_ISSUES
+}
+
+# 执行数据库初始化
+init_database
+
+# 执行表结构核对
+echo ""
+echo "========================================"
+echo "  核对数据库表结构..."
+echo "========================================"
+verify_database_schema || true
 
 echo ""
 echo "========================================"

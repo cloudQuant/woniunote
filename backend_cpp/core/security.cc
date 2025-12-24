@@ -18,8 +18,10 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
-// System crypt for bcrypt support
+// System crypt for bcrypt support (Linux only)
+#ifdef __linux__
 #include <crypt.h>
+#endif
 
 // jwt-cpp header
 #include <jwt-cpp/jwt.h>
@@ -70,7 +72,8 @@ std::string generateSalt(int workFactor) {
 
 // Use system crypt() for bcrypt - it properly supports $2b$ format
 std::string bcryptHash(const std::string& password, const std::string& salt) {
-    // Use crypt_r for thread safety
+#ifdef __linux__
+    // Use crypt_r for thread safety on Linux
     struct crypt_data data;
     memset(&data, 0, sizeof(data));
     
@@ -79,6 +82,30 @@ std::string bcryptHash(const std::string& password, const std::string& salt) {
         return "";
     }
     return std::string(result);
+#else
+    // On macOS/other platforms, bcrypt is not available via crypt()
+    // Fall back to a simple hash for development/testing only
+    // In production on non-Linux, consider using a proper bcrypt library
+    Logger::warning("bcrypt not available on this platform, using fallback");
+    
+    // Generate a deterministic hash using SHA256 + salt prefix
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    std::string toHash = salt + password;
+    
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr);
+    EVP_DigestUpdate(ctx, toHash.c_str(), toHash.length());
+    EVP_DigestFinal_ex(ctx, hash, nullptr);
+    EVP_MD_CTX_free(ctx);
+    
+    // Format like bcrypt: $2b$<work>$<22-char-salt><31-char-hash>
+    std::ostringstream oss;
+    oss << salt;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH && oss.str().length() < 60; ++i) {
+        oss << BCRYPT_BASE64[hash[i] % 64];
+    }
+    return oss.str();
+#endif
 }
 
 bool bcryptVerify(const std::string& password, const std::string& hash) {
@@ -86,6 +113,7 @@ bool bcryptVerify(const std::string& password, const std::string& hash) {
         return false;
     }
     
+#ifdef __linux__
     // Verify using system crypt which supports bcrypt ($2a$, $2b$, $2y$)
     struct crypt_data data;
     memset(&data, 0, sizeof(data));
@@ -105,6 +133,26 @@ bool bcryptVerify(const std::string& password, const std::string& hash) {
         diff |= result[i] ^ hash[i];
     }
     return diff == 0;
+#else
+    // On macOS/other platforms, re-hash and compare
+    // Extract salt from hash (first 29 chars: $2b$XX$<22-char-salt>)
+    if (hash.length() < 29) {
+        return false;
+    }
+    std::string salt = hash.substr(0, 29);
+    std::string computed = bcryptHash(password, salt);
+    
+    // Constant-time comparison
+    if (computed.length() != hash.length()) {
+        return false;
+    }
+    
+    int diff = 0;
+    for (size_t i = 0; i < hash.length(); ++i) {
+        diff |= computed[i] ^ hash[i];
+    }
+    return diff == 0;
+#endif
 }
 
 } // anonymous namespace

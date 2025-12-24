@@ -3,15 +3,20 @@
     {
       "name": "macos-clang-arm64",
       "includePath": [
-        "${workspaceFolder}/**"
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/backend_cpp",
+        "${workspaceFolder}/backend_cpp/build/vcpkg_installed/arm64-osx/include",
+        "${workspaceFolder}/backend_cpp/third_party",
+        "${env:HOME}/vcpkg/installed/arm64-osx/include"
+      ],
+      "defines": [
+        "__APPLE__"
       ],
       "compilerPath": "/usr/bin/clang",
-      "cStandard": "${default}",
-      "cppStandard": "${default}",
+      "cStandard": "c17",
+      "cppStandard": "c++17",
       "intelliSenseMode": "macos-clang-arm64",
-      "compilerArgs": [
-        ""
-      ]
+      "configurationProvider": "ms-vscode.cmake-tools"
     }
   ],
   "version": 4
