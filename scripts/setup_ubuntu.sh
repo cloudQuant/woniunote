@@ -313,17 +313,23 @@ cmake .. \
 cmake --build . --config Release -j$(nproc)
 
 echo "[10/10] 安装 systemd 服务并部署..."
-DEPLOY_DIR="/var/www/woniunote"
+# 部署目录 (可通过环境变量覆盖，默认使用源码目录)
+DEPLOY_DIR="${DEPLOY_DIR:-$PROJECT_DIR}"
 mkdir -p "$DEPLOY_DIR"
 mkdir -p "$DEPLOY_DIR/logs"
 
-# 复制项目文件 (排除 node_modules 和 package-lock.json 以避免跨平台问题)
-rsync -av --exclude='.git' \
-          --exclude='node_modules' \
-          --exclude='package-lock.json' \
-          --exclude='__pycache__' \
-          --exclude='*.pyc' \
-          "$PROJECT_DIR/" "$DEPLOY_DIR/"
+# 复制项目文件 (仅当部署目录与源码目录不同时)
+if [ "$DEPLOY_DIR" != "$PROJECT_DIR" ]; then
+    log_info "复制项目文件到 $DEPLOY_DIR..."
+    rsync -av --exclude='.git' \
+              --exclude='node_modules' \
+              --exclude='package-lock.json' \
+              --exclude='__pycache__' \
+              --exclude='*.pyc' \
+              "$PROJECT_DIR/" "$DEPLOY_DIR/"
+else
+    log_info "部署目录与源码目录相同，跳过复制"
+fi
 
 # 安装前端依赖
 log_info "安装前端依赖..."
@@ -349,6 +355,17 @@ if [ -f "package.json" ]; then
         else
             log_warn "vite 模块不完整，重新安装..."
             npm install vite --save-dev
+        fi
+        
+        # 生产环境构建前端
+        log_info "构建前端生产版本..."
+        if npm run build 2>&1 | tail -10; then
+            log_info "前端构建完成"
+            if [ -d "dist" ]; then
+                log_info "前端静态文件已生成到 $DEPLOY_DIR/frontend/dist"
+            fi
+        else
+            log_warn "前端构建失败，请手动检查"
         fi
     else
         log_warn "前端依赖安装失败，请手动检查"
@@ -573,42 +590,73 @@ echo "  核对数据库表结构..."
 echo "========================================"
 verify_database_schema || true
 
+# 启动服务
 echo ""
 echo "========================================"
-echo "  环境配置完成!"  
+echo "  启动服务..."
+echo "========================================"
+
+# 启动后端服务
+log_info "启动后端服务..."
+systemctl start woniunote || log_warn "后端服务启动失败"
+sleep 2
+
+# 启动 Nginx
+log_info "启动 Nginx..."
+systemctl start nginx || log_warn "Nginx 启动失败"
+
+# 检查服务状态
+echo ""
+echo "========================================"
+echo "  服务状态检查"
+echo "========================================"
+
+echo -n "后端服务: "
+if systemctl is-active --quiet woniunote; then
+    echo -e "${GREEN}运行中${NC}"
+else
+    echo -e "${RED}未运行${NC}"
+fi
+
+echo -n "Nginx: "
+if systemctl is-active --quiet nginx; then
+    echo -e "${GREEN}运行中${NC}"
+else
+    echo -e "${RED}未运行${NC}"
+fi
+
+echo -n "MySQL: "
+if systemctl is-active --quiet mysql; then
+    echo -e "${GREEN}运行中${NC}"
+else
+    echo -e "${RED}未运行${NC}"
+fi
+
+echo -n "Redis: "
+if systemctl is-active --quiet redis-server; then
+    echo -e "${GREEN}运行中${NC}"
+else
+    echo -e "${RED}未运行${NC}"
+fi
+
+echo ""
+echo "========================================"
+echo "  部署完成!"  
 echo "========================================"
 echo ""
-echo "后续步骤:"
-echo ""
-echo "1. 配置 MySQL 数据库 (如尚未配置):"
-echo "   sudo mysql"
-echo "   CREATE DATABASE woniunote CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-echo "   CREATE USER 'woniunote'@'localhost' IDENTIFIED BY 'your_password';"
-echo "   GRANT ALL PRIVILEGES ON woniunote.* TO 'woniunote'@'localhost';"
-echo "   FLUSH PRIVILEGES;"
-echo "   EXIT;"
-echo ""
-echo "   然后初始化数据库表:"
-echo "   sudo bash $PROJECT_DIR/scripts/init_db.sh"
-echo ""
-echo "2. 修改生产环境配置文件:"
-echo "   cp $DEPLOY_DIR/backend_cpp/config.json $DEPLOY_DIR/backend_cpp/config.prod.json"
-echo "   nano $DEPLOY_DIR/backend_cpp/config.prod.json"
-echo "   # 修改数据库连接信息、密钥等"
-echo ""
-echo "3. 配置 SSL 证书 (使用 Let's Encrypt):"
-echo "   apt install certbot python3-certbot-nginx"
-echo "   certbot --nginx -d your-domain.com"
-echo ""
-echo "4. 启动服务:"
-echo "   sudo systemctl start woniunote"
-echo "   sudo systemctl status woniunote"
+echo "访问地址:"
+echo "  HTTP:  http://your-domain.com"
+echo "  HTTPS: https://your-domain.com (如已配置SSL证书)"
 echo ""
 echo "管理命令:"
-echo "  sudo bash $DEPLOY_DIR/scripts/manage.sh start    # 启动"
-echo "  sudo bash $DEPLOY_DIR/scripts/manage.sh stop     # 停止"
-echo "  sudo bash $DEPLOY_DIR/scripts/manage.sh restart  # 重启"
-echo "  sudo bash $DEPLOY_DIR/scripts/manage.sh status   # 状态"
-echo "  sudo bash $DEPLOY_DIR/scripts/manage.sh logs backend  # 日志"
+echo "  sudo bash $DEPLOY_DIR/scripts/prod_manage.sh start    # 启动"
+echo "  sudo bash $DEPLOY_DIR/scripts/prod_manage.sh stop     # 停止"
+echo "  sudo bash $DEPLOY_DIR/scripts/prod_manage.sh restart  # 重启"
+echo "  sudo bash $DEPLOY_DIR/scripts/prod_manage.sh status   # 状态"
+echo "  sudo bash $DEPLOY_DIR/scripts/prod_manage.sh logs backend  # 日志"
+echo ""
+echo "日志位置:"
+echo "  后端日志: $DEPLOY_DIR/logs/backend.log"
+echo "  Nginx日志: /var/log/nginx/woniunote_access.log"
 echo ""
 echo "========================================"
