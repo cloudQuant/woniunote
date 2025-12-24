@@ -98,6 +98,16 @@ if [ ! -f "package.json" ]; then
     exit 1
 fi
 
+# 检查前端依赖是否已安装
+if [ ! -d "node_modules" ] || [ ! -f "node_modules/vite/dist/node/cli.js" ]; then
+    echo "     前端依赖未安装或不完整，正在安装..."
+    rm -rf node_modules package-lock.json 2>/dev/null
+    npm cache clean --force 2>/dev/null || true
+    npm install --no-package-lock 2>&1 | tail -5
+    npm install 2>&1 | tail -3
+    echo "     前端依赖安装完成"
+fi
+
 nohup npm run dev >> ../frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo "     前端服务已启动 (PID: $FRONTEND_PID)"

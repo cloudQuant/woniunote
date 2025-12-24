@@ -317,9 +317,10 @@ DEPLOY_DIR="/var/www/woniunote"
 mkdir -p "$DEPLOY_DIR"
 mkdir -p "$DEPLOY_DIR/logs"
 
-# 复制项目文件
+# 复制项目文件 (排除 node_modules 和 package-lock.json 以避免跨平台问题)
 rsync -av --exclude='.git' \
           --exclude='node_modules' \
+          --exclude='package-lock.json' \
           --exclude='__pycache__' \
           --exclude='*.pyc' \
           "$PROJECT_DIR/" "$DEPLOY_DIR/"
@@ -328,22 +329,29 @@ rsync -av --exclude='.git' \
 log_info "安装前端依赖..."
 cd "$DEPLOY_DIR/frontend"
 if [ -f "package.json" ]; then
-    # 清理可能损坏的 node_modules
-    if [ -d "node_modules" ]; then
-        log_info "清理旧的 node_modules..."
-        rm -rf node_modules package-lock.json
-    fi
+    # 强制清理 node_modules 和 package-lock.json
+    log_info "清理旧的 node_modules 和 package-lock.json..."
+    rm -rf node_modules package-lock.json 2>/dev/null || true
     
     # 清理 npm 缓存
     npm cache clean --force 2>/dev/null || true
     
-    # 安装依赖
+    # 安装依赖 (不使用 lock 文件，允许重新解析依赖)
     log_info "执行 npm install..."
-    if npm install 2>&1 | tail -10; then
+    if npm install --no-package-lock 2>&1; then
+        # 安装成功后再生成 package-lock.json
+        npm install 2>&1 | tail -5
         log_info "前端依赖安装完成"
+        
+        # 验证 vite 是否正确安装
+        if [ -f "node_modules/vite/dist/node/cli.js" ]; then
+            log_info "vite 模块验证成功"
+        else
+            log_warn "vite 模块不完整，重新安装..."
+            npm install vite --save-dev
+        fi
     else
-        log_warn "前端依赖安装可能有问题，尝试使用 npm ci..."
-        npm ci 2>&1 | tail -10 || log_warn "npm ci 也失败，请手动检查"
+        log_warn "前端依赖安装失败，请手动检查"
     fi
 else
     log_warn "未找到 package.json，跳过前端依赖安装"
