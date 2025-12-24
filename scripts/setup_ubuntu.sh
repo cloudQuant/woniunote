@@ -83,22 +83,48 @@ if [ ! -f /usr/lib/x86_64-linux-gnu/libmysqlclient_r.so ]; then
 fi
 
 echo "[4/10] 安装 MySQL..."
-apt-get install -y mysql-server mysql-client
-systemctl enable mysql
-systemctl start mysql
+if command -v mysql &> /dev/null && systemctl is-active --quiet mysql; then
+    log_info "MySQL 已安装并运行中，跳过安装"
+else
+    apt-get install -y mysql-server mysql-client
+    systemctl enable mysql
+    systemctl start mysql
+    log_info "MySQL 安装完成"
+fi
 
 echo "[5/10] 安装 Redis..."
-apt-get install -y redis-server
-systemctl enable redis-server
-systemctl start redis-server
+if command -v redis-server &> /dev/null && systemctl is-active --quiet redis-server; then
+    log_info "Redis 已安装并运行中，跳过安装"
+else
+    apt-get install -y redis-server
+    systemctl enable redis-server
+    systemctl start redis-server
+    log_info "Redis 安装完成"
+fi
 
 echo "[6/10] 安装 Nginx..."
-apt-get install -y nginx
+if command -v nginx &> /dev/null; then
+    log_info "Nginx 已安装，跳过安装"
+else
+    apt-get install -y nginx
+    log_info "Nginx 安装完成"
+fi
 systemctl enable nginx
 
 echo "[7/10] 安装 Node.js 22.x (LTS)..."
-curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-apt-get install -y nodejs
+if command -v node &> /dev/null; then
+    NODE_VERSION=$(node -v 2>/dev/null | sed 's/v//' | cut -d. -f1)
+    if [ "$NODE_VERSION" -ge 18 ]; then
+        log_info "Node.js 已安装 ($(node -v))，跳过安装"
+    else
+        log_info "Node.js 版本过低，升级中..."
+        curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+        apt-get install -y nodejs
+    fi
+else
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+    apt-get install -y nodejs
+fi
 log_info "Node.js 版本: $(node -v)"
 log_info "npm 版本: $(npm -v)"
 
@@ -329,15 +355,70 @@ bash "$PROJECT_DIR/scripts/install_service.sh" << EOF
 n
 EOF
 
-echo "配置 Nginx..."
-# 使用初始配置 (HTTP-only)，SSL 证书需要后续配置
-if [ -f "$PROJECT_DIR/configs/woniunote_nginx_initial.conf" ]; then
-    cp "$PROJECT_DIR/configs/woniunote_nginx_initial.conf" /etc/nginx/sites-available/woniunote
+echo "配置防火墙 (ufw)..."
+if command -v ufw &> /dev/null; then
+    # 检查 ufw 是否启用
+    if ufw status | grep -q "Status: active"; then
+        log_info "ufw 已启用，配置端口规则..."
+        ufw allow 22/tcp comment 'SSH' 2>/dev/null || true
+        ufw allow 80/tcp comment 'HTTP' 2>/dev/null || true
+        ufw allow 443/tcp comment 'HTTPS' 2>/dev/null || true
+        ufw allow 8888/tcp comment 'Frontend Dev' 2>/dev/null || true
+        ufw allow 5173/tcp comment 'Backend API' 2>/dev/null || true
+        log_info "防火墙端口配置完成"
+    else
+        log_info "ufw 未启用，跳过防火墙配置"
+        log_warn "建议启用防火墙: ufw enable"
+    fi
 else
-    cp "$PROJECT_DIR/configs/woniunote_nginx_prod.conf" /etc/nginx/sites-available/woniunote
+    log_warn "ufw 未安装，跳过防火墙配置"
 fi
+
+echo "配置 SSL 证书..."
+SSL_CERT_DIR="/etc/ssl/woniunote"
+mkdir -p "$SSL_CERT_DIR"
+
+# 检查是否有自定义 SSL 证书
+if [ -d "$PROJECT_DIR/configs/yunjinqi.top_nginx" ]; then
+    log_info "使用项目中的 SSL 证书..."
+    cp "$PROJECT_DIR/configs/yunjinqi.top_nginx/yunjinqi.top_bundle.crt" "$SSL_CERT_DIR/fullchain.pem"
+    cp "$PROJECT_DIR/configs/yunjinqi.top_nginx/yunjinqi.top.key" "$SSL_CERT_DIR/privkey.pem"
+    chmod 600 "$SSL_CERT_DIR/privkey.pem"
+    chmod 644 "$SSL_CERT_DIR/fullchain.pem"
+    log_info "SSL 证书已安装到 $SSL_CERT_DIR"
+    USE_SSL=true
+else
+    log_warn "未找到 SSL 证书，将使用 HTTP-only 配置"
+    USE_SSL=false
+fi
+
+echo "配置 Nginx..."
+# 删除默认站点
+rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+
+if [ "$USE_SSL" = true ]; then
+    log_info "使用 HTTPS 配置..."
+    cp "$PROJECT_DIR/configs/woniunote_nginx_prod.conf" /etc/nginx/sites-available/woniunote
+    # 更新证书路径为自定义路径
+    sed -i "s|/etc/letsencrypt/live/yunjinqi.top/fullchain.pem|$SSL_CERT_DIR/fullchain.pem|g" /etc/nginx/sites-available/woniunote
+    sed -i "s|/etc/letsencrypt/live/yunjinqi.top/privkey.pem|$SSL_CERT_DIR/privkey.pem|g" /etc/nginx/sites-available/woniunote
+else
+    log_info "使用 HTTP-only 配置..."
+    if [ -f "$PROJECT_DIR/configs/woniunote_nginx_initial.conf" ]; then
+        cp "$PROJECT_DIR/configs/woniunote_nginx_initial.conf" /etc/nginx/sites-available/woniunote
+    else
+        cp "$PROJECT_DIR/configs/woniunote_nginx_prod.conf" /etc/nginx/sites-available/woniunote
+    fi
+fi
+
 ln -sf /etc/nginx/sites-available/woniunote /etc/nginx/sites-enabled/
-nginx -t && systemctl reload nginx || log_warn "Nginx 配置测试失败，请手动检查"
+if nginx -t 2>/dev/null; then
+    systemctl reload nginx
+    log_info "Nginx 配置完成"
+else
+    log_warn "Nginx 配置测试失败，请手动检查"
+    nginx -t
+fi
 
 echo ""
 echo "========================================"
