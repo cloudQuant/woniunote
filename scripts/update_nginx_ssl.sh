@@ -187,99 +187,28 @@ else
     log_action "使用 nginx.conf 直接配置模式"
 fi
 
-if [ "$USE_SITES_AVAILABLE" = true ]; then
-    # 模式 1: sites-available 模式
-    NGINX_CONF_DEST="/etc/nginx/sites-available/woniunote"
+# 使用 configs/woniunote_nginx_config 作为模板
+NGINX_CONFIG_TEMPLATE="$PROJECT_DIR/configs/woniunote_nginx_config"
+
+if [ -f "$NGINX_CONFIG_TEMPLATE" ]; then
+    log_action "使用项目配置模板: $NGINX_CONFIG_TEMPLATE"
     
-    # 检查是否有现成的配置文件模板
-    if [ -f "$PROJECT_DIR/configs/woniunote_nginx_prod.conf" ]; then
-        log_action "使用项目配置模板..."
-        cp "$PROJECT_DIR/configs/woniunote_nginx_prod.conf" "$NGINX_CONF_DEST"
-        
-        # 更新证书路径
-        sed -i "s|/etc/letsencrypt/live/yunjinqi.top/fullchain.pem|$SSL_DEST_DIR/fullchain.pem|g" "$NGINX_CONF_DEST"
-        sed -i "s|/etc/letsencrypt/live/yunjinqi.top/privkey.pem|$SSL_DEST_DIR/privkey.pem|g" "$NGINX_CONF_DEST"
-        
-        # 更新项目路径
-        sed -i "s|/var/www/woniunote|$PROJECT_DIR|g" "$NGINX_CONF_DEST"
-    else
-        # 生成新配置
-        log_action "生成新的 Nginx 配置..."
-        cat > "$NGINX_CONF_DEST" << EOF
-# WoniuNote Nginx 配置
-# 自动生成于 $(date)
-
-# HTTP -> HTTPS 重定向
-server {
-    listen 80;
-    listen [::]:80;
-    server_name $DOMAIN yunjinqi.top;
-    return 301 https://\$host\$request_uri;
-}
-
-# HTTPS 服务器
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name $DOMAIN yunjinqi.top;
-
-    # SSL 证书
-    ssl_certificate $SSL_DEST_DIR/fullchain.pem;
-    ssl_certificate_key $SSL_DEST_DIR/privkey.pem;
-
-    # SSL 配置
-    ssl_session_timeout 1d;
-    ssl_session_cache shared:SSL:50m;
-    ssl_session_tickets off;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
-    ssl_prefer_server_ciphers off;
-
-    # 前端静态文件
-    root $PROJECT_DIR/frontend/dist;
-    index index.html;
-
-    # 前端路由 (Vue Router history 模式)
-    location / {
-        try_files \$uri \$uri/ /index.html;
-    }
-
-    # API 代理到后端
-    location /api/ {
-        proxy_pass http://127.0.0.1:5173;
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-    }
-
-    # 上传文件
-    location /uploads/ {
-        alias $PROJECT_DIR/backend_cpp/build/uploads/;
-    }
-
-    # 静态资源缓存
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-}
-EOF
-    fi
+    # 复制配置到 nginx.conf
+    cp "$NGINX_CONFIG_TEMPLATE" /etc/nginx/nginx.conf
     
-    # 删除默认站点
-    rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+    # 更新证书路径为实际路径
+    sed -i "s|/root/woniunote/configs/yunjinqi.top_nginx/yunjinqi.top_bundle.pem|$SSL_DEST_DIR/fullchain.pem|g" /etc/nginx/nginx.conf
+    sed -i "s|/root/woniunote/configs/yunjinqi.top_nginx/yunjinqi.top.key|$SSL_DEST_DIR/privkey.pem|g" /etc/nginx/nginx.conf
     
-    # 创建软链接
-    ln -sf "$NGINX_CONF_DEST" /etc/nginx/sites-enabled/woniunote
+    # 兼容其他可能的证书路径格式
+    sed -i "s|$PROJECT_DIR/configs/yunjinqi.top_nginx/yunjinqi.top_bundle.pem|$SSL_DEST_DIR/fullchain.pem|g" /etc/nginx/nginx.conf
+    sed -i "s|$PROJECT_DIR/configs/yunjinqi.top_nginx/yunjinqi.top.key|$SSL_DEST_DIR/privkey.pem|g" /etc/nginx/nginx.conf
     
+    echo "  使用模板: $NGINX_CONFIG_TEMPLATE" >> "$LOG_FILE"
+    echo "  更新证书路径: $SSL_DEST_DIR/" >> "$LOG_FILE"
 else
-    # 模式 2: 直接修改 nginx.conf (旧版兼容)
-    log_action "更新 /etc/nginx/nginx.conf..."
+    # 如果模板不存在，生成默认配置
+    log_action "模板不存在，生成默认 Nginx 配置..."
     
     cat > /etc/nginx/nginx.conf << EOF
 # WoniuNote Nginx 配置
@@ -298,15 +227,23 @@ http {
     # HTTP -> HTTPS 重定向
     server {
         listen 80;
-        listen [::]:80;
-        server_name $DOMAIN yunjinqi.top;
-        return 301 https://\$host\$request_uri;
+        listen [::]:80 ipv6only=on;
+        server_name $DOMAIN;
+
+        rewrite ^(.*)\$ https://\$host\$1 permanent;
+
+        location / {
+            index index.html index.htm;
+        }
     }
 
     # HTTPS 服务器
     server {
         listen 443 ssl;
-        server_name $DOMAIN yunjinqi.top;
+        server_name $DOMAIN;
+
+        root html;
+        index index.html index.htm;
 
         # SSL 证书
         ssl_certificate $SSL_DEST_DIR/fullchain.pem;
@@ -318,32 +255,24 @@ http {
         ssl_protocols TLSv1.2 TLSv1.3;
         ssl_prefer_server_ciphers on;
 
-        # 前端静态文件
-        root $PROJECT_DIR/frontend/dist;
-        index index.html;
-
-        # 前端路由
+        # 代理到前端服务
         location / {
-            try_files \$uri \$uri/ /index.html;
-        }
-
-        # API 代理
-        location /api/ {
-            proxy_pass http://127.0.0.1:5173;
+            proxy_pass http://127.0.0.1:8888;
             proxy_redirect off;
             proxy_set_header Host \$http_host;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
         }
-
-        # 上传文件
-        location /uploads/ {
-            alias $PROJECT_DIR/backend_cpp/build/uploads/;
-        }
     }
 }
 EOF
+fi
+
+# 如果存在 sites-enabled，禁用默认站点避免冲突
+if [ -d "/etc/nginx/sites-enabled" ]; then
+    rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+    rm -f /etc/nginx/sites-enabled/woniunote 2>/dev/null || true
 fi
 
 echo "  Nginx 配置已更新" >> "$LOG_FILE"
