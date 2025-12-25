@@ -16,7 +16,8 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-DEPLOY_DIR="${DEPLOY_DIR:-/var/www/woniunote}"
+# 默认使用源码目录作为部署目录
+DEPLOY_DIR="${DEPLOY_DIR:-$PROJECT_DIR}"
 SERVICE_FILE="/etc/systemd/system/woniunote.service"
 
 echo "========================================"
@@ -32,13 +33,11 @@ fi
 
 # 检查部署目录
 if [ ! -d "$DEPLOY_DIR" ]; then
-    log_warn "部署目录 $DEPLOY_DIR 不存在"
-    log_info "创建部署目录..."
-    mkdir -p "$DEPLOY_DIR"
-    
-    log_info "请先运行 quick_deploy.sh 部署项目"
+    log_error "部署目录 $DEPLOY_DIR 不存在"
     exit 1
 fi
+
+log_info "部署目录: $DEPLOY_DIR"
 
 # 检查可执行文件
 if [ ! -f "$DEPLOY_DIR/backend_cpp/build/woniunote_backend" ]; then

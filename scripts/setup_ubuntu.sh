@@ -424,7 +424,7 @@ rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
 if [ "$USE_SSL" = true ]; then
     log_info "使用 HTTPS 配置..."
     cp "$PROJECT_DIR/configs/woniunote_nginx_prod.conf" /etc/nginx/sites-available/woniunote
-    # 更新证书路径为自定义路径
+    # 更新证书路径
     sed -i "s|/etc/letsencrypt/live/yunjinqi.top/fullchain.pem|$SSL_CERT_DIR/fullchain.pem|g" /etc/nginx/sites-available/woniunote
     sed -i "s|/etc/letsencrypt/live/yunjinqi.top/privkey.pem|$SSL_CERT_DIR/privkey.pem|g" /etc/nginx/sites-available/woniunote
 else
@@ -435,6 +435,10 @@ else
         cp "$PROJECT_DIR/configs/woniunote_nginx_prod.conf" /etc/nginx/sites-available/woniunote
     fi
 fi
+
+# 更新 Nginx 配置中的路径为实际部署目录
+log_info "更新 Nginx 配置路径: $DEPLOY_DIR"
+sed -i "s|/var/www/woniunote|$DEPLOY_DIR|g" /etc/nginx/sites-available/woniunote
 
 ln -sf /etc/nginx/sites-available/woniunote /etc/nginx/sites-enabled/
 if nginx -t 2>/dev/null; then
