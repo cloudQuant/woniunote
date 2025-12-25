@@ -230,9 +230,18 @@ DROGON_VERSION="1.9.8"
 TRANTOR_VERSION="1.5.21"
 DROGON_DIR="/tmp/drogon"
 
-# Drogon 使用 CMake 配置文件，不是 pkg-config
+# 检查 Drogon 是否已安装且包含 MySQL 支持
+NEED_DROGON_INSTALL=false
 if [ ! -f "/usr/local/lib/cmake/Drogon/DrogonConfig.cmake" ]; then
-    log_info "编译 Drogon v$DROGON_VERSION ..."
+    NEED_DROGON_INSTALL=true
+    log_info "Drogon 未安装"
+elif ! grep -q "mysql" /usr/local/lib/cmake/Drogon/DrogonTargets.cmake 2>/dev/null; then
+    NEED_DROGON_INSTALL=true
+    log_warn "Drogon 已安装但缺少 MySQL 支持，将重新编译"
+fi
+
+if [ "$NEED_DROGON_INSTALL" = true ]; then
+    log_info "编译 Drogon v$DROGON_VERSION (包含 MySQL 支持)..."
     cd /tmp
     rm -rf drogon drogon-*
     
@@ -293,10 +302,10 @@ if [ ! -f "/usr/local/lib/cmake/Drogon/DrogonConfig.cmake" ]; then
     make install
     ldconfig
     
-    log_info "Drogon 安装完成"
+    log_info "Drogon 安装完成 (包含 MySQL 支持)"
     rm -rf "$DROGON_DIR"
 else
-    log_info "Drogon 已安装"
+    log_info "Drogon 已安装且包含 MySQL 支持"
 fi
 
 echo "[9/10] 编译 WoniuNote C++ 后端..."
@@ -451,7 +460,7 @@ fi
 
 echo ""
 echo "========================================"
-echo "  初始化数据库..."
+echo "  检查数据库..."
 echo "========================================"
 
 # 数据库初始化函数
@@ -467,47 +476,45 @@ init_database() {
         systemctl start mysql
     fi
     
-    # 检查数据库是否存在，不存在则创建
-    if ! mysql -e "USE $DB_NAME" 2>/dev/null; then
-        log_info "创建数据库 $DB_NAME..."
-        mysql -e "CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-        
-        # 创建数据库用户
-        log_info "创建数据库用户 $DB_USER..."
-        mysql -e "CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';"
-        mysql -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';"
-        mysql -e "FLUSH PRIVILEGES;"
-        
-        log_info "数据库和用户创建成功"
-        log_warn "默认密码: $DB_PASS (请在生产环境中修改)"
-    else
-        log_info "数据库 $DB_NAME 已存在"
+    # 尝试多种方式检查数据库是否存在
+    DB_EXISTS=false
+    
+    # 方式1: 使用 woniunote 用户连接
+    if mysql -u"$DB_USER" -p"$DB_PASS" -e "USE $DB_NAME" 2>/dev/null; then
+        DB_EXISTS=true
+        log_info "数据库 $DB_NAME 已存在 (使用 $DB_USER 用户验证)"
+    # 方式2: 使用 sudo mysql (适用于 auth_socket)
+    elif sudo mysql -e "USE $DB_NAME" 2>/dev/null; then
+        DB_EXISTS=true
+        log_info "数据库 $DB_NAME 已存在 (使用 root 验证)"
     fi
     
-    # 执行所有 SQL 文件 (按文件名排序)
-    if [ -d "$SQL_DIR" ]; then
-        log_info "执行 SQL 初始化脚本..."
-        for sql_file in $(ls "$SQL_DIR"/*.sql 2>/dev/null | sort); do
-            if [ -f "$sql_file" ]; then
-                log_info "  执行: $(basename $sql_file)"
-                mysql "$DB_NAME" < "$sql_file" 2>/dev/null || log_warn "  警告: $(basename $sql_file) 执行时有警告"
-            fi
-        done
-        log_info "SQL 脚本执行完成"
-    else
-        log_warn "SQL 目录不存在: $SQL_DIR"
+    if [ "$DB_EXISTS" = true ]; then
+        # 检查表是否存在
+        TABLE_COUNT=$(mysql -u"$DB_USER" -p"$DB_PASS" -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DB_NAME'" 2>/dev/null || echo "0")
+        if [ "$TABLE_COUNT" -gt 0 ] 2>/dev/null; then
+            log_info "数据库已有 $TABLE_COUNT 个表，跳过初始化"
+            return 0
+        fi
     fi
+    
+    # 数据库不存在，需要创建
+    log_info "需要初始化数据库..."
+    log_warn "如果数据库已存在，请确保 MySQL 用户 $DB_USER 密码为 $DB_PASS"
+    log_warn "或者手动运行: bash $PROJECT_DIR/scripts/import_db.sh"
 }
 
 # 数据库表结构核对函数
 verify_database_schema() {
     local DB_NAME="woniunote"
+    local DB_USER="woniunote"
+    local DB_PASS="woniunote_password"
     local LOG_DIR="$PROJECT_DIR/logs"
     local LOG_FILE="$LOG_DIR/db_schema_verify_$(date +%Y%m%d_%H%M%S).log"
     
-    # 检查数据库是否存在
-    if ! mysql -e "USE $DB_NAME" 2>/dev/null; then
-        log_warn "数据库不存在，跳过表结构核对"
+    # 检查数据库是否存在 (使用用户认证)
+    if ! mysql -u"$DB_USER" -p"$DB_PASS" -e "USE $DB_NAME" 2>/dev/null && ! sudo mysql -e "USE $DB_NAME" 2>/dev/null; then
+        log_warn "数据库不存在或无法连接，跳过表结构核对"
         return 1
     fi
     
@@ -542,8 +549,14 @@ verify_database_schema() {
         echo ""
     } > "$LOG_FILE"
     
+    # 设置 MySQL 命令 (优先使用用户认证)
+    local MYSQL_CMD="mysql -u$DB_USER -p$DB_PASS"
+    if ! $MYSQL_CMD -e "SELECT 1" &>/dev/null; then
+        MYSQL_CMD="sudo mysql"
+    fi
+    
     # 获取实际表列表
-    local ACTUAL_TABLES=$(mysql -N -e "USE $DB_NAME; SHOW TABLES;" 2>/dev/null)
+    local ACTUAL_TABLES=$($MYSQL_CMD -N -e "USE $DB_NAME; SHOW TABLES;" 2>/dev/null)
     
     for table in "${!EXPECTED_TABLES[@]}"; do
         if ! echo "$ACTUAL_TABLES" | grep -q "^${table}$"; then
@@ -553,7 +566,7 @@ verify_database_schema() {
         fi
         
         # 获取实际列
-        local ACTUAL_COLUMNS=$(mysql -N -e "USE $DB_NAME; SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$DB_NAME' AND TABLE_NAME='$table' ORDER BY ORDINAL_POSITION;" 2>/dev/null | tr '\n' ',' | sed 's/,$//')
+        local ACTUAL_COLUMNS=$($MYSQL_CMD -N -e "USE $DB_NAME; SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$DB_NAME' AND TABLE_NAME='$table' ORDER BY ORDINAL_POSITION;" 2>/dev/null | tr '\n' ',' | sed 's/,$//')
         local EXPECTED_COLUMNS="${EXPECTED_TABLES[$table]}"
         
         IFS=',' read -ra EXPECTED_ARR <<< "$EXPECTED_COLUMNS"
