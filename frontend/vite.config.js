@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [vue()],
   resolve: {
     alias: {
@@ -12,8 +12,12 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 8888,
-    allowedHosts: ['yunjinqi.top', 'www.yunjinqi.top', 'localhost'],
-    hmr: false,  // 在通过 Nginx 代理访问时禁用 HMR
+    allowedHosts: 'all',
+    // 完全禁用 HMR WebSocket 连接
+    hmr: false,
+    watch: {
+      usePolling: false
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5173',
@@ -24,5 +28,9 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  // 生产构建时不需要 HMR
+  build: {
+    sourcemap: false
   }
-})
+}))
