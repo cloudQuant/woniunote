@@ -12,6 +12,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 8888,
+    allowedHosts: ['yunjinqi.top', 'www.yunjinqi.top', 'localhost'],
     proxy: {
       '/api': {
         target: 'http://localhost:5173',
