@@ -1,10 +1,24 @@
 #!/bin/bash
 
 # WoniuNote 启动脚本 - 仅使用 C++ 后端
+# 用法: bash start_app.sh [prod|dev]
+#   prod (默认): 生产模式，使用 npm run build + Nginx 服务静态文件
+#   dev: 开发模式，使用 npm run dev 热重载
+
+# 解析参数
+MODE="${1:-prod}"
+
+if [ "$MODE" != "prod" ] && [ "$MODE" != "dev" ]; then
+    echo "用法: bash start_app.sh [prod|dev]"
+    echo "  prod (默认): 生产模式"
+    echo "  dev: 开发模式"
+    exit 1
+fi
 
 echo "========================================"
 echo "  WoniuNote 应用启动脚本"
 echo "  后端: C++ (Drogon)"
+echo "  模式: $MODE"
 echo "========================================"
 echo ""
 
@@ -91,7 +105,7 @@ if ! lsof -ti:5173 >/dev/null 2>&1; then
 fi
 
 # 启动前端
-echo "[5/5] 启动前端服务..."
+echo "[5/5] 启动前端服务 ($MODE 模式)..."
 cd "$SCRIPT_DIR/frontend"
 if [ ! -f "package.json" ]; then
     echo "[错误] 未找到前端配置文件 frontend/package.json"
@@ -108,32 +122,64 @@ if [ ! -d "node_modules" ] || [ ! -f "node_modules/vite/dist/node/cli.js" ]; the
     echo "     前端依赖安装完成"
 fi
 
-nohup npm run dev >> ../frontend.log 2>&1 &
-FRONTEND_PID=$!
-echo "     前端服务已启动 (PID: $FRONTEND_PID)"
+FRONTEND_PID=""
 
-# 等待前端启动
-sleep 5
-
-# 检查前端是否成功启动
-if ! lsof -ti:8888 >/dev/null 2>&1; then
-    echo "[警告] 前端可能未成功启动，请检查 frontend.log"
+if [ "$MODE" = "prod" ]; then
+    # 生产模式: 构建静态文件，由 Nginx 服务
+    echo "     构建前端生产版本..."
+    npm run build 2>&1 | tail -10
+    
+    if [ -d "dist" ]; then
+        echo "     前端构建成功，静态文件位于: $SCRIPT_DIR/frontend/dist"
+        echo "     请确保 Nginx 已配置正确并运行"
+        
+        # 检查并重载 Nginx
+        if command -v nginx &> /dev/null; then
+            if nginx -t 2>/dev/null; then
+                systemctl reload nginx 2>/dev/null || sudo systemctl reload nginx 2>/dev/null || true
+                echo "     Nginx 已重载"
+            fi
+        fi
+    else
+        echo "[警告] 前端构建可能失败，请检查 dist 目录"
+    fi
+else
+    # 开发模式: 使用 npm run dev
+    nohup npm run dev >> ../frontend.log 2>&1 &
+    FRONTEND_PID=$!
+    echo "     前端开发服务已启动 (PID: $FRONTEND_PID)"
+    
+    # 等待前端启动
+    sleep 5
+    
+    # 检查前端是否成功启动
+    if ! lsof -ti:8888 >/dev/null 2>&1; then
+        echo "[警告] 前端可能未成功启动，请检查 frontend.log"
+    fi
 fi
 
 echo ""
 echo "========================================"
-echo "  启动成功!"
+echo "  启动成功! (模式: $MODE)"
 echo "========================================"
 echo "  后端地址: http://localhost:5173"
-echo "  前端地址: http://localhost:8888"
+if [ "$MODE" = "prod" ]; then
+    echo "  前端地址: 通过 Nginx 访问 (端口 80/443)"
+else
+    echo "  前端地址: http://localhost:8888"
+fi
 echo "========================================"
 echo "  日志文件:"
 echo "  - backend.log  (后端日志)"
-echo "  - frontend.log (前端日志)"
+if [ "$MODE" = "dev" ]; then
+    echo "  - frontend.log (前端日志)"
+fi
 echo "========================================"
 echo "  进程ID:"
 echo "  - 后端: $BACKEND_PID"
-echo "  - 前端: $FRONTEND_PID"
+if [ -n "$FRONTEND_PID" ]; then
+    echo "  - 前端: $FRONTEND_PID"
+fi
 echo "========================================"
 
 cd "$SCRIPT_DIR"
