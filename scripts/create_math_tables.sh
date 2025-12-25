@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 创建数学训练数据库表脚本
-# 使用 woniunote 用户凭据
+# 从 configs/user_password_config.yaml 读取数据库凭据
 
 set -e
 
@@ -14,14 +14,33 @@ log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-# 数据库配置
-DB_NAME="${DB_NAME:-woniunote}"
-DB_USER="${DB_USER:-woniunote}"
-DB_PASS="${DB_PASS:-woniunote_password}"
-DB_HOST="${DB_HOST:-localhost}"
-
-# 获取脚本所在目录
+# 获取脚本和项目目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+CONFIG_FILE="$PROJECT_DIR/configs/user_password_config.yaml"
+
+# 从配置文件读取数据库连接信息
+if [ -f "$CONFIG_FILE" ]; then
+    # 提取 SQLALCHEMY_DATABASE_URI: mysql://user:pass@host:port/dbname
+    DB_URI=$(grep "SQLALCHEMY_DATABASE_URI" "$CONFIG_FILE" | sed 's/.*mysql:\/\///' | sed 's/?.*//')
+    if [ -n "$DB_URI" ]; then
+        # 解析 user:pass@host:port/dbname
+        DB_USER=$(echo "$DB_URI" | cut -d':' -f1)
+        DB_PASS=$(echo "$DB_URI" | cut -d':' -f2 | cut -d'@' -f1)
+        DB_HOST=$(echo "$DB_URI" | cut -d'@' -f2 | cut -d':' -f1)
+        DB_PORT=$(echo "$DB_URI" | cut -d':' -f3 | cut -d'/' -f1)
+        DB_NAME=$(echo "$DB_URI" | cut -d'/' -f2)
+        log_info "从配置文件读取数据库凭据"
+    fi
+fi
+
+# 如果未从配置文件获取，使用默认值
+DB_NAME="${DB_NAME:-woniunote}"
+DB_USER="${DB_USER:-woniunote_user}"
+DB_PASS="${DB_PASS:-Woniunote_password1!}"
+DB_HOST="${DB_HOST:-127.0.0.1}"
+DB_PORT="${DB_PORT:-3306}"
+
 SQL_FILE="$SCRIPT_DIR/sql/08_math_training.sql"
 
 echo "========================================"

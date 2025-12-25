@@ -13,11 +13,27 @@ log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-# 数据库配置
+# 获取脚本所在目录
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+CONFIG_FILE="$PROJECT_DIR/configs/user_password_config.yaml"
+
+# 从配置文件读取数据库连接信息
+if [ -f "$CONFIG_FILE" ]; then
+    DB_URI=$(grep "SQLALCHEMY_DATABASE_URI" "$CONFIG_FILE" | sed 's/.*mysql:\/\///' | sed 's/?.*//')
+    if [ -n "$DB_URI" ]; then
+        DB_USER=$(echo "$DB_URI" | cut -d':' -f1)
+        DB_PASS=$(echo "$DB_URI" | cut -d':' -f2 | cut -d'@' -f1)
+        DB_HOST=$(echo "$DB_URI" | cut -d'@' -f2 | cut -d':' -f1)
+        DB_NAME=$(echo "$DB_URI" | cut -d'/' -f2)
+    fi
+fi
+
+# 如果未从配置文件获取，使用默认值
 DB_NAME="${DB_NAME:-woniunote}"
-DB_USER="${DB_USER:-woniunote}"
-DB_PASS="${DB_PASS:-woniunote_password}"
-DB_HOST="${DB_HOST:-localhost}"
+DB_USER="${DB_USER:-woniunote_user}"
+DB_PASS="${DB_PASS:-Woniunote_password1!}"
+DB_HOST="${DB_HOST:-127.0.0.1}"
 
 echo "========================================"
 echo "  WoniuNote 数据库状态检查"
