@@ -12,7 +12,7 @@ export default defineConfig(({ command }) => ({
   server: {
     host: '0.0.0.0',
     port: 8888,
-    allowedHosts: 'all',
+    allowedHosts: ['yunjinqi.top', 'www.yunjinqi.top', 'localhost', '127.0.0.1'],
     // 完全禁用 HMR WebSocket 连接
     hmr: false,
     watch: {
