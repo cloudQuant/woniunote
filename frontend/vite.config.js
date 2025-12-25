@@ -13,9 +13,11 @@ export default defineConfig(({ command }) => ({
     host: '0.0.0.0',
     port: 8888,
     allowedHosts: ['yunjinqi.top', 'www.yunjinqi.top', 'localhost', '127.0.0.1'],
-    // 生产环境完全禁用 HMR，避免页面频繁刷新
-    hmr: false,
-    watch: null,
+    // 配置 HMR 以支持通过 Nginx SSL 代理连接
+    hmr: {
+      host: 'www.yunjinqi.top',
+      clientPort: 443
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5173',
