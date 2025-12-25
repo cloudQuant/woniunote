@@ -125,31 +125,49 @@ fi
 FRONTEND_PID=""
 
 if [ "$MODE" = "prod" ]; then
-    # 生产模式: 构建并使用 npm run preview 在 8888 端口
-    # (Nginx 配置 proxy_pass http://127.0.0.1:8888)
+    # 生产模式: 构建并同步到 Nginx 服务目录
+    # Nginx 直接提供静态文件，无需 preview 服务器
     echo "     正在构建前端生产环境..."
     npm run build >> ../frontend.log 2>&1
     
-    echo "     启动前端预览服务 (端口 8888)..."
-    nohup npm run preview >> ../frontend.log 2>&1 &
-    FRONTEND_PID=$!
-    echo "     前端服务已启动 (PID: $FRONTEND_PID)"
-    
-    # 等待前端启动
-    sleep 5
-    
-    # 检查前端是否成功启动
-    if ! lsof -ti:8888 >/dev/null 2>&1; then
-        echo "[警告] 前端可能未成功启动，请检查 frontend.log"
+    if [ ! -d "dist" ]; then
+        echo "[错误] 前端构建失败，dist 目录不存在"
+        exit 1
     fi
+    
+    # 同步到 Nginx 服务目录
+    NGINX_ROOT="/var/www/woniunote/frontend/dist"
+    echo "     同步构建产物到 $NGINX_ROOT..."
+    
+    # 确保目标目录存在
+    if [ ! -d "/var/www/woniunote/frontend" ]; then
+        sudo mkdir -p /var/www/woniunote/frontend 2>/dev/null || mkdir -p /var/www/woniunote/frontend
+    fi
+    
+    # 使用 rsync 或 cp 同步文件
+    if command -v rsync &> /dev/null; then
+        sudo rsync -av --delete dist/ "$NGINX_ROOT/" 2>/dev/null || rsync -av --delete dist/ "$NGINX_ROOT/"
+    else
+        sudo rm -rf "$NGINX_ROOT" 2>/dev/null || rm -rf "$NGINX_ROOT"
+        sudo cp -r dist "$NGINX_ROOT" 2>/dev/null || cp -r dist "$NGINX_ROOT"
+    fi
+    echo "     构建产物已同步"
     
     # 检查并重载 Nginx
     if command -v nginx &> /dev/null; then
-        if nginx -t 2>/dev/null; then
-            systemctl reload nginx 2>/dev/null || sudo systemctl reload nginx 2>/dev/null || true
+        echo "     检查 Nginx 配置..."
+        if sudo nginx -t 2>/dev/null || nginx -t 2>/dev/null; then
+            sudo systemctl reload nginx 2>/dev/null || systemctl reload nginx 2>/dev/null || sudo nginx -s reload 2>/dev/null || nginx -s reload 2>/dev/null || true
             echo "     Nginx 已重载"
+        else
+            echo "[警告] Nginx 配置检查失败，请手动检查"
         fi
+    else
+        echo "[警告] 未找到 Nginx，请确保 Nginx 已安装并配置"
     fi
+    
+    FRONTEND_PID=""
+    echo "     前端由 Nginx 提供服务 (端口 80/443)"
 else
     # 开发模式: 使用 npm run dev
     nohup npm run dev >> ../frontend.log 2>&1 &
@@ -170,9 +188,11 @@ echo "========================================"
 echo "  启动成功! (模式: $MODE)"
 echo "========================================"
 echo "  后端地址: http://localhost:5173"
-echo "  前端地址: http://localhost:8888"
 if [ "$MODE" = "prod" ]; then
-    echo "  外部访问: 通过 Nginx (端口 80/443)"
+    echo "  前端地址: 通过 Nginx (端口 80/443)"
+    echo "  外部访问: https://www.yunjinqi.top"
+else
+    echo "  前端地址: http://localhost:8888"
 fi
 echo "========================================"
 echo "  日志文件:"
@@ -183,6 +203,8 @@ echo "  进程ID:"
 echo "  - 后端: $BACKEND_PID"
 if [ -n "$FRONTEND_PID" ]; then
     echo "  - 前端: $FRONTEND_PID"
+else
+    echo "  - 前端: Nginx (系统服务)"
 fi
 echo "========================================"
 
