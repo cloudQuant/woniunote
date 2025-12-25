@@ -29,6 +29,21 @@ export default defineConfig(({ command }) => ({
       }
     }
   },
+  preview: {
+    host: '0.0.0.0',
+    port: 8888,
+    allowedHosts: ['yunjinqi.top', 'www.yunjinqi.top', 'localhost', '127.0.0.1'],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5173',
+        changeOrigin: true
+      },
+      '/uploads': {
+        target: 'http://localhost:5173',
+        changeOrigin: true
+      }
+    }
+  },
   // 生产构建时不需要 HMR
   build: {
     sourcemap: false

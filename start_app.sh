@@ -125,10 +125,13 @@ fi
 FRONTEND_PID=""
 
 if [ "$MODE" = "prod" ]; then
-    # 生产模式: 使用 npm run dev 在 8888 端口，Nginx 代理到此端口
+    # 生产模式: 构建并使用 npm run preview 在 8888 端口
     # (Nginx 配置 proxy_pass http://127.0.0.1:8888)
-    echo "     启动前端服务 (端口 8888)..."
-    nohup npm run dev >> ../frontend.log 2>&1 &
+    echo "     正在构建前端生产环境..."
+    npm run build >> ../frontend.log 2>&1
+    
+    echo "     启动前端预览服务 (端口 8888)..."
+    nohup npm run preview >> ../frontend.log 2>&1 &
     FRONTEND_PID=$!
     echo "     前端服务已启动 (PID: $FRONTEND_PID)"
     
