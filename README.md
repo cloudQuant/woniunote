@@ -2,15 +2,15 @@
 
 <div align="center">
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)](https://fastapi.tiangolo.com/)
-[![Vue](https://img.shields.io/badge/Vue-3.0+-4FC08D.svg)](https://vuejs.org/)
-[![Element Plus](https://img.shields.io/badge/Element%20Plus-2.0+-409EFF.svg)](https://element-plus.org/)
+[![C++](https://img.shields.io/badge/C++-17+-00599C.svg)](https://isocpp.org/)
+[![Drogon](https://img.shields.io/badge/Drogon-1.9+-blue.svg)](https://github.com/drogonframework/drogon)
+[![Vue](https://img.shields.io/badge/Vue-3.4+-4FC08D.svg)](https://vuejs.org/)
+[![Element Plus](https://img.shields.io/badge/Element%20Plus-2.5+-409EFF.svg)](https://element-plus.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**现代化前后端分离的个人博客系统，基于 FastAPI + Vue 3 + Element Plus**
+**高性能前后端分离的个人博客系统，基于 C++ Drogon + Vue 3 + Element Plus**
 
-🌐 **在线演示**: [yunjinqi.top](http://yunjinqi.top)
+🌐 **在线演示**: [https://www.yunjinqi.top](https://www.yunjinqi.top)
 
 [中文](#-项目简介) | [English](#-english-version)
 
@@ -20,27 +20,27 @@
 
 ## 📖 项目简介
 
-WoniuNote（蜗牛笔记）是一个面向量化投资领域的个人博客系统，采用**前后端分离架构**，提供文章发布、用户管理、评论互动、待办事项、卡片管理等完整功能。
+WoniuNote（蜗牛笔记）是一个博客系统，采用**前后端分离架构**，使用高性能 C++ 后端，提供文章发布、用户管理、评论互动、数学训练等完整功能。
 
 ### 🎯 技术架构
 
 | 层级 | 技术栈 | 说明 |
 |------|--------|------|
-| **前端** | Vue 3 + Vite + Element Plus + Pinia | 现代化 SPA 单页应用 |
-| **后端** | FastAPI + SQLAlchemy + Pydantic | 高性能异步 API 服务 |
+| **前端** | Vue 3 + Vite 5 + Element Plus + Pinia | 现代化 SPA 单页应用 |
+| **后端** | C++ 17 + Drogon + JWT + bcrypt | 高性能异步 API 服务 |
 | **数据库** | MySQL 8.0 + Redis | 持久化存储 + 缓存加速 |
-| **部署** | Docker + Nginx | 容器化部署 |
+| **部署** | Nginx + HTTPS + systemd | 生产环境部署 |
 
 ---
 
 ## 🌟 项目特色
 
-- **前后端分离** - Vue 3 SPA + FastAPI RESTful API，开发效率高
-- **高性能优化** - 异步 SQLAlchemy、Redis 缓存、数据库连接池
-- **安全防护** - JWT 认证、CORS 保护、输入验证、API 限流
-- **现代 UI** - Element Plus 组件库、响应式设计、深色模式支持
-- **丰富功能** - 文章管理、用户系统、评论互动、待办事项、卡片系统
-- **开发友好** - 自动生成 API 文档、完整测试套件、Docker 一键部署
+- **高性能后端** - C++ Drogon 框架，比 Python 快 5-10 倍，低延迟高吞吐
+- **前后端分离** - Vue 3 SPA + RESTful API，开发部署灵活
+- **安全防护** - JWT 认证、bcrypt 密码加密、CORS 保护、API 限流
+- **现代 UI** - Element Plus 组件库、响应式设计
+- **丰富功能** - 文章管理、用户系统、评论互动、待办事项、卡片系统、数学训练
+- **生产就绪** - Nginx + HTTPS、systemd 服务管理、完整部署脚本
 
 ---
 
@@ -48,38 +48,36 @@ WoniuNote（蜗牛笔记）是一个面向量化投资领域的个人博客系�
 
 ```
 woniunote/
-├── 📁 backend/                      # FastAPI 后端服务
-│   ├── app/
-│   │   ├── api/                     # API 路由模块
-│   │   │   ├── auth.py              # 认证接口 (登录/注册/登出)
-│   │   │   ├── articles.py          # 文章接口 (CRUD/搜索/分类)
-│   │   │   ├── comments.py          # 评论接口 (评论/回复)
-│   │   │   ├── favorites.py         # 收藏接口
-│   │   │   ├── users.py             # 用户接口 (个人信息)
-│   │   │   ├── admin.py             # 管理接口 (后台管理)
-│   │   │   ├── todos.py             # 待办事项接口
-│   │   │   ├── cards.py             # 卡片管理接口
-│   │   │   ├── credits.py           # 积分系统接口
-│   │   │   ├── upload.py            # 文件上传接口
-│   │   │   └── ueditor.py           # 富文本编辑器接口
-│   │   ├── core/                    # 核心模块
-│   │   │   ├── config.py            # 应用配置
-│   │   │   ├── database.py          # 数据库连接
-│   │   │   ├── security.py          # 安全工具 (JWT/密码)
-│   │   │   └── redis.py             # Redis 连接
-│   │   ├── models/                  # SQLAlchemy 数据模型
-│   │   ├── schemas/                 # Pydantic 请求/响应模型
-│   │   └── main.py                  # FastAPI 应用入口
-│   ├── requirements.txt             # Python 依赖
-│   └── Dockerfile                   # 后端容器配置
+├── 📁 backend_cpp/                  # C++ 后端服务 (Drogon)
+│   ├── main.cc                      # 应用入口
+│   ├── config.json                  # 开发环境配置
+│   ├── config.prod.json             # 生产环境配置
+│   ├── CMakeLists.txt               # CMake 构建配置
+│   ├── vcpkg.json                   # vcpkg 依赖清单
+│   ├── controllers/                 # API 控制器
+│   │   ├── AuthController           # 认证 (登录/注册/登出)
+│   │   ├── ArticleController        # 文章 (CRUD/搜索/分类)
+│   │   ├── CommentController        # 评论 (评论/回复/投票)
+│   │   ├── FavoriteController       # 收藏管理
+│   │   ├── UserController           # 用户信息
+│   │   ├── AdminController          # 管理后台
+│   │   ├── UploadController         # 文件上传
+│   │   ├── CreditController         # 积分系统
+│   │   ├── CaptchaController        # 验证码
+│   │   ├── MathTrainingController   # 数学训练
+│   │   └── SystemController         # 系统状态
+│   ├── core/                        # 核心模块
+│   │   ├── config.h/cc              # 配置加载
+│   │   ├── database.h/cc            # 数据库工具
+│   │   ├── security.h/cc            # JWT + bcrypt
+│   │   └── logger.h/cc              # 日志工具
+│   ├── models/                      # 数据模型
+│   └── filters/                     # 中间件 (认证/限流)
 │
 ├── 📁 frontend/                     # Vue 3 前端应用
 │   ├── src/
 │   │   ├── api/                     # Axios API 封装
 │   │   ├── components/              # 公共组件
-│   │   │   ├── layout/              # 布局组件 (Header/Footer/Sidebar)
-│   │   │   ├── article/             # 文章组件 (列表/卡片/详情)
-│   │   │   └── sidebar/             # 侧边栏组件
 │   │   ├── views/                   # 页面视图
 │   │   │   ├── Home.vue             # 首页
 │   │   │   ├── ArticleDetail.vue    # 文章详情
@@ -87,29 +85,32 @@ woniunote/
 │   │   │   ├── Search.vue           # 搜索页
 │   │   │   ├── WriteArticle.vue     # 写文章
 │   │   │   ├── UserCenter.vue       # 用户中心
-│   │   │   ├── Todo.vue             # 待办事项
-│   │   │   ├── Cards.vue            # 卡片管理
-│   │   │   ├── user/                # 用户相关页面
-│   │   │   └── admin/               # 管理后台页面
+│   │   │   ├── MathTraining.vue     # 数学训练
+│   │   │   ├── Login.vue            # 登录
+│   │   │   ├── Register.vue         # 注册
+│   │   │   └── admin/               # 管理后台
 │   │   ├── stores/                  # Pinia 状态管理
-│   │   ├── router/                  # Vue Router 路由配置
-│   │   ├── App.vue                  # 根组件
+│   │   ├── router/                  # Vue Router 路由
 │   │   └── main.js                  # 入口文件
 │   ├── package.json                 # Node.js 依赖
-│   ├── vite.config.js               # Vite 构建配置
-│   └── Dockerfile.new               # 前端容器配置
+│   └── vite.config.js               # Vite 构建配置
 │
-├── 📁 tests/                        # 测试套件
-│   ├── unit/                        # 单元测试
-│   ├── integration/                 # 集成测试
-│   ├── functional/                  # 功能测试
-│   └── security/                    # 安全测试
+├── 📁 scripts/                      # 部署和管理脚本
+│   ├── setup_ubuntu.sh              # Ubuntu 环境配置
+│   ├── start_prod.sh                # 启动生产服务
+│   ├── stop_prod.sh                 # 停止服务
+│   ├── update_nginx_ssl.sh          # 更新 Nginx 配置
+│   └── sql/                         # 数据库脚本
 │
 ├── 📁 configs/                      # 配置文件
+│   ├── woniunote_nginx_prod.conf    # Nginx 生产配置
+│   └── yunjinqi.top_nginx/          # SSL 证书
+│
+├── 📁 tests/                        # 测试套件
 ├── 📁 docs/                         # 项目文档
-├── 📁 scripts/                      # 工具脚本
-├── docker-compose.new.yml           # Docker 编排文件
-└── README.md                        # 项目说明
+├── start_app.sh                     # 一键启动脚本
+├── stop_app.sh                      # 停止脚本
+└── restart_app.sh                   # 重启脚本
 ```
 
 ---
@@ -120,52 +121,54 @@ woniunote/
 
 | 组件 | 版本 | 必需 |
 |------|------|------|
-| Python | 3.8+ | ✅ |
-| Node.js | 16+ | ✅ |
-| MySQL | 5.7+ | ✅ |
-| Redis | 4.0+ | ❌ (可选，推荐) |
+| C++ 编译器 | GCC 10+ / Clang 13+ / MSVC 2019+ | ✅ |
+| CMake | 3.20+ | ✅ |
+| vcpkg | 最新版 | ✅ |
+| Node.js | 18+ | ✅ |
+| MySQL | 8.0+ | ✅ |
+| Redis | 6.0+ | ❌ (可选，推荐) |
 
-### 方式一：Docker 部署（推荐）
+### 方式一：一键启动（推荐）
 
 ```bash
 # 克隆项目
 git clone https://github.com/cloudQuant/woniunote.git
 cd woniunote
 
-# 一键启动所有服务
-docker-compose -f docker-compose.new.yml up -d
+# 开发模式 (前端热重载)
+bash start_app.sh dev
+
+# 生产模式 (构建前端 + Nginx 服务)
+bash start_app.sh prod
 
 # 访问
-# 前端: http://localhost
+# 前端: http://localhost:8888
 # 后端 API: http://localhost:5173
-# API 文档: http://localhost:5173/docs
 ```
 
-### 方式二：本地开发
+### 方式二：手动启动
 
-#### 1. 启动后端
+#### 1. 编译并启动后端
 
 ```bash
-cd backend
+cd backend_cpp
 
-# 创建虚拟环境
-python -m venv venv
-# Windows
-.\venv\Scripts\activate
-# Linux/Mac
-source venv/bin/activate
+# 安装 vcpkg (如未安装)
+git clone https://github.com/microsoft/vcpkg.git ~/vcpkg
+~/vcpkg/bootstrap-vcpkg.sh
 
-# 安装依赖
-pip install -r requirements.txt
+# 编译
+mkdir build && cd build
+cmake .. -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake --build . --config Release -j8
 
-# 配置环境变量
-cp .env.example .env
-# 编辑 .env 文件配置数据库连接等
+# 配置数据库连接
+cp ../config.json .
+# 编辑 config.json 设置数据库密码等
 
-# 启动开发服务器
-uvicorn app.main:app --reload --host 0.0.0.0 --port 5173
-
-# API 文档: http://localhost:5173/docs
+# 启动
+./woniunote_backend
+# 后端运行在 http://localhost:5173
 ```
 
 #### 2. 启动前端
@@ -176,28 +179,20 @@ cd frontend
 # 安装依赖
 npm install
 
-# 启动开发服务器
+# 开发模式
 npm run dev
-
 # 访问: http://localhost:8888
+
+# 生产构建
+npm run build
 ```
 
-### 方式三：传统一键启动
+### 方式三：生产环境部署 (Ubuntu 22.04 + HTTPS)
+
+#### 1. 运行环境配置脚本
 
 ```bash
-# Windows
-start_app.bat
-
-# Linux/Mac
-chmod +x start_app.sh && ./start_app.sh
-```
-
-### 方式四：生产环境部署 (Ubuntu 22.04 + HTTPS)
-
-#### 1. 配置生产环境
-
-```bash
-# 运行环境配置脚本 (需要 root 权限)
+# 需要 root 权限
 sudo bash scripts/setup_ubuntu.sh
 ```
 
@@ -211,65 +206,25 @@ sudo bash scripts/setup_ubuntu.sh
 #### 2. 配置数据库
 
 ```bash
-# 登录 MySQL
 mysql -u root -p
 
-# 创建数据库和用户
 CREATE DATABASE woniunote CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'woniunote_user'@'localhost' IDENTIFIED BY 'your_secure_password';
+CREATE USER 'woniunote_user'@'localhost' IDENTIFIED BY 'your_password';
 GRANT ALL PRIVILEGES ON woniunote.* TO 'woniunote_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-#### 3. 配置 SSL 证书 (HTTPS)
+#### 3. 配置并启动
 
 ```bash
-# 使用 Let's Encrypt 获取免费证书
-sudo apt install certbot python3-certbot-nginx
-sudo certbot certonly --nginx -d yunjinqi.top -d www.yunjinqi.top
-```
-
-#### 4. 配置 Nginx
-
-```bash
-# 复制生产环境 Nginx 配置
-sudo cp configs/woniunote_nginx_prod.conf /etc/nginx/sites-available/woniunote
-sudo ln -s /etc/nginx/sites-available/woniunote /etc/nginx/sites-enabled/
-
-# 测试并重载配置
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-#### 5. 修改生产配置
-
-```bash
-# 编辑生产配置文件
+# 编辑生产配置
 nano backend_cpp/config.prod.json
-# 修改数据库密码、JWT 密钥等敏感信息
-```
 
-#### 6. 构建前端
+# 更新 Nginx 配置
+sudo bash scripts/update_nginx_ssl.sh
 
-```bash
-cd frontend
-npm install
-npm run build
-# 将 dist 目录部署到 /var/www/woniunote/frontend/dist
-sudo mkdir -p /var/www/woniunote/frontend
-sudo cp -r dist /var/www/woniunote/frontend/
-```
-
-#### 7. 启动服务
-
-```bash
-# 启动生产服务
-sudo bash scripts/start_prod.sh
-
-# 停止服务
-sudo bash scripts/stop_prod.sh
-
-# 重启服务
-sudo bash scripts/restart_prod.sh
+# 启动服务
+bash restart_app.sh prod
 ```
 
 **访问地址**: https://www.yunjinqi.top
@@ -279,53 +234,55 @@ sudo bash scripts/restart_prod.sh
 ## 🔧 核心功能
 
 ### 📝 内容管理
-- **文章系统** - 支持原创/转载/翻译，Markdown 和富文本编辑
+- **文章系统** - 支持原创/转载/翻译，富文本编辑器 (UEditor)
 - **分类管理** - 多级分类、灵活的文章归类
 - **搜索功能** - 关键词搜索、分类筛选
 
 ### 👥 用户系统
-- **认证授权** - JWT Token 认证、安全登录登出
-- **用户注册** - 邮箱验证、验证码保护
+- **认证授权** - JWT Token 认证、bcrypt 密码加密
+- **用户注册** - 验证码保护
 - **个人中心** - 资料管理、头像上传、密码修改
-- **角色权限** - 普通用户/编辑/管理员多角色
+- **角色权限** - 普通用户/管理员
 
 ### 💬 互动功能
-- **评论系统** - 文章评论、多级回复
+- **评论系统** - 文章评论、多级回复、点赞
 - **收藏功能** - 收藏文章、收藏管理
 - **积分系统** - 用户活跃度积分
 
-### � 扩展功能
-- **待办事项** - 个人任务管理、完成状态追踪
-- **卡片系统** - 信息卡片管理、快捷记录
+### 🧮 数学训练
+- **口算练习** - 加减乘除四则运算
+- **难度分级** - 多难度级别
+- **成绩记录** - 答题统计
 
-### �️ 管理后台
+### 🛠️ 管理后台
 - **文章审核** - 待审核文章管理
 - **用户管理** - 用户列表、权限控制
-- **系统监控** - 运行状态监控
+- **系统监控** - 健康检查、数据库状态
 - **数据统计** - 访问量、文章统计
 
 ---
 
 ## 🛠️ 技术栈
 
-### 后端技术
+### 后端技术 (C++)
 
 | 技术 | 说明 |
 |------|------|
-| **FastAPI** | 高性能异步 Python Web 框架 |
-| **SQLAlchemy** | ORM 数据库操作 |
-| **Pydantic** | 数据验证和序列化 |
-| **PyJWT** | JWT Token 认证 |
-| **asyncmy** | MySQL 异步驱动 |
-| **aioredis** | Redis 异步客户端 |
+| **Drogon** | 高性能 C++ 异步 Web 框架 |
+| **jwt-cpp** | JWT Token 认证 |
+| **OpenSSL** | 加密、bcrypt 密码哈希 |
+| **jsoncpp** | JSON 解析 |
+| **hiredis** | Redis 客户端 |
+| **libmariadb** | MySQL 客户端 |
+| **spdlog** | 高性能日志库 |
 
 ### 前端技术
 
 | 技术 | 说明 |
 |------|------|
-| **Vue 3** | 渐进式 JavaScript 框架 |
-| **Vite** | 下一代前端构建工具 |
-| **Element Plus** | Vue 3 UI 组件库 |
+| **Vue 3.4** | 渐进式 JavaScript 框架 |
+| **Vite 5** | 下一代前端构建工具 |
+| **Element Plus 2.5** | Vue 3 UI 组件库 |
 | **Pinia** | Vue 3 状态管理 |
 | **Vue Router** | 官方路由管理器 |
 | **Axios** | HTTP 请求库 |
@@ -335,9 +292,9 @@ sudo bash scripts/restart_prod.sh
 | 组件 | 说明 |
 |------|------|
 | **MySQL 8.0** | 主数据库 |
-| **Redis** | 缓存、会话存储 |
-| **Nginx** | 反向代理、静态资源服务 |
-| **Docker** | 容器化部署 |
+| **Redis 6.0+** | 缓存、限流 |
+| **Nginx** | 反向代理、HTTPS、静态资源 |
+| **vcpkg** | C++ 包管理器 |
 
 ---
 
@@ -361,32 +318,21 @@ pytest tests/ --cov=backend --cov-report=html
 
 ## 📚 API 文档
 
-后端启动后自动生成交互式 API 文档：
-
-- **Swagger UI**: http://localhost:5173/docs
-- **ReDoc**: http://localhost:5173/redoc
-
 ### 主要 API 端点
 
-| 模块 | 端点 | 方法 | 说明 |
-|------|------|------|------|
-| **认证** | `/api/auth/login` | POST | 用户登录 |
-| | `/api/auth/register` | POST | 用户注册 |
-| | `/api/auth/logout` | POST | 用户登出 |
-| **文章** | `/api/articles/` | GET | 文章列表 |
-| | `/api/articles/{id}` | GET | 文章详情 |
-| | `/api/articles/` | POST | 创建文章 |
-| | `/api/articles/{id}` | PUT | 更新文章 |
-| | `/api/articles/{id}` | DELETE | 删除文章 |
-| **评论** | `/api/comments/` | GET | 评论列表 |
-| | `/api/comments/` | POST | 发表评论 |
-| **收藏** | `/api/favorites/` | GET | 收藏列表 |
-| | `/api/favorites/` | POST | 添加收藏 |
-| **用户** | `/api/users/me` | GET | 当前用户信息 |
-| | `/api/users/me` | PUT | 更新用户信息 |
-| **待办** | `/api/todos/` | GET/POST | 待办事项管理 |
-| **卡片** | `/api/cards/` | GET/POST | 卡片管理 |
-| **管理** | `/api/admin/*` | - | 管理后台接口 |
+| 模块 | 端点 | 说明 |
+|------|------|------|
+| **认证** | `/api/auth/login`, `/api/auth/register`, `/api/auth/logout` | 登录/注册/登出 |
+| **用户** | `/api/auth/me`, `/api/user/profile`, `/api/user/password` | 用户信息/资料/密码 |
+| **文章** | `/api/article/list`, `/api/article/{id}`, `/api/article/create` | 文章 CRUD |
+| **评论** | `/api/comment/list`, `/api/comment/create`, `/api/comment/vote` | 评论/回复/点赞 |
+| **收藏** | `/api/favorite/list`, `/api/favorite/add`, `/api/favorite/remove` | 收藏管理 |
+| **积分** | `/api/credit/balance`, `/api/credit/history` | 积分查询 |
+| **数学** | `/api/math/problems`, `/api/math/submit`, `/api/math/history` | 数学训练 |
+| **上传** | `/api/upload/image`, `/api/upload/file`, `/api/upload/avatar` | 文件上传 |
+| **验证码** | `/api/captcha/generate`, `/api/captcha/verify` | 验证码 |
+| **管理** | `/api/admin/stats`, `/api/admin/users`, `/api/admin/articles` | 管理后台 |
+| **系统** | `/api/system/health`, `/api/system/status` | 健康检查 |
 
 ---
 
@@ -426,15 +372,15 @@ pytest tests/ --cov=backend --cov-report=html
 
 ### Overview
 
-WoniuNote is a modern personal blog system for quantitative investment, built with **FastAPI + Vue 3 + Element Plus** using a frontend-backend separation architecture.
+WoniuNote is a high-performance personal blog system for quantitative investment, built with **C++ Drogon + Vue 3 + Element Plus** using a frontend-backend separation architecture.
 
 ### Features
 
-- **Modern Architecture** - Vue 3 SPA + FastAPI RESTful API
-- **High Performance** - Async SQLAlchemy, Redis caching
-- **Security** - JWT authentication, CORS protection, input validation
-- **Rich Features** - Articles, comments, favorites, todos, cards management
-- **Developer Friendly** - Auto-generated API docs, Docker deployment
+- **High Performance** - C++ Drogon framework, 5-10x faster than Python
+- **Modern Frontend** - Vue 3 SPA + Element Plus
+- **Security** - JWT authentication, bcrypt password hashing, rate limiting
+- **Rich Features** - Articles, comments, favorites, math training
+- **Production Ready** - Nginx + HTTPS, systemd service management
 
 ### Quick Start
 
@@ -443,41 +389,36 @@ WoniuNote is a modern personal blog system for quantitative investment, built wi
 git clone https://github.com/cloudQuant/woniunote.git
 cd woniunote
 
-# Option 1: Docker (Recommended)
-docker-compose -f docker-compose.new.yml up -d
-# Frontend: http://localhost
-# API Docs: http://localhost:5173/docs
+# Development mode
+bash start_app.sh dev
 
-# Option 2: Local Development
-# Backend
-cd backend && pip install -r requirements.txt
-uvicorn app.main:app --reload --port 5173
+# Production mode
+bash start_app.sh prod
 
-# Frontend (new terminal)
-cd frontend && npm install && npm run dev
-# Visit: http://localhost:8888
+# Frontend: http://localhost:8888
+# Backend API: http://localhost:5173
 ```
 
 ### Tech Stack
 
 | Layer | Technologies |
 |-------|-------------|
-| **Frontend** | Vue 3 + Vite + Element Plus + Pinia |
-| **Backend** | FastAPI + SQLAlchemy + Pydantic + JWT |
+| **Frontend** | Vue 3.4 + Vite 5 + Element Plus + Pinia |
+| **Backend** | C++ 17 + Drogon + JWT + bcrypt |
 | **Database** | MySQL 8.0 + Redis |
-| **Deployment** | Docker + Nginx |
+| **Deployment** | Nginx + HTTPS + systemd |
 
 ### API Endpoints
 
-| Module | Endpoint | Description |
-|--------|----------|-------------|
+| Module | Endpoints | Description |
+|--------|-----------|-------------|
 | Auth | `/api/auth/*` | Login, Register, Logout |
-| Articles | `/api/articles/*` | CRUD, Search, Categories |
-| Comments | `/api/comments/*` | Comment, Reply |
-| Favorites | `/api/favorites/*` | Bookmark management |
-| Users | `/api/users/*` | User profile |
-| Todos | `/api/todos/*` | Task management |
-| Cards | `/api/cards/*` | Card management |
+| Articles | `/api/article/*` | CRUD, Search, Categories |
+| Comments | `/api/comment/*` | Comment, Reply, Vote |
+| Favorites | `/api/favorite/*` | Bookmark management |
+| Users | `/api/user/*` | User profile |
+| Math | `/api/math/*` | Math training |
+| Admin | `/api/admin/*` | Admin dashboard |
 
 ### License
 
