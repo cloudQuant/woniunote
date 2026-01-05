@@ -54,10 +54,15 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import * as pdfjsLib from 'pdfjs-dist'
 import { ArrowLeft, ArrowRight, ZoomIn, ZoomOut, Download, Loading, Warning } from '@element-plus/icons-vue'
 
-// 设置 worker 路径 - 使用 CDN，确保跨域兼容性
-// 版本号与 package.json 中的 pdfjs-dist 版本保持一致
-const PDFJS_VERSION = '5.4.449'
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.mjs`
+// 设置 worker 路径
+// 使用 Vite 的 ?raw 将 worker 内容作为字符串导入，然后创建 Blob URL
+// 这样可以避免跨域和 MIME 类型问题
+import pdfWorkerContent from 'pdfjs-dist/build/pdf.worker.min.mjs?raw'
+
+const workerBlob = new Blob([pdfWorkerContent], { type: 'text/javascript' })
+const workerUrl = URL.createObjectURL(workerBlob)
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
 
 const props = defineProps({
   /**
