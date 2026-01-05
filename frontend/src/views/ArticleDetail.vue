@@ -447,11 +447,11 @@ onBeforeUnmount(() => {
 }
 
 .article-detail-container {
-  /* 文章详情页使用全宽容器，让右侧侧边栏尽量贴近屏幕右侧 */
+  /* 使用最大宽度容器，确保在大屏幕上布局正常 */
   width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .article-container {
@@ -503,6 +503,9 @@ onBeforeUnmount(() => {
   font-size: 16px;
   line-height: 1.8;
   color: #606266;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .article-body :deep(img) {
@@ -528,11 +531,14 @@ onBeforeUnmount(() => {
 .article-body :deep(table) {
   border-collapse: collapse;
   width: 100%;
+  max-width: 100%;
   margin: 16px 0;
   font-size: 14px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border-radius: 4px;
   overflow: hidden;
+  display: block;
+  overflow-x: auto;
 }
 
 .article-body :deep(th),
