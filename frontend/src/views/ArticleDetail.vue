@@ -462,16 +462,21 @@ onBeforeUnmount(() => {
 }
 
 .article-header {
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #ebeef5;
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .article-title {
-  font-size: 28px;
-  font-weight: 600;
-  color: #303133;
-  margin: 0 0 15px;
+  /* 文章标题 - 遵循排版最佳实践 */
+  font-size: clamp(28px, 4vw, 42px); /* 响应式：最小28px，最大42px */
+  font-weight: 700; /* 加粗增强层次感 */
+  line-height: 1.3; /* 标题使用较紧凑的行高 */
+  letter-spacing: -0.02em; /* 大标题稍微收紧字间距 */
+  color: #1a1a1a; /* 更深的黑色增强对比度 */
+  margin: 0 0 24px; /* 增加底部间距 */
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e5e7eb; /* 更明显的分隔线 */
 }
 
 .article-meta {
@@ -503,6 +508,71 @@ onBeforeUnmount(() => {
   font-size: 16px;
   line-height: 1.8;
   color: #606266;
+  /* 内容标题层级系统 - 基于 16px 基准 */
+}
+
+/* 文章内容中的标题层级 */
+.article-body :deep(h1),
+.article-body :deep(h2),
+.article-body :deep(h3),
+.article-body :deep(h4),
+.article-body :deep(h5),
+.article-body :deep(h6) {
+  font-weight: 700;
+  line-height: 1.4;
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  color: #1a1a1a;
+}
+
+.article-body :deep(h1) {
+  font-size: 2em; /* 32px - 主标题 */
+  margin-top: 0;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.article-body :deep(h2) {
+  font-size: 1.75em; /* 28px - 二级标题 */
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.article-body :deep(h3) {
+  font-size: 1.5em; /* 24px - 三级标题 */
+}
+
+.article-body :deep(h4) {
+  font-size: 1.25em; /* 20px - 四级标题 */
+}
+
+.article-body :deep(h5) {
+  font-size: 1.1em; /* 17.6px - 五级标题 */
+}
+
+.article-body :deep(h6) {
+  font-size: 1em; /* 16px - 六级标题 */
+  font-weight: 600;
+  color: #606266;
+}
+
+/* 段落和列表样式 */
+.article-body :deep(p) {
+  margin: 0 0 1.2em;
+}
+
+.article-body :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.article-body :deep(ul),
+.article-body :deep(ol) {
+  margin: 1.2em 0;
+  padding-left: 1.8em;
+}
+
+.article-body :deep(li) {
+  margin: 0.5em 0;
 }
 
 .article-body :deep(img) {
@@ -663,5 +733,59 @@ onBeforeUnmount(() => {
 
 .comment-actions span:hover {
   color: #409eff;
+}
+
+/* 移动端响应式优化 */
+@media (max-width: 768px) {
+  .article-container {
+    padding: 20px 16px;
+  }
+
+  .article-title {
+    font-size: clamp(24px, 5vw, 32px);
+    margin-bottom: 20px;
+  }
+
+  .article-body {
+    font-size: 16px; /* 移动端保持16px，不缩小 */
+  }
+
+  .article-body :deep(h1) {
+    font-size: 1.75em; /* 28px */
+  }
+
+  .article-body :deep(h2) {
+    font-size: 1.5em; /* 24px */
+  }
+
+  .article-body :deep(h3) {
+    font-size: 1.3em; /* 20.8px */
+  }
+
+  /* 表格在移动端可横向滚动 */
+  .article-body :deep(table) {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* 超大屏幕优化 */
+@media (min-width: 1440px) {
+  .article-title {
+    font-size: 42px;
+  }
+
+  .article-body {
+    font-size: 17px; /* 大屏幕稍微增大 */
+  }
+}
+
+/* 阅读体验优化 - 最大宽度限制 */
+@media (min-width: 992px) {
+  .article-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
 }
 </style>
