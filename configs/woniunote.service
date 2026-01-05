@@ -6,13 +6,13 @@ Wants=mysql.service redis-server.service
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/var/www/woniunote/backend_cpp/build
-ExecStart=/var/www/woniunote/backend_cpp/build/woniunote_backend
+WorkingDirectory=/root/woniunote/backend_cpp/build
+ExecStart=/root/woniunote/backend_cpp/build/woniunote_backend
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 RestartSec=5
-StandardOutput=append:/var/www/woniunote/logs/backend.log
-StandardError=append:/var/www/woniunote/logs/backend_error.log
+StandardOutput=append:/root/woniunote/logs/backend.log
+StandardError=append:/root/woniunote/logs/backend_error.log
 
 # 环境变量
 Environment=LANG=en_US.UTF-8
@@ -27,9 +27,10 @@ LimitNPROC=4096
 # 安全设置
 NoNewPrivileges=true
 ProtectSystem=strict
-ReadWritePaths=/var/www/woniunote/backend_cpp/build/logs
-ReadWritePaths=/var/www/woniunote/backend_cpp/build/uploads
-ReadWritePaths=/var/www/woniunote/logs
+ReadWritePaths=/root/woniunote/backend_cpp/build/logs
+ReadWritePaths=/root/woniunote/backend_cpp/build/uploads
+ReadWritePaths=/root/woniunote/logs
+ReadWritePaths=/root/woniunote/uploads
 
 [Install]
 WantedBy=multi-user.target
