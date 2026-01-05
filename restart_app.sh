@@ -33,11 +33,14 @@ echo "[2/6] 停止服务..."
 bash "$SCRIPT_DIR/stop_app.sh"
 
 echo "[3/6] 清理缓存..."
+# 删除旧的构建产物和缓存
 rm -rf "$SCRIPT_DIR/frontend/dist"
 rm -rf "$SCRIPT_DIR/frontend/node_modules/.vite"
+# 清理 nginx 缓存（如果存在）
+sudo rm -rf /var/cache/nginx/* 2>/dev/null || true
 : > "$SCRIPT_DIR/backend.log"
 : > "$SCRIPT_DIR/frontend.log"
-echo "     缓存已清理"
+echo "     缓存已清理（包括 nginx 缓存）"
 
 echo "[4/6] 更新 Nginx 配置..."
 NGINX_CONF_SRC="$SCRIPT_DIR/configs/woniunote_nginx_prod.conf"
@@ -84,6 +87,34 @@ echo "  后端: http://localhost:5173"
 echo ""
 echo "  重要提示："
 echo "  浏览器按 Ctrl+Shift+R (Mac: Cmd+Shift+R) 强制刷新"
+echo ""
+
+# 验证前端构建文件是否正确部署
+echo "[验证] 检查前端构建文件..."
+if [ -f "$SCRIPT_DIR/frontend/dist/index.html" ]; then
+    CSS_FILE=$(grep -o 'href="/assets/[^"]*\.css"' "$SCRIPT_DIR/frontend/dist/index.html" | head -1 | sed 's/href="\/assets\///;s/"//')
+    JS_FILE=$(grep -o 'src="/assets/[^"]*\.js"' "$SCRIPT_DIR/frontend/dist/index.html" | head -1 | sed 's/src="\/assets\///;s/"//')
+    echo "  index.html 引用的 CSS: $CSS_FILE"
+    echo "  index.html 引用的 JS: $JS_FILE"
+
+    # 检查文件是否实际存在
+    if [ -f "$SCRIPT_DIR/frontend/dist/assets/$CSS_FILE" ] && [ -f "$SCRIPT_DIR/frontend/dist/assets/$JS_FILE" ]; then
+        echo "  ✓ 所有引用文件存在"
+    else
+        echo "  ✗ 警告: 部分引用文件不存在，可能构建不完整"
+    fi
+
+    # 检查 nginx root 目录是否正确
+    NGINX_ROOT=$(grep -A 20 "server_name yunjinqi.top" "$NGINX_CONF_DST" 2>/dev/null | grep "root" | head -1 | awk '{print $2}' | sed 's/;//')
+    if [ -n "$NGINX_ROOT" ]; then
+        echo "  Nginx root 目录: $NGINX_ROOT"
+        if [ "$NGINX_ROOT" != "$SCRIPT_DIR/frontend/dist" ]; then
+            echo "  ✗ 警告: Nginx root 与项目目录不一致"
+        fi
+    fi
+else
+    echo "  ✗ 警告: dist/index.html 不存在"
+fi
 echo "========================================"
 
 exit 0

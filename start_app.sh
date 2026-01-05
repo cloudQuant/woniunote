@@ -127,14 +127,35 @@ FRONTEND_PID=""
 if [ "$MODE" = "prod" ]; then
     # 生产模式: 构建 frontend (无需 rsync，Nginx 直接读取项目目录)
     echo "     正在构建前端生产环境..."
+
+    # 确保旧的构建目录完全清除
+    rm -rf dist
+    rm -rf node_modules/.vite
+
+    # 执行构建
     npm run build >> ../frontend.log 2>&1
 
     if [ ! -d "dist" ]; then
         echo "[错误] 前端构建失败，dist 目录不存在"
+        echo "       请查看 frontend.log 了解详情"
         exit 1
     fi
 
-    echo "     前端构建完成，Nginx 将直接从项目目录服务静态文件"
+    # 验证关键文件存在
+    if [ ! -f "dist/index.html" ]; then
+        echo "[错误] 前端构建不完整，index.html 不存在"
+        exit 1
+    fi
+
+    # 检查并显示构建产物的文件
+    ASSETS_COUNT=$(ls dist/assets/ 2>/dev/null | wc -l)
+    echo "     前端构建完成，生成了 $ASSETS_COUNT 个资源文件"
+
+    # 验证 index.html 中的资源引用是否与实际文件一致
+    INDEX_CSS=$(grep -o 'href="/assets/[^"]*\.css"' dist/index.html | head -1 | sed 's/href="\/assets\///;s/"//')
+    if [ -n "$INDEX_CSS" ] && [ ! -f "dist/assets/$INDEX_CSS" ]; then
+        echo "[警告] index.html 引用的 CSS 文件不存在: $INDEX_CSS"
+    fi
 
     # 检查并重载 Nginx
     if command -v nginx &> /dev/null; then
