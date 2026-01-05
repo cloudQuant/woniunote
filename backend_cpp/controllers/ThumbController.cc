@@ -42,7 +42,10 @@ static fs::path getThumbRoot()
             cwd / "backend" / "resource" / "thumb",
             // 绝对路径备选（开发环境）
             "/Users/yunjinqi/Documents/woniunote/backend_cpp/resource/thumb",
-            "/Users/yunjinqi/Documents/woniunote/backend/resource/thumb"
+            "/Users/yunjinqi/Documents/woniunote/backend/resource/thumb",
+            // 生产服务器路径
+            "/root/woniunote/backend_cpp/resource/thumb",
+            "/root/woniunote/backend/resource/thumb"
         };
         
         Logger::info("[Thumb] Searching for thumb root, cwd: " + cwd.string());

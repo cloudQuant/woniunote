@@ -21,7 +21,7 @@ echo ""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "[1/6] 更新代码..."
+echo "[1/7] 更新代码..."
 git pull origin dev_cpp
 if [ $? -ne 0 ]; then
     echo "[错误] Git pull 失败，终止重启"
@@ -29,10 +29,10 @@ if [ $? -ne 0 ]; then
 fi
 echo "     代码已更新"
 
-echo "[2/6] 停止服务..."
+echo "[2/7] 停止服务..."
 bash "$SCRIPT_DIR/stop_app.sh"
 
-echo "[3/6] 清理缓存..."
+echo "[3/7] 清理缓存..."
 # 删除旧的构建产物和缓存
 rm -rf "$SCRIPT_DIR/frontend/dist"
 rm -rf "$SCRIPT_DIR/frontend/node_modules/.vite"
@@ -42,7 +42,20 @@ sudo rm -rf /var/cache/nginx/* 2>/dev/null || true
 : > "$SCRIPT_DIR/frontend.log"
 echo "     缓存已清理（包括 nginx 缓存）"
 
-echo "[4/6] 更新 Nginx 配置..."
+echo "[4/7] 生成缩略图..."
+THUMB_SCRIPT="$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py"
+if [ -f "$THUMB_SCRIPT" ]; then
+    python3 "$THUMB_SCRIPT"
+    if [ $? -eq 0 ]; then
+        echo "     缩略图生成完成"
+    else
+        echo "     警告: 缩略图生成失败，但继续启动"
+    fi
+else
+    echo "     跳过缩略图生成（脚本不存在）"
+fi
+
+echo "[5/7] 更新 Nginx 配置..."
 NGINX_CONF_SRC="$SCRIPT_DIR/configs/woniunote_nginx_prod.conf"
 NGINX_CONF_DST="/etc/nginx/nginx.conf"
 
@@ -67,7 +80,7 @@ else
     exit 1
 fi
 
-echo "[5/6] 删除旧的同步目录（如果存在）..."
+echo "[6/7] 删除旧的同步目录（如果存在）..."
 if [ -d "/var/www/woniunote/frontend" ]; then
     sudo rm -rf /var/www/woniunote/frontend
     echo "     旧目录已删除"
@@ -75,7 +88,7 @@ else
     echo "     无需删除"
 fi
 
-echo "[6/6] 启动服务..."
+echo "[7/7] 启动服务..."
 bash "$SCRIPT_DIR/start_app.sh" "$MODE"
 
 echo ""
@@ -114,6 +127,25 @@ if [ -f "$SCRIPT_DIR/frontend/dist/index.html" ]; then
     fi
 else
     echo "  ✗ 警告: dist/index.html 不存在"
+fi
+
+# 验证缩略图是否生成
+echo "[验证] 检查缩略图..."
+THUMB_DIR="$SCRIPT_DIR/backend_cpp/resource/thumb"
+if [ -d "$THUMB_DIR" ]; then
+    THUMB_COUNT=$(ls "$THUMB_DIR"/*.png 2>/dev/null | wc -l)
+    echo "  缩略图目录: $THUMB_DIR"
+    echo "  缩略图数量: $THUMB_COUNT"
+    # 检查关键的缩略图是否存在
+    for id in 605 604 808 802; do
+        if [ -f "$THUMB_DIR/$id.png" ]; then
+            echo "  ✓ $id.png 存在"
+        else
+            echo "  ✗ $id.png 缺失"
+        fi
+    done
+else
+    echo "  ✗ 警告: 缩略图目录不存在"
 fi
 echo "========================================"
 
