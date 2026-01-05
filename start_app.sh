@@ -125,34 +125,17 @@ fi
 FRONTEND_PID=""
 
 if [ "$MODE" = "prod" ]; then
-    # 生产模式: 构建并同步到 Nginx 服务目录
-    # Nginx 直接提供静态文件，无需 preview 服务器
+    # 生产模式: 构建 frontend (无需 rsync，Nginx 直接读取项目目录)
     echo "     正在构建前端生产环境..."
     npm run build >> ../frontend.log 2>&1
-    
+
     if [ ! -d "dist" ]; then
         echo "[错误] 前端构建失败，dist 目录不存在"
         exit 1
     fi
-    
-    # 同步到 Nginx 服务目录
-    NGINX_ROOT="/var/www/woniunote/frontend/dist"
-    echo "     同步构建产物到 $NGINX_ROOT..."
-    
-    # 确保目标目录存在
-    if [ ! -d "/var/www/woniunote/frontend" ]; then
-        sudo mkdir -p /var/www/woniunote/frontend 2>/dev/null || mkdir -p /var/www/woniunote/frontend
-    fi
-    
-    # 使用 rsync 或 cp 同步文件
-    if command -v rsync &> /dev/null; then
-        sudo rsync -av --delete dist/ "$NGINX_ROOT/" 2>/dev/null || rsync -av --delete dist/ "$NGINX_ROOT/"
-    else
-        sudo rm -rf "$NGINX_ROOT" 2>/dev/null || rm -rf "$NGINX_ROOT"
-        sudo cp -r dist "$NGINX_ROOT" 2>/dev/null || cp -r dist "$NGINX_ROOT"
-    fi
-    echo "     构建产物已同步"
-    
+
+    echo "     前端构建完成，Nginx 将直接从项目目录服务静态文件"
+
     # 检查并重载 Nginx
     if command -v nginx &> /dev/null; then
         echo "     检查 Nginx 配置..."
@@ -165,7 +148,7 @@ if [ "$MODE" = "prod" ]; then
     else
         echo "[警告] 未找到 Nginx，请确保 Nginx 已安装并配置"
     fi
-    
+
     FRONTEND_PID=""
     echo "     前端由 Nginx 提供服务 (端口 80/443)"
 else
