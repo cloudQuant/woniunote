@@ -447,10 +447,11 @@ onBeforeUnmount(() => {
 }
 
 .article-detail-container {
-  /* 文章详情页使用限制宽度的容器 */
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+  /* 文章详情页使用全宽容器，让右侧侧边栏尽量贴近屏幕右侧 */
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .article-container {
@@ -461,44 +462,35 @@ onBeforeUnmount(() => {
 }
 
 .article-header {
-  margin-bottom: 40px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #ebeef5;
 }
 
 .article-title {
-  /* 文章主标题 - 页面最大的文字 */
-  font-size: 40px;
-  font-weight: 800;
-  line-height: 1.25;
-  letter-spacing: -0.03em;
-  color: #0a0a0a;
-  margin: 0 0 20px;
-  word-break: keep-all;
-  overflow-wrap: break-word;
+  font-size: 28px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0 0 15px;
 }
 
 .article-meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
-  color: #6b7280;
+  gap: 10px;
+  color: #909399;
   font-size: 14px;
-  line-height: 1.5;
 }
 
 .author {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 500;
-  color: #374151;
 }
 
 .divider {
-  color: #d1d5db;
-  font-size: 12px;
+  color: #dcdfe6;
 }
 
 .views {
@@ -508,83 +500,14 @@ onBeforeUnmount(() => {
 }
 
 .article-body {
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.8;
-  color: #374151;
-  /* 内容标题层级系统 - 比主标题小得多 */
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
-}
-
-/* 文章内容中的标题层级 - 必须小于主标题(40px) */
-.article-body :deep(h1),
-.article-body :deep(h2),
-.article-body :deep(h3),
-.article-body :deep(h4),
-.article-body :deep(h5),
-.article-body :deep(h6) {
-  font-weight: 700;
-  line-height: 1.4;
-  margin-top: 2em;
-  margin-bottom: 1em;
-  color: #111827;
-}
-
-.article-body :deep(h1) {
-  font-size: 24px; /* 远小于主标题40px */
-  margin-top: 0;
-  padding-bottom: 0.5em;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.article-body :deep(h2) {
-  font-size: 22px;
-}
-
-.article-body :deep(h3) {
-  font-size: 20px;
-}
-
-.article-body :deep(h4) {
-  font-size: 18px;
-}
-
-.article-body :deep(h5) {
-  font-size: 17px;
-  font-weight: 600;
-}
-
-.article-body :deep(h6) {
-  font-size: 17px;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-/* 段落和列表样式 */
-.article-body :deep(p) {
-  margin: 0 0 1.2em;
-}
-
-.article-body :deep(p:last-child) {
-  margin-bottom: 0;
-}
-
-.article-body :deep(ul),
-.article-body :deep(ol) {
-  margin: 1.2em 0;
-  padding-left: 1.8em;
-}
-
-.article-body :deep(li) {
-  margin: 0.5em 0;
+  color: #606266;
 }
 
 .article-body :deep(img) {
   max-width: 100%;
   height: auto;
-  display: block;
-  margin: 16px auto;
 }
 
 .article-body :deep(pre) {
@@ -592,9 +515,6 @@ onBeforeUnmount(() => {
   padding: 15px;
   border-radius: 4px;
   overflow-x: auto;
-  max-width: 100%;
-  white-space: pre-wrap;
-  word-wrap: break-word;
 }
 
 .article-body :deep(code) {
@@ -608,14 +528,11 @@ onBeforeUnmount(() => {
 .article-body :deep(table) {
   border-collapse: collapse;
   width: 100%;
-  max-width: 100%;
   margin: 16px 0;
   font-size: 14px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border-radius: 4px;
   overflow: hidden;
-  display: block;
-  overflow-x: auto;
 }
 
 .article-body :deep(th),
@@ -747,69 +664,4 @@ onBeforeUnmount(() => {
 .comment-actions span:hover {
   color: #409eff;
 }
-
-/* 移动端响应式优化 */
-@media (max-width: 768px) {
-  .article-container {
-    padding: 20px 16px;
-  }
-
-  .article-title {
-    font-size: 28px;
-    margin-bottom: 16px;
-  }
-
-  .article-meta {
-    gap: 12px;
-    font-size: 13px;
-  }
-
-  .article-body {
-    font-size: 16px;
-  }
-
-  .article-body :deep(h1) {
-    font-size: 22px;
-  }
-
-  .article-body :deep(h2) {
-    font-size: 20px;
-  }
-
-  .article-body :deep(h3) {
-    font-size: 18px;
-  }
-
-  /* 表格在移动端可横向滚动 */
-  .article-body :deep(table) {
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* 大屏幕优化 */
-@media (min-width: 1200px) {
-  .article-title {
-    font-size: 46px;
-  }
-
-  .article-body {
-    font-size: 18px;
-  }
-
-  .article-body :deep(h1) {
-    font-size: 26px;
-  }
-
-  .article-body :deep(h2) {
-    font-size: 24px;
-  }
-
-  .article-body :deep(h3) {
-    font-size: 22px;
-  }
-}
-
-/* 移除最大宽度限制 - 保持网格布局正常工作 */
 </style>
