@@ -152,3 +152,57 @@ frontend/node_modules/
 npm-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Frontend build artifacts
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+
+# C++ build artifacts
+backend_cpp/build/
+backend_cpp/cmake-build-*/
+backend_cpp/CMakeFiles/
+backend_cpp/CMakeCache.txt
+backend_cpp/cmake_install.cmake
+backend_cpp/Makefile
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.out
+*.app
+
+# Generated thumbnails
+backend_cpp/resource/thumb/*.png
+!backend_cpp/resource/thumb/.gitkeep
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.sublime-*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs (backend)
+backend_cpp/*.log
+*.log
+
+# vcpkg
+vcpkg_installed/
+VCPKG_BUILD_TREE/
+
+# Test coverage
+*.gcda
+*.gcno
+*.gcov
