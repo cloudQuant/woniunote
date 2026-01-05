@@ -447,11 +447,10 @@ onBeforeUnmount(() => {
 }
 
 .article-detail-container {
-  /* 文章详情页使用全宽容器，让右侧侧边栏尽量贴近屏幕右侧 */
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
+  /* 文章详情页使用限制宽度的容器 */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .article-container {
@@ -513,6 +512,9 @@ onBeforeUnmount(() => {
   line-height: 1.8;
   color: #374151;
   /* 内容标题层级系统 - 比主标题小得多 */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 /* 文章内容中的标题层级 - 必须小于主标题(40px) */
@@ -581,6 +583,8 @@ onBeforeUnmount(() => {
 .article-body :deep(img) {
   max-width: 100%;
   height: auto;
+  display: block;
+  margin: 16px auto;
 }
 
 .article-body :deep(pre) {
@@ -588,6 +592,9 @@ onBeforeUnmount(() => {
   padding: 15px;
   border-radius: 4px;
   overflow-x: auto;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .article-body :deep(code) {
@@ -601,11 +608,14 @@ onBeforeUnmount(() => {
 .article-body :deep(table) {
   border-collapse: collapse;
   width: 100%;
+  max-width: 100%;
   margin: 16px 0;
   font-size: 14px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border-radius: 4px;
   overflow: hidden;
+  display: block;
+  overflow-x: auto;
 }
 
 .article-body :deep(th),
