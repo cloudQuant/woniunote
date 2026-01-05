@@ -468,34 +468,38 @@ onBeforeUnmount(() => {
 }
 
 .article-title {
-  /* 文章标题 - 遵循排版最佳实践 */
-  font-size: clamp(28px, 4vw, 42px); /* 响应式：最小28px，最大42px */
-  font-weight: 700; /* 加粗增强层次感 */
-  line-height: 1.3; /* 标题使用较紧凑的行高 */
-  letter-spacing: -0.02em; /* 大标题稍微收紧字间距 */
-  color: #1a1a1a; /* 更深的黑色增强对比度 */
-  margin: 0 0 24px; /* 增加底部间距 */
-  padding-bottom: 16px;
-  border-bottom: 2px solid #e5e7eb; /* 更明显的分隔线 */
+  /* 文章主标题 - 页面最大的文字 */
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  color: #0a0a0a;
+  margin: 0 0 20px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .article-meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
-  color: #909399;
+  gap: 16px;
+  color: #6b7280;
   font-size: 14px;
+  line-height: 1.5;
 }
 
 .author {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-weight: 500;
+  color: #374151;
 }
 
 .divider {
-  color: #dcdfe6;
+  color: #d1d5db;
+  font-size: 12px;
 }
 
 .views {
@@ -505,13 +509,13 @@ onBeforeUnmount(() => {
 }
 
 .article-body {
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.8;
-  color: #606266;
-  /* 内容标题层级系统 - 基于 16px 基准 */
+  color: #374151;
+  /* 内容标题层级系统 - 比主标题小得多 */
 }
 
-/* 文章内容中的标题层级 */
+/* 文章内容中的标题层级 - 必须小于主标题(40px) */
 .article-body :deep(h1),
 .article-body :deep(h2),
 .article-body :deep(h3),
@@ -520,40 +524,39 @@ onBeforeUnmount(() => {
 .article-body :deep(h6) {
   font-weight: 700;
   line-height: 1.4;
-  margin-top: 1.5em;
-  margin-bottom: 0.75em;
-  color: #1a1a1a;
+  margin-top: 2em;
+  margin-bottom: 1em;
+  color: #111827;
 }
 
 .article-body :deep(h1) {
-  font-size: 2em; /* 32px - 主标题 */
+  font-size: 24px; /* 远小于主标题40px */
   margin-top: 0;
   padding-bottom: 0.5em;
   border-bottom: 1px solid #e5e7eb;
 }
 
 .article-body :deep(h2) {
-  font-size: 1.75em; /* 28px - 二级标题 */
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid #f0f0f0;
+  font-size: 22px;
 }
 
 .article-body :deep(h3) {
-  font-size: 1.5em; /* 24px - 三级标题 */
+  font-size: 20px;
 }
 
 .article-body :deep(h4) {
-  font-size: 1.25em; /* 20px - 四级标题 */
+  font-size: 18px;
 }
 
 .article-body :deep(h5) {
-  font-size: 1.1em; /* 17.6px - 五级标题 */
+  font-size: 17px;
+  font-weight: 600;
 }
 
 .article-body :deep(h6) {
-  font-size: 1em; /* 16px - 六级标题 */
+  font-size: 17px;
   font-weight: 600;
-  color: #606266;
+  color: #6b7280;
 }
 
 /* 段落和列表样式 */
@@ -742,24 +745,29 @@ onBeforeUnmount(() => {
   }
 
   .article-title {
-    font-size: clamp(24px, 5vw, 32px);
-    margin-bottom: 20px;
+    font-size: 28px;
+    margin-bottom: 16px;
+  }
+
+  .article-meta {
+    gap: 12px;
+    font-size: 13px;
   }
 
   .article-body {
-    font-size: 16px; /* 移动端保持16px，不缩小 */
+    font-size: 16px;
   }
 
   .article-body :deep(h1) {
-    font-size: 1.75em; /* 28px */
+    font-size: 22px;
   }
 
   .article-body :deep(h2) {
-    font-size: 1.5em; /* 24px */
+    font-size: 20px;
   }
 
   .article-body :deep(h3) {
-    font-size: 1.3em; /* 20.8px */
+    font-size: 18px;
   }
 
   /* 表格在移动端可横向滚动 */
@@ -770,14 +778,26 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 超大屏幕优化 */
-@media (min-width: 1440px) {
+/* 大屏幕优化 */
+@media (min-width: 1200px) {
   .article-title {
-    font-size: 42px;
+    font-size: 46px;
   }
 
   .article-body {
-    font-size: 17px; /* 大屏幕稍微增大 */
+    font-size: 18px;
+  }
+
+  .article-body :deep(h1) {
+    font-size: 26px;
+  }
+
+  .article-body :deep(h2) {
+    font-size: 24px;
+  }
+
+  .article-body :deep(h3) {
+    font-size: 22px;
   }
 }
 
