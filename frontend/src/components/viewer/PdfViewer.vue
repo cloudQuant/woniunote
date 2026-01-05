@@ -52,11 +52,12 @@
  */
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import * as pdfjsLib from 'pdfjs-dist'
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { ArrowLeft, ArrowRight, ZoomIn, ZoomOut, Download, Loading, Warning } from '@element-plus/icons-vue'
 
-// 设置worker路径 - 使用本地worker文件
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker
+// 设置 worker 路径 - 使用 CDN，确保跨域兼容性
+// 版本号与 package.json 中的 pdfjs-dist 版本保持一致
+const PDFJS_VERSION = '5.4.449'
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.mjs`
 
 const props = defineProps({
   /**
