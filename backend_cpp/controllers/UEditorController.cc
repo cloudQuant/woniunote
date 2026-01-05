@@ -426,13 +426,51 @@ void UEditorController::serveUpload(const HttpRequestPtr& req,
     std::string uploadDir = getUploadDir();
     std::string filePath = uploadDir + "/" + filename;
 
+    Logger::info("[serveUpload] Serving file: " + filePath);
+
     if (!fs::exists(filePath)) {
+        Logger::error("[serveUpload] File not found: " + filePath);
         auto resp = HttpResponse::newNotFoundResponse();
         callback(resp);
         return;
     }
 
     auto resp = HttpResponse::newFileResponse(filePath);
+
+    // 根据文件扩展名设置 Content-Type
+    std::string ext = fs::path(filePath).extension().string();
+    std::string contentType = "application/octet-stream";
+
+    if (ext == ".pdf") {
+        contentType = "application/pdf";
+    } else if (ext == ".jpg" || ext == ".jpeg") {
+        contentType = "image/jpeg";
+    } else if (ext == ".png") {
+        contentType = "image/png";
+    } else if (ext == ".gif") {
+        contentType = "image/gif";
+    } else if (ext == ".svg") {
+        contentType = "image/svg+xml";
+    } else if (ext == ".webp") {
+        contentType = "image/webp";
+    }
+
+    resp->addHeader("Content-Type", contentType);
+
+    // 添加 CORS 头，允许前端访问文件
+    auto origin = req->getHeader("Origin");
+    if (!origin.empty()) {
+        resp->addHeader("Access-Control-Allow-Origin", origin);
+        resp->addHeader("Access-Control-Allow-Credentials", "true");
+    } else {
+        // 如果没有 Origin 头，允许所有源（用于同源请求）
+        resp->addHeader("Access-Control-Allow-Origin", "*");
+    }
+
+    // 添加缓存头
+    resp->addHeader("Cache-Control", "public, max-age=31536000");
+
+    Logger::info("[serveUpload] Serving file with Content-Type: " + contentType);
     callback(resp);
 }
 

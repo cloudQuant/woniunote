@@ -161,25 +161,46 @@ async function loadPdf() {
   try {
     loading.value = true
     error.value = ''
-    
+
     // 构建完整URL - 使用当前页面的origin确保正确的域名和端口
     let url = props.pdfUrl
     if (!url.startsWith('http')) {
       url = `${window.location.origin}${url}`
     }
-    
+
     console.log('Loading PDF from:', url)
-    
-    const loadingTask = pdfjsLib.getDocument({
-      url: url,
-      withCredentials: false
-    })
-    
-    pdfDoc = await loadingTask.promise
-    numPages.value = pdfDoc.numPages
-    console.log('PDF loaded successfully, pages:', numPages.value)
-    
-    await renderPage(1)
+
+    // 使用 ArrayBuffer 方式加载 PDF，更可靠
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const arrayBuffer = await response.arrayBuffer()
+      console.log('PDF file size:', arrayBuffer.length, 'bytes')
+
+      // 使用 ArrayBuffer 加载 PDF
+      const loadingTask = pdfjsLib.getDocument({
+        data: arrayBuffer
+      })
+
+      pdfDoc = await loadingTask.promise
+      numPages.value = pdfDoc.numPages
+      console.log('PDF loaded successfully, pages:', numPages.value)
+
+      await renderPage(1)
+    } catch (fetchErr) {
+      console.error('Fetch PDF error:', fetchErr)
+      throw new Error(`无法获取PDF文件: ${fetchErr.message}`)
+    }
   } catch (err) {
     console.error('Load PDF error:', err)
     error.value = '加载PDF失败: ' + (err.message || '请检查文件是否存在')
