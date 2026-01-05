@@ -22,11 +22,18 @@ echo "========================================"
 echo ""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
-echo "[1/3] 停止前后端服务..."
+echo "[1/5] 更新代码..."
+git pull origin dev_cpp
+if [ $? -ne 0 ]; then
+    echo "[警告] Git pull 失败，继续重启..."
+fi
+
+echo "[2/5] 停止前后端服务..."
 bash "$SCRIPT_DIR/stop_app.sh"
 
-echo "[2/3] 清空日志..."
+echo "[3/5] 清空日志..."
 : > "$SCRIPT_DIR/backend.log"
 : > "$SCRIPT_DIR/frontend.log"
 
@@ -40,7 +47,20 @@ fi
 
 echo "     日志已清空"
 
-echo "[3/3] 启动前后端服务..."
+echo "[4/5] 清理前端构建缓存..."
+rm -rf "$SCRIPT_DIR/frontend/dist"
+rm -rf "$SCRIPT_DIR/frontend/node_modules/.vite"
+echo "     缓存已清理"
+
+echo "[5/5] 启动前后端服务..."
 bash "$SCRIPT_DIR/start_app.sh" "$MODE"
+
+echo ""
+echo "========================================"
+echo "  重启完成!"
+echo "========================================"
+echo "  前端: https://www.yunjinqi.top"
+echo "  请使用 Ctrl+Shift+R 强制刷新浏览器"
+echo "========================================"
 
 exit 0
