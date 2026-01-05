@@ -801,11 +801,5 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 阅读体验优化 - 最大宽度限制 */
-@media (min-width: 992px) {
-  .article-container {
-    max-width: 900px;
-    margin: 0 auto;
-  }
-}
+/* 移除最大宽度限制 - 保持网格布局正常工作 */
 </style>
