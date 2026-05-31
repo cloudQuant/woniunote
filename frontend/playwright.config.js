@@ -16,6 +16,38 @@ import { defineConfig, devices } from '@playwright/test'
 const PORT = process.env.E2E_PORT || 4173
 const BASE_URL = process.env.E2E_BASE_URL || `http://localhost:${PORT}`
 
+// Which browser projects to run. Default to chromium-only locally (so a bare
+// `npx playwright install chromium` is enough); set PW_BROWSERS=all in CI to
+// run the full desktop + mobile matrix. Comma-separated subsets also work,
+// e.g. PW_BROWSERS=chromium,firefox.
+const requested = (process.env.PW_BROWSERS || 'chromium').toLowerCase()
+const wantAll = requested === 'all'
+const wants = (name) => wantAll || requested.split(',').map((s) => s.trim()).includes(name)
+
+const chromiumLaunch = process.env.PW_CHROMIUM_PATH
+  ? { executablePath: process.env.PW_CHROMIUM_PATH }
+  : {}
+
+const allProjects = [
+  {
+    name: 'chromium',
+    use: {
+      ...devices['Desktop Chrome'],
+      // Use the full Chromium build rather than the separate headless-shell
+      // binary. Allows running with only `npx playwright install chromium`.
+      // Override with PW_CHROMIUM_PATH if your install lives elsewhere.
+      channel: undefined,
+      launchOptions: chromiumLaunch
+    }
+  },
+  { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+  { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+  // Mobile viewport (Chromium engine) to catch responsive regressions.
+  { name: 'mobile-chrome', use: { ...devices['Pixel 5'] } }
+]
+
+const projects = allProjects.filter((p) => wants(p.name))
+
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.js',
@@ -31,21 +63,7 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure'
   },
-  projects: [
-    {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        // Use the full Chromium build rather than the separate headless-shell
-        // binary. Allows running with only `npx playwright install chromium`.
-        // Override with PW_CHROMIUM_PATH if your install lives elsewhere.
-        channel: undefined,
-        launchOptions: process.env.PW_CHROMIUM_PATH
-          ? { executablePath: process.env.PW_CHROMIUM_PATH }
-          : {}
-      }
-    }
-  ],
+  projects: projects.length > 0 ? projects : [allProjects[0]],
   // Build once, then serve the static build for fast, production-like E2E.
   webServer: process.env.E2E_BASE_URL
     ? undefined

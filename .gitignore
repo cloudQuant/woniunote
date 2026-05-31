@@ -212,6 +212,7 @@ VCPKG_BUILD_TREE/
 
 # Local secrets / config overrides (never commit real credentials)
 backend_cpp/config.local.json
+backend_cpp/config.integration.json
 backend_cpp/.env
 .env.local
 

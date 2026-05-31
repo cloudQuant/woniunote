@@ -20,12 +20,15 @@ int main(int argc, char* argv[])
     woniunote::Logger::info("=== WoniuNote C++ Backend Starting ===");
     woniunote::Logger::info("Version: 2.0.0-cpp");
 
-    // Load Drogon configuration. Prefer config.local.json when present so
-    // local credentials (DB/Redis passwords, dev JWT secret) stay out of the
-    // git-tracked config.json. Falls back to config.json otherwise.
+    // Load Drogon configuration. Precedence:
+    //   1. An explicit path passed as argv[1] (used by integration tests).
+    //   2. config.local.json when present (keeps local credentials out of git).
+    //   3. config.json otherwise.
     try {
         std::string configFile = "config.json";
-        if (std::ifstream("config.local.json").good()) {
+        if (argc > 1 && argv[1] && std::ifstream(argv[1]).good()) {
+            configFile = argv[1];
+        } else if (std::ifstream("config.local.json").good()) {
             configFile = "config.local.json";
         }
         woniunote::Logger::info("Loading configuration from " + configFile);

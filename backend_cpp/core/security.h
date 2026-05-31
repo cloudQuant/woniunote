@@ -25,6 +25,7 @@ namespace woniunote {
 struct TokenPayload {
     std::string sub;        // Subject (user ID)
     std::string type;       // Token type ("access" or "refresh")
+    std::string jti;        // Unique token id (for refresh rotation / reuse detection)
     std::chrono::system_clock::time_point exp;  // Expiration time
 };
 
@@ -78,10 +79,18 @@ public:
      * @brief Create refresh token
      * @param userId User ID string
      * @param expireDays Token expiration in days (optional, uses config default)
+     * @param jti Unique token id to embed (optional; empty means none)
      * @return JWT token string
      */
     static std::string createRefreshToken(const std::string& userId,
-                                           int expireDays = 0);
+                                           int expireDays = 0,
+                                           const std::string& jti = "");
+
+    /**
+     * @brief Generate a random unique token id (jti), hex-encoded.
+     * @return 32-char hex string (128 bits of entropy)
+     */
+    static std::string generateJti();
 
     /**
      * @brief Decode and verify a JWT token

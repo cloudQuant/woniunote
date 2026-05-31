@@ -150,7 +150,10 @@ test.describe('UI polish — responsive layout, dialog, reduced motion, hover', 
   })
 
   // ── R9 / R14.4 减弱动效 ──────────────────────────────────────────────
-  test('reduced motion: slogan animation is none and card hover has no transform', async ({ page }) => {
+  test('reduced motion: slogan animation is none and card hover has no transform', async ({ page, isMobile }) => {
+    // Slogan is hidden and hover semantics differ on touch devices; this
+    // assertion targets the desktop layout/interaction model.
+    test.skip(isMobile, 'desktop hover/slogan behavior only')
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.setViewportSize({ width: 1280, height: 900 })
     await page.goto('/')
@@ -173,7 +176,8 @@ test.describe('UI polish — responsive layout, dialog, reduced motion, hover', 
   })
 
   // ── R14 悬停 box-shadow 变化 ─────────────────────────────────────────
-  test('normal motion: hovering a card changes its box-shadow (elevation)', async ({ page }) => {
+  test('normal motion: hovering a card changes its box-shadow (elevation)', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'hover elevation is a pointer-device interaction')
     await page.emulateMedia({ reducedMotion: 'no-preference' })
     await page.setViewportSize({ width: 1280, height: 900 })
     await page.goto('/')

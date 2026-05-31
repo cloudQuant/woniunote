@@ -34,7 +34,7 @@ public:
     ADD_METHOD_TO(AuthController::login, "/api/auth/login", drogon::Post, "woniunote::RateLimitFilter");
     ADD_METHOD_TO(AuthController::refresh, "/api/auth/refresh", drogon::Post, "woniunote::RateLimitFilter");
     ADD_METHOD_TO(AuthController::me, "/api/auth/me", drogon::Get, "woniunote::AuthFilter");
-    ADD_METHOD_TO(AuthController::logout, "/api/auth/logout", drogon::Post);
+    ADD_METHOD_TO(AuthController::logout, "/api/auth/logout", drogon::Post, "woniunote::OptionalAuthFilter");
     METHOD_LIST_END
 
     /**

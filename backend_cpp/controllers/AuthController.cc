@@ -7,10 +7,13 @@
 #include "CaptchaController.h"
 #include "core/security.h"
 #include "core/database.h"
+#include "core/config.h"
 #include "core/logger.h"
 #include "core/response.h"
 #include "models/User.h"
 #include <drogon/HttpResponse.h>
+#include <drogon/drogon.h>
+#include <memory>
 #include <optional>
 
 using namespace drogon;
@@ -32,6 +35,37 @@ std::optional<int64_t> parseUserId(const std::string& s)
     } catch (const std::exception&) {
         return std::nullopt;
     }
+}
+
+// Redis key holding the single active refresh-token id (jti) for a user.
+// Refresh rotation overwrites it; presenting any other jti is treated as reuse.
+std::string refreshJtiKey(const std::string& userId)
+{
+    return "refresh_jti:" + userId;
+}
+
+// Persist the active refresh jti for a user (TTL = refresh token lifetime),
+// then invoke done(). If Redis is unavailable, rotation tracking is best-effort
+// and we still proceed (done() is called) so login/refresh keep working.
+void storeRefreshJti(const std::string& userId, const std::string& jti,
+                     std::function<void()> done)
+{
+    auto redis = drogon::app().getRedisClient("default");
+    if (!redis) {
+        Logger::warning("[Auth] Redis unavailable; refresh jti not tracked");
+        done();
+        return;
+    }
+    int ttlSeconds = Config::instance().getRefreshTokenExpireDays() * 24 * 3600;
+    if (ttlSeconds <= 0) ttlSeconds = 7 * 24 * 3600;
+    auto sharedDone = std::make_shared<std::function<void()>>(std::move(done));
+    redis->execCommandAsync(
+        [sharedDone](const nosql::RedisResult&) { (*sharedDone)(); },
+        [sharedDone](const nosql::RedisException& e) {
+            Logger::warning("[Auth] Failed to store refresh jti: " + std::string(e.what()));
+            (*sharedDone)();
+        },
+        "SETEX %s %d %s", refreshJtiKey(userId).c_str(), ttlSeconds, jti.c_str());
 }
 }  // namespace
 
@@ -217,10 +251,12 @@ void AuthController::login(const HttpRequestPtr& req,
             
             Logger::info("[Auth] Login successful", {{"userid", std::to_string(user.getUserid())}, {"username", username}});
 
-            // Generate tokens
+            // Generate tokens. The refresh token carries a unique jti that is
+            // recorded in Redis so it can be rotated and reuse-detected.
             std::string userId = std::to_string(user.getUserid());
+            std::string jti = Security::generateJti();
             std::string accessToken = Security::createAccessToken(userId);
-            std::string refreshToken = Security::createRefreshToken(userId);
+            std::string refreshToken = Security::createRefreshToken(userId, 0, jti);
 
             Json::Value data;
             data["access_token"] = accessToken;
@@ -228,7 +264,10 @@ void AuthController::login(const HttpRequestPtr& req,
             data["token_type"] = "bearer";
             data["user"] = user.toJsonWithoutPassword();
 
-            callback(makeJsonResponse(200, "登录成功", data));
+            auto self = this;
+            storeRefreshJti(userId, jti, [self, callback, data]() {
+                callback(self->makeJsonResponse(200, "登录成功", data));
+            });
         },
         [this, callback](const orm::DrogonDbException& e) {
             Logger::error("Database error: " + std::string(e.base().what()));
@@ -266,34 +305,92 @@ void AuthController::refresh(const HttpRequestPtr& req,
         return;
     }
 
-    auto dbClient = Database::getClient();
-    dbClient->execSqlAsync(
-        "SELECT * FROM users WHERE userid = ?",
-        [this, callback, userId](const orm::Result& result) {
-            if (result.size() == 0) {
-                callback(makeErrorResponse(401, "用户不存在"));
+    const std::string presentedJti = payload->jti;
+    auto self = this;
+
+    // Verify the presented refresh jti against the single active jti stored in
+    // Redis, then rotate. This detects reuse of an already-rotated (or stolen)
+    // refresh token and revokes the session. Degrades gracefully when Redis is
+    // down (issues new tokens without reuse detection) to preserve availability.
+    auto issueNewTokens = [self, callback, userId, parsedId]() {
+        auto dbClient = Database::getClient();
+        dbClient->execSqlAsync(
+            "SELECT * FROM users WHERE userid = ?",
+            [self, callback, userId](const orm::Result& result) {
+                if (result.size() == 0) {
+                    callback(self->makeErrorResponse(401, "用户不存在"));
+                    return;
+                }
+
+                std::string newJti = Security::generateJti();
+                std::string newAccessToken = Security::createAccessToken(userId);
+                std::string newRefreshToken =
+                    Security::createRefreshToken(userId, 0, newJti);
+
+                Logger::info("[Auth] Token refreshed (rotated)", {{"userid", userId}});
+
+                Json::Value data;
+                data["access_token"] = newAccessToken;
+                data["refresh_token"] = newRefreshToken;
+                data["token_type"] = "bearer";
+
+                storeRefreshJti(userId, newJti, [self, callback, data]() {
+                    callback(self->makeJsonResponse(200, "刷新成功", data));
+                });
+            },
+            [self, callback](const orm::DrogonDbException& e) {
+                Logger::error("Database error: " + std::string(e.base().what()));
+                callback(self->makeErrorResponse(500, "数据库错误"));
+            },
+            parsedId.value());
+    };
+
+    auto redis = drogon::app().getRedisClient("default");
+    if (!redis || presentedJti.empty()) {
+        // No Redis, or a legacy token issued before jti tracking existed:
+        // fall back to the original behaviour (sign new tokens, no reuse check).
+        if (presentedJti.empty()) {
+            Logger::debug("[Auth] Refresh token without jti; skipping reuse check");
+        } else {
+            Logger::warning("[Auth] Redis unavailable; skipping refresh reuse check");
+        }
+        issueNewTokens();
+        return;
+    }
+
+    auto sharedIssue = std::make_shared<std::function<void()>>(std::move(issueNewTokens));
+    redis->execCommandAsync(
+        [self, callback, userId, presentedJti, sharedIssue, redis]
+        (const nosql::RedisResult& result) {
+            std::string storedJti =
+                result.type() == nosql::RedisResultType::kNil ? "" : result.asString();
+
+            if (storedJti.empty()) {
+                // No active session recorded; treat as invalid/expired refresh.
+                Logger::warning("[Auth] Refresh rejected: no active session", {{"userid", userId}});
+                callback(self->makeErrorResponse(401, "刷新令牌已失效，请重新登录"));
                 return;
             }
-
-            // Generate new tokens
-            std::string newAccessToken = Security::createAccessToken(userId);
-            std::string newRefreshToken = Security::createRefreshToken(userId);
-
-            Logger::info("[Auth] Token refreshed", {{"userid", userId}});
-
-            Json::Value data;
-            data["access_token"] = newAccessToken;
-            data["refresh_token"] = newRefreshToken;
-            data["token_type"] = "bearer";
-
-            callback(makeJsonResponse(200, "刷新成功", data));
+            if (storedJti != presentedJti) {
+                // Reuse of a rotated/stolen refresh token -> revoke all sessions.
+                Logger::warning("[Auth] Refresh token reuse detected; revoking session",
+                                {{"userid", userId}});
+                redis->execCommandAsync(
+                    [](const nosql::RedisResult&) {},
+                    [](const nosql::RedisException&) {},
+                    "DEL %s", refreshJtiKey(userId).c_str());
+                callback(self->makeErrorResponse(401, "检测到刷新令牌复用，请重新登录"));
+                return;
+            }
+            // Valid -> rotate.
+            (*sharedIssue)();
         },
-        [this, callback](const orm::DrogonDbException& e) {
-            Logger::error("Database error: " + std::string(e.base().what()));
-            callback(makeErrorResponse(500, "数据库错误"));
+        [sharedIssue](const nosql::RedisException& e) {
+            // Redis read failed mid-flight: degrade to issuing tokens.
+            Logger::warning("[Auth] Refresh reuse check failed, degrading: " + std::string(e.what()));
+            (*sharedIssue)();
         },
-        parsedId.value()
-    );
+        "GET %s", refreshJtiKey(userId).c_str());
 }
 
 void AuthController::me(const HttpRequestPtr& req,
@@ -338,6 +435,17 @@ void AuthController::logout(const HttpRequestPtr& req,
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
     Logger::info("[Auth] User logged out", {{"userid", userId}});
+
+    // Revoke the active refresh session so a stolen refresh token cannot be
+    // used after logout. Best-effort: succeed regardless of Redis state.
+    auto redis = drogon::app().getRedisClient("default");
+    if (redis && !userId.empty() && parseUserId(userId).has_value()) {
+        redis->execCommandAsync(
+            [](const nosql::RedisResult&) {},
+            [](const nosql::RedisException&) {},
+            "DEL %s", refreshJtiKey(userId).c_str());
+    }
+
     // Client should clear tokens; server just returns success
     callback(makeJsonResponse(200, "登出成功"));
 }

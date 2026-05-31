@@ -36,9 +36,9 @@ public:
     void init();
 
     // Getters for configuration values
-    std::string getAppName() const { return appName_; }
-    std::string getJwtSecret() const { return jwtSecret_; }
-    std::string getJwtAlgorithm() const { return jwtAlgorithm_; }
+    const std::string& getAppName() const { return appName_; }
+    const std::string& getJwtSecret() const { return jwtSecret_; }
+    const std::string& getJwtAlgorithm() const { return jwtAlgorithm_; }
     int getAccessTokenExpireMinutes() const { return accessTokenExpireMinutes_; }
     int getRefreshTokenExpireDays() const { return refreshTokenExpireDays_; }
     const std::vector<std::string>& getCorsOrigins() const { return corsOrigins_; }
@@ -48,7 +48,7 @@ public:
     bool getRateLimitFailClosed() const { return rateLimitFailClosed_; }
 
     // Upload path & limits (bytes)
-    std::string getUploadPath() const { return uploadPath_; }
+    const std::string& getUploadPath() const { return uploadPath_; }
     int64_t getMaxImageSize() const { return maxImageSize_; }
     int64_t getMaxFileSize() const { return maxFileSize_; }
     int64_t getMaxAvatarSize() const { return maxAvatarSize_; }

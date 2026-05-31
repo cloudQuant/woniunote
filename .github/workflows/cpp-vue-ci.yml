@@ -60,15 +60,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cppcheck
 
-      # Static analysis as a quality signal. Reports issues but does not fail
-      # the build yet (--error-exitcode=0); tighten to 1 once the baseline is clean.
-      - name: Run cppcheck
+      # Static analysis as a real gate. The baseline is clean (iteration 13),
+      # so any newly-introduced warning/perf/portability issue fails the build.
+      # Informational branch-limit notes are suppressed (not real findings).
+      - name: Run cppcheck (blocking)
         working-directory: backend_cpp
         run: |
           cppcheck --enable=warning,performance,portability \
             --std=c++17 --language=c++ --inline-suppr \
             --suppress=missingIncludeSystem \
-            --error-exitcode=0 \
+            --suppress=normalCheckLevelMaxBranches \
+            --error-exitcode=1 \
             -I core -I controllers -I filters -I models \
             controllers core filters models main.cc
 
@@ -89,15 +91,22 @@ jobs:
         working-directory: frontend
         run: npm ci || npm install
 
-      - name: Audit dependencies
+      - name: Audit production dependencies (blocking)
         working-directory: frontend
-        # Supply-chain gate: fail only on high/critical advisories.
+        # Supply-chain gate: fail on high/critical advisories in *runtime*
+        # dependencies. Dev-only build-chain advisories (rollup/postcss via
+        # vite) are surfaced separately below but do not block.
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Audit all dependencies (advisory only)
+        working-directory: frontend
         run: npm audit --audit-level=high || true
 
       - name: Lint
         working-directory: frontend
-        # Quality signal; surfaces real bugs (errors fail, warnings do not).
-        run: npm run lint
+        # Real bugs (errors) always fail; warnings are capped at the current
+        # baseline so they cannot silently grow.
+        run: npm run lint:ci
 
       - name: Run unit tests
         working-directory: frontend
@@ -127,12 +136,15 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: frontend
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps
 
-      - name: Run E2E tests
+      - name: Run E2E tests (chromium + firefox + webkit + mobile)
         working-directory: frontend
         # Builds the app and serves it via vite preview; API calls are mocked
         # by the suite (e2e/support/mockApi.js) so no live backend is needed.
+        # PW_BROWSERS=all runs the full desktop + mobile matrix.
+        env:
+          PW_BROWSERS: all
         run: npm run test:e2e
 
       - name: Upload Playwright report
@@ -142,3 +154,74 @@ jobs:
           name: playwright-report
           path: frontend/playwright-report
           retention-days: 7
+
+  backend-integration:
+    name: Backend (HTTP integration tests)
+    runs-on: ubuntu-latest
+
+    # Live dependencies for the real backend: MySQL holds the isolated test
+    # schema; Redis backs rate limiting and refresh-token rotation.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testrootpw
+          MYSQL_DATABASE: woniunote_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptestrootpw"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake git curl zip unzip tar pkg-config \
+            libssl-dev default-mysql-client
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: ~/vcpkg
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('backend_cpp/vcpkg.json') }}
+
+      - name: Bootstrap vcpkg
+        run: |
+          if [ ! -d "$HOME/vcpkg" ]; then
+            git clone https://github.com/microsoft/vcpkg.git "$HOME/vcpkg"
+          fi
+          "$HOME/vcpkg/bootstrap-vcpkg.sh"
+
+      - name: Build backend
+        working-directory: backend_cpp
+        run: |
+          cmake -S . -B build -DBUILD_TESTING=OFF \
+            -DCMAKE_TOOLCHAIN_FILE=$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake
+          cmake --build build -j$(nproc) --target woniunote_backend
+
+      - name: Install Python test deps
+        run: pip install --quiet requests pytest
+
+      - name: Run integration tests
+        run: bash backend_cpp/tests/integration/run_integration.sh
+        env:
+          WONIUNOTE_TEST_DB_HOST: 127.0.0.1
+          WONIUNOTE_TEST_DB_PORT: "3306"
+          WONIUNOTE_TEST_DB_USER: root
+          WONIUNOTE_TEST_DB_PASSWORD: testrootpw
+          WONIUNOTE_TEST_DB_NAME: woniunote_test
+          WONIUNOTE_TEST_REDIS_HOST: 127.0.0.1
+          WONIUNOTE_TEST_REDIS_PORT: "6379"
+          WONIUNOTE_TEST_PORT: "5273"
+          WONIUNOTE_TEST_RATE_LIMIT: "30"
+          PYTEST_CMD: "python -m pytest -p no:cacheprovider -o addopts=''"

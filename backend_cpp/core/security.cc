@@ -324,7 +324,8 @@ std::string Security::createAccessToken(const std::string& userId, int expireMin
     return token;
 }
 
-std::string Security::createRefreshToken(const std::string& userId, int expireDays)
+std::string Security::createRefreshToken(const std::string& userId, int expireDays,
+                                         const std::string& jti)
 {
     auto& config = Config::instance();
     
@@ -332,17 +333,36 @@ std::string Security::createRefreshToken(const std::string& userId, int expireDa
         expireDays = config.getRefreshTokenExpireDays();
     }
 
-    auto token = jwt::create()
+    auto builder = jwt::create()
         .set_issuer("woniunote")
         .set_type("JWT")
         .set_payload_claim("sub", jwt::claim(userId))
         .set_payload_claim("type", jwt::claim(std::string("refresh")))
         .set_issued_at(std::chrono::system_clock::now())
         .set_expires_at(std::chrono::system_clock::now() + 
-                        std::chrono::hours(24 * expireDays))
-        .sign(jwt::algorithm::hs256{config.getJwtSecret()});
-    
-    return token;
+                        std::chrono::hours(24 * expireDays));
+    if (!jti.empty()) {
+        builder.set_payload_claim("jti", jwt::claim(jti));
+    }
+    return builder.sign(jwt::algorithm::hs256{config.getJwtSecret()});
+}
+
+std::string Security::generateJti()
+{
+    unsigned char buf[16];
+    if (RAND_bytes(buf, sizeof(buf)) != 1) {
+        // Fallback: still produce something non-empty, but log the weakness.
+        Logger::warning("[Security] RAND_bytes failed generating jti, using fallback");
+        auto now = std::chrono::system_clock::now().time_since_epoch().count();
+        std::ostringstream oss;
+        oss << std::hex << now;
+        return oss.str();
+    }
+    std::ostringstream oss;
+    for (unsigned char c : buf) {
+        oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(c);
+    }
+    return oss.str();
 }
 
 std::optional<TokenPayload> Security::decodeToken(const std::string& token)
@@ -361,6 +381,9 @@ std::optional<TokenPayload> Security::decodeToken(const std::string& token)
         TokenPayload payload;
         payload.sub = decoded.get_payload_claim("sub").as_string();
         payload.type = decoded.get_payload_claim("type").as_string();
+        if (decoded.has_payload_claim("jti")) {
+            payload.jti = decoded.get_payload_claim("jti").as_string();
+        }
         payload.exp = decoded.get_expires_at();
         
         return payload;

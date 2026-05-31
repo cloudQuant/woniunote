@@ -1,0 +1,50 @@
+{
+    "listeners": [
+        { "address": "127.0.0.1", "port": __PORT__, "https": false }
+    ],
+    "app": {
+        "threads_num": 1,
+        "document_root": "./uploads",
+        "upload_path": "./uploads",
+        "log": { "log_path": "./logs", "logfile_base_name": "drogon_itest", "log_level": "WARN" },
+        "run_as_daemon": false,
+        "relaunch_on_error": false
+    },
+    "db_clients": [
+        {
+            "name": "mysql",
+            "rdbms": "mysql",
+            "host": "__DB_HOST__",
+            "port": __DB_PORT__,
+            "dbname": "__DB_NAME__",
+            "user": "__DB_USER__",
+            "passwd": "__DB_PASSWORD__",
+            "number_of_connections": 4,
+            "is_fast": false,
+            "client_encoding": "utf8mb4",
+            "timeout": 10.0
+        }
+    ],
+    "redis_clients": [
+        {
+            "name": "default",
+            "host": "__REDIS_HOST__",
+            "port": __REDIS_PORT__,
+            "passwd": "",
+            "db": 1,
+            "number_of_connections": 2,
+            "is_fast": false,
+            "timeout": -1.0
+        }
+    ],
+    "custom_config": {
+        "app_name": "WoniuNote-Test",
+        "app_mode": "test",
+        "jwt_algorithm": "HS256",
+        "access_token_expire_minutes": 120,
+        "refresh_token_expire_days": 7,
+        "cors_origins": [ "http://127.0.0.1:8888" ],
+        "rate_limit_per_minute": __RATE_LIMIT__,
+        "rate_limit_fail_closed": false
+    }
+}

@@ -10,18 +10,16 @@ namespace models {
 
 // MathTrainingWrongAnswer implementation
 MathTrainingWrongAnswer::MathTrainingWrongAnswer(const drogon::orm::Row& row)
+    : id_(row["id"].as<int64_t>()),
+      record_id_(row["record_id"].as<int64_t>()),
+      user_id_(row["user_id"].as<int64_t>()),
+      question_(row["question"].as<std::string>()),
+      correct_answer_(row["correct_answer"].as<int>()),
+      user_answer_(row["user_answer"].isNull() ? 0 : row["user_answer"].as<int>()),
+      operation_(row["operation"].as<std::string>()),
+      difficulty_(row["difficulty"].as<int>()),
+      created_at_(row["created_at"].as<std::string>())
 {
-    id_ = row["id"].as<int64_t>();
-    record_id_ = row["record_id"].as<int64_t>();
-    user_id_ = row["user_id"].as<int64_t>();
-    question_ = row["question"].as<std::string>();
-    correct_answer_ = row["correct_answer"].as<int>();
-    if (!row["user_answer"].isNull()) {
-        user_answer_ = row["user_answer"].as<int>();
-    }
-    operation_ = row["operation"].as<std::string>();
-    difficulty_ = row["difficulty"].as<int>();
-    created_at_ = row["created_at"].as<std::string>();
 }
 
 Json::Value MathTrainingWrongAnswer::toJson() const
@@ -41,18 +39,18 @@ Json::Value MathTrainingWrongAnswer::toJson() const
 
 // MathTrainingRecord implementation
 MathTrainingRecord::MathTrainingRecord(const drogon::orm::Row& row)
+    : id_(row["id"].as<int64_t>()),
+      user_id_(row["user_id"].as<int64_t>()),
+      difficulty_(row["difficulty"].as<int>()),
+      total_questions_(row["total_questions"].as<int>()),
+      correct_count_(row["correct_count"].as<int>()),
+      wrong_count_(row["wrong_count"].as<int>()),
+      accuracy_(row["accuracy"].as<double>()),
+      start_time_(row["start_time"].as<std::string>()),
+      end_time_(row["end_time"].as<std::string>()),
+      duration_seconds_(row["duration_seconds"].as<int>()),
+      created_at_(row["created_at"].as<std::string>())
 {
-    id_ = row["id"].as<int64_t>();
-    user_id_ = row["user_id"].as<int64_t>();
-    difficulty_ = row["difficulty"].as<int>();
-    total_questions_ = row["total_questions"].as<int>();
-    correct_count_ = row["correct_count"].as<int>();
-    wrong_count_ = row["wrong_count"].as<int>();
-    accuracy_ = row["accuracy"].as<double>();
-    start_time_ = row["start_time"].as<std::string>();
-    end_time_ = row["end_time"].as<std::string>();
-    duration_seconds_ = row["duration_seconds"].as<int>();
-    created_at_ = row["created_at"].as<std::string>();
 }
 
 Json::Value MathTrainingRecord::toJson() const

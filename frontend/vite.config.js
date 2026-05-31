@@ -56,7 +56,33 @@ export default defineConfig(() => {
     },
     // 生产构建时不需要 HMR
     build: {
-      sourcemap: false
+      sourcemap: false,
+      // Raise the warning ceiling: pdfjs-dist is intrinsically large and lives
+      // in its own lazily-loaded chunk, so it should not flag the whole build.
+      chunkSizeWarningLimit: 1600,
+      rollupOptions: {
+        output: {
+          // Split heavy third-party libs into their own long-cached vendor
+          // chunks so the app shell stays small and library upgrades don't
+          // bust the app bundle's cache (and vice versa).
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined
+            if (id.includes('pdfjs-dist')) return 'vendor-pdfjs'
+            if (id.includes('element-plus') || id.includes('@element-plus')) {
+              return 'vendor-element-plus'
+            }
+            if (
+              id.includes('/vue/') ||
+              id.includes('/@vue/') ||
+              id.includes('/vue-router/') ||
+              id.includes('/pinia/')
+            ) {
+              return 'vendor-vue'
+            }
+            return 'vendor'
+          }
+        }
+      }
     }
   }
 })

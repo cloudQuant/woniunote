@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS `users` (
     `userid` INT NOT NULL AUTO_INCREMENT,
     `username` VARCHAR(50) NOT NULL COMMENT '用户名/邮箱',
-    `password` VARCHAR(100) NOT NULL COMMENT '密码哈希(MD5或bcrypt)',
+    `password` VARCHAR(255) NOT NULL COMMENT '密码哈希(MD5/bcrypt/pbkdf2-sha256)',
     `nickname` VARCHAR(30) DEFAULT NULL COMMENT '昵称',
     `avatar` VARCHAR(20) DEFAULT NULL COMMENT '头像文件名',
     `qq` VARCHAR(15) DEFAULT NULL COMMENT 'QQ号',

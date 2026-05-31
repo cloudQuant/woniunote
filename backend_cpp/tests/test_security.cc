@@ -101,3 +101,46 @@ TEST_CASE(jwt_rejects_garbage) {
     CHECK(!Security::decodeToken("").has_value());
     CHECK(!Security::decodeToken("not.a.jwt").has_value());
 }
+
+// ---------------------------------------------------------------------------
+// Refresh token rotation: jti generation + embedding (iteration 13)
+// ---------------------------------------------------------------------------
+
+TEST_CASE(generateJti_is_nonempty_and_unique) {
+    std::string a = Security::generateJti();
+    std::string b = Security::generateJti();
+    CHECK(!a.empty());
+    CHECK(!b.empty());
+    // 128-bit random ids must (practically) never collide.
+    CHECK(a != b);
+}
+
+TEST_CASE(refresh_token_carries_jti_when_provided) {
+    std::string jti = Security::generateJti();
+    std::string token = Security::createRefreshToken("7", 1, jti);
+    auto payload = Security::decodeToken(token);
+    CHECK(payload.has_value());
+    if (payload.has_value()) {
+        CHECK_EQ(payload->type, std::string("refresh"));
+        CHECK_EQ(payload->jti, jti);
+    }
+}
+
+TEST_CASE(refresh_token_without_jti_has_empty_jti) {
+    // Legacy/back-compat path: no jti supplied -> claim absent -> empty string.
+    std::string token = Security::createRefreshToken("7", 1);
+    auto payload = Security::decodeToken(token);
+    CHECK(payload.has_value());
+    if (payload.has_value()) {
+        CHECK(payload->jti.empty());
+    }
+}
+
+TEST_CASE(access_token_has_no_jti) {
+    std::string token = Security::createAccessToken("42", 60);
+    auto payload = Security::decodeToken(token);
+    CHECK(payload.has_value());
+    if (payload.has_value()) {
+        CHECK(payload->jti.empty());
+    }
+}

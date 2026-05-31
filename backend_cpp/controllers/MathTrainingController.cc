@@ -32,11 +32,11 @@ std::string isoToMysqlDatetime(const std::string& isoTime) {
     }
     size_t zPos = result.find('Z');
     if (zPos != std::string::npos) {
-        result = result.substr(0, zPos);
+        result.resize(zPos);
     }
     size_t dotPos = result.find('.');
     if (dotPos != std::string::npos) {
-        result = result.substr(0, dotPos);
+        result.resize(dotPos);
     }
     return result;
 }
