@@ -21,6 +21,13 @@ a:hover {
   color: var(--wn-color-link-hover);
 }
 
+/* 全局焦点环：仅键盘导航时显示（:focus-visible 不响应鼠标点击） */
+:focus-visible {
+  outline: 2px solid var(--wn-color-focus);
+  outline-offset: 2px;
+  border-radius: var(--wn-radius-sm);
+}
+
 /* 容器 */
 .container {
   max-width: 1200px;
@@ -48,12 +55,14 @@ a:hover {
   border-radius: var(--wn-radius-md);
   overflow: hidden;
   box-shadow: var(--wn-shadow-card);
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: box-shadow var(--wn-transition-base), transform var(--wn-transition-base),
+    color var(--wn-transition-base), background var(--wn-transition-base);
 }
 
+/* 统一悬停反馈（R14）：抬升阴影 + 标准位移量，颜色/阴影消费令牌随主题变化 */
 .article-item:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--wn-shadow-lg);
+  box-shadow: var(--wn-elevation-hover);
+  transform: translateY(var(--wn-hover-lift));
 }
 
 .article-thumbnail {

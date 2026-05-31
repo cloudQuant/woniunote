@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { h } from 'vue'
+import fc from 'fast-check'
 import { mount, flushPromises } from '@vue/test-utils'
 import { installLocalStorage, mountOptions } from '@/test/harness'
 
@@ -65,6 +67,29 @@ describe('AppHeader.vue', () => {
     expect(push).toHaveBeenCalledWith({ name: 'Search', query: { keyword: 'vue' } })
   })
 
+  // Feature: ui-polish-refinement, Property 1: For any 字符串关键字 k，调用 handleSearch（注入 mock router）后：若 k.trim() 非空，则恰好发生一次跳转到 { name: 'Search', query: { keyword: k } }；若 k.trim() 为空（含纯空白、空串），则不发生任何跳转。
+  it('Property 1: handleSearch pushes exactly once for non-blank keyword and never for blank', () => {
+    // Mount once and reuse across runs (perf): handleSearch reads searchKeyword
+    // and the module-level `push` mock, both reset per iteration.
+    const wrapper = mount(AppHeader, mountOptions())
+    fc.assert(
+      fc.property(fc.string(), (k) => {
+        push.mockClear()
+        wrapper.vm.searchKeyword = k
+        wrapper.vm.handleSearch()
+        if (k.trim() !== '') {
+          // trim 非空 → 恰好一次跳转，query.keyword 为原始（未 trim）字符串
+          expect(push).toHaveBeenCalledTimes(1)
+          expect(push).toHaveBeenCalledWith({ name: 'Search', query: { keyword: k } })
+        } else {
+          // trim 空（纯空白 / 空串）→ 不发生任何跳转
+          expect(push).not.toHaveBeenCalled()
+        }
+      }),
+      { numRuns: 100 }
+    )
+  })
+
   it('handleCategoryClick navigates to category', () => {
     const wrapper = mount(AppHeader, mountOptions())
     wrapper.vm.handleCategoryClick(5)
@@ -126,15 +151,6 @@ describe('AppHeader.vue', () => {
     expect(login).not.toHaveBeenCalled()
   })
 
-  it('handleForgotPassword validates email presence', () => {
-    const wrapper = mount(AppHeader, mountOptions())
-    wrapper.vm.handleForgotPassword()
-    expect(msg.warning).toHaveBeenCalledWith('请输入注册邮箱')
-    wrapper.vm.forgotForm.email = 'x@y.com'
-    wrapper.vm.handleForgotPassword()
-    expect(msg.info).toHaveBeenCalledWith('密码重置功能开发中')
-  })
-
   it('handleUserCommand routes each command', () => {
     const wrapper = mount(AppHeader, mountOptions())
     const cases = {
@@ -164,5 +180,49 @@ describe('AppHeader.vue', () => {
     const wrapper = mount(AppHeader, mountOptions())
     wrapper.vm.handleUserCommand('nope')
     expect(push).not.toHaveBeenCalled()
+  })
+
+  // --- UI semantics / accessibility (R3.1, R4.1, R11.1, R11.3) ---
+
+  it('renders logo image with alt "云子量化"', () => {
+    const wrapper = mount(AppHeader, mountOptions())
+    const logo = wrapper.find('img[alt="云子量化"]')
+    expect(logo.exists()).toBe(true)
+  })
+
+  it('login entry is a <button> element (keyboard accessible)', () => {
+    // userStore mock has isLoggedIn:false → the login entry renders.
+    const wrapper = mount(AppHeader, mountOptions())
+    const loginLink = wrapper.find('.login-link')
+    expect(loginLink.exists()).toBe(true)
+    expect(loginLink.element.tagName).toBe('BUTTON')
+  })
+
+  it('login modal has a single tab and no "找回密码" entry; close is an aria-labeled <button>', () => {
+    // The close button + tabs live in the el-dialog #header slot. The default
+    // harness el-dialog stub only renders the default slot, so provide a stub
+    // that also renders the header slot (supplying the slot's `close` prop) to
+    // make the "no 找回密码" and close-button assertions meaningful.
+    const dialogStub = {
+      name: 'el-dialog',
+      props: ['modelValue'],
+      render() {
+        const header = this.$slots.header ? this.$slots.header({ close: () => {} }) : []
+        const body = this.$slots.default ? this.$slots.default() : []
+        return h('div', { class: 'el-dialog' }, [header, body])
+      }
+    }
+    const wrapper = mount(AppHeader, mountOptions({ stubs: { 'el-dialog': dialogStub } }))
+
+    // Exactly one login tab (登录) — the 找回密码 tab was removed.
+    const tabs = wrapper.findAll('.login-tab')
+    expect(tabs).toHaveLength(1)
+    expect(wrapper.html()).not.toContain('找回密码')
+
+    // Close button is a real <button aria-label="关闭"> for keyboard/SR access.
+    const close = wrapper.find('.login-close')
+    expect(close.exists()).toBe(true)
+    expect(close.element.tagName).toBe('BUTTON')
+    expect(close.attributes('aria-label')).toBe('关闭')
   })
 })

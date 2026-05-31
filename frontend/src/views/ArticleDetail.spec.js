@@ -197,4 +197,25 @@ describe('ArticleDetail.vue', () => {
     await flushPromises()
     expect(m.articleApi.getDetail).toHaveBeenCalledWith('2')
   })
+
+  it('renders el-skeleton placeholder while loading (first paint)', async () => {
+    const wrapper = mount(ArticleDetail, mountOptions())
+    // Before async fetch resolves the component is in its loading state.
+    expect(wrapper.vm.loading).toBe(true)
+    expect(wrapper.find('.loading-container').exists()).toBe(true)
+    expect(wrapper.find('.el-skeleton').exists()).toBe(true)
+    // The real article container is not rendered yet (no abrupt content).
+    expect(wrapper.find('.article-container').exists()).toBe(false)
+  })
+
+  it('replaces skeleton with article content once loading completes', async () => {
+    const wrapper = mount(ArticleDetail, mountOptions())
+    await flushPromises()
+    expect(wrapper.vm.loading).toBe(false)
+    // Skeleton placeholder is gone, real content is shown.
+    expect(wrapper.find('.loading-container').exists()).toBe(false)
+    expect(wrapper.find('.el-skeleton').exists()).toBe(false)
+    expect(wrapper.find('.article-container').exists()).toBe(true)
+    expect(wrapper.find('.article-title').text()).toBe('Hello')
+  })
 })

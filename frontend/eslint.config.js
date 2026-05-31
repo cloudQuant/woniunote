@@ -42,4 +42,24 @@ export default [
       'vue/no-v-html': 'off',
     },
   },
+  {
+    // Test specs and build/config files run in Node (vitest/playwright/vite),
+    // so they may use Node globals like process/__dirname.
+    files: [
+      '**/*.spec.js',
+      '**/*.config.js',
+      'e2e/**/*.js',
+    ],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
+        global: 'readonly',
+        Buffer: 'readonly',
+      },
+    },
+  },
 ]

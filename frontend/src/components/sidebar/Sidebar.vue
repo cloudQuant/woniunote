@@ -42,7 +42,15 @@
     </div>
     
     <!-- 回到顶部 -->
-    <div class="back-to-top" v-show="showBackToTop" @click="scrollToTop">
+    <div
+      class="back-to-top"
+      v-show="showBackToTop"
+      role="button"
+      tabindex="0"
+      @click="scrollToTop"
+      @keydown.enter.prevent="scrollToTop"
+      @keydown.space.prevent="scrollToTop"
+    >
       <el-icon><ArrowUp /></el-icon>
       <span>回到顶部</span>
     </div>
@@ -118,19 +126,19 @@ onUnmounted(() => {
   background: var(--wn-color-surface);
   border-radius: var(--wn-radius-sm);
   border: 1px solid var(--wn-color-border);
-  margin-bottom: 15px;
+  margin-bottom: var(--wn-space-4);
   overflow: hidden;
 }
 
 .search-card {
-  padding: 15px;
+  padding: var(--wn-space-4);
 }
 
 .sidebar-title {
-  font-size: 15px;
+  font-size: var(--wn-font-size-md);
   font-weight: 600;
   margin: 0;
-  padding: 12px 15px;
+  padding: var(--wn-space-3) var(--wn-space-4);
   background: var(--wn-color-primary);
   color: var(--wn-color-on-primary);
   text-align: center;
@@ -138,12 +146,12 @@ onUnmounted(() => {
 
 .article-list {
   list-style: none;
-  padding: 10px 15px;
+  padding: var(--wn-space-3) var(--wn-space-4);
   margin: 0;
 }
 
 .article-list li {
-  padding: 8px 0;
+  padding: var(--wn-space-2) 0;
   border-bottom: 1px dashed var(--wn-color-border);
 }
 
@@ -153,13 +161,13 @@ onUnmounted(() => {
 
 .article-list a {
   color: var(--wn-color-text-secondary);
-  font-size: 14px;
+  font-size: var(--wn-font-size-base);
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: color 0.3s;
-  line-height: 1.5;
+  transition: color var(--wn-transition-base);
+  line-height: var(--wn-line-height-snug);
 }
 
 .article-list a:hover {
@@ -168,12 +176,12 @@ onUnmounted(() => {
 
 .list-num {
   color: var(--wn-color-primary);
-  margin-right: 5px;
+  margin-right: var(--wn-space-1);
 }
 
 .empty-tip {
   color: var(--wn-color-text-muted);
-  font-size: 14px;
+  font-size: var(--wn-font-size-base);
   text-align: center;
 }
 
@@ -181,18 +189,24 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 12px;
+  gap: var(--wn-space-1);
+  padding: var(--wn-space-3);
   background: var(--wn-color-primary);
   color: var(--wn-color-on-primary);
   border-radius: var(--wn-radius-sm);
   cursor: pointer;
-  transition: all 0.3s;
-  font-size: 14px;
+  transition: background var(--wn-transition-base), transform var(--wn-transition-base);
+  font-size: var(--wn-font-size-base);
 }
 
 .back-to-top:hover {
   background: var(--wn-color-primary-active);
-  transform: translateY(-2px);
+  transform: translateY(var(--wn-hover-lift));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back-to-top:hover {
+    transform: none;
+  }
 }
 </style>

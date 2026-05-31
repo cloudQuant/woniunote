@@ -65,6 +65,43 @@
 
   /* 富文本编辑器(UEditor)工具栏图标滤镜：浅色主题不反色 */
   --wn-editor-icon-filter: none;
+
+  /* 间距（4px 基准，语义有限档位；静态默认值防 FOUC） */
+  --wn-space-1: 4px;
+  --wn-space-2: 8px;
+  --wn-space-3: 12px;
+  --wn-space-4: 16px;
+  --wn-space-5: 20px;
+  --wn-space-6: 24px;
+  --wn-space-7: 32px;
+  --wn-space-8: 48px;
+
+  /* 字号（静态默认值防 FOUC） */
+  --wn-font-size-xs: 12px;
+  --wn-font-size-sm: 13px;
+  --wn-font-size-base: 14px;   /* 正文/元信息基准 */
+  --wn-font-size-md: 15px;     /* 卡/栏标题 */
+  --wn-font-size-lg: 16px;     /* 文章标题（列表项） */
+  --wn-font-size-xl: 18px;     /* Slogan */
+  --wn-font-size-2xl: 20px;    /* 占位图分类文字 */
+
+  /* 行高（静态默认值防 FOUC） */
+  --wn-line-height-tight: 1.4;
+  --wn-line-height-snug: 1.5;
+  --wn-line-height-normal: 1.6;
+  --wn-line-height-relaxed: 1.8;
+
+  /* 过渡（统一时长/缓动） */
+  --wn-transition-fast: 0.15s ease;
+  --wn-transition-base: 0.25s ease;
+
+  /* 悬停反馈 */
+  --wn-elevation-hover: var(--wn-shadow-lg);  /* 悬停抬升阴影，消费现有阴影令牌→随主题变化 */
+  --wn-hover-lift: -2px;                       /* 统一上移量（替代散乱的 -5px / -2px / scale） */
+
+  /* 焦点（键盘可达焦点环，消费主色→随主题变化） */
+  --wn-color-focus: var(--wn-color-primary);
+  --wn-focus-ring: 0 0 0 3px color-mix(in srgb, var(--wn-color-primary) 45%, transparent);
 }
 
 /* ============ Element Plus 变量映射（特异度 0,1,1，覆盖 EP 默认 & 暗色 css-vars） ============ */
@@ -139,4 +176,12 @@ body {
 html,
 body {
   transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* 减弱动效：用户偏好 reduce 时中和主题切换的颜色过渡（组件级动效在各组件内单独处理） */
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body {
+    transition: none;
+  }
 }

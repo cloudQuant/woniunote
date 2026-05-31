@@ -49,21 +49,21 @@
 .app-footer {
   background: var(--wn-color-nav-bg);
   color: var(--wn-color-text-muted);
-  padding: 30px 0;
+  padding: var(--wn-space-7) 0;
   margin-top: auto;
 }
 
 .footer-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 var(--wn-space-5);
 }
 
 .footer-row {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 30px;
+  gap: var(--wn-space-7);
 }
 
 .footer-col {
@@ -73,25 +73,25 @@
 
 .footer-title {
   color: var(--wn-color-nav-text);
-  font-size: 15px;
-  margin-bottom: 12px;
+  font-size: var(--wn-font-size-md);
+  margin-bottom: var(--wn-space-3);
   font-weight: 500;
 }
 
 .footer-col p {
-  margin: 8px 0;
-  font-size: 14px;
-  line-height: 1.6;
+  margin: var(--wn-space-2) 0;
+  font-size: var(--wn-font-size-base);
+  line-height: var(--wn-line-height-normal);
 }
 
 .footer-col a {
   color: var(--wn-color-text-muted);
   text-decoration: none;
-  margin-right: 15px;
+  margin-right: var(--wn-space-4);
   transition: color 0.3s;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--wn-space-1);
 }
 
 .footer-col a:hover {

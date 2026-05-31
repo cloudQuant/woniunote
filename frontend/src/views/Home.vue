@@ -53,31 +53,25 @@ function handlePageChange(page) {
 
 <style scoped>
 .home-page {
-  padding: 20px 0;
+  padding: var(--wn-space-5) 0;
   background: var(--wn-color-canvas);
   min-height: calc(100vh - 200px);
 }
 
 .home-container {
-  /* 首页全宽容器，让文章和侧边栏尽量贴近屏幕两侧 */
   width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
+  max-width: 1200px;          /* 最大阅读宽度阈值 */
+  margin: 0 auto;             /* 水平居中（仅宽屏视觉上生效）*/
+  padding: 0 var(--wn-space-5);
+}
+
+@media (max-width: 768px) {
+  .home-container {
+    padding: 0 var(--wn-space-4);  /* 移动端两侧留边 */
+  }
 }
 
 .main-content {
-  padding: 20px;
-}
-
-.sidebar-wrapper {
-  width: 280px;
-  padding: 20px;
-}
-
-@media (max-width: 992px) {
-  .sidebar-wrapper {
-    width: 100%;
-  }
+  padding: var(--wn-space-5);
 }
 </style>

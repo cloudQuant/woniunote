@@ -4,7 +4,7 @@
     <div class="top-bar">
       <div class="top-container">
         <router-link to="/" class="logo">
-          <img src="/logo.png" alt="cloudQuant Logo" class="logo-img" />
+          <img src="/logo.png" alt="云子量化" class="logo-img" />
         </router-link>
         <div class="slogan-wrapper">
           <span class="slogan">量化投资 · 量化自我 · 量化是一生的修行</span>
@@ -65,7 +65,7 @@
             </el-dropdown>
           </template>
           <template v-else>
-            <span class="nav-item login-link" @click="showLoginModal = true">登录</span>
+            <button type="button" class="nav-item login-link" @click="showLoginModal = true">登录</button>
           </template>
         </div>
       </div>
@@ -74,7 +74,7 @@
     <!-- 登录弹窗 -->
     <el-dialog 
       v-model="showLoginModal" 
-      width="520px" 
+      width="min(520px, 92vw)" 
       :close-on-click-modal="false" 
       :show-close="false"
       class="login-dialog"
@@ -88,12 +88,8 @@
               :class="['login-tab', { active: activeTab === 'login' }]"
               @click="activeTab = 'login'"
             >登录</span>
-            <span 
-              :class="['login-tab', { active: activeTab === 'forgot' }]"
-              @click="activeTab = 'forgot'"
-            >找回密码</span>
           </div>
-          <span class="login-close" @click="close">×</span>
+          <button type="button" class="login-close" @click="close" aria-label="关闭">×</button>
         </div>
       </template>
       
@@ -143,25 +139,6 @@
         </el-form>
       </div>
       
-      <!-- 找回密码表单 -->
-      <div class="login-body" v-else>
-        <el-form 
-          :model="forgotForm" 
-          label-width="100px"
-          label-position="left"
-          class="login-form"
-        >
-          <el-form-item label="注册邮箱：">
-            <el-input 
-              v-model="forgotForm.email" 
-              placeholder="请输入你的注册邮箱"
-              size="large"
-            />
-          </el-form-item>
-          <p class="forgot-tip">密码重置链接将发送到您的邮箱</p>
-        </el-form>
-      </div>
-      
       <template #footer>
         <div class="login-footer">
           <el-button @click="showLoginModal = false" size="large">关闭</el-button>
@@ -172,12 +149,6 @@
             :loading="loginLoading"
             size="large"
           >登录</el-button>
-          <el-button 
-            v-else
-            type="primary" 
-            @click="handleForgotPassword"
-            size="large"
-          >发送重置邮件</el-button>
         </div>
       </template>
     </el-dialog>
@@ -232,10 +203,6 @@ const loginForm = reactive({
   username: '',
   password: '',
   captchaCode: ''
-})
-
-const forgotForm = reactive({
-  email: ''
 })
 
 // 表单验证规则
@@ -367,17 +334,6 @@ async function handleLogin() {
 }
 
 /**
- * 处理忘记密码
- */
-function handleForgotPassword() {
-  if (!forgotForm.email) {
-    ElMessage.warning('请输入注册邮箱')
-    return
-  }
-  ElMessage.info('密码重置功能开发中')
-}
-
-/**
  * 处理用户下拉菜单命令
  * @param {string} command - 菜单命令
  */
@@ -427,16 +383,16 @@ function handleUserCommand(command) {
 .top-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 15px 20px;
+  padding: var(--wn-space-4) var(--wn-space-5);
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: var(--wn-space-5);
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--wn-space-3);
   text-decoration: none;
 }
 
@@ -445,22 +401,16 @@ function handleUserCommand(command) {
   width: auto;
 }
 
-.logo-text {
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--wn-color-primary);
-}
-
 .slogan-wrapper {
   flex: 1;
   overflow: hidden;
-  margin-left: 20px;
+  margin-left: var(--wn-space-5);
 }
 
 .slogan {
   display: inline-block;
   color: var(--wn-color-primary);
-  font-size: 18px;
+  font-size: var(--wn-font-size-xl);
   font-weight: 500;
   white-space: nowrap;
   animation: scrolling 20s linear infinite;
@@ -471,6 +421,13 @@ function handleUserCommand(command) {
   100% { transform: translateX(100%); }
 }
 
+/* 减弱动效：系统开启 prefers-reduced-motion 时，slogan 跑马灯静止 (R9.1/R9.4) */
+@media (prefers-reduced-motion: reduce) {
+  .slogan {
+    animation: none;
+  }
+}
+
 /* 导航栏 - 使用主题导航色 */
 .nav-bar {
   background: var(--wn-color-nav-bg);
@@ -479,7 +436,7 @@ function handleUserCommand(command) {
 .nav-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 var(--wn-space-5);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -492,13 +449,13 @@ function handleUserCommand(command) {
 
 .nav-item {
   color: var(--wn-color-nav-text);
-  font-size: 14px;
-  padding: 12px 18px;
+  font-size: var(--wn-font-size-base);
+  padding: var(--wn-space-3) 18px;
   text-decoration: none;
   transition: background 0.3s;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--wn-space-1);
   cursor: pointer;
 }
 
@@ -520,6 +477,10 @@ function handleUserCommand(command) {
 }
 
 .login-link {
+  /* 重置原生 button 默认样式，保持与原 span 视觉一致 */
+  background: none;
+  border: none;
+  font: inherit;
   cursor: pointer;
 }
 
@@ -532,7 +493,7 @@ function handleUserCommand(command) {
   align-items: center;
 }
 
-/* 搜索栏 - 放在侧边栏 */
+/* 搜索栏 - 桌面隐藏（桌面使用 Sidebar 搜索），仅移动端显示 */
 .search-bar {
   display: none;
 }
@@ -543,12 +504,20 @@ function handleUserCommand(command) {
   }
   
   .nav-item {
-    padding: 10px 12px;
-    font-size: 13px;
+    padding: var(--wn-space-3) var(--wn-space-3);
+    font-size: var(--wn-font-size-sm);
   }
   
   .slogan {
     display: none;
+  }
+
+  /* 移动端：在导航条下方、文章列表之上提供可达的搜索入口 */
+  .search-bar {
+    display: block;
+    padding: var(--wn-space-3) var(--wn-space-5);
+    background: var(--wn-color-surface);
+    border-bottom: 1px solid var(--wn-color-border);
   }
 }
 
@@ -556,6 +525,7 @@ function handleUserCommand(command) {
 :deep(.login-dialog) {
   border-radius: 4px;
   overflow: hidden;
+  max-width: 92vw;
 }
 
 :deep(.login-dialog .el-dialog__header) {
@@ -568,7 +538,7 @@ function handleUserCommand(command) {
 }
 
 :deep(.login-dialog .el-dialog__footer) {
-  padding: 15px 20px 20px;
+  padding: var(--wn-space-4) var(--wn-space-5) var(--wn-space-5);
   border-top: 1px solid var(--wn-color-border);
 }
 
@@ -584,10 +554,10 @@ function handleUserCommand(command) {
 }
 
 .login-tab {
-  padding: 15px 28px;
+  padding: var(--wn-space-4) 28px;
   color: var(--wn-color-on-primary);
   cursor: pointer;
-  font-size: 15px;
+  font-size: var(--wn-font-size-md);
   transition: background 0.3s;
   font-weight: 500;
 }
@@ -601,6 +571,9 @@ function handleUserCommand(command) {
 }
 
 .login-close {
+  /* 重置原生 button 默认样式，保持与原 span 视觉一致 */
+  background: none;
+  border: none;
   display: flex;
   align-items: center;
   padding: 0 18px;
@@ -615,7 +588,7 @@ function handleUserCommand(command) {
 }
 
 .login-body {
-  padding: 30px 30px 10px;
+  padding: var(--wn-space-7) var(--wn-space-7) var(--wn-space-3);
 }
 
 .login-form {
@@ -628,7 +601,7 @@ function handleUserCommand(command) {
 
 .login-form :deep(.el-form-item__label) {
   color: var(--wn-color-text);
-  font-size: 14px;
+  font-size: var(--wn-font-size-base);
 }
 
 .login-form :deep(.el-input__wrapper) {
@@ -647,7 +620,7 @@ function handleUserCommand(command) {
 .captcha-row {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: var(--wn-space-4);
 }
 
 .captcha-input {
@@ -669,17 +642,10 @@ function handleUserCommand(command) {
 .login-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: var(--wn-space-3);
 }
 
 .login-footer .el-button {
   min-width: 80px;
-}
-
-.forgot-tip {
-  color: var(--wn-color-text-muted);
-  font-size: 13px;
-  text-align: center;
-  margin-top: 20px;
 }
 </style>

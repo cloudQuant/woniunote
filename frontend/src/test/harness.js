@@ -55,7 +55,7 @@ const EP_COMPONENTS = [
   'el-dropdown', 'el-dropdown-menu', 'el-dropdown-item', 'el-popover', 'el-tooltip',
   'el-row', 'el-col', 'el-statistic', 'el-progress', 'el-switch', 'el-radio-group',
   'el-radio', 'el-radio-button', 'el-checkbox', 'el-image', 'el-upload', 'el-badge',
-  'el-divider', 'el-skeleton', 'el-result', 'el-breadcrumb', 'el-breadcrumb-item',
+  'el-divider', 'el-skeleton', 'el-skeleton-item', 'el-result', 'el-breadcrumb', 'el-breadcrumb-item',
   'el-menu', 'el-menu-item', 'el-descriptions', 'el-descriptions-item', 'el-link',
   'el-rate', 'el-tooltip', 'el-alert'
 ]

@@ -3,7 +3,18 @@
     <div class="article-detail-container">
       <el-row :gutter="20">
         <el-col :span="17" :xs="24">
-        <div class="article-container" v-loading="loading">
+        <div v-if="loading" class="loading-container">
+          <el-skeleton animated>
+            <template #template>
+              <el-skeleton-item variant="h1" style="width: 60%" />
+              <div style="margin: var(--wn-space-4) 0;">
+                <el-skeleton-item variant="text" style="width: 40%" />
+              </div>
+              <el-skeleton-item variant="text" :rows="6" />
+            </template>
+          </el-skeleton>
+        </div>
+        <div v-else class="article-container">
           <template v-if="article">
             <article class="article-content">
               <header class="article-header">
@@ -162,7 +173,7 @@
             </section>
           </template>
           
-          <el-empty v-else-if="!loading" description="文章不存在" />
+          <el-empty v-else description="文章不存在" />
         </div>
       </el-col>
         <el-col :span="7" :xs="24">
@@ -570,6 +581,12 @@ onBeforeUnmount(() => {
   border-radius: var(--wn-radius-md);
   box-shadow: var(--wn-shadow-card);
   padding: 30px;
+}
+
+.loading-container {
+  padding: var(--wn-space-5);
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-md);
 }
 
 .article-header {

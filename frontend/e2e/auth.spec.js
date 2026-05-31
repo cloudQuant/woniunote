@@ -17,7 +17,9 @@ test.describe('Authentication', () => {
     await page.goto('/login')
     await page.getByPlaceholder('请输入用户名').fill('tester@example.com')
     await page.getByPlaceholder('请输入密码').fill('secret123')
-    await page.getByRole('button', { name: '登录' }).click()
+    // Submit via the form's own button (the header now also has a "登录"
+    // entry button after the R11 keyboard-accessibility change).
+    await page.locator('.login-btn').click()
     await expect(page).toHaveURL(/\/$|\/page/)
     const token = await page.evaluate(() => localStorage.getItem('token'))
     expect(token).toBe('e2e-access')
@@ -27,7 +29,9 @@ test.describe('Authentication', () => {
     await page.goto('/login')
     await page.getByPlaceholder('请输入用户名').fill('tester@example.com')
     await page.getByPlaceholder('请输入密码').fill('wrongpass')
-    await page.getByRole('button', { name: '登录' }).click()
+    // Submit via the form's own button (the header now also has a "登录"
+    // entry button after the R11 keyboard-accessibility change).
+    await page.locator('.login-btn').click()
     // Stays on login; no token stored.
     await expect(page).toHaveURL(/\/login/)
     const token = await page.evaluate(() => localStorage.getItem('token'))
