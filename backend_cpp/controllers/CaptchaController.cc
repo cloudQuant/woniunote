@@ -8,6 +8,7 @@
 #include "CaptchaController.h"
 #include "core/database.h"
 #include "core/logger.h"
+#include "core/response.h"
 #include <drogon/HttpResponse.h>
 #include <random>
 #include <sstream>
@@ -156,6 +157,21 @@ static std::string getCaptcha(const std::string& id)
     return "";
 }
 
+bool CaptchaController::validateCaptcha(const std::string& captchaId,
+                                        const std::string& captchaCode)
+{
+    if (captchaId.empty() || captchaCode.empty()) {
+        return false;
+    }
+    std::string stored = getCaptcha(captchaId);
+    if (stored.empty()) {
+        return false;
+    }
+    std::string upper = captchaCode;
+    std::transform(upper.begin(), upper.end(), upper.begin(), ::toupper);
+    return stored == upper;
+}
+
 void CaptchaController::generate(const HttpRequestPtr& req,
                                  std::function<void(const HttpResponsePtr&)>&& callback)
 {
@@ -170,12 +186,10 @@ void CaptchaController::generate(const HttpRequestPtr& req,
     std::string imageData = generateCaptchaSvg(captchaCode);
     
     Logger::debug("[Captcha] Generated", {{"captcha_id", captchaId}});
-    Json::Value ret;
-    ret["code"] = 200;
-    ret["message"] = "success";
-    ret["data"]["captcha_id"] = captchaId;
-    ret["data"]["image"] = imageData;
-    callback(HttpResponse::newHttpJsonResponse(ret));
+    Json::Value data;
+    data["captcha_id"] = captchaId;
+    data["image"] = imageData;
+    callback(Response::success(data));
 }
 
 void CaptchaController::verify(const HttpRequestPtr& req,
@@ -185,10 +199,7 @@ void CaptchaController::verify(const HttpRequestPtr& req,
     auto json = req->getJsonObject();
     if (!json || !json->isMember("captcha_id") || !json->isMember("captcha_code")) {
         Logger::warning("[Captcha] Verify failed: missing fields");
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "请提供验证码ID和验证码";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+        callback(Response::badRequest("请提供验证码ID和验证码"));
         return;
     }
     
@@ -202,11 +213,9 @@ void CaptchaController::verify(const HttpRequestPtr& req,
     std::string storedCode = getCaptcha(captchaId);
     
     if (storedCode.empty()) {
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "验证码已过期";
-        ret["data"]["valid"] = false;
-        callback(HttpResponse::newHttpJsonResponse(ret));
+        Json::Value data;
+        data["valid"] = false;
+        callback(Response::make(400, "验证码已过期", data, k400BadRequest));
         return;
     }
     
@@ -218,11 +227,12 @@ void CaptchaController::verify(const HttpRequestPtr& req,
         Logger::debug("[Captcha] Verification failed", {{"captcha_id", captchaId}});
     }
     
-    Json::Value ret;
-    ret["code"] = valid ? 200 : 400;
-    ret["message"] = valid ? "验证成功" : "验证码错误";
-    ret["data"]["valid"] = valid;
-    callback(HttpResponse::newHttpJsonResponse(ret));
+    Json::Value data;
+    data["valid"] = valid;
+    callback(Response::make(valid ? 200 : 400,
+                            valid ? "验证成功" : "验证码错误",
+                            data,
+                            valid ? k200OK : k400BadRequest));
 }
 
 } // namespace controllers

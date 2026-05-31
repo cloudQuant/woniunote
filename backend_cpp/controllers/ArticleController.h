@@ -25,6 +25,7 @@ public:
     
     // Protected endpoints
     ADD_METHOD_TO(ArticleController::myArticles, "/api/articles/my", drogon::Get, "woniunote::AuthFilter");
+    ADD_METHOD_TO(ArticleController::myDrafts, "/api/articles/drafts/my", drogon::Get, "woniunote::AuthFilter");
     ADD_METHOD_TO(ArticleController::create, "/api/articles", drogon::Post, "woniunote::AuthFilter");
     ADD_METHOD_TO(ArticleController::update, "/api/articles/{id}", drogon::Put, "woniunote::AuthFilter");
     ADD_METHOD_TO(ArticleController::remove, "/api/articles/{id}", drogon::Delete, "woniunote::AuthFilter");
@@ -32,6 +33,7 @@ public:
     // Admin endpoints
     ADD_METHOD_TO(ArticleController::toggleRecommend, "/api/articles/{id}/recommend", drogon::Post, "woniunote::AdminFilter");
     ADD_METHOD_TO(ArticleController::toggleHide, "/api/articles/{id}/hide", drogon::Post, "woniunote::AdminFilter");
+    ADD_METHOD_TO(ArticleController::toggleCheck, "/api/articles/{id}/check", drogon::Post, "woniunote::AdminFilter");
     METHOD_LIST_END
 
     void list(const drogon::HttpRequestPtr& req,
@@ -49,6 +51,9 @@ public:
 
     void myArticles(const drogon::HttpRequestPtr& req,
                     std::function<void(const drogon::HttpResponsePtr&)>&& callback);
+
+    void myDrafts(const drogon::HttpRequestPtr& req,
+                  std::function<void(const drogon::HttpResponsePtr&)>&& callback);
 
     void create(const drogon::HttpRequestPtr& req,
                 std::function<void(const drogon::HttpResponsePtr&)>&& callback);
@@ -68,6 +73,10 @@ public:
     void toggleHide(const drogon::HttpRequestPtr& req,
                     std::function<void(const drogon::HttpResponsePtr&)>&& callback,
                     int64_t id);
+
+    void toggleCheck(const drogon::HttpRequestPtr& req,
+                     std::function<void(const drogon::HttpResponsePtr&)>&& callback,
+                     int64_t id);
 };
 
 } // namespace controllers

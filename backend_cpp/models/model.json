@@ -4,7 +4,7 @@
     "port": 3306,
     "dbname": "woniunote",
     "user": "woniunote_user",
-    "password": "Woniunote_password1!",
+    "password": "CHANGE_ME_LOCAL_DB_PASSWORD",
     "tables": [],
     "relationships": {
         "enabled": false

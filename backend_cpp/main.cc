@@ -7,6 +7,7 @@
 
 #include <drogon/drogon.h>
 #include <iostream>
+#include <fstream>
 #include "core/config.h"
 #include "core/logger.h"
 
@@ -19,37 +20,58 @@ int main(int argc, char* argv[])
     woniunote::Logger::info("=== WoniuNote C++ Backend Starting ===");
     woniunote::Logger::info("Version: 2.0.0-cpp");
 
-    // Load Drogon configuration
+    // Load Drogon configuration. Prefer config.local.json when present so
+    // local credentials (DB/Redis passwords, dev JWT secret) stay out of the
+    // git-tracked config.json. Falls back to config.json otherwise.
     try {
-        woniunote::Logger::info("Loading configuration from config.json");
-        app().loadConfigFile("config.json");
+        std::string configFile = "config.json";
+        if (std::ifstream("config.local.json").good()) {
+            configFile = "config.local.json";
+        }
+        woniunote::Logger::info("Loading configuration from " + configFile);
+        app().loadConfigFile(configFile);
         woniunote::Logger::info("Configuration loaded successfully");
     } catch (const std::exception& e) {
-        woniunote::Logger::error("Failed to load config.json: " + std::string(e.what()));
+        woniunote::Logger::error("Failed to load configuration: " + std::string(e.what()));
         return 1;
     }
 
-    // CORS configuration - Add CORS headers to all responses
-    app().registerPostHandlingAdvice([](const HttpRequestPtr& req, const HttpResponsePtr& resp) {
-        auto origin = req->getHeader("Origin");
-        if (!origin.empty()) {
-            resp->addHeader("Access-Control-Allow-Origin", origin);
-            resp->addHeader("Access-Control-Allow-Credentials", "true");
+    // Initialize application configuration (JWT secret, CORS whitelist, etc.)
+    woniunote::Config::instance().init();
+
+    // Resolve the CORS allow-list from configuration. Only origins on this
+    // list may receive Access-Control-Allow-Origin with credentials enabled.
+    const auto corsOrigins = woniunote::Config::instance().getCorsOrigins();
+    auto isAllowedOrigin = [corsOrigins](const std::string& origin) -> bool {
+        if (origin.empty()) return false;
+        for (const auto& allowed : corsOrigins) {
+            if (allowed == origin) return true;
         }
-        resp->addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        resp->addHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-    });
+        return false;
+    };
+
+    // CORS configuration - only reflect Origin when it is whitelisted.
+    app().registerPostHandlingAdvice(
+        [isAllowedOrigin](const HttpRequestPtr& req, const HttpResponsePtr& resp) {
+            auto origin = req->getHeader("Origin");
+            if (isAllowedOrigin(origin)) {
+                resp->addHeader("Access-Control-Allow-Origin", origin);
+                resp->addHeader("Access-Control-Allow-Credentials", "true");
+            }
+            resp->addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            resp->addHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+        });
 
     // Handle OPTIONS preflight requests globally
     app().registerHandler(
         "/api/{path}",
-        [](const HttpRequestPtr& req,
+        [isAllowedOrigin](const HttpRequestPtr& req,
            std::function<void(const HttpResponsePtr&)>&& callback,
            const std::string& path) {
             woniunote::Logger::debug("[CORS] Preflight request", {{"path", "/api/" + path}});
             auto resp = HttpResponse::newHttpResponse();
             auto origin = req->getHeader("Origin");
-            if (!origin.empty()) {
+            if (isAllowedOrigin(origin)) {
                 resp->addHeader("Access-Control-Allow-Origin", origin);
                 resp->addHeader("Access-Control-Allow-Credentials", "true");
             }

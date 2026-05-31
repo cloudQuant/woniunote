@@ -106,7 +106,7 @@ onMounted(async () => {
 <style scoped>
 .category-page {
   padding: 20px 0;
-  background: #f5f7fa;
+  background: var(--wn-color-canvas);
   min-height: calc(100vh - 200px);
 }
 
@@ -121,10 +121,10 @@ onMounted(async () => {
   font-weight: 600;
   margin: 0 0 20px;
   padding: 15px;
-  background: #fff;
-  border-left: 4px solid #409eff;
-  border-radius: 4px;
-  color: #303133;
+  background: var(--wn-color-surface);
+  border-left: 4px solid var(--wn-color-primary);
+  border-radius: var(--wn-radius-sm);
+  color: var(--wn-color-text);
 }
 
 .sub-categories {
@@ -133,8 +133,8 @@ onMounted(async () => {
   gap: 10px;
   margin-bottom: 20px;
   padding: 15px;
-  background: #fff;
-  border-radius: 4px;
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-sm);
 }
 
 .category-tag {

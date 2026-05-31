@@ -115,9 +115,9 @@ onUnmounted(() => {
 }
 
 .sidebar-card {
-  background: #fff;
-  border-radius: 4px;
-  border: 1px solid #ebeef5;
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-sm);
+  border: 1px solid var(--wn-color-border);
   margin-bottom: 15px;
   overflow: hidden;
 }
@@ -131,8 +131,8 @@ onUnmounted(() => {
   font-weight: 600;
   margin: 0;
   padding: 12px 15px;
-  background: #17a2b8;
-  color: #fff;
+  background: var(--wn-color-primary);
+  color: var(--wn-color-on-primary);
   text-align: center;
 }
 
@@ -144,7 +144,7 @@ onUnmounted(() => {
 
 .article-list li {
   padding: 8px 0;
-  border-bottom: 1px dashed #ebeef5;
+  border-bottom: 1px dashed var(--wn-color-border);
 }
 
 .article-list li:last-child {
@@ -152,7 +152,7 @@ onUnmounted(() => {
 }
 
 .article-list a {
-  color: #606266;
+  color: var(--wn-color-text-secondary);
   font-size: 14px;
   display: block;
   overflow: hidden;
@@ -163,16 +163,16 @@ onUnmounted(() => {
 }
 
 .article-list a:hover {
-  color: #409eff;
+  color: var(--wn-color-primary);
 }
 
 .list-num {
-  color: #409eff;
+  color: var(--wn-color-primary);
   margin-right: 5px;
 }
 
 .empty-tip {
-  color: #909399;
+  color: var(--wn-color-text-muted);
   font-size: 14px;
   text-align: center;
 }
@@ -183,16 +183,16 @@ onUnmounted(() => {
   justify-content: center;
   gap: 5px;
   padding: 12px;
-  background: #17a2b8;
-  color: #fff;
-  border-radius: 4px;
+  background: var(--wn-color-primary);
+  color: var(--wn-color-on-primary);
+  border-radius: var(--wn-radius-sm);
   cursor: pointer;
   transition: all 0.3s;
   font-size: 14px;
 }
 
 .back-to-top:hover {
-  background: #138496;
+  background: var(--wn-color-primary-active);
   transform: translateY(-2px);
 }
 </style>

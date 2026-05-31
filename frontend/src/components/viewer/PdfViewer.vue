@@ -303,9 +303,9 @@ onBeforeUnmount(() => {
 <style scoped>
 .pdf-viewer-container {
   width: 100%;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  background: #f5f7fa;
+  border: 1px solid var(--wn-color-border);
+  border-radius: var(--wn-radius-sm);
+  background: var(--wn-color-surface-soft);
   position: relative;
   min-height: 600px;
 }
@@ -315,8 +315,8 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   padding: 10px 15px;
-  background: #fff;
-  border-bottom: 1px solid #dcdfe6;
+  background: var(--wn-color-surface);
+  border-bottom: 1px solid var(--wn-color-border);
   border-radius: 4px 4px 0 0;
   flex-wrap: wrap;
   gap: 10px;
@@ -324,7 +324,7 @@ onBeforeUnmount(() => {
 
 .page-info {
   font-size: 14px;
-  color: #606266;
+  color: var(--wn-color-text-secondary);
   margin: 0 10px;
 }
 
@@ -339,7 +339,7 @@ onBeforeUnmount(() => {
 }
 
 .pdf-viewer-content canvas {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--wn-shadow-card);
   background: #fff;
 }
 
@@ -353,12 +353,12 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  color: #909399;
+  color: var(--wn-color-text-muted);
   font-size: 14px;
 }
 
 .pdf-error {
-  color: #f56c6c;
+  color: var(--wn-color-error);
 }
 
 @media (max-width: 768px) {

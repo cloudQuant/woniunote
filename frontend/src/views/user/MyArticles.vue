@@ -154,7 +154,7 @@ onMounted(async () => {
   font-size: 18px;
   font-weight: 600;
   margin: 0;
-  color: #303133;
+  color: var(--wn-color-text);
 }
 
 .pagination-container {

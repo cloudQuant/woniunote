@@ -24,6 +24,18 @@ public:
 
     void verify(const drogon::HttpRequestPtr& req,
                 std::function<void(const drogon::HttpResponsePtr&)>&& callback);
+
+    /**
+     * @brief Validate and consume a captcha code (one-time use).
+     * @param captchaId Captcha identifier returned by generate
+     * @param captchaCode User-supplied code (case-insensitive)
+     * @return true if the code matches an unexpired stored captcha
+     *
+     * Shared with other controllers (e.g. login) so captcha logic lives in
+     * one place. Consumes the captcha on a successful match.
+     */
+    static bool validateCaptcha(const std::string& captchaId,
+                                const std::string& captchaCode);
 };
 
 } // namespace controllers

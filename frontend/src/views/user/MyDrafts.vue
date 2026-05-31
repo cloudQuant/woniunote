@@ -135,7 +135,7 @@ onMounted(() => {
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 20px;
-  color: #303133;
+  color: var(--wn-color-text);
 }
 
 .drafts-list {
@@ -149,13 +149,13 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background: #f5f7fa;
-  border-radius: 8px;
+  background: var(--wn-color-surface-soft);
+  border-radius: var(--wn-radius-md);
   transition: background 0.3s;
 }
 
 .draft-item:hover {
-  background: #ebeef5;
+  background: var(--wn-color-surface-2);
 }
 
 .draft-info {
@@ -166,7 +166,7 @@ onMounted(() => {
 .draft-title {
   font-size: 16px;
   font-weight: 500;
-  color: #303133;
+  color: var(--wn-color-text);
   margin-bottom: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -175,7 +175,7 @@ onMounted(() => {
 
 .draft-meta {
   font-size: 13px;
-  color: #909399;
+  color: var(--wn-color-text-muted);
   display: flex;
   align-items: center;
   gap: 15px;

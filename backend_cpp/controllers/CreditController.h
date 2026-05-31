@@ -17,6 +17,8 @@ public:
     METHOD_LIST_BEGIN
     ADD_METHOD_TO(CreditController::getBalance, "/api/credits/balance", drogon::Get, "woniunote::AuthFilter");
     ADD_METHOD_TO(CreditController::getHistory, "/api/credits/history", drogon::Get, "woniunote::AuthFilter");
+    ADD_METHOD_TO(CreditController::payArticle, "/api/credits/pay-article/{id}", drogon::Post, "woniunote::AuthFilter");
+    ADD_METHOD_TO(CreditController::checkArticle, "/api/credits/check-article/{id}", drogon::Get, "woniunote::AuthFilter");
     METHOD_LIST_END
 
     void getBalance(const drogon::HttpRequestPtr& req,
@@ -24,6 +26,14 @@ public:
 
     void getHistory(const drogon::HttpRequestPtr& req,
                     std::function<void(const drogon::HttpResponsePtr&)>&& callback);
+
+    void payArticle(const drogon::HttpRequestPtr& req,
+                    std::function<void(const drogon::HttpResponsePtr&)>&& callback,
+                    int64_t id);
+
+    void checkArticle(const drogon::HttpRequestPtr& req,
+                      std::function<void(const drogon::HttpResponsePtr&)>&& callback,
+                      int64_t id);
 };
 
 } // namespace controllers

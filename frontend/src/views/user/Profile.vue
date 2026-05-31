@@ -221,7 +221,7 @@ onMounted(() => {
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 25px;
-  color: #303133;
+  color: var(--wn-color-text);
 }
 
 .avatar-uploader {
@@ -231,7 +231,7 @@ onMounted(() => {
 .avatar-tip {
   display: block;
   font-size: 12px;
-  color: #909399;
+  color: var(--wn-color-text-muted);
   margin-top: 8px;
 }
 </style>

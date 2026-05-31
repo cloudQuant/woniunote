@@ -1,0 +1,53 @@
+/**
+ * Sentry 数据暗紫 —— 暗色
+ * 源: awesome-design-md/design-md/sentry
+ * 深紫午夜画布 + 电光柠檬/紫强调，数据密集仪表盘气质。
+ * 注：源 primary 为近黑按钮 #150f23，作为可读强调，这里主色取其品牌紫 violet。
+ */
+[data-theme="sentry"] {
+  color-scheme: dark;
+
+  --wn-color-primary: #7553ff;
+  --wn-color-primary-hover: #8c70ff;
+  --wn-color-primary-active: #6a5fc1;
+  --wn-color-on-primary: #ffffff;
+
+  --wn-color-canvas: #1d1127;
+  --wn-color-surface: #1f1633;
+  --wn-color-surface-soft: #2a1f45;
+  --wn-color-surface-2: #362d59;
+
+  --wn-color-text: #ffffff;
+  --wn-color-text-secondary: #d8d3e0;
+  --wn-color-text-muted: #bdb8c0;
+
+  --wn-color-border: #362d59;
+  --wn-color-border-strong: #4a3f73;
+
+  --wn-color-link: #c2ef4e;
+  --wn-color-link-hover: #d2f76e;
+
+  --wn-color-success: #c2ef4e;
+  --wn-color-warning: #ffd00e;
+  --wn-color-error: #fa7faa;
+  --wn-color-info: #7553ff;
+
+  --wn-color-nav-bg: #150f23;
+  --wn-color-nav-text: #ffffff;
+  --wn-color-nav-hover: rgba(255, 255, 255, 0.08);
+  --wn-color-nav-active: rgba(117, 83, 255, 0.45);
+
+  --wn-radius-sm: 6px;
+  --wn-radius-md: 8px;
+  --wn-radius-lg: 12px;
+
+  --wn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --wn-shadow-card: 0 2px 14px rgba(0, 0, 0, 0.5);
+  --wn-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.6);
+
+  --wn-font-display: Rubik, Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --wn-font-body: Rubik, Inter, "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+
+  /* 暗色主题：反色 UEditor 工具栏单色图标以保证可读性 */
+  --wn-editor-icon-filter: invert(0.85) hue-rotate(180deg);
+}

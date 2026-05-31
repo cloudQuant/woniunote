@@ -107,7 +107,7 @@ onMounted(() => {
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 20px;
-  color: #303133;
+  color: var(--wn-color-text);
 }
 
 .favorites-list {
@@ -121,30 +121,30 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background: #f5f7fa;
-  border-radius: 8px;
+  background: var(--wn-color-surface-soft);
+  border-radius: var(--wn-radius-md);
   transition: background 0.3s;
 }
 
 .favorite-item:hover {
-  background: #ebeef5;
+  background: var(--wn-color-surface-2);
 }
 
 .article-title {
   font-size: 16px;
   font-weight: 500;
-  color: #303133;
+  color: var(--wn-color-text);
   display: block;
   margin-bottom: 8px;
 }
 
 .article-title:hover {
-  color: #409eff;
+  color: var(--wn-color-primary);
 }
 
 .article-meta {
   font-size: 13px;
-  color: #909399;
+  color: var(--wn-color-text-muted);
   display: flex;
   gap: 15px;
 }

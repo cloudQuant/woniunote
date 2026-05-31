@@ -2,6 +2,12 @@
 
 完整的、优化的测试执行和覆盖率分析系统。
 
+> ⚠️ **迭代 8 归档标注：本目录测试仅适用于旧版 Python Flask 后端（`woniunote/` 模块）。**
+> 这些用例依赖 Flask 应用上下文，**无法用于当前 dev_cpp 分支的 C++ Drogon 后端**，
+> 也不应计入新栈覆盖率。新栈测试：C++ 见 `backend_cpp/tests/`（`ctest`），
+> 前端见 `frontend/src/**/*.spec.js`（`npm test`），CI 见
+> `.github/workflows/cpp-vue-ci.yml`。保留本目录用于历史参考与 legacy 维护。
+
 ## 🚀 快速开始
 
 ### 最简单的方式

@@ -128,6 +128,21 @@ export const useUserStore = defineStore('user', () => {
     localStorage.setItem('user', JSON.stringify(user.value))
   }
 
+  /**
+   * 更新访问/刷新令牌（用于无感刷新）。
+   *
+   * @param {string} accessToken - 新的访问令牌
+   * @param {string} [newRefreshToken] - 新的刷新令牌（可选，后端轮换时提供）
+   */
+  function setTokens(accessToken, newRefreshToken) {
+    token.value = accessToken || ''
+    localStorage.setItem('token', token.value)
+    if (newRefreshToken) {
+      refreshToken.value = newRefreshToken
+      localStorage.setItem('refreshToken', newRefreshToken)
+    }
+  }
+
   return {
     token,
     refreshToken,
@@ -139,6 +154,7 @@ export const useUserStore = defineStore('user', () => {
     register,
     logout,
     refreshUserInfo,
-    updateUser
+    updateUser,
+    setTokens
   }
 })

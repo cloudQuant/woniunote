@@ -6,8 +6,13 @@
 #include "UploadController.h"
 #include "core/config.h"
 #include "core/logger.h"
+#include "core/response.h"
+#include "core/upload_safety.h"
 #include <drogon/HttpResponse.h>
 #include <drogon/utils/Utilities.h>
+#include <algorithm>
+#include <cctype>
+#include <ctime>
 #include <fstream>
 #include <random>
 #include <chrono>
@@ -19,37 +24,61 @@ using namespace drogon;
 namespace woniunote {
 namespace controllers {
 
-// Allowed image file types using Drogon's FileType enum
-static const std::set<drogon::FileType> ALLOWED_IMAGE_TYPES = {
-    drogon::FileType::FT_IMAGE
-};
+namespace {
 
-// For file uploads, we'll be more permissive
-static const std::set<drogon::FileType> ALLOWED_FILE_TYPES = {
-    drogon::FileType::FT_DOCUMENT,
-    drogon::FileType::FT_ARCHIVE,
-    drogon::FileType::FT_CUSTOM
-};
+// Build "YYYY/MM" using a thread-safe localtime_r (the shared static buffer of
+// std::localtime is a data race under Drogon's multi-threaded event loop).
+std::string yearMonthPath()
+{
+    auto now = std::chrono::system_clock::now();
+    std::time_t timeT = std::chrono::system_clock::to_time_t(now);
+    std::tm tmBuf{};
+#if defined(_WIN32)
+    localtime_s(&tmBuf, &timeT);
+#else
+    localtime_r(&timeT, &tmBuf);
+#endif
+    char buf[16];
+    std::strftime(buf, sizeof(buf), "%Y/%m", &tmBuf);
+    return std::string(buf);
+}
+
+// Verify finalPath resolves to a location inside baseDir. Defends against any
+// residual traversal in the constructed path. Returns true when safe.
+bool isWithinBase(const fs::path& baseDir, const fs::path& finalPath)
+{
+    std::error_code ec;
+    fs::path base = fs::weakly_canonical(baseDir, ec);
+    if (ec) base = baseDir.lexically_normal();
+    fs::path target = fs::weakly_canonical(finalPath, ec);
+    if (ec) target = finalPath.lexically_normal();
+
+    auto baseStr = base.generic_string();
+    auto targetStr = target.generic_string();
+    if (!baseStr.empty() && baseStr.back() != '/') baseStr += '/';
+    return targetStr.rfind(baseStr, 0) == 0;
+}
+
+}  // namespace
 
 std::string UploadController::generateFilename(const std::string& originalName)
 {
-    // Get extension from original name
-    std::string ext;
-    auto dotPos = originalName.rfind('.');
-    if (dotPos != std::string::npos) {
-        ext = originalName.substr(dotPos);
-    }
-    
+    std::string ext = sanitizeExtension(originalName);
+
     // Generate unique filename: timestamp + random
     auto now = std::chrono::system_clock::now();
     auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
         now.time_since_epoch()).count();
-    
+
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(1000, 9999);
-    
-    return std::to_string(timestamp) + "_" + std::to_string(dis(gen)) + ext;
+
+    std::string name = std::to_string(timestamp) + "_" + std::to_string(dis(gen));
+    if (!ext.empty()) {
+        name += "." + ext;
+    }
+    return name;
 }
 
 bool UploadController::isAllowedImageType(drogon::FileType fileType)
@@ -59,7 +88,12 @@ bool UploadController::isAllowedImageType(drogon::FileType fileType)
 
 bool UploadController::isAllowedFileType(drogon::FileType fileType)
 {
-    return ALLOWED_FILE_TYPES.count(fileType) > 0 || fileType == drogon::FileType::FT_DOCUMENT;
+    // Disallow images-as-files only matters for the dedicated image endpoint.
+    // Here we accept documents/archives; the authoritative gate is the
+    // extension allow-list applied by the caller.
+    return fileType == drogon::FileType::FT_DOCUMENT ||
+           fileType == drogon::FileType::FT_ARCHIVE ||
+           fileType == drogon::FileType::FT_CUSTOM;
 }
 
 void UploadController::uploadImage(const HttpRequestPtr& req,
@@ -67,77 +101,61 @@ void UploadController::uploadImage(const HttpRequestPtr& req,
 {
     Logger::info("[Upload] Image upload request", {{"ip", req->getPeerAddr().toIp()}});
     auto& config = Config::instance();
-    
+
     MultiPartParser fileParser;
     if (fileParser.parse(req) != 0) {
         Logger::warning("[Upload] Image upload failed: parse error");
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "解析文件失败";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+        callback(Response::badRequest("解析文件失败"));
         return;
     }
-    
+
     auto& files = fileParser.getFiles();
     if (files.empty()) {
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "未找到上传文件";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+        callback(Response::badRequest("未找到上传文件"));
         return;
     }
-    
+
     auto& file = files[0];
-    
-    // Check file type
-    if (!isAllowedImageType(file.getFileType())) {
-        Logger::warning("[Upload] Image upload failed: invalid type", {{"filename", file.getFileName()}});
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "不支持的图片格式";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+
+    // Validate by sniffed type AND sanitized extension allow-list.
+    std::string ext = sanitizeExtension(file.getFileName());
+    if (!isAllowedImageType(file.getFileType()) ||
+        !isExtAllowed(ext, config.getAllowedImageExts())) {
+        Logger::warning("[Upload] Image upload failed: invalid type",
+                        {{"filename", file.getFileName()}, {"ext", ext}});
+        callback(Response::badRequest("不支持的图片格式"));
         return;
     }
-    
-    // Check file size (max 5MB)
-    if (file.fileLength() > 5 * 1024 * 1024) {
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "图片大小不能超过5MB";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+
+    if (static_cast<int64_t>(file.fileLength()) > config.getMaxImageSize()) {
+        callback(Response::badRequest("图片大小超过限制"));
         return;
     }
-    
-    // Generate path: uploads/images/YYYY/MM/filename
-    auto now = std::chrono::system_clock::now();
-    auto timeT = std::chrono::system_clock::to_time_t(now);
-    std::tm tm = *std::localtime(&timeT);
-    
-    std::ostringstream pathStream;
-    pathStream << "uploads/images/" 
-               << std::put_time(&tm, "%Y/%m");
-    std::string relativePath = pathStream.str();
-    
+
+    std::string relativePath = "uploads/images/" + yearMonthPath();
     std::string uploadDir = config.getUploadPath() + "/" + relativePath;
     fs::create_directories(uploadDir);
-    
+
     std::string filename = generateFilename(file.getFileName());
-    std::string fullPath = uploadDir + "/" + filename;
-    
-    // Save file
-    file.saveAs(fullPath);
-    
-    // Return URL
+    fs::path fullPath = fs::path(uploadDir) / filename;
+
+    // Final guard: ensure the resolved path stays under the upload root.
+    if (!isWithinBase(config.getUploadPath(), fullPath)) {
+        Logger::warning("[Upload] Rejected path outside upload root",
+                        {{"path", fullPath.string()}});
+        callback(Response::badRequest("非法的文件路径"));
+        return;
+    }
+
+    file.saveAs(fullPath.string());
+
     std::string url = "/static/" + relativePath + "/" + filename;
-    
     Logger::info("[Upload] Image uploaded", {{"filename", filename}, {"size", std::to_string(file.fileLength())}});
-    
-    Json::Value ret;
-    ret["code"] = 200;
-    ret["message"] = "上传成功";
-    ret["data"]["url"] = url;
-    ret["data"]["filename"] = filename;
-    callback(HttpResponse::newHttpJsonResponse(ret));
+
+    Json::Value data;
+    data["url"] = url;
+    data["filename"] = filename;
+    callback(Response::ok("上传成功", data));
 }
 
 void UploadController::uploadFile(const HttpRequestPtr& req,
@@ -145,66 +163,60 @@ void UploadController::uploadFile(const HttpRequestPtr& req,
 {
     Logger::info("[Upload] File upload request", {{"ip", req->getPeerAddr().toIp()}});
     auto& config = Config::instance();
-    
+
     MultiPartParser fileParser;
     if (fileParser.parse(req) != 0) {
         Logger::warning("[Upload] File upload failed: parse error");
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "解析文件失败";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+        callback(Response::badRequest("解析文件失败"));
         return;
     }
-    
+
     auto& files = fileParser.getFiles();
     if (files.empty()) {
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "未找到上传文件";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+        callback(Response::badRequest("未找到上传文件"));
         return;
     }
-    
+
     auto& file = files[0];
-    
-    // Check file size (max 50MB)
-    if (file.fileLength() > 50 * 1024 * 1024) {
-        Logger::warning("[Upload] File upload failed: size exceeded", {{"size", std::to_string(file.fileLength())}});
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "文件大小不能超过50MB";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+
+    // Authoritative gate: sanitized extension must be on the allow-list.
+    std::string ext = sanitizeExtension(file.getFileName());
+    if (!isExtAllowed(ext, config.getAllowedFileExts())) {
+        Logger::warning("[Upload] File upload failed: extension not allowed",
+                        {{"filename", file.getFileName()}, {"ext", ext}});
+        callback(Response::badRequest("不支持的文件类型"));
         return;
     }
-    
-    // Generate path
-    auto now = std::chrono::system_clock::now();
-    auto timeT = std::chrono::system_clock::to_time_t(now);
-    std::tm tm = *std::localtime(&timeT);
-    
-    std::ostringstream pathStream;
-    pathStream << "uploads/files/" 
-               << std::put_time(&tm, "%Y/%m");
-    std::string relativePath = pathStream.str();
-    
+
+    if (static_cast<int64_t>(file.fileLength()) > config.getMaxFileSize()) {
+        Logger::warning("[Upload] File upload failed: size exceeded", {{"size", std::to_string(file.fileLength())}});
+        callback(Response::badRequest("文件大小超过限制"));
+        return;
+    }
+
+    std::string relativePath = "uploads/files/" + yearMonthPath();
     std::string uploadDir = config.getUploadPath() + "/" + relativePath;
     fs::create_directories(uploadDir);
-    
+
     std::string filename = generateFilename(file.getFileName());
-    std::string fullPath = uploadDir + "/" + filename;
-    
-    file.saveAs(fullPath);
-    
+    fs::path fullPath = fs::path(uploadDir) / filename;
+
+    if (!isWithinBase(config.getUploadPath(), fullPath)) {
+        Logger::warning("[Upload] Rejected path outside upload root",
+                        {{"path", fullPath.string()}});
+        callback(Response::badRequest("非法的文件路径"));
+        return;
+    }
+
+    file.saveAs(fullPath.string());
+
     std::string url = "/static/" + relativePath + "/" + filename;
-    
     Logger::info("[Upload] File uploaded", {{"filename", filename}, {"size", std::to_string(file.fileLength())}});
-    
-    Json::Value ret;
-    ret["code"] = 200;
-    ret["message"] = "上传成功";
-    ret["data"]["url"] = url;
-    ret["data"]["filename"] = filename;
-    callback(HttpResponse::newHttpJsonResponse(ret));
+
+    Json::Value data;
+    data["url"] = url;
+    data["filename"] = filename;
+    callback(Response::ok("上传成功", data));
 }
 
 void UploadController::uploadAvatar(const HttpRequestPtr& req,
@@ -213,73 +225,60 @@ void UploadController::uploadAvatar(const HttpRequestPtr& req,
     auto userId = req->getAttributes()->get<std::string>("user_id");
     Logger::info("[Upload] Avatar upload request", {{"userid", userId}});
     auto& config = Config::instance();
-    
+
     MultiPartParser fileParser;
     if (fileParser.parse(req) != 0) {
         Logger::warning("[Upload] Avatar upload failed: parse error", {{"userid", userId}});
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "解析文件失败";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+        callback(Response::badRequest("解析文件失败"));
         return;
     }
-    
+
     auto& files = fileParser.getFiles();
     if (files.empty()) {
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "未找到上传文件";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+        callback(Response::badRequest("未找到上传文件"));
         return;
     }
-    
+
     auto& file = files[0];
-    
-    if (!isAllowedImageType(file.getFileType())) {
-        Logger::warning("[Upload] Avatar upload failed: invalid type", {{"userid", userId}});
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "不支持的图片格式";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+
+    std::string ext = sanitizeExtension(file.getFileName());
+    if (!isAllowedImageType(file.getFileType()) ||
+        !isExtAllowed(ext, config.getAllowedImageExts())) {
+        Logger::warning("[Upload] Avatar upload failed: invalid type", {{"userid", userId}, {"ext", ext}});
+        callback(Response::badRequest("不支持的图片格式"));
         return;
     }
-    
-    // Max 2MB for avatars
-    if (file.fileLength() > 2 * 1024 * 1024) {
+
+    if (static_cast<int64_t>(file.fileLength()) > config.getMaxAvatarSize()) {
         Logger::warning("[Upload] Avatar upload failed: size exceeded", {{"userid", userId}, {"size", std::to_string(file.fileLength())}});
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "头像大小不能超过2MB";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+        callback(Response::badRequest("头像大小超过限制"));
         return;
     }
-    
+
     std::string uploadDir = config.getUploadPath() + "/uploads/avatars";
     fs::create_directories(uploadDir);
-    
-    // Use user ID as filename for easy replacement
-    std::string ext;
-    auto dotPos = file.getFileName().rfind('.');
-    if (dotPos != std::string::npos) {
-        ext = file.getFileName().substr(dotPos);
-    } else {
-        ext = ".jpg";
+
+    // Filename derives only from the numeric user id and a sanitized
+    // extension, so user-controlled input can never inject path separators.
+    if (ext.empty()) ext = "jpg";
+    std::string filename = userId + "." + ext;
+    fs::path fullPath = fs::path(uploadDir) / filename;
+
+    if (!isWithinBase(config.getUploadPath(), fullPath)) {
+        Logger::warning("[Upload] Rejected avatar path outside upload root",
+                        {{"path", fullPath.string()}});
+        callback(Response::badRequest("非法的文件路径"));
+        return;
     }
-    
-    std::string filename = userId + ext;
-    std::string fullPath = uploadDir + "/" + filename;
-    
-    file.saveAs(fullPath);
-    
+
+    file.saveAs(fullPath.string());
+
     std::string url = "/static/uploads/avatars/" + filename;
-    
     Logger::info("[Upload] Avatar uploaded", {{"userid", userId}, {"filename", filename}});
-    
-    Json::Value ret;
-    ret["code"] = 200;
-    ret["message"] = "上传成功";
-    ret["data"]["url"] = url;
-    callback(HttpResponse::newHttpJsonResponse(ret));
+
+    Json::Value data;
+    data["url"] = url;
+    callback(Response::ok("上传成功", data));
 }
 
 } // namespace controllers

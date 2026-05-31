@@ -112,7 +112,7 @@ onMounted(() => {
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 20px;
-  color: #303133;
+  color: var(--wn-color-text);
 }
 
 .comments-list {
@@ -126,13 +126,13 @@ onMounted(() => {
   justify-content: space-between;
   align-items: flex-start;
   padding: 15px;
-  background: #f5f7fa;
-  border-radius: 8px;
+  background: var(--wn-color-surface-soft);
+  border-radius: var(--wn-radius-md);
   transition: background 0.3s;
 }
 
 .comment-item:hover {
-  background: #ebeef5;
+  background: var(--wn-color-surface-2);
 }
 
 .comment-content {
@@ -142,7 +142,7 @@ onMounted(() => {
 
 .comment-text {
   font-size: 15px;
-  color: #303133;
+  color: var(--wn-color-text);
   line-height: 1.6;
   margin-bottom: 10px;
   word-break: break-word;
@@ -150,7 +150,7 @@ onMounted(() => {
 
 .comment-meta {
   font-size: 13px;
-  color: #909399;
+  color: var(--wn-color-text-muted);
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
@@ -158,7 +158,7 @@ onMounted(() => {
 }
 
 .article-link {
-  color: #409eff;
+  color: var(--wn-color-link);
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -6,6 +6,7 @@
 #include "FavoriteController.h"
 #include "core/database.h"
 #include "core/logger.h"
+#include "core/response.h"
 #include "models/Favorite.h"
 #include "models/Article.h"
 #include <drogon/HttpResponse.h>
@@ -34,20 +35,12 @@ void FavoriteController::list(const HttpRequestPtr& req,
                 models::Article article(row);
                 articles.append(article.toJsonBrief());
             }
-
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "success";
-            ret["data"] = articles;
             Logger::debug("[Favorite] List returned", {{"count", std::to_string(static_cast<int>(result.size()))}});
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::success(articles));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("[Favorite] Database error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "数据库错误";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::serverError("数据库错误"));
         },
         std::stoll(userId)
     );
@@ -62,10 +55,7 @@ void FavoriteController::add(const HttpRequestPtr& req,
 
     if (!json || !json->isMember("articleid")) {
         Logger::warning("[Favorite] Add failed: missing articleid");
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "文章ID不能为空";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+        callback(Response::badRequest("文章ID不能为空"));
         return;
     }
 
@@ -79,10 +69,7 @@ void FavoriteController::add(const HttpRequestPtr& req,
             if (result.size() > 0) {
                 int canceled = result[0]["canceled"].as<int>();
                 if (canceled == 0) {
-                    Json::Value ret;
-                    ret["code"] = 400;
-                    ret["message"] = "已经收藏过了";
-                    callback(HttpResponse::newHttpJsonResponse(ret));
+                    callback(Response::badRequest("已经收藏过了"));
                     return;
                 }
 
@@ -93,17 +80,11 @@ void FavoriteController::add(const HttpRequestPtr& req,
                     "UPDATE favorite SET canceled = 0, updatetime = NOW() WHERE favoriteid = ?",
                     [callback, favId, userId, articleId](const orm::Result&) {
                         Logger::info("[Favorite] Reactivated", {{"userid", userId}, {"articleid", std::to_string(articleId)}});
-                        Json::Value ret;
-                        ret["code"] = 200;
-                        ret["message"] = "收藏成功";
-                        callback(HttpResponse::newHttpJsonResponse(ret));
+                        callback(Response::ok("收藏成功"));
                     },
                     [callback](const orm::DrogonDbException& e) {
                         Logger::error("Update error: " + std::string(e.base().what()));
-                        Json::Value ret;
-                        ret["code"] = 500;
-                        ret["message"] = "收藏失败";
-                        callback(HttpResponse::newHttpJsonResponse(ret));
+                        callback(Response::serverError("收藏失败"));
                     },
                     favId
                 );
@@ -116,27 +97,18 @@ void FavoriteController::add(const HttpRequestPtr& req,
                 "INSERT INTO favorite (userid, articleid, createtime, updatetime) VALUES (?, ?, NOW(), NOW())",
                 [callback, userId, articleId](const orm::Result&) {
                     Logger::info("[Favorite] Created", {{"userid", userId}, {"articleid", std::to_string(articleId)}});
-                    Json::Value ret;
-                    ret["code"] = 200;
-                    ret["message"] = "收藏成功";
-                    callback(HttpResponse::newHttpJsonResponse(ret));
+                    callback(Response::ok("收藏成功"));
                 },
                 [callback](const orm::DrogonDbException& e) {
                     Logger::error("Insert error: " + std::string(e.base().what()));
-                    Json::Value ret;
-                    ret["code"] = 500;
-                    ret["message"] = "收藏失败";
-                    callback(HttpResponse::newHttpJsonResponse(ret));
+                    callback(Response::serverError("收藏失败"));
                 },
                 std::stoll(userId), articleId
             );
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Database error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "数据库错误";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::serverError("数据库错误"));
         },
         std::stoll(userId), articleId
     );
@@ -154,17 +126,11 @@ void FavoriteController::remove(const HttpRequestPtr& req,
         "UPDATE favorite SET canceled = 1, updatetime = NOW() WHERE userid = ? AND articleid = ?",
         [callback, userId, articleId](const orm::Result&) {
             Logger::info("[Favorite] Removed", {{"userid", userId}, {"articleid", std::to_string(articleId)}});
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "取消收藏成功";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::ok("取消收藏成功"));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Update error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "操作失败";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::serverError("操作失败"));
         },
         std::stoll(userId), articleId
     );
@@ -181,18 +147,13 @@ void FavoriteController::check(const HttpRequestPtr& req,
     dbClient->execSqlAsync(
         "SELECT favoriteid FROM favorite WHERE userid = ? AND articleid = ? AND canceled = 0",
         [callback](const orm::Result& result) {
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "success";
-            ret["data"]["favorited"] = result.size() > 0;
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            Json::Value data;
+            data["favorited"] = result.size() > 0;
+            callback(Response::success(data));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Database error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "数据库错误";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::serverError("数据库错误"));
         },
         std::stoll(userId), articleId
     );

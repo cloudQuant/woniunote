@@ -7,6 +7,21 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 选项: 使用系统库而不是 vcpkg
 option(USE_SYSTEM_LIBS "使用系统安装的库而不是 vcpkg" OFF)
 
+# 选项: 启用 AddressSanitizer + UBSan（仅用于本地/CI 测试构建）
+option(ENABLE_SANITIZERS "Enable Address/UB sanitizers for test builds" OFF)
+
+# 编译告警门禁: 在非 MSVC 上开启常用告警，暴露潜在质量问题
+if(NOT MSVC)
+    add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# Sanitizer 配置（GCC/Clang）
+if(ENABLE_SANITIZERS AND NOT MSVC)
+    message(STATUS "Sanitizers enabled: address, undefined")
+    add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer -g)
+    add_link_options(-fsanitize=address,undefined)
+endif()
+
 # MSVC specific: Use UTF-8 for source and execution charset
 if(MSVC)
     add_compile_options(/utf-8)
@@ -131,6 +146,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 # Copy config.json to build directory
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.json
     ${CMAKE_CURRENT_BINARY_DIR}/config.json COPYONLY)
+
+# Copy local config override (git-ignored, holds real local credentials) when
+# present, so it survives reconfigures and the binary can prefer it.
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/config.local.json)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.local.json
+        ${CMAKE_CURRENT_BINARY_DIR}/config.local.json COPYONLY)
+endif()
 
 # Testing (optional)
 option(BUILD_TESTING "Build tests" OFF)

@@ -1,7 +1,9 @@
 # woniunote
 */sessions/*
 *.log
-woniunote/configs/user_password_config.yaml
+# 用户密码/密钥配置（真实凭据，禁止入库）
+configs/user_password_config.yaml
+user_password_config.yaml
 
 .DS_Store
 
@@ -158,6 +160,12 @@ frontend/dist/
 frontend/.vite/
 frontend/.cache/
 
+# Frontend test artifacts
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/.playwright/
+
 # C++ build artifacts
 backend_cpp/build/
 backend_cpp/cmake-build-*/
@@ -202,7 +210,30 @@ backend_cpp/*.log
 vcpkg_installed/
 VCPKG_BUILD_TREE/
 
+# Local secrets / config overrides (never commit real credentials)
+backend_cpp/config.local.json
+backend_cpp/.env
+.env.local
+
 # Test coverage
 *.gcda
 *.gcno
 *.gcov
+
+# AI assistant artifacts / tooling (keep only _bmad-output/)
+_bmad/
+.agents/
+.claude/
+.cursor/
+.kiro/
+.opencode/
+.windsurf/
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+.aider*
+.continue/
+.codeium/
+.roo/
+.cline/
+# Note: _bmad-output/ is intentionally NOT ignored (kept in repo)

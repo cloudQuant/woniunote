@@ -7,6 +7,7 @@
 #include "core/security.h"
 #include "core/logger.h"
 #include <drogon/HttpResponse.h>
+#include <cctype>
 
 using namespace drogon;
 
@@ -70,6 +71,26 @@ void AuthFilter::doFilter(const HttpRequestPtr& req,
         return;
     }
 
+    // Defensive parse: a validly signed token could carry a non-numeric "sub".
+    // Downstream controllers call std::stoll(user_id) unguarded, so validate
+    // here at the single choke point to avoid uncaught exceptions crashing the
+    // request handler.
+    const std::string& sub = payload->sub;
+    bool numericId = !sub.empty();
+    for (char c : sub) {
+        if (!std::isdigit(static_cast<unsigned char>(c))) { numericId = false; break; }
+    }
+    if (!numericId) {
+        Logger::warning("[AuthFilter] Non-numeric token subject rejected", {{"sub", sub}});
+        Json::Value ret;
+        ret["code"] = 401;
+        ret["message"] = "无效的认证令牌";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
+        resp->setStatusCode(k401Unauthorized);
+        callback(resp);
+        return;
+    }
+
     // Store user ID in request attributes for controllers
     req->getAttributes()->insert("user_id", payload->sub);
     
@@ -99,7 +120,15 @@ void OptionalAuthFilter::doFilter(const HttpRequestPtr& req,
     auto payload = Security::decodeToken(token);
     
     if (payload.has_value() && payload->type == "access") {
-        req->getAttributes()->insert("user_id", payload->sub);
+        // Only store a numeric subject; downstream callers std::stoll(user_id).
+        const std::string& sub = payload->sub;
+        bool numericId = !sub.empty();
+        for (char c : sub) {
+            if (!std::isdigit(static_cast<unsigned char>(c))) { numericId = false; break; }
+        }
+        if (numericId) {
+            req->getAttributes()->insert("user_id", payload->sub);
+        }
     }
 
     chainCallback();

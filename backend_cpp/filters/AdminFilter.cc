@@ -8,6 +8,7 @@
 #include "core/database.h"
 #include "core/logger.h"
 #include <drogon/HttpResponse.h>
+#include <cctype>
 
 using namespace drogon;
 
@@ -57,6 +58,21 @@ void AdminFilter::doFilter(const HttpRequestPtr& req,
     }
 
     std::string userId = payload->sub;
+
+    // Defensive parse: a validly signed token could carry a non-numeric sub.
+    bool numericId = !userId.empty();
+    for (char c : userId) {
+        if (!std::isdigit(static_cast<unsigned char>(c))) { numericId = false; break; }
+    }
+    if (!numericId) {
+        Json::Value ret;
+        ret["code"] = 401;
+        ret["message"] = "无效的认证令牌";
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
+        resp->setStatusCode(k401Unauthorized);
+        fcb(resp);
+        return;
+    }
 
     // Check if user is admin
     auto dbClient = Database::getClient();

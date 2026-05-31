@@ -1,0 +1,50 @@
+/**
+ * Starbucks 大地绿 —— 浅色
+ * 源: awesome-design-md/design-md/starbucks
+ * 暖奶油画布 + 四档品牌绿 + 深绿导航，温暖零售品牌感。
+ */
+[data-theme="starbucks"] {
+  color-scheme: light;
+
+  --wn-color-primary: #00754a;
+  --wn-color-primary-hover: #00875a;
+  --wn-color-primary-active: #006241;
+  --wn-color-on-primary: #ffffff;
+
+  --wn-color-canvas: #f2f0eb;
+  --wn-color-surface: #ffffff;
+  --wn-color-surface-soft: #edebe9;
+  --wn-color-surface-2: #e3e0d8;
+
+  --wn-color-text: #1e3932;
+  --wn-color-text-secondary: #2a423a;
+  --wn-color-text-muted: #6b6b6b;
+
+  --wn-color-border: #d4d1c9;
+  --wn-color-border-strong: #b8b4a8;
+
+  --wn-color-link: #00754a;
+  --wn-color-link-hover: #006241;
+
+  --wn-color-success: #00754a;
+  --wn-color-warning: #cba258;
+  --wn-color-error: #d62b1f;
+  --wn-color-info: #1e3932;
+
+  --wn-color-nav-bg: #1e3932;
+  --wn-color-nav-text: #ffffff;
+  --wn-color-nav-hover: rgba(255, 255, 255, 0.12);
+  --wn-color-nav-active: rgba(0, 117, 74, 0.5);
+
+  --wn-radius-sm: 8px;
+  --wn-radius-md: 12px;
+  --wn-radius-lg: 18px;
+  --wn-radius-pill: 9999px;
+
+  --wn-shadow-sm: 0 0 6px rgba(0, 0, 0, 0.1);
+  --wn-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.14);
+  --wn-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+  --wn-font-display: "Iowan Old Style", Georgia, "Songti SC", serif;
+  --wn-font-body: "Segoe UI", Inter, "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+}

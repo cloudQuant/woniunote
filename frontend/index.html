@@ -9,6 +9,29 @@
     <title>云子量化</title>
     <link rel="shortcut icon" href="/images/favicon.png" type="image/png">
     <link rel="icon" href="/images/favicon.png" type="image/png">
+    <!-- 主题防闪烁(FOUC)：首屏渲染前同步设定 data-theme / dark class -->
+    <script>
+      (function () {
+        try {
+          var KEY = 'wn-theme';
+          // 暗色主题清单需与 src/config/themes.js 保持一致
+          var DARK = { linear: 1, spotify: 1, supabase: 1, sentry: 1 };
+          var VALID = { claude: 1, notion: 1, vercel: 1, stripe: 1, starbucks: 1, linear: 1, spotify: 1, supabase: 1, sentry: 1 };
+          var saved = localStorage.getItem(KEY);
+          var theme;
+          if (saved && VALID[saved]) {
+            theme = saved;
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            theme = 'linear';
+          } else {
+            theme = 'claude';
+          }
+          var html = document.documentElement;
+          html.setAttribute('data-theme', theme);
+          if (DARK[theme]) html.classList.add('dark');
+        } catch (e) { /* 忽略 */ }
+      })();
+    </script>
     <!-- MathJax配置 -->
     <script>
       window.MathJax = {

@@ -39,19 +39,19 @@ function goHome() {
 .error-code {
   font-size: 120px;
   font-weight: 700;
-  color: #409eff;
+  color: var(--wn-color-primary);
   margin: 0;
   line-height: 1;
 }
 
 .error-message {
   font-size: 24px;
-  color: #303133;
+  color: var(--wn-color-text);
   margin: 20px 0 10px;
 }
 
 .error-description {
-  color: #909399;
+  color: var(--wn-color-text-muted);
   margin-bottom: 30px;
 }
 </style>

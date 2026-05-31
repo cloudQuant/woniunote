@@ -143,7 +143,7 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--wn-color-primary) 0%, var(--wn-color-primary-active) 100%);
   padding: 40px 20px;
 }
 
@@ -153,17 +153,17 @@ async function handleRegister() {
 }
 
 .register-card {
-  background: #fff;
-  border-radius: 12px;
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-lg);
   padding: 40px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--wn-shadow-lg);
 }
 
 .register-title {
   text-align: center;
   font-size: 24px;
   font-weight: 600;
-  color: #303133;
+  color: var(--wn-color-text);
   margin: 0 0 30px;
 }
 
@@ -176,11 +176,11 @@ async function handleRegister() {
 .register-footer {
   text-align: center;
   margin-top: 20px;
-  color: #909399;
+  color: var(--wn-color-text-muted);
   font-size: 14px;
 }
 
 .register-footer a {
-  color: #409eff;
+  color: var(--wn-color-link);
 }
 </style>

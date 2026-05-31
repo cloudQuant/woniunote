@@ -291,16 +291,16 @@ onMounted(async () => {
 <style scoped>
 .write-article-page {
   padding: 20px 0;
-  background: #f5f7fa;
+  background: var(--wn-color-canvas);
   min-height: calc(100vh - 200px);
 }
 
 .editor-container {
   max-width: 900px;
   margin: 0 auto;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-md);
+  box-shadow: var(--wn-shadow-card);
   padding: 30px;
 }
 
@@ -308,7 +308,7 @@ onMounted(async () => {
   font-size: 24px;
   font-weight: 600;
   margin: 0 0 30px;
-  color: #303133;
+  color: var(--wn-color-text);
 }
 
 .meta-row {
@@ -343,8 +343,8 @@ onMounted(async () => {
 .thumbnail-uploader {
   width: 180px;
   height: 40px;
-  border: 1px dashed #dcdfe6;
-  border-radius: 6px;
+  border: 1px dashed var(--wn-color-border-strong);
+  border-radius: var(--wn-radius-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -353,19 +353,19 @@ onMounted(async () => {
 }
 
 .thumbnail-uploader:hover {
-  border-color: #409eff;
+  border-color: var(--wn-color-primary);
 }
 
 .thumbnail-preview {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: var(--wn-radius-sm);
 }
 
 .upload-icon {
   font-size: 16px;
-  color: #909399;
+  color: var(--wn-color-text-muted);
 }
 
 .editor-wrapper {

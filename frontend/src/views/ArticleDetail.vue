@@ -52,7 +52,7 @@
             
             <!-- 评论区 -->
             <section class="comment-section">
-              <h3 class="section-title">评论 ({{ comments.length }})</h3>
+              <h3 class="section-title">评论 ({{ totalComments }})</h3>
               
               <!-- 发表评论 -->
               <div class="comment-form" v-if="userStore.isLoggedIn">
@@ -75,7 +75,7 @@
                 <router-link to="/login">登录</router-link> 后发表评论
               </div>
               
-              <!-- 评论列表 -->
+              <!-- 评论列表（支持楼中楼回复） -->
               <div class="comment-list">
                 <div 
                   v-for="comment in comments" 
@@ -83,13 +83,13 @@
                   class="comment-item"
                 >
                   <div class="comment-avatar">
-                    <el-avatar :size="40" :src="comment.user?.avatar">
-                      {{ comment.user?.nickname?.charAt(0) || 'U' }}
+                    <el-avatar :size="40" :src="comment.avatar">
+                      {{ (comment.nickname || 'U').charAt(0) }}
                     </el-avatar>
                   </div>
                   <div class="comment-body">
                     <div class="comment-header">
-                      <span class="comment-author">{{ comment.user?.nickname || '匿名' }}</span>
+                      <span class="comment-author">{{ comment.nickname || '匿名' }}</span>
                       <span class="comment-time">{{ formatDate(comment.createtime) }}</span>
                     </div>
                     <div class="comment-content">{{ comment.content }}</div>
@@ -100,11 +100,64 @@
                       <span @click="opposeComment(comment)">
                         <el-icon><CaretBottom /></el-icon> {{ comment.opposecount }}
                       </span>
+                      <span v-if="userStore.isLoggedIn" @click="startReply(comment)">
+                        <el-icon><ChatLineSquare /></el-icon> 回复
+                      </span>
+                    </div>
+
+                    <!-- 回复输入框 -->
+                    <div v-if="replyingTo === comment.commentid" class="reply-form">
+                      <el-input
+                        v-model="replyContent"
+                        type="textarea"
+                        :rows="2"
+                        placeholder="回复..."
+                      />
+                      <div class="reply-form-actions">
+                        <el-button size="small" @click="cancelReply">取消</el-button>
+                        <el-button
+                          size="small"
+                          type="primary"
+                          :loading="submittingReply"
+                          :disabled="!replyContent.trim()"
+                          @click="submitReply(comment)"
+                        >
+                          回复
+                        </el-button>
+                      </div>
+                    </div>
+
+                    <!-- 楼中楼回复列表 -->
+                    <div v-if="comment.replies && comment.replies.length" class="reply-list">
+                      <div
+                        v-for="reply in comment.replies"
+                        :key="reply.commentid"
+                        class="reply-item"
+                      >
+                        <el-avatar :size="28" :src="reply.avatar">
+                          {{ (reply.nickname || 'U').charAt(0) }}
+                        </el-avatar>
+                        <div class="reply-body">
+                          <div class="comment-header">
+                            <span class="comment-author">{{ reply.nickname || '匿名' }}</span>
+                            <span class="comment-time">{{ formatDate(reply.createtime) }}</span>
+                          </div>
+                          <div class="comment-content">{{ reply.content }}</div>
+                          <div class="comment-actions">
+                            <span @click="agreeComment(reply)">
+                              <el-icon><CaretTop /></el-icon> {{ reply.agreecount }}
+                            </span>
+                            <span @click="opposeComment(reply)">
+                              <el-icon><CaretBottom /></el-icon> {{ reply.opposecount }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
                 
-                <el-empty v-if="comments.length === 0" description="暂无评论" />
+                <EmptyState v-if="comments.length === 0" description="暂无评论" compact />
               </div>
             </section>
           </template>
@@ -131,12 +184,13 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import ElementPlus from 'element-plus'
-import { View, Star, Edit, CaretTop, CaretBottom } from '@element-plus/icons-vue'
+import { View, Star, Edit, CaretTop, CaretBottom, ChatLineSquare } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useArticleStore } from '@/stores/article'
 import { articleApi, commentApi, favoriteApi } from '@/api'
 import Sidebar from '@/components/sidebar/Sidebar.vue'
 import PdfViewer from '@/components/viewer/PdfViewer.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import { createApp } from 'vue'
 
 // 存储创建的PDF查看器应用实例，用于清理
@@ -156,6 +210,18 @@ const favoriteLoading = ref(false)
 const newComment = ref('')
 const submittingComment = ref(false)
 const articleBodyRef = ref(null)
+
+// 回复（楼中楼）状态
+const replyingTo = ref(null)
+const replyContent = ref('')
+const submittingReply = ref(false)
+
+/**
+ * 评论总数（含楼中楼回复）
+ */
+const totalComments = computed(() => {
+  return comments.value.reduce((sum, c) => sum + 1 + (c.replies ? c.replies.length : 0), 0)
+})
 
 /**
  * 文章分类名称
@@ -256,7 +322,7 @@ function replacePdfPlaceholders() {
   
   // 清理之前创建的应用实例
   pdfViewerApps.forEach(app => {
-    try { app.unmount() } catch(e) {}
+    try { app.unmount() } catch (e) { /* already unmounted, ignore */ }
   })
   pdfViewerApps.length = 0
   
@@ -373,7 +439,52 @@ async function submitComment() {
 }
 
 /**
- * 点赞评论
+ * 开始回复某条评论（楼中楼）
+ * @param {Object} comment - 被回复的评论
+ */
+function startReply(comment) {
+  if (!userStore.isLoggedIn) {
+    router.push({ name: 'Login' })
+    return
+  }
+  replyingTo.value = comment.commentid
+  replyContent.value = ''
+}
+
+/**
+ * 取消回复
+ */
+function cancelReply() {
+  replyingTo.value = null
+  replyContent.value = ''
+}
+
+/**
+ * 提交回复
+ * @param {Object} comment - 被回复的顶层评论
+ */
+async function submitReply(comment) {
+  if (!replyContent.value.trim()) return
+
+  submittingReply.value = true
+  try {
+    await commentApi.create({
+      articleid: article.value.articleid,
+      content: replyContent.value.trim(),
+      replyid: comment.commentid
+    })
+    cancelReply()
+    await fetchComments()
+    ElMessage.success('回复成功')
+  } catch (error) {
+    console.error('回复失败:', error)
+  } finally {
+    submittingReply.value = false
+  }
+}
+
+/**
+ * 点赞评论。后端 vote 接口仅返回成功，前端本地自增计数。
  * @param {Object} comment - 评论对象
  */
 async function agreeComment(comment) {
@@ -383,15 +494,15 @@ async function agreeComment(comment) {
   }
   
   try {
-    const res = await commentApi.agree(comment.commentid)
-    comment.agreecount = res.data.agreecount
+    await commentApi.agree(comment.commentid)
+    comment.agreecount = (comment.agreecount || 0) + 1
   } catch (error) {
     console.error('点赞失败:', error)
   }
 }
 
 /**
- * 反对评论
+ * 反对评论。后端 vote 接口仅返回成功，前端本地自增计数。
  * @param {Object} comment - 评论对象
  */
 async function opposeComment(comment) {
@@ -401,8 +512,8 @@ async function opposeComment(comment) {
   }
   
   try {
-    const res = await commentApi.oppose(comment.commentid)
-    comment.opposecount = res.data.opposecount
+    await commentApi.oppose(comment.commentid)
+    comment.opposecount = (comment.opposecount || 0) + 1
   } catch (error) {
     console.error('踩失败:', error)
   }
@@ -430,7 +541,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   // 清理PDF查看器应用实例
   pdfViewerApps.forEach(app => {
-    try { app.unmount() } catch(e) {}
+    try { app.unmount() } catch (e) { /* already unmounted, ignore */ }
   })
   pdfViewerApps.length = 0
   
@@ -442,7 +553,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .article-detail-page {
   padding: 20px 0;
-  background: #f5f7fa;
+  background: var(--wn-color-canvas);
   min-height: calc(100vh - 200px);
 }
 
@@ -455,22 +566,22 @@ onBeforeUnmount(() => {
 }
 
 .article-container {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-md);
+  box-shadow: var(--wn-shadow-card);
   padding: 30px;
 }
 
 .article-header {
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--wn-color-border);
 }
 
 .article-title {
   font-size: 28px;
   font-weight: 600;
-  color: #303133;
+  color: var(--wn-color-text);
   margin: 0 0 15px;
 }
 
@@ -479,7 +590,7 @@ onBeforeUnmount(() => {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  color: #909399;
+  color: var(--wn-color-text-muted);
   font-size: 14px;
 }
 
@@ -490,7 +601,7 @@ onBeforeUnmount(() => {
 }
 
 .divider {
-  color: #dcdfe6;
+  color: var(--wn-color-border-strong);
 }
 
 .views {
@@ -502,7 +613,7 @@ onBeforeUnmount(() => {
 .article-body {
   font-size: 16px;
   line-height: 1.8;
-  color: #606266;
+  color: var(--wn-color-text-secondary);
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
@@ -514,14 +625,14 @@ onBeforeUnmount(() => {
 }
 
 .article-body :deep(pre) {
-  background: #f5f7fa;
+  background: var(--wn-color-surface-soft);
   padding: 15px;
-  border-radius: 4px;
+  border-radius: var(--wn-radius-sm);
   overflow-x: auto;
 }
 
 .article-body :deep(code) {
-  background: #f5f7fa;
+  background: var(--wn-color-surface-soft);
   padding: 2px 6px;
   border-radius: 3px;
   font-family: Consolas, Monaco, monospace;
@@ -534,8 +645,8 @@ onBeforeUnmount(() => {
   max-width: 100%;
   margin: 16px 0;
   font-size: 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
+  box-shadow: var(--wn-shadow-sm);
+  border-radius: var(--wn-radius-sm);
   overflow: hidden;
   display: block;
   overflow-x: auto;
@@ -543,24 +654,24 @@ onBeforeUnmount(() => {
 
 .article-body :deep(th),
 .article-body :deep(td) {
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--wn-color-border);
   padding: 12px 16px;
   text-align: left;
   vertical-align: top;
 }
 
 .article-body :deep(th) {
-  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+  background: var(--wn-color-surface-2);
   font-weight: 600;
-  color: #333;
+  color: var(--wn-color-text);
 }
 
 .article-body :deep(tr:nth-child(even)) {
-  background-color: #f8f9fa;
+  background-color: var(--wn-color-surface-soft);
 }
 
 .article-body :deep(tr:hover) {
-  background-color: #e8f4fd;
+  background-color: var(--wn-color-surface-2);
 }
 
 .article-body :deep(td:first-child) {
@@ -570,7 +681,7 @@ onBeforeUnmount(() => {
 .article-footer {
   margin-top: 30px;
   padding-top: 20px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--wn-color-border);
 }
 
 .article-actions {
@@ -582,14 +693,14 @@ onBeforeUnmount(() => {
 .comment-section {
   margin-top: 40px;
   padding-top: 30px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--wn-color-border);
 }
 
 .section-title {
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 20px;
-  color: #303133;
+  color: var(--wn-color-text);
 }
 
 .comment-form {
@@ -602,8 +713,8 @@ onBeforeUnmount(() => {
 
 .login-prompt {
   padding: 15px;
-  background: #f5f7fa;
-  border-radius: 4px;
+  background: var(--wn-color-surface-soft);
+  border-radius: var(--wn-radius-sm);
   text-align: center;
   margin-bottom: 30px;
 }
@@ -632,16 +743,16 @@ onBeforeUnmount(() => {
 
 .comment-author {
   font-weight: 500;
-  color: #303133;
+  color: var(--wn-color-text);
 }
 
 .comment-time {
   font-size: 12px;
-  color: #909399;
+  color: var(--wn-color-text-muted);
 }
 
 .comment-content {
-  color: #606266;
+  color: var(--wn-color-text-secondary);
   line-height: 1.6;
 }
 
@@ -662,12 +773,55 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 4px;
   cursor: pointer;
-  color: #909399;
+  color: var(--wn-color-text-muted);
   font-size: 13px;
   transition: color 0.3s;
 }
 
 .comment-actions span:hover {
-  color: #409eff;
+  color: var(--wn-color-primary);
+}
+
+/* 楼中楼回复 */
+.reply-form {
+  margin-top: 12px;
+}
+
+.reply-form-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.reply-list {
+  margin-top: 12px;
+  padding-left: 12px;
+  border-left: 2px solid var(--wn-color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reply-item {
+  display: flex;
+  gap: 10px;
+}
+
+.reply-body {
+  flex: 1;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .comment-item {
+    gap: 10px;
+  }
+  .reply-list {
+    padding-left: 8px;
+  }
+  .comment-actions {
+    flex-wrap: wrap;
+  }
 }
 </style>

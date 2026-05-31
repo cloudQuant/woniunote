@@ -1,0 +1,52 @@
+/**
+ * Supabase 代码翡翠 —— 暗色
+ * 源: awesome-design-md/design-md/supabase
+ * 近黑画布 #1c1c1c + 翡翠绿主色，代码优先暗色，契合量化/技术博客。
+ */
+[data-theme="supabase"] {
+  color-scheme: dark;
+
+  --wn-color-primary: #3ecf8e;
+  --wn-color-primary-hover: #4ade80;
+  --wn-color-primary-active: #24b47e;
+  --wn-color-on-primary: #052e1c;
+
+  --wn-color-canvas: #1c1c1c;
+  --wn-color-surface: #202020;
+  --wn-color-surface-soft: #262626;
+  --wn-color-surface-2: #2e2e2e;
+
+  --wn-color-text: #ffffff;
+  --wn-color-text-secondary: #d4d4d4;
+  --wn-color-text-muted: #9a9a9a;
+
+  --wn-color-border: #2e2e2e;
+  --wn-color-border-strong: #404040;
+
+  --wn-color-link: #3ecf8e;
+  --wn-color-link-hover: #4ade80;
+
+  --wn-color-success: #3ecf8e;
+  --wn-color-warning: #ffdb13;
+  --wn-color-error: #ff2201;
+  --wn-color-info: #054cff;
+
+  --wn-color-nav-bg: #161616;
+  --wn-color-nav-text: #ffffff;
+  --wn-color-nav-hover: rgba(255, 255, 255, 0.08);
+  --wn-color-nav-active: rgba(62, 207, 142, 0.4);
+
+  --wn-radius-sm: 6px;
+  --wn-radius-md: 8px;
+  --wn-radius-lg: 12px;
+
+  --wn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+  --wn-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.55);
+  --wn-shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.65);
+
+  --wn-font-display: "Helvetica Neue", Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --wn-font-body: "Helvetica Neue", Inter, "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+
+  /* 暗色主题：反色 UEditor 工具栏单色图标以保证可读性 */
+  --wn-editor-icon-filter: invert(0.85) hue-rotate(180deg);
+}

@@ -30,11 +30,12 @@ void Database::beginTransaction(
     auto client = getClient();
     client->newTransactionAsync(
         [callback](const std::shared_ptr<Transaction>& trans) {
-            if (trans) {
-                callback(trans);
-            } else {
+            if (!trans) {
                 Logger::error("Failed to start database transaction");
             }
+            // Always invoke the callback (even on failure) so callers can
+            // react instead of having their request hang forever.
+            callback(trans);
         }
     );
 }

@@ -159,16 +159,16 @@ function handleImageError(event) {
   display: flex;
   gap: 15px;
   padding: 15px;
-  background: #fff;
-  border-radius: 5px;
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-md);
   margin-bottom: 15px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--wn-shadow-sm);
   transition: box-shadow 0.3s;
 }
 
 .article-item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--wn-shadow-card);
 }
 
 .article-thumbnail {
@@ -176,7 +176,7 @@ function handleImageError(event) {
   width: 226px;
   height: 136px;
   overflow: hidden;
-  border-radius: 4px;
+  border-radius: var(--wn-radius-sm);
 }
 
 .article-thumbnail img {
@@ -200,14 +200,14 @@ function handleImageError(event) {
 .article-title {
   font-size: 16px;
   font-weight: normal;
-  color: #333;
+  color: var(--wn-color-text);
   margin: 0 0 10px;
   line-height: 1.8;
   cursor: pointer;
 }
 
 .article-title:hover {
-  color: #007bff;
+  color: var(--wn-color-primary);
 }
 
 .article-meta {
@@ -216,7 +216,7 @@ function handleImageError(event) {
   gap: 0;
   margin-bottom: 10px;
   font-size: 14px;
-  color: #666;
+  color: var(--wn-color-text-muted);
 }
 
 .meta-item {
@@ -235,7 +235,7 @@ function handleImageError(event) {
 .article-excerpt {
   margin: 0;
   font-size: 14px;
-  color: #666;
+  color: var(--wn-color-text-muted);
   line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 2;

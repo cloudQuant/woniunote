@@ -47,8 +47,8 @@
 
 <style scoped>
 .app-footer {
-  background: #343a40;
-  color: #adb5bd;
+  background: var(--wn-color-nav-bg);
+  color: var(--wn-color-text-muted);
   padding: 30px 0;
   margin-top: auto;
 }
@@ -72,7 +72,7 @@
 }
 
 .footer-title {
-  color: #fff;
+  color: var(--wn-color-nav-text);
   font-size: 15px;
   margin-bottom: 12px;
   font-weight: 500;
@@ -85,7 +85,7 @@
 }
 
 .footer-col a {
-  color: #adb5bd;
+  color: var(--wn-color-text-muted);
   text-decoration: none;
   margin-right: 15px;
   transition: color 0.3s;
@@ -95,7 +95,7 @@
 }
 
 .footer-col a:hover {
-  color: #17a2b8;
+  color: var(--wn-color-primary);
 }
 
 @media (max-width: 768px) {

@@ -132,16 +132,21 @@ static std::string generateFilename(const std::string& prefix, const std::string
 {
     auto now = std::chrono::system_clock::now();
     auto time = std::chrono::system_clock::to_time_t(now);
-    std::tm* tm = std::localtime(&time);
-    
+    std::tm tmBuf{};
+#if defined(_WIN32)
+    localtime_s(&tmBuf, &time);
+#else
+    localtime_r(&time, &tmBuf);  // thread-safe; std::localtime shares a static buffer
+#endif
+
     char timestamp[32];
-    std::strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", tm);
-    
+    std::strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", &tmBuf);
+
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(100000, 999999);
     int randomNum = dis(gen);
-    
+
     return prefix + timestamp + "_" + std::to_string(randomNum) + suffix;
 }
 

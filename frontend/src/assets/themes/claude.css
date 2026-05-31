@@ -1,0 +1,49 @@
+/**
+ * Claude 暖调编辑 —— 浅色
+ * 源: awesome-design-md/design-md/claude
+ * 奶油画布 + 珊瑚主色 + 衬线标题，温暖文学气质。
+ */
+[data-theme="claude"] {
+  color-scheme: light;
+
+  --wn-color-primary: #cc785c;
+  --wn-color-primary-hover: #d68b71;
+  --wn-color-primary-active: #a9583e;
+  --wn-color-on-primary: #ffffff;
+
+  --wn-color-canvas: #faf9f5;
+  --wn-color-surface: #fffdfa;
+  --wn-color-surface-soft: #f5f0e8;
+  --wn-color-surface-2: #efe9de;
+
+  --wn-color-text: #141413;
+  --wn-color-text-secondary: #3d3d3a;
+  --wn-color-text-muted: #6c6a64;
+
+  --wn-color-border: #e6dfd8;
+  --wn-color-border-strong: #d8cec0;
+
+  --wn-color-link: #cc785c;
+  --wn-color-link-hover: #a9583e;
+
+  --wn-color-success: #5db872;
+  --wn-color-warning: #d4a017;
+  --wn-color-error: #c64545;
+  --wn-color-info: #5db8a6;
+
+  --wn-color-nav-bg: #181715;
+  --wn-color-nav-text: #faf9f5;
+  --wn-color-nav-hover: rgba(255, 255, 255, 0.12);
+  --wn-color-nav-active: rgba(204, 120, 92, 0.35);
+
+  --wn-radius-sm: 6px;
+  --wn-radius-md: 8px;
+  --wn-radius-lg: 12px;
+
+  --wn-shadow-sm: 0 1px 3px rgba(20, 20, 19, 0.06);
+  --wn-shadow-card: 0 2px 12px rgba(20, 20, 19, 0.07);
+  --wn-shadow-lg: 0 8px 28px rgba(20, 20, 19, 0.14);
+
+  --wn-font-display: "Cormorant Garamond", Georgia, "Songti SC", "STSong", serif;
+  --wn-font-body: Inter, "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}

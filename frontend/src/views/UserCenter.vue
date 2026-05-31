@@ -74,7 +74,7 @@ const activeMenu = computed(() => route.path)
 <style scoped>
 .user-center-page {
   padding: 20px 0;
-  background: #f5f7fa;
+  background: var(--wn-color-canvas);
   min-height: calc(100vh - 200px);
 }
 
@@ -85,17 +85,17 @@ const activeMenu = computed(() => route.path)
 }
 
 .user-sidebar {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-md);
+  box-shadow: var(--wn-shadow-card);
   overflow: hidden;
 }
 
 .user-info {
   padding: 30px 20px;
   text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--wn-color-primary) 0%, var(--wn-color-primary-active) 100%);
+  color: var(--wn-color-on-primary);
 }
 
 .user-name {
@@ -110,9 +110,9 @@ const activeMenu = computed(() => route.path)
 }
 
 .user-content {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-md);
+  box-shadow: var(--wn-shadow-card);
   padding: 30px;
   min-height: 500px;
 }

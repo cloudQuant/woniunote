@@ -7,6 +7,7 @@
 #include "core/database.h"
 #include "core/security.h"
 #include "core/logger.h"
+#include "core/response.h"
 #include "models/User.h"
 #include <drogon/HttpResponse.h>
 
@@ -27,31 +28,17 @@ void UserController::getUser(const HttpRequestPtr& req,
         [callback, id](const orm::Result& result) {
             if (result.size() == 0) {
                 Logger::debug("[User] Not found", {{"userid", std::to_string(id)}});
-                Json::Value ret;
-                ret["code"] = 404;
-                ret["message"] = "用户不存在";
-                auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k404NotFound);
-                callback(resp);
+                callback(Response::notFound("用户不存在"));
                 return;
             }
 
             models::User user(result[0]);
             Logger::debug("[User] Found", {{"userid", std::to_string(id)}, {"username", user.getUsername()}});
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "success";
-            ret["data"] = user.toJsonWithoutPassword();
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::success(user.toJsonWithoutPassword()));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Database error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "数据库错误";
-            auto resp = HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k500InternalServerError);
-            callback(resp);
+            callback(Response::serverError("数据库错误"));
         },
         id
     );
@@ -66,12 +53,7 @@ void UserController::updateProfile(const HttpRequestPtr& req,
 
     if (!json) {
         Logger::warning("[User] Update failed: invalid JSON");
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "请求格式错误";
-        auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
-        callback(resp);
+        callback(Response::badRequest("请求格式错误"));
         return;
     }
 
@@ -90,27 +72,21 @@ void UserController::updateProfile(const HttpRequestPtr& req,
                     if (userResult.size() > 0) {
                         models::User user(userResult[0]);
                         Logger::info("[User] Profile updated", {{"userid", userId}});
-                        Json::Value ret;
-                        ret["code"] = 200;
-                        ret["message"] = "更新成功";
-                        ret["data"] = user.toJsonWithoutPassword();
-                        callback(HttpResponse::newHttpJsonResponse(ret));
+                        callback(Response::ok("更新成功", user.toJsonWithoutPassword()));
+                    } else {
+                        callback(Response::notFound("用户不存在"));
                     }
                 },
                 [callback](const orm::DrogonDbException& e) {
                     Logger::error("Fetch error: " + std::string(e.base().what()));
+                    callback(Response::serverError("更新失败"));
                 },
                 std::stoll(userId)
             );
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Update error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "更新失败";
-            auto resp = HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k500InternalServerError);
-            callback(resp);
+            callback(Response::serverError("更新失败"));
         },
         nickname, qq, avatar, std::stoll(userId)
     );
@@ -125,12 +101,7 @@ void UserController::changePassword(const HttpRequestPtr& req,
 
     if (!json || !json->isMember("old_password") || !json->isMember("new_password")) {
         Logger::warning("[User] Change password failed: missing fields");
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "请提供旧密码和新密码";
-        auto resp = HttpResponse::newHttpJsonResponse(ret);
-        resp->setStatusCode(k400BadRequest);
-        callback(resp);
+        callback(Response::badRequest("请提供旧密码和新密码"));
         return;
     }
 
@@ -143,24 +114,14 @@ void UserController::changePassword(const HttpRequestPtr& req,
         "SELECT password FROM users WHERE userid = ?",
         [callback, userId, oldPassword, newPassword, dbClient](const orm::Result& result) {
             if (result.size() == 0) {
-                Json::Value ret;
-                ret["code"] = 404;
-                ret["message"] = "用户不存在";
-                auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k404NotFound);
-                callback(resp);
+                callback(Response::notFound("用户不存在"));
                 return;
             }
 
             std::string currentHash = result[0]["password"].as<std::string>();
             if (!Security::verifyPassword(oldPassword, currentHash)) {
                 Logger::warning("[User] Password change failed: wrong old password", {{"userid", userId}});
-                Json::Value ret;
-                ret["code"] = 400;
-                ret["message"] = "旧密码错误";
-                auto resp = HttpResponse::newHttpJsonResponse(ret);
-                resp->setStatusCode(k400BadRequest);
-                callback(resp);
+                callback(Response::badRequest("旧密码错误"));
                 return;
             }
 
@@ -169,31 +130,18 @@ void UserController::changePassword(const HttpRequestPtr& req,
                 "UPDATE users SET password = ?, updatetime = NOW() WHERE userid = ?",
                 [callback, userId](const orm::Result&) {
                     Logger::info("[User] Password changed", {{"userid", userId}});
-                    Json::Value ret;
-                    ret["code"] = 200;
-                    ret["message"] = "密码修改成功";
-                    callback(HttpResponse::newHttpJsonResponse(ret));
+                    callback(Response::ok("密码修改成功"));
                 },
                 [callback](const orm::DrogonDbException& e) {
                     Logger::error("Password update error: " + std::string(e.base().what()));
-                    Json::Value ret;
-                    ret["code"] = 500;
-                    ret["message"] = "密码修改失败";
-                    auto resp = HttpResponse::newHttpJsonResponse(ret);
-                    resp->setStatusCode(k500InternalServerError);
-                    callback(resp);
+                    callback(Response::serverError("密码修改失败"));
                 },
                 newHash, std::stoll(userId)
             );
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Database error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "数据库错误";
-            auto resp = HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k500InternalServerError);
-            callback(resp);
+            callback(Response::serverError("数据库错误"));
         },
         std::stoll(userId)
     );

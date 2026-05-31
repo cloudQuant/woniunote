@@ -452,17 +452,17 @@ onMounted(async () => {
   align-items: center;
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 2px solid #17a2b8;
+  border-bottom: 2px solid var(--wn-color-primary);
 }
 
 .admin-header h1 {
   font-size: 24px;
-  color: #333;
+  color: var(--wn-color-text);
   margin: 0;
 }
 
 .admin-user {
-  color: #666;
+  color: var(--wn-color-text-secondary);
   font-size: 14px;
 }
 
@@ -474,13 +474,13 @@ onMounted(async () => {
 }
 
 .stat-card {
-  background: #fff;
-  border-radius: 8px;
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-md);
   padding: 20px;
   display: flex;
   align-items: center;
   gap: 15px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--wn-shadow-card);
 }
 
 .stat-icon {
@@ -495,19 +495,19 @@ onMounted(async () => {
 .stat-value {
   font-size: 28px;
   font-weight: bold;
-  color: #17a2b8;
+  color: var(--wn-color-primary);
 }
 
 .stat-label {
   font-size: 14px;
-  color: #666;
+  color: var(--wn-color-text-secondary);
 }
 
 .admin-section {
-  background: #fff;
-  border-radius: 8px;
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-md);
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--wn-shadow-card);
 }
 
 .section-header {
@@ -516,13 +516,13 @@ onMounted(async () => {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--wn-color-border);
 }
 
 .section-header h2 {
   font-size: 18px;
   margin: 0;
-  color: #333;
+  color: var(--wn-color-text);
 }
 
 .section-actions {
@@ -576,15 +576,15 @@ onMounted(async () => {
 }
 
 .monitor-card {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-md);
+  box-shadow: var(--wn-shadow-card);
   overflow: hidden;
 }
 
 .card-header {
-  background: linear-gradient(135deg, #17a2b8, #138496);
-  color: #fff;
+  background: linear-gradient(135deg, var(--wn-color-primary), var(--wn-color-primary-active));
+  color: var(--wn-color-on-primary);
   padding: 12px 16px;
   display: flex;
   align-items: center;
@@ -615,7 +615,7 @@ onMounted(async () => {
 .percentage-value {
   font-size: 20px;
   font-weight: bold;
-  color: #333;
+  color: var(--wn-color-text);
 }
 
 .card-details {
@@ -626,7 +626,7 @@ onMounted(async () => {
 .card-details p {
   margin: 5px 0;
   font-size: 13px;
-  color: #666;
+  color: var(--wn-color-text-secondary);
 }
 
 .network-stats {
@@ -640,38 +640,38 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   padding: 10px;
-  background: #f5f7fa;
-  border-radius: 6px;
+  background: var(--wn-color-surface-soft);
+  border-radius: var(--wn-radius-sm);
 }
 
 .network-item .label {
   font-size: 12px;
-  color: #909399;
+  color: var(--wn-color-text-muted);
   margin-bottom: 4px;
 }
 
 .network-item .value {
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
+  color: var(--wn-color-text);
 }
 
 .system-info-section,
 .process-info-section {
-  background: #fff;
-  border-radius: 8px;
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-md);
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--wn-shadow-card);
 }
 
 .system-info-section h3,
 .process-info-section h3 {
   margin: 0 0 15px;
   font-size: 16px;
-  color: #333;
+  color: var(--wn-color-text);
   padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--wn-color-border);
 }
 
 .refresh-section {
@@ -683,7 +683,7 @@ onMounted(async () => {
 
 .last-update {
   font-size: 13px;
-  color: #909399;
+  color: var(--wn-color-text-muted);
 }
 
 @media (max-width: 1200px) {

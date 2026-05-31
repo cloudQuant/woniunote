@@ -77,7 +77,7 @@
             "name": "default",
             "host": "127.0.0.1",
             "port": 6379,
-            "passwd": "",
+            "passwd": "YOUR_SECURE_REDIS_PASSWORD_HERE",
             "db": 0,
             "number_of_connections": 10,
             "is_fast": false,
@@ -86,13 +86,19 @@
     ],
     "custom_config": {
         "app_name": "WoniuNote",
+        "app_mode": "production",
         "jwt_secret": "YOUR_SECURE_JWT_SECRET_CHANGE_IN_PRODUCTION",
         "jwt_algorithm": "HS256",
-        "access_token_expire_minutes": 1440,
+        "access_token_expire_minutes": 120,
         "refresh_token_expire_days": 7,
         "cors_origins": [
             "https://www.yunjinqi.top",
             "https://yunjinqi.top"
-        ]
+        ],
+        "rate_limit_per_minute": 60,
+        "rate_limit_fail_closed": false,
+        "max_image_size": 5242880,
+        "max_file_size": 52428800,
+        "max_avatar_size": 2097152
     }
 }

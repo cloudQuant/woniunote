@@ -11,6 +11,7 @@
  * 支持 v-model 双向绑定、自定义配置、动态加载脚本以及 PDF 上传处理。
  */
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { useThemeStore } from '@/stores/theme'
 
 const props = defineProps({
   /**
@@ -53,6 +54,56 @@ const emit = defineEmits([
 
 let editor = null
 const isReady = ref(false)
+const themeStore = useThemeStore()
+
+/**
+ * 把当前主题令牌注入编辑器 iframe 的内部文档。
+ * UEditor 的编辑区是一个同源 iframe，父页面 CSS 无法穿透，
+ * 需要直接往其 document.head 注入 <style>，并在主题切换时刷新。
+ * 颜色值从父页面计算样式读取（已由 [data-theme] 决定），保证与全站一致。
+ */
+function applyEditorTheme() {
+  if (!editor) return
+  // UEditor 提供 editor.document（编辑区 iframe 的 document）
+  const doc = editor.document
+  if (!doc || !doc.head) return
+
+  // 从父页面读取当前主题的实际令牌值
+  const root = getComputedStyle(document.documentElement)
+  const v = (name, fallback) => (root.getPropertyValue(name) || fallback).trim()
+  const bg = v('--wn-color-surface', '#ffffff')
+  const text = v('--wn-color-text', '#333333')
+  const link = v('--wn-color-link', '#409eff')
+  const border = v('--wn-color-border', '#e6dfd8')
+  const codeBg = v('--wn-color-surface-soft', '#f5f5f5')
+  const muted = v('--wn-color-text-muted', '#909399')
+
+  const css = `
+    html, body { background: ${bg} !important; color: ${text} !important; }
+    body { caret-color: ${text}; }
+    a { color: ${link} !important; }
+    p, span, div, li, td, th, h1, h2, h3, h4, h5, h6 { color: ${text}; }
+    blockquote { color: ${muted}; border-left: 3px solid ${border}; }
+    pre, code { background: ${codeBg} !important; color: ${text} !important; }
+    table, th, td { border-color: ${border} !important; }
+    hr { border-color: ${border}; }
+    img { background: transparent; }
+  `
+
+  let styleEl = doc.getElementById('wn-editor-theme')
+  if (!styleEl) {
+    styleEl = doc.createElement('style')
+    styleEl.id = 'wn-editor-theme'
+    doc.head.appendChild(styleEl)
+  }
+  styleEl.textContent = css
+
+  // 同步 iframe 外层占位/工具栏区域的底色，避免编辑区与边框间露出白边
+  try {
+    const iframe = editor.iframe
+    if (iframe) iframe.style.background = bg
+  } catch (e) { /* 忽略 */ }
+}
 
 // 默认配置
 const defaultConfig = {
@@ -118,11 +169,21 @@ async function initEditor() {
       if (props.modelValue) {
         editor.setContent(props.modelValue)
       }
+
+      // 注入当前主题到编辑区 iframe
+      applyEditorTheme()
       
       // 监听内容变化
       editor.addListener('contentChange', () => {
         const content = editor.getContent()
         emit('update:modelValue', content)
+        // 某些操作（切换源码模式/setContent）可能重建 iframe 文档，
+        // 导致注入的样式丢失；若丢失则补回，保证暗色主题持续生效。
+        try {
+          if (editor.document && !editor.document.getElementById('wn-editor-theme')) {
+            applyEditorTheme()
+          }
+        } catch (e) { /* 忽略 */ }
       })
       
       // 监听UEditor的文件上传成功事件
@@ -169,6 +230,13 @@ watch(() => props.modelValue, (newVal) => {
   }
 })
 
+// 监听主题切换，刷新编辑区 iframe 内部样式
+watch(() => themeStore.currentTheme, () => {
+  if (isReady.value) {
+    applyEditorTheme()
+  }
+})
+
 onMounted(() => {
   initEditor()
 })
@@ -207,16 +275,45 @@ defineExpose({
 
 /* 覆盖 UEditor 默认样式 */
 :deep(.edui-editor) {
-  border: 1px solid #dcdfe6 !important;
-  border-radius: 4px;
+  border: 1px solid var(--wn-color-border) !important;
+  border-radius: var(--wn-radius-sm);
+  background: var(--wn-color-surface) !important;
 }
 
 :deep(.edui-editor-toolbarbox) {
-  border-bottom: 1px solid #dcdfe6 !important;
-  background: #f5f7fa !important;
+  border-bottom: 1px solid var(--wn-color-border) !important;
+  background: var(--wn-color-surface-soft) !important;
+}
+
+:deep(.edui-editor-toolbarboxouter) {
+  background: var(--wn-color-surface-soft) !important;
+  border-bottom: 1px solid var(--wn-color-border) !important;
 }
 
 :deep(.edui-editor-iframeholder) {
   border: none !important;
+  background: var(--wn-color-surface) !important;
+}
+
+/* 工具栏按钮在暗色主题下的可读性 */
+:deep(.edui-default .edui-toolbar .edui-button .edui-icon),
+:deep(.edui-default .edui-toolbar .edui-combox .edui-icon) {
+  /* 暗色主题下反色显示单色图标，浅色主题保持原样 */
+  filter: var(--wn-editor-icon-filter, none);
+}
+
+:deep(.edui-default .edui-toolbar .edui-button-body:hover),
+:deep(.edui-default .edui-toolbar .edui-combox-body:hover) {
+  background: var(--wn-color-surface-2) !important;
+}
+
+:deep(.edui-default .edui-combox-body .edui-button-label) {
+  color: var(--wn-color-text) !important;
+}
+
+/* 编辑器底部状态栏 */
+:deep(.edui-editor-bottombar) {
+  background: var(--wn-color-surface-soft) !important;
+  border-top: 1px solid var(--wn-color-border) !important;
 }
 </style>

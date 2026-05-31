@@ -54,7 +54,7 @@ function handlePageChange(page) {
 <style scoped>
 .home-page {
   padding: 20px 0;
-  background: #f5f7fa;
+  background: var(--wn-color-canvas);
   min-height: calc(100vh - 200px);
 }
 

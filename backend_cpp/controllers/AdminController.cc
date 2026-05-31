@@ -6,6 +6,7 @@
 #include "AdminController.h"
 #include "core/database.h"
 #include "core/logger.h"
+#include "core/response.h"
 #include "models/User.h"
 #include "models/Article.h"
 #include "models/Comment.h"
@@ -16,13 +17,28 @@ using namespace drogon;
 namespace woniunote {
 namespace controllers {
 
+namespace {
+// Safe pagination parsing shared by the admin list endpoints.
+void parsePaging(const HttpRequestPtr& req, int& page, int& pageSize) {
+    auto parse = [&req](const std::string& name, int fallback) -> int {
+        const std::string raw = req->getParameter(name);
+        if (raw.empty()) return fallback;
+        try { return std::stoi(raw); } catch (const std::exception&) { return fallback; }
+    };
+    page = parse("page", 1);
+    pageSize = parse("page_size", 20);
+    if (page < 1) page = 1;
+    if (pageSize < 1) pageSize = 20;
+    if (pageSize > 100) pageSize = 100;
+}
+} // namespace
+
 void AdminController::getStats(const HttpRequestPtr& req,
                                std::function<void(const HttpResponsePtr&)>&& callback)
 {
     Logger::debug("[Admin] Get stats request");
     auto dbClient = Database::getClient();
 
-    // Get counts of users, articles, comments
     dbClient->execSqlAsync(
         "SELECT "
         "(SELECT COUNT(*) FROM users) as user_count, "
@@ -37,19 +53,11 @@ void AdminController::getStats(const HttpRequestPtr& req,
             data["comment_count"] = result[0]["comment_count"].as<int>();
             data["articles_week"] = result[0]["articles_week"].as<int>();
             data["users_week"] = result[0]["users_week"].as<int>();
-
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "success";
-            ret["data"] = data;
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::success(data));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("DB error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "数据库错误";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::serverError("数据库错误"));
         }
     );
 }
@@ -59,12 +67,7 @@ void AdminController::listUsers(const HttpRequestPtr& req,
 {
     Logger::debug("[Admin] List users request");
     int page = 1, pageSize = 20;
-    if (req->getParameter("page").length() > 0) {
-        page = std::stoi(req->getParameter("page"));
-    }
-    if (req->getParameter("page_size").length() > 0) {
-        pageSize = std::stoi(req->getParameter("page_size"));
-    }
+    parsePaging(req, page, pageSize);
     int offset = (page - 1) * pageSize;
 
     auto dbClient = Database::getClient();
@@ -77,19 +80,11 @@ void AdminController::listUsers(const HttpRequestPtr& req,
                 models::User user(row);
                 users.append(user.toJsonWithoutPassword());
             }
-
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "success";
-            ret["data"] = users;
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::success(users));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("DB error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "数据库错误";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::serverError("数据库错误"));
         },
         pageSize, offset
     );
@@ -103,10 +98,7 @@ void AdminController::updateUser(const HttpRequestPtr& req,
     auto json = req->getJsonObject();
     if (!json) {
         Logger::warning("[Admin] Update user failed: invalid JSON");
-        Json::Value ret;
-        ret["code"] = 400;
-        ret["message"] = "请求格式错误";
-        callback(HttpResponse::newHttpJsonResponse(ret));
+        callback(Response::badRequest("请求格式错误"));
         return;
     }
 
@@ -118,17 +110,11 @@ void AdminController::updateUser(const HttpRequestPtr& req,
     dbClient->execSqlAsync(
         "UPDATE users SET role = ?, credit = ?, updatetime = NOW() WHERE userid = ?",
         [callback](const orm::Result&) {
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "更新成功";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::ok("更新成功"));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Update error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "更新失败";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::serverError("更新失败"));
         },
         role, credit, id
     );
@@ -145,17 +131,11 @@ void AdminController::deleteUser(const HttpRequestPtr& req,
         "DELETE FROM users WHERE userid = ?",
         [callback, id](const orm::Result&) {
             Logger::info("[Admin] User deleted", {{"userid", std::to_string(id)}});
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "删除成功";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::ok("删除成功"));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Delete error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "删除失败";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::serverError("删除失败"));
         },
         id
     );
@@ -166,12 +146,7 @@ void AdminController::listArticles(const HttpRequestPtr& req,
 {
     Logger::debug("[Admin] List articles request");
     int page = 1, pageSize = 20;
-    if (req->getParameter("page").length() > 0) {
-        page = std::stoi(req->getParameter("page"));
-    }
-    if (req->getParameter("page_size").length() > 0) {
-        pageSize = std::stoi(req->getParameter("page_size"));
-    }
+    parsePaging(req, page, pageSize);
     int offset = (page - 1) * pageSize;
 
     auto dbClient = Database::getClient();
@@ -185,19 +160,11 @@ void AdminController::listArticles(const HttpRequestPtr& req,
                 models::Article article(row);
                 articles.append(article.toJsonBrief());
             }
-
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "success";
-            ret["data"] = articles;
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::success(articles));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("DB error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "数据库错误";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::serverError("数据库错误"));
         },
         pageSize, offset
     );
@@ -214,17 +181,11 @@ void AdminController::deleteArticle(const HttpRequestPtr& req,
         "DELETE FROM article WHERE articleid = ?",
         [callback, id](const orm::Result&) {
             Logger::info("[Admin] Article deleted", {{"articleid", std::to_string(id)}});
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "删除成功";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::ok("删除成功"));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Delete error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "删除失败";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::serverError("删除失败"));
         },
         id
     );
@@ -235,12 +196,7 @@ void AdminController::listComments(const HttpRequestPtr& req,
 {
     Logger::debug("[Admin] List comments request");
     int page = 1, pageSize = 20;
-    if (req->getParameter("page").length() > 0) {
-        page = std::stoi(req->getParameter("page"));
-    }
-    if (req->getParameter("page_size").length() > 0) {
-        pageSize = std::stoi(req->getParameter("page_size"));
-    }
+    parsePaging(req, page, pageSize);
     int offset = (page - 1) * pageSize;
 
     auto dbClient = Database::getClient();
@@ -253,19 +209,11 @@ void AdminController::listComments(const HttpRequestPtr& req,
                 models::Comment comment(row);
                 comments.append(comment.toJson());
             }
-
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "success";
-            ret["data"] = comments;
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::success(comments));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("DB error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "数据库错误";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::serverError("数据库错误"));
         },
         pageSize, offset
     );
@@ -282,17 +230,11 @@ void AdminController::deleteComment(const HttpRequestPtr& req,
         "DELETE FROM comment WHERE commentid = ?",
         [callback, id](const orm::Result&) {
             Logger::info("[Admin] Comment deleted", {{"commentid", std::to_string(id)}});
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "删除成功";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::ok("删除成功"));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Delete error: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "删除失败";
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::serverError("删除失败"));
         },
         id
     );

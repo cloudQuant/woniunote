@@ -1,0 +1,142 @@
+/**
+ * tokens.css —— 设计令牌契约
+ *
+ * 全站所有组件只消费 --wn-* 语义变量，不再写死颜色。
+ * 每套主题（themes/<key>.css）通过 [data-theme="x"] 覆盖这些 --wn-* 变量。
+ * 切换主题 = 改 <html data-theme="x">，CSS 变量级联即时生效，无需重渲染/重编译。
+ *
+ * 同时把 Element Plus 的 --el-* 变量映射到 --wn-*，使 EP 组件随主题变化。
+ * 映射放在 html[data-theme]（特异度 0,1,1）上，确保覆盖 EP 默认值与暗色 css-vars。
+ */
+
+/* ============ 默认令牌（= Claude 暖调，JS 未执行时的兜底，防 FOUC） ============ */
+:root {
+  /* 品牌主色 */
+  --wn-color-primary: #cc785c;
+  --wn-color-primary-hover: #d68b71;
+  --wn-color-primary-active: #a9583e;
+  --wn-color-on-primary: #ffffff;
+
+  /* 表面层级 */
+  --wn-color-canvas: #faf9f5;        /* 页面底色 */
+  --wn-color-surface: #fffdfa;       /* 卡片 / 弹层 / 输入框 */
+  --wn-color-surface-soft: #f5f0e8;  /* 次级表面 / hover 底 */
+  --wn-color-surface-2: #efe9de;     /* 更深一档表面 */
+
+  /* 文本 */
+  --wn-color-text: #141413;
+  --wn-color-text-secondary: #3d3d3a;
+  --wn-color-text-muted: #6c6a64;
+
+  /* 边框 */
+  --wn-color-border: #e6dfd8;
+  --wn-color-border-strong: #d8cec0;
+
+  /* 链接 */
+  --wn-color-link: #cc785c;
+  --wn-color-link-hover: #a9583e;
+
+  /* 语义色 */
+  --wn-color-success: #5db872;
+  --wn-color-warning: #d4a017;
+  --wn-color-error: #c64545;
+  --wn-color-info: #5db8a6;
+
+  /* 导航条（站点主导航的彩色 bar） */
+  --wn-color-nav-bg: #1f1c19;
+  --wn-color-nav-text: #faf9f5;
+  --wn-color-nav-hover: rgba(255, 255, 255, 0.12);
+  --wn-color-nav-active: rgba(255, 255, 255, 0.2);
+
+  /* 圆角 */
+  --wn-radius-sm: 6px;
+  --wn-radius-md: 8px;
+  --wn-radius-lg: 12px;
+  --wn-radius-pill: 9999px;
+
+  /* 阴影 */
+  --wn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --wn-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --wn-shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.16);
+
+  /* 字体 */
+  --wn-font-display: "Cormorant Garamond", Georgia, "Songti SC", "STSong", serif;
+  --wn-font-body: Inter, "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* 富文本编辑器(UEditor)工具栏图标滤镜：浅色主题不反色 */
+  --wn-editor-icon-filter: none;
+}
+
+/* ============ Element Plus 变量映射（特异度 0,1,1，覆盖 EP 默认 & 暗色 css-vars） ============ */
+html[data-theme] {
+  /* 主色及其浅色梯度（用 color-mix 从主色 + 表面色推导，自动适配明暗） */
+  --el-color-primary: var(--wn-color-primary);
+  --el-color-primary-light-3: color-mix(in srgb, var(--wn-color-primary) 70%, var(--wn-color-surface));
+  --el-color-primary-light-5: color-mix(in srgb, var(--wn-color-primary) 50%, var(--wn-color-surface));
+  --el-color-primary-light-7: color-mix(in srgb, var(--wn-color-primary) 30%, var(--wn-color-surface));
+  --el-color-primary-light-8: color-mix(in srgb, var(--wn-color-primary) 20%, var(--wn-color-surface));
+  --el-color-primary-light-9: color-mix(in srgb, var(--wn-color-primary) 10%, var(--wn-color-surface));
+  --el-color-primary-dark-2: var(--wn-color-primary-active);
+
+  /* 语义色 */
+  --el-color-success: var(--wn-color-success);
+  --el-color-warning: var(--wn-color-warning);
+  --el-color-danger: var(--wn-color-error);
+  --el-color-error: var(--wn-color-error);
+  --el-color-info: var(--wn-color-info);
+
+  /* 背景 */
+  --el-bg-color: var(--wn-color-surface);
+  --el-bg-color-page: var(--wn-color-canvas);
+  --el-bg-color-overlay: var(--wn-color-surface);
+
+  /* 文本 */
+  --el-text-color-primary: var(--wn-color-text);
+  --el-text-color-regular: var(--wn-color-text-secondary);
+  --el-text-color-secondary: var(--wn-color-text-muted);
+  --el-text-color-placeholder: var(--wn-color-text-muted);
+  --el-text-color-disabled: var(--wn-color-text-muted);
+
+  /* 边框 */
+  --el-border-color: var(--wn-color-border);
+  --el-border-color-light: var(--wn-color-border);
+  --el-border-color-lighter: var(--wn-color-border);
+  --el-border-color-extra-light: var(--wn-color-border);
+  --el-border-color-dark: var(--wn-color-border-strong);
+  --el-border-color-darker: var(--wn-color-border-strong);
+
+  /* 填充（输入框、卡片空白底等） */
+  --el-fill-color-blank: var(--wn-color-surface);
+  --el-fill-color: var(--wn-color-surface-soft);
+  --el-fill-color-light: var(--wn-color-surface-soft);
+  --el-fill-color-lighter: var(--wn-color-surface-soft);
+  --el-fill-color-extra-light: var(--wn-color-surface-soft);
+  --el-fill-color-dark: var(--wn-color-surface-2);
+  --el-fill-color-darker: var(--wn-color-surface-2);
+
+  /* 圆角 */
+  --el-border-radius-base: var(--wn-radius-md);
+  --el-border-radius-small: var(--wn-radius-sm);
+
+  /* 阴影 */
+  --el-box-shadow: var(--wn-shadow-card);
+  --el-box-shadow-light: var(--wn-shadow-sm);
+  --el-box-shadow-lighter: var(--wn-shadow-sm);
+}
+
+/* ============ 全局基底 ============ */
+html {
+  background-color: var(--wn-color-canvas);
+}
+
+body {
+  background-color: var(--wn-color-canvas);
+  color: var(--wn-color-text);
+  font-family: var(--wn-font-body);
+}
+
+/* 主题切换过渡（仅作用于颜色，避免布局抖动） */
+html,
+body {
+  transition: background-color 0.25s ease, color 0.25s ease;
+}

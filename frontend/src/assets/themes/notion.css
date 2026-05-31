@@ -1,0 +1,49 @@
+/**
+ * Notion 简约工作区 —— 浅色
+ * 源: awesome-design-md/design-md/notion
+ * 纯白画布 + 紫色 pill 主色 + 深navy导航，干净友好。
+ */
+[data-theme="notion"] {
+  color-scheme: light;
+
+  --wn-color-primary: #5645d4;
+  --wn-color-primary-hover: #6857e0;
+  --wn-color-primary-active: #4534b3;
+  --wn-color-on-primary: #ffffff;
+
+  --wn-color-canvas: #ffffff;
+  --wn-color-surface: #ffffff;
+  --wn-color-surface-soft: #f6f5f4;
+  --wn-color-surface-2: #f0eeec;
+
+  --wn-color-text: #1a1a1a;
+  --wn-color-text-secondary: #37352f;
+  --wn-color-text-muted: #787671;
+
+  --wn-color-border: #e5e3df;
+  --wn-color-border-strong: #c8c4be;
+
+  --wn-color-link: #0075de;
+  --wn-color-link-hover: #005bab;
+
+  --wn-color-success: #1aae39;
+  --wn-color-warning: #dd5b00;
+  --wn-color-error: #e03131;
+  --wn-color-info: #0075de;
+
+  --wn-color-nav-bg: #0a1530;
+  --wn-color-nav-text: #ffffff;
+  --wn-color-nav-hover: rgba(255, 255, 255, 0.1);
+  --wn-color-nav-active: rgba(86, 69, 212, 0.55);
+
+  --wn-radius-sm: 6px;
+  --wn-radius-md: 8px;
+  --wn-radius-lg: 12px;
+
+  --wn-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --wn-shadow-card: 0 2px 10px rgba(0, 0, 0, 0.08);
+  --wn-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.14);
+
+  --wn-font-display: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --wn-font-body: Inter, "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}

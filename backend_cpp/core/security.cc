@@ -31,6 +31,7 @@
 #include <cstring>
 #include <random>
 #include <algorithm>
+#include <vector>
 
 namespace woniunote {
 
@@ -83,29 +84,107 @@ std::string bcryptHash(const std::string& password, const std::string& salt) {
     }
     return std::string(result);
 #else
-    // On macOS/other platforms, bcrypt is not available via crypt()
-    // Fall back to a simple hash for development/testing only
-    // In production on non-Linux, consider using a proper bcrypt library
-    Logger::warning("bcrypt not available on this platform, using fallback");
-    
-    // Generate a deterministic hash using SHA256 + salt prefix
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    std::string toHash = salt + password;
-    
-    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
-    EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr);
-    EVP_DigestUpdate(ctx, toHash.c_str(), toHash.length());
-    EVP_DigestFinal_ex(ctx, hash, nullptr);
-    EVP_MD_CTX_free(ctx);
-    
-    // Format like bcrypt: $2b$<work>$<22-char-salt><31-char-hash>
-    std::ostringstream oss;
-    oss << salt;
-    for (int i = 0; i < SHA256_DIGEST_LENGTH && oss.str().length() < 60; ++i) {
-        oss << BCRYPT_BASE64[hash[i] % 64];
+    // bcrypt via crypt() is unavailable on macOS/Windows. Use a proper,
+    // portable KDF instead of a weak single-round SHA256.
+    //
+    // Format: $pbkdf2-sha256$<iterations>$<salt-hex>$<dk-hex>
+    // PBKDF2-HMAC-SHA256 is a recognized password hashing scheme and is
+    // recognized by verifyPassword() on ALL platforms, so a hash produced on
+    // macOS verifies on Linux and vice versa (resolves cross-platform drift).
+    constexpr int kIterations = 100000;
+    constexpr int kDkLen = 32;
+
+    // Derive 16 random salt bytes (RAND_bytes return value is checked).
+    unsigned char saltBytes[16];
+    if (RAND_bytes(saltBytes, sizeof(saltBytes)) != 1) {
+        Logger::error("[Security] RAND_bytes failed while generating salt");
+        return "";
     }
+
+    unsigned char dk[kDkLen];
+    if (PKCS5_PBKDF2_HMAC(password.c_str(), static_cast<int>(password.size()),
+                          saltBytes, sizeof(saltBytes),
+                          kIterations, EVP_sha256(), kDkLen, dk) != 1) {
+        Logger::error("[Security] PBKDF2 derivation failed");
+        return "";
+    }
+
+    auto toHex = [](const unsigned char* data, size_t len) {
+        std::ostringstream oss;
+        for (size_t i = 0; i < len; ++i) {
+            oss << std::hex << std::setw(2) << std::setfill('0') << (int)data[i];
+        }
+        return oss.str();
+    };
+
+    std::ostringstream oss;
+    oss << "$pbkdf2-sha256$" << kIterations << "$"
+        << toHex(saltBytes, sizeof(saltBytes)) << "$"
+        << toHex(dk, kDkLen);
     return oss.str();
 #endif
+}
+
+// Verify a PBKDF2-SHA256 hash produced by bcryptHash()'s portable fallback.
+// Available on every platform so cross-platform hashes interoperate.
+bool pbkdf2Verify(const std::string& password, const std::string& hash) {
+    // Expected: $pbkdf2-sha256$<iter>$<salt-hex>$<dk-hex>
+    const std::string prefix = "$pbkdf2-sha256$";
+    if (hash.rfind(prefix, 0) != 0) {
+        return false;
+    }
+    std::string rest = hash.substr(prefix.size());
+    auto p1 = rest.find('$');
+    if (p1 == std::string::npos) return false;
+    auto p2 = rest.find('$', p1 + 1);
+    if (p2 == std::string::npos) return false;
+
+    int iterations = 0;
+    try {
+        iterations = std::stoi(rest.substr(0, p1));
+    } catch (const std::exception&) {
+        return false;
+    }
+    if (iterations <= 0) return false;
+
+    std::string saltHex = rest.substr(p1 + 1, p2 - (p1 + 1));
+    std::string dkHex = rest.substr(p2 + 1);
+    if (saltHex.empty() || dkHex.empty() || (saltHex.size() % 2) || (dkHex.size() % 2)) {
+        return false;
+    }
+
+    auto fromHex = [](const std::string& hex) {
+        std::vector<unsigned char> out;
+        out.reserve(hex.size() / 2);
+        for (size_t i = 0; i + 1 < hex.size(); i += 2) {
+            out.push_back(static_cast<unsigned char>(std::stoi(hex.substr(i, 2), nullptr, 16)));
+        }
+        return out;
+    };
+
+    std::vector<unsigned char> salt, expected;
+    try {
+        salt = fromHex(saltHex);
+        expected = fromHex(dkHex);
+    } catch (const std::exception&) {
+        return false;
+    }
+
+    std::vector<unsigned char> dk(expected.size());
+    if (PKCS5_PBKDF2_HMAC(password.c_str(), static_cast<int>(password.size()),
+                          salt.data(), static_cast<int>(salt.size()),
+                          iterations, EVP_sha256(),
+                          static_cast<int>(dk.size()), dk.data()) != 1) {
+        return false;
+    }
+
+    // Constant-time comparison.
+    if (dk.size() != expected.size()) return false;
+    unsigned char diff = 0;
+    for (size_t i = 0; i < dk.size(); ++i) {
+        diff |= dk[i] ^ expected[i];
+    }
+    return diff == 0;
 }
 
 bool bcryptVerify(const std::string& password, const std::string& hash) {
@@ -134,24 +213,11 @@ bool bcryptVerify(const std::string& password, const std::string& hash) {
     }
     return diff == 0;
 #else
-    // On macOS/other platforms, re-hash and compare
-    // Extract salt from hash (first 29 chars: $2b$XX$<22-char-salt>)
-    if (hash.length() < 29) {
-        return false;
-    }
-    std::string salt = hash.substr(0, 29);
-    std::string computed = bcryptHash(password, salt);
-    
-    // Constant-time comparison
-    if (computed.length() != hash.length()) {
-        return false;
-    }
-    
-    int diff = 0;
-    for (size_t i = 0; i < hash.length(); ++i) {
-        diff |= computed[i] ^ hash[i];
-    }
-    return diff == 0;
+    // On macOS, real bcrypt verification is unavailable. Such a hash was
+    // created on a Linux host; we cannot verify it here. Returning false is
+    // safe (login simply fails in this dev scenario).
+    Logger::warning("[Security] bcrypt ($2*) hash cannot be verified on this platform");
+    return false;
 #endif
 }
 
@@ -177,9 +243,22 @@ bool Security::verifyPassword(const std::string& password, const std::string& ha
     // Check for MD5 format (32 hex chars) - legacy compatibility
     if (isMd5Password(hash)) {
         Logger::debug("[Security] Using MD5 verification");
-        return getMd5Hash(password) == hash;
+        // Constant-time comparison to avoid timing leaks.
+        std::string computed = getMd5Hash(password);
+        if (computed.length() != hash.length()) return false;
+        unsigned char diff = 0;
+        for (size_t i = 0; i < hash.length(); ++i) {
+            diff |= static_cast<unsigned char>(computed[i] ^ hash[i]);
+        }
+        return diff == 0;
     }
-    
+
+    // Check for portable PBKDF2-SHA256 format (used on non-Linux hosts).
+    if (hash.rfind("$pbkdf2-sha256$", 0) == 0) {
+        Logger::debug("[Security] Using PBKDF2 verification");
+        return pbkdf2Verify(password, hash);
+    }
+
     // Check for bcrypt format ($2a$, $2b$, $2y$)
     if (hash.length() >= 60 && hash.substr(0, 2) == "$2") {
         Logger::debug("[Security] Using bcrypt verification");

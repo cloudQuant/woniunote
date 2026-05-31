@@ -13,6 +13,8 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
 import './assets/main.css'
+import './assets/themes/index.css'
+import { useThemeStore } from './stores/theme'
 
 /**
  * Create the Vue application instance.
@@ -28,9 +30,13 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 }
 
 // Initialize plugins
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
+
+// 初始化主题（在挂载前应用持久化/系统偏好主题，配合 index.html 防闪烁脚本）
+useThemeStore(pinia).initTheme()
 
 // Mount the application
 app.mount('#app')

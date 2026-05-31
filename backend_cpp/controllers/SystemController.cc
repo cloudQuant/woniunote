@@ -6,6 +6,7 @@
 #include "SystemController.h"
 #include "core/database.h"
 #include "core/logger.h"
+#include "core/response.h"
 #include <drogon/HttpResponse.h>
 
 using namespace drogon;
@@ -17,34 +18,22 @@ void SystemController::health(const HttpRequestPtr& req,
                               std::function<void(const HttpResponsePtr&)>&& callback)
 {
     Logger::debug("[System] Health check");
-    Json::Value ret;
-    ret["code"] = 200;
-    ret["message"] = "success";
-    
     Json::Value data;
     data["status"] = "healthy";
     data["version"] = "2.0.0-cpp";
-    ret["data"] = data;
-
-    callback(HttpResponse::newHttpJsonResponse(ret));
+    callback(Response::success(data));
 }
 
 void SystemController::status(const HttpRequestPtr& req,
                               std::function<void(const HttpResponsePtr&)>&& callback)
 {
     Logger::debug("[System] Status check");
-    Json::Value ret;
-    ret["code"] = 200;
-    ret["message"] = "success";
-    
     Json::Value data;
     data["status"] = "running";
     data["version"] = "2.0.0-cpp";
     data["framework"] = "Drogon";
     data["threads"] = static_cast<int>(app().getThreadNum());
-    
-    ret["data"] = data;
-    callback(HttpResponse::newHttpJsonResponse(ret));
+    callback(Response::success(data));
 }
 
 void SystemController::dbStatus(const HttpRequestPtr& req,
@@ -52,35 +41,22 @@ void SystemController::dbStatus(const HttpRequestPtr& req,
 {
     Logger::debug("[System] DB status check");
     auto dbClient = Database::getClient();
-    
+
     dbClient->execSqlAsync(
         "SELECT 1 AS ok",
         [callback](const orm::Result& result) {
-            Json::Value ret;
-            ret["code"] = 200;
-            ret["message"] = "success";
-            
             Json::Value data;
             data["database"] = "connected";
             data["type"] = "mysql";
-            ret["data"] = data;
-            
-            callback(HttpResponse::newHttpJsonResponse(ret));
+            callback(Response::success(data));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("[System] Database connection failed: " + std::string(e.base().what()));
-            Json::Value ret;
-            ret["code"] = 500;
-            ret["message"] = "数据库连接失败";
-            
             Json::Value data;
             data["database"] = "disconnected";
             data["error"] = e.base().what();
-            ret["data"] = data;
-            
-            auto resp = HttpResponse::newHttpJsonResponse(ret);
-            resp->setStatusCode(k500InternalServerError);
-            callback(resp);
+            callback(Response::make(500, "数据库连接失败", data,
+                                    drogon::k500InternalServerError));
         }
     );
 }

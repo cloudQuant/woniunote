@@ -140,14 +140,14 @@ function changePage(page) {
   justify-content: center;
   gap: 8px;
   padding: 15px;
-  background: #fff;
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-sm);
+  box-shadow: var(--wn-shadow-sm);
   margin-top: 15px;
 }
 
 .page-link {
-  color: #007bff;
+  color: var(--wn-color-link);
   text-decoration: none;
   padding: 5px 10px;
   cursor: pointer;
@@ -155,23 +155,23 @@ function changePage(page) {
 }
 
 .page-link:hover:not(.disabled):not(.current-page) {
-  color: #0056b3;
+  color: var(--wn-color-link-hover);
   text-decoration: underline;
 }
 
 .page-link.disabled {
-  color: #999;
+  color: var(--wn-color-text-muted);
   cursor: not-allowed;
 }
 
 .page-link.current-page {
-  color: red;
+  color: var(--wn-color-primary);
   font-weight: bold;
   cursor: default;
 }
 
 .pagination-ellipsis {
-  color: #666;
+  color: var(--wn-color-text-muted);
   padding: 5px;
 }
 </style>

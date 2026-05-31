@@ -44,6 +44,7 @@
         </nav>
         
         <div class="nav-right">
+          <ThemeSwitcher />
           <template v-if="userStore.isLoggedIn">
             <el-dropdown trigger="click" @command="handleUserCommand">
               <span class="nav-item user-link">
@@ -211,6 +212,7 @@ import { ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { useArticleStore } from '@/stores/article'
+import ThemeSwitcher from '@/components/common/ThemeSwitcher.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -413,13 +415,13 @@ function handleUserCommand(command) {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: #fff;
+  background: var(--wn-color-surface);
 }
 
 /* 顶部Logo栏 */
 .top-bar {
-  background: #fff;
-  border-bottom: 1px solid #eee;
+  background: var(--wn-color-surface);
+  border-bottom: 1px solid var(--wn-color-border);
 }
 
 .top-container {
@@ -446,7 +448,7 @@ function handleUserCommand(command) {
 .logo-text {
   font-size: 24px;
   font-weight: bold;
-  color: #409eff;
+  color: var(--wn-color-primary);
 }
 
 .slogan-wrapper {
@@ -457,7 +459,7 @@ function handleUserCommand(command) {
 
 .slogan {
   display: inline-block;
-  color: #2b6db4;
+  color: var(--wn-color-primary);
   font-size: 18px;
   font-weight: 500;
   white-space: nowrap;
@@ -469,9 +471,9 @@ function handleUserCommand(command) {
   100% { transform: translateX(100%); }
 }
 
-/* 导航栏 - 使用原站 bg-info 颜色 */
+/* 导航栏 - 使用主题导航色 */
 .nav-bar {
-  background: #17a2b8;
+  background: var(--wn-color-nav-bg);
 }
 
 .nav-container {
@@ -489,7 +491,7 @@ function handleUserCommand(command) {
 }
 
 .nav-item {
-  color: #fff;
+  color: var(--wn-color-nav-text);
   font-size: 14px;
   padding: 12px 18px;
   text-decoration: none;
@@ -501,11 +503,11 @@ function handleUserCommand(command) {
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--wn-color-nav-hover);
 }
 
 .nav-item.router-link-active {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--wn-color-nav-active);
 }
 
 .nav-right {
@@ -567,14 +569,14 @@ function handleUserCommand(command) {
 
 :deep(.login-dialog .el-dialog__footer) {
   padding: 15px 20px 20px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--wn-color-border);
 }
 
 .login-header {
   display: flex;
   justify-content: space-between;
   align-items: stretch;
-  background: #337AB7;
+  background: var(--wn-color-primary);
 }
 
 .login-tabs {
@@ -583,7 +585,7 @@ function handleUserCommand(command) {
 
 .login-tab {
   padding: 15px 28px;
-  color: #fff;
+  color: var(--wn-color-on-primary);
   cursor: pointer;
   font-size: 15px;
   transition: background 0.3s;
@@ -602,7 +604,7 @@ function handleUserCommand(command) {
   display: flex;
   align-items: center;
   padding: 0 18px;
-  color: #fff;
+  color: var(--wn-color-on-primary);
   font-size: 24px;
   cursor: pointer;
   transition: background 0.3s;
@@ -625,21 +627,21 @@ function handleUserCommand(command) {
 }
 
 .login-form :deep(.el-form-item__label) {
-  color: #333;
+  color: var(--wn-color-text);
   font-size: 14px;
 }
 
 .login-form :deep(.el-input__wrapper) {
-  box-shadow: 0 0 0 1px #dcdfe6 inset;
-  border-radius: 4px;
+  box-shadow: 0 0 0 1px var(--wn-color-border) inset;
+  border-radius: var(--wn-radius-sm);
 }
 
 .login-form :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #c0c4cc inset;
+  box-shadow: 0 0 0 1px var(--wn-color-border-strong) inset;
 }
 
 .login-form :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px #409eff inset;
+  box-shadow: 0 0 0 1px var(--wn-color-primary) inset;
 }
 
 .captcha-row {
@@ -675,7 +677,7 @@ function handleUserCommand(command) {
 }
 
 .forgot-tip {
-  color: #999;
+  color: var(--wn-color-text-muted);
   font-size: 13px;
   text-align: center;
   margin-top: 20px;

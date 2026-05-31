@@ -1,0 +1,26 @@
+/**
+ * themes/index.css —— 主题体系统一入口
+ *
+ * 引入顺序很重要：
+ * 1) Element Plus 暗色 css-vars：为 html.dark 提供暗色基底（随后被 tokens.css 的
+ *    html[data-theme] 映射覆盖为本站主题色）。
+ * 2) tokens.css：语义令牌契约 + EP 变量映射（含默认值，防 FOUC）。
+ * 3) 各主题文件：[data-theme="x"] 覆盖 --wn-* 变量。
+ */
+
+@import "element-plus/theme-chalk/dark/css-vars.css";
+
+@import "./tokens.css";
+
+/* 浅色主题 */
+@import "./claude.css";
+@import "./notion.css";
+@import "./vercel.css";
+@import "./stripe.css";
+@import "./starbucks.css";
+
+/* 暗色主题 */
+@import "./linear.css";
+@import "./spotify.css";
+@import "./supabase.css";
+@import "./sentry.css";

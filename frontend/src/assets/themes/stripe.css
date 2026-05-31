@@ -1,0 +1,49 @@
+/**
+ * Stripe 优雅紫渐变 —— 浅色
+ * 源: awesome-design-md/design-md/stripe
+ * 近白冷调画布 + 电光靛蓝主色 + 深navy文本，金融科技高级感。
+ */
+[data-theme="stripe"] {
+  color-scheme: light;
+
+  --wn-color-primary: #533afd;
+  --wn-color-primary-hover: #665efd;
+  --wn-color-primary-active: #4434d4;
+  --wn-color-on-primary: #ffffff;
+
+  --wn-color-canvas: #f6f9fc;
+  --wn-color-surface: #ffffff;
+  --wn-color-surface-soft: #eef3f9;
+  --wn-color-surface-2: #e3e8ee;
+
+  --wn-color-text: #0d253d;
+  --wn-color-text-secondary: #273951;
+  --wn-color-text-muted: #64748d;
+
+  --wn-color-border: #e3e8ee;
+  --wn-color-border-strong: #a8c3de;
+
+  --wn-color-link: #533afd;
+  --wn-color-link-hover: #2e2b8c;
+
+  --wn-color-success: #1aae39;
+  --wn-color-warning: #9b6829;
+  --wn-color-error: #ea2261;
+  --wn-color-info: #533afd;
+
+  --wn-color-nav-bg: #1c1e54;
+  --wn-color-nav-text: #ffffff;
+  --wn-color-nav-hover: rgba(255, 255, 255, 0.12);
+  --wn-color-nav-active: rgba(83, 58, 253, 0.6);
+
+  --wn-radius-sm: 6px;
+  --wn-radius-md: 8px;
+  --wn-radius-lg: 12px;
+
+  --wn-shadow-sm: 0 1px 3px rgba(0, 55, 112, 0.08);
+  --wn-shadow-card: 0 4px 16px rgba(0, 55, 112, 0.10);
+  --wn-shadow-lg: 0 16px 40px rgba(0, 55, 112, 0.16);
+
+  --wn-font-display: "SF Pro Display", Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --wn-font-body: Inter, "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}

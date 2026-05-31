@@ -16,6 +16,7 @@ class CommentController : public drogon::HttpController<CommentController>
 public:
     METHOD_LIST_BEGIN
     ADD_METHOD_TO(CommentController::listByArticle, "/api/comments/article/{articleId}", drogon::Get);
+    ADD_METHOD_TO(CommentController::myComments, "/api/comments/my", drogon::Get, "woniunote::AuthFilter");
     ADD_METHOD_TO(CommentController::create, "/api/comments", drogon::Post, "woniunote::AuthFilter");
     ADD_METHOD_TO(CommentController::remove, "/api/comments/{id}", drogon::Delete, "woniunote::AuthFilter");
     ADD_METHOD_TO(CommentController::vote, "/api/comments/{id}/vote", drogon::Post, "woniunote::AuthFilter");
@@ -24,6 +25,9 @@ public:
     void listByArticle(const drogon::HttpRequestPtr& req,
                        std::function<void(const drogon::HttpResponsePtr&)>&& callback,
                        int64_t articleId);
+
+    void myComments(const drogon::HttpRequestPtr& req,
+                    std::function<void(const drogon::HttpResponsePtr&)>&& callback);
 
     void create(const drogon::HttpRequestPtr& req,
                 std::function<void(const drogon::HttpResponsePtr&)>&& callback);

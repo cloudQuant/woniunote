@@ -9,6 +9,7 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 import { logInfo, logError, logWarning, logRequest } from '@/utils/logger'
+import { startLoading, stopLoading } from '@/utils/loading'
 
 /**
  * 创建 Axios 实例
@@ -22,6 +23,47 @@ const api = axios.create({
   }
 })
 
+// ---- Token 无感刷新状态 ----
+// 当多个请求同时收到 401 时，只发起一次 refresh，其余请求排队等待新 token。
+let isRefreshing = false
+let refreshSubscribers = []
+
+function subscribeTokenRefresh(cb) {
+  refreshSubscribers.push(cb)
+}
+
+function onTokenRefreshed(newToken) {
+  refreshSubscribers.forEach((cb) => cb(newToken))
+  refreshSubscribers = []
+}
+
+function onRefreshFailed() {
+  refreshSubscribers.forEach((cb) => cb(null))
+  refreshSubscribers = []
+}
+
+/**
+ * 用 refresh_token 静默换取新的 access_token。
+ * 直接用裸 axios，避免触发本实例拦截器导致递归。
+ * @returns {Promise<string|null>} 新 access token，失败返回 null
+ */
+async function refreshAccessToken() {
+  const userStore = useUserStore()
+  const rt = userStore.refreshToken
+  if (!rt) return null
+  try {
+    const resp = await axios.post('/api/auth/refresh', { refresh_token: rt })
+    const data = resp.data
+    if (data?.code === 200 && data.data?.access_token) {
+      userStore.setTokens(data.data.access_token, data.data.refresh_token)
+      return data.data.access_token
+    }
+    return null
+  } catch (e) {
+    return null
+  }
+}
+
 /**
  * 请求拦截器
  * 处理 Token 注入和请求日志记录
@@ -30,12 +72,18 @@ api.interceptors.request.use(
   config => {
     // 记录请求开始时间
     config.metadata = { startTime: Date.now() }
-    
+
+    // 全局 loading（除非显式跳过，如静默刷新/轮询）
+    if (!config.skipLoading) {
+      startLoading()
+      config._loadingStarted = true
+    }
+
     const userStore = useUserStore()
     if (userStore.token) {
       config.headers.Authorization = `Bearer ${userStore.token}`
     }
-    
+
     logInfo(`API请求开始: ${config.method?.toUpperCase()} ${config.url}`)
     return config
   },
@@ -47,17 +95,19 @@ api.interceptors.request.use(
 
 /**
  * 响应拦截器
- * 处理响应日志、错误统一处理和 Token 过期跳转
+ * 处理响应日志、错误统一处理和 Token 过期无感刷新
  */
 api.interceptors.response.use(
   response => {
+    if (response.config?._loadingStarted) stopLoading()
+
     // 计算请求耗时
     const duration = Date.now() - (response.config.metadata?.startTime || Date.now())
     const method = response.config.method?.toUpperCase()
     const url = response.config.url
-    
+
     logRequest(method, url, response.status, duration)
-    
+
     const data = response.data
     if (data.code !== 200) {
       logWarning(`API响应异常: ${method} ${url}`, { code: data.code, message: data.message })
@@ -66,43 +116,94 @@ api.interceptors.response.use(
     }
     return data
   },
-  error => {
+  async error => {
+    if (error.config?._loadingStarted) stopLoading()
+
     // 计算请求耗时
     const duration = Date.now() - (error.config?.metadata?.startTime || Date.now())
     const method = error.config?.method?.toUpperCase()
     const url = error.config?.url
-    
+
     let errorMessage = '请求失败'
-    
+
     if (error.response) {
       const status = error.response.status
       errorMessage = error.response.data?.detail || error.response.data?.message || '请求失败'
-      
+
       logRequest(method, url, status, duration)
-      
-      if (status === 401 && !url?.includes('/auth/login')) {
+
+      const originalConfig = error.config
+      const isAuthEndpoint = url?.includes('/auth/login') ||
+                             url?.includes('/auth/register') ||
+                             url?.includes('/auth/refresh')
+
+      // 401：尝试用 refresh_token 无感刷新并重放原请求（每个请求只重试一次）
+      if (status === 401 && !isAuthEndpoint && !originalConfig._retried) {
         const userStore = useUserStore()
+        if (!userStore.refreshToken) {
+          userStore.logout()
+          router.push({ name: 'Login' })
+          return Promise.reject(buildError('登录已过期，请重新登录', error))
+        }
+
+        originalConfig._retried = true
+
+        if (isRefreshing) {
+          // 已有刷新在进行：排队等待新 token
+          return new Promise((resolve, reject) => {
+            subscribeTokenRefresh((newToken) => {
+              if (!newToken) {
+                reject(buildError('登录已过期，请重新登录', error))
+                return
+              }
+              originalConfig.headers.Authorization = `Bearer ${newToken}`
+              resolve(api(originalConfig))
+            })
+          })
+        }
+
+        isRefreshing = true
+        const newToken = await refreshAccessToken()
+        isRefreshing = false
+
+        if (newToken) {
+          onTokenRefreshed(newToken)
+          originalConfig.headers.Authorization = `Bearer ${newToken}`
+          return api(originalConfig)
+        }
+
+        // 刷新失败：清理队列并登出
+        onRefreshFailed()
         userStore.logout()
         router.push({ name: 'Login' })
-        errorMessage = '登录已过期，请重新登录'
-      } else if (status === 403) {
+        return Promise.reject(buildError('登录已过期，请重新登录', error))
+      }
+
+      if (status === 403) {
         errorMessage = '没有权限执行此操作'
       } else if (status === 404) {
         errorMessage = '请求的资源不存在'
+      } else if (status === 429) {
+        errorMessage = error.response.data?.message || '请求过于频繁，请稍后再试'
       }
     } else {
       logError(`网络错误: ${method} ${url}`, error)
       errorMessage = '网络错误，请检查网络连接'
     }
-    
-    // 创建带有明确错误信息的Error对象
-    const customError = new Error(errorMessage)
-    customError.response = error.response
-    customError.originalError = error
-    
-    return Promise.reject(customError)
+
+    return Promise.reject(buildError(errorMessage, error))
   }
 )
+
+/**
+ * 构造携带原始信息的 Error 对象。
+ */
+function buildError(message, original) {
+  const customError = new Error(message)
+  customError.response = original?.response
+  customError.originalError = original
+  return customError
+}
 
 export default api
 
@@ -154,14 +255,12 @@ export const commentApi = {
   getByArticle: (articleId, params) => api.get(`/comments/article/${articleId}`, { params }),
   /** 发表评论 */
   create: (data) => api.post('/comments', data),
-  /** 更新评论 */
-  update: (id, data) => api.put(`/comments/${id}`, data),
   /** 删除评论 */
   delete: (id) => api.delete(`/comments/${id}`),
-  /** 点赞评论 */
-  agree: (id) => api.post(`/comments/${id}/agree`),
-  /** 反对评论 */
-  oppose: (id) => api.post(`/comments/${id}/oppose`)
+  /** 点赞评论（vote_type=1） */
+  agree: (id) => api.post(`/comments/${id}/vote`, { vote_type: 1 }),
+  /** 反对评论（vote_type=-1） */
+  oppose: (id) => api.post(`/comments/${id}/vote`, { vote_type: -1 })
 }
 
 /**
@@ -185,9 +284,9 @@ export const userApi = {
   /** 获取用户资料 */
   getProfile: (id) => api.get(`/users/${id}`),
   /** 更新个人资料 */
-  updateProfile: (data) => api.put('/users/me', data),
+  updateProfile: (data) => api.put('/users/profile', data),
   /** 修改密码 */
-  updatePassword: (data) => api.put('/users/me/password', data)
+  updatePassword: (data) => api.post('/users/password', data)
 }
 
 /**
@@ -225,9 +324,9 @@ export const uploadApi = {
  */
 export const creditApi = {
   /** 获取积分记录 */
-  getList: (params) => api.get('/credits', { params }),
-  /** 获取积分概况 */
-  getSummary: () => api.get('/credits/summary'),
+  getList: (params) => api.get('/credits/history', { params }),
+  /** 获取积分概况（余额） */
+  getSummary: () => api.get('/credits/balance'),
   /** 支付文章积分 */
   payArticle: (articleId) => api.post(`/credits/pay-article/${articleId}`),
   /** 检查文章支付状态 */
@@ -273,11 +372,7 @@ export const systemApi = {
   /** 获取系统状态 */
   getStatus: () => api.get('/system/status'),
   /** 获取数据库状态 */
-  getDatabase: () => api.get('/system/database'),
-  /** 获取实时指标 */
-  getMetrics: () => api.get('/system/metrics'),
-  /** 获取进程列表 */
-  getProcesses: (limit = 10) => api.get(`/system/processes?limit=${limit}`),
+  getDatabase: () => api.get('/system/db'),
   /** 健康检查 */
   healthCheck: () => api.get('/system/health')
 }

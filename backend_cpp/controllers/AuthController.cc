@@ -4,39 +4,51 @@
  */
 
 #include "AuthController.h"
+#include "CaptchaController.h"
 #include "core/security.h"
 #include "core/database.h"
 #include "core/logger.h"
+#include "core/response.h"
 #include "models/User.h"
 #include <drogon/HttpResponse.h>
+#include <optional>
 
 using namespace drogon;
 
 namespace woniunote {
 namespace controllers {
 
-HttpResponsePtr AuthController::makeJsonResponse(int code, 
+namespace {
+// Parse a user id string to int64 defensively. A JWT may carry a validly
+// signed but non-numeric "sub"; std::stoll would otherwise throw.
+std::optional<int64_t> parseUserId(const std::string& s)
+{
+    if (s.empty()) return std::nullopt;
+    for (char c : s) {
+        if (!std::isdigit(static_cast<unsigned char>(c))) return std::nullopt;
+    }
+    try {
+        return std::stoll(s);
+    } catch (const std::exception&) {
+        return std::nullopt;
+    }
+}
+}  // namespace
+
+// Thin wrappers that delegate to the shared Response helpers so the JSON
+// envelope and HTTP status mapping live in exactly one place (core/response.h).
+HttpResponsePtr AuthController::makeJsonResponse(int code,
                                                   const std::string& message,
                                                   const Json::Value& data)
 {
-    Json::Value ret;
-    ret["code"] = code;
-    ret["message"] = message;
-    if (!data.isNull()) {
-        ret["data"] = data;
-    }
-    return HttpResponse::newHttpJsonResponse(ret);
+    return Response::make(code, message, data, drogon::k200OK);
 }
 
-HttpResponsePtr AuthController::makeErrorResponse(int httpCode, 
+HttpResponsePtr AuthController::makeErrorResponse(int httpCode,
                                                    const std::string& message)
 {
-    Json::Value ret;
-    ret["code"] = httpCode;
-    ret["message"] = message;
-    auto resp = HttpResponse::newHttpJsonResponse(ret);
-    resp->setStatusCode(static_cast<HttpStatusCode>(httpCode));
-    return resp;
+    return Response::error(httpCode, message,
+                           static_cast<HttpStatusCode>(httpCode));
 }
 
 void AuthController::registerUser(const HttpRequestPtr& req,
@@ -69,72 +81,84 @@ void AuthController::registerUser(const HttpRequestPtr& req,
     }
 
     Logger::debug("[Auth] Checking if username exists", {{"username", username}});
-    auto dbClient = Database::getClient();
 
-    // Check if username exists
-    dbClient->execSqlAsync(
-        "SELECT userid FROM users WHERE username = ?",
-        [this, callback, username, password, nickname, qq, dbClient]
-        (const orm::Result& result) {
-            if (result.size() > 0) {
-                Logger::warning("[Auth] Register failed: username exists", {{"username", username}});
-                callback(makeErrorResponse(400, "用户名已存在"));
+    // Wrap the whole registration in a transaction so the user row and the
+    // initial credit row are written atomically (both or neither).
+    Database::beginTransaction(
+        [this, callback, username, password, nickname, qq]
+        (const std::shared_ptr<orm::Transaction>& trans) {
+            if (!trans) {
+                callback(makeErrorResponse(500, "无法开启事务"));
                 return;
             }
-            
-            Logger::debug("[Auth] Creating new user", {{"username", username}});
 
-            // Create new user
-            std::string hashedPassword = Security::hashPassword(password);
-            
-            dbClient->execSqlAsync(
-                "INSERT INTO users (username, password, nickname, qq, role, credit, createtime, updatetime) "
-                "VALUES (?, ?, ?, ?, 'user', 50, NOW(), NOW())",
-                [this, callback, dbClient, username](const orm::Result& insertResult) {
-                    int64_t userId = insertResult.insertId();
-                    
-                    // Add credit record for registration
-                    dbClient->execSqlAsync(
-                        "INSERT INTO credit (userid, category, target, credit, createtime, updatetime) "
-                        "VALUES (?, '用户注册', ?, 50, NOW(), NOW())",
-                        [](const orm::Result&) {},
-                        [](const orm::DrogonDbException& e) {
-                            Logger::error("Failed to add credit record: " + std::string(e.base().what()));
-                        },
-                        userId, userId
-                    );
+            // Check if username exists
+            trans->execSqlAsync(
+                "SELECT userid FROM users WHERE username = ?",
+                [this, callback, username, password, nickname, qq, trans]
+                (const orm::Result& result) {
+                    if (result.size() > 0) {
+                        Logger::warning("[Auth] Register failed: username exists", {{"username", username}});
+                        callback(makeErrorResponse(400, "用户名已存在"));
+                        return;
+                    }
 
-                    // Fetch created user
-                    dbClient->execSqlAsync(
-                        "SELECT * FROM users WHERE userid = ?",
-                        [this, callback, username](const orm::Result& userResult) {
-                            if (userResult.size() > 0) {
-                                models::User user(userResult[0]);
-                                Logger::info("[Auth] User registered successfully", {{"userid", std::to_string(user.getUserid())}, {"username", username}});
-                                callback(makeJsonResponse(200, "注册成功", user.toJsonWithoutPassword()));
-                            } else {
-                                callback(makeErrorResponse(500, "注册失败"));
-                            }
+                    Logger::debug("[Auth] Creating new user", {{"username", username}});
+                    std::string hashedPassword = Security::hashPassword(password);
+
+                    trans->execSqlAsync(
+                        "INSERT INTO users (username, password, nickname, qq, role, credit, createtime, updatetime) "
+                        "VALUES (?, ?, ?, ?, 'user', 50, NOW(), NOW())",
+                        [this, callback, trans, username](const orm::Result& insertResult) {
+                            int64_t userId = insertResult.insertId();
+
+                            // Add credit record for registration. If this fails,
+                            // the whole transaction is rolled back (see below).
+                            trans->execSqlAsync(
+                                "INSERT INTO credit (userid, category, target, credit, createtime, updatetime) "
+                                "VALUES (?, '用户注册', ?, 50, NOW(), NOW())",
+                                [this, callback, trans, userId, username](const orm::Result&) {
+                                    // Fetch created user for the response.
+                                    trans->execSqlAsync(
+                                        "SELECT * FROM users WHERE userid = ?",
+                                        [this, callback, username](const orm::Result& userResult) {
+                                            if (userResult.size() > 0) {
+                                                models::User user(userResult[0]);
+                                                Logger::info("[Auth] User registered successfully", {{"userid", std::to_string(user.getUserid())}, {"username", username}});
+                                                callback(makeJsonResponse(200, "注册成功", user.toJsonWithoutPassword()));
+                                            } else {
+                                                callback(makeErrorResponse(500, "注册失败"));
+                                            }
+                                        },
+                                        [this, callback](const orm::DrogonDbException& e) {
+                                            Logger::error("Failed to fetch user: " + std::string(e.base().what()));
+                                            callback(makeErrorResponse(500, "注册失败"));
+                                        },
+                                        userId
+                                    );
+                                },
+                                [this, callback](const orm::DrogonDbException& e) {
+                                    // Credit insert failed -> transaction rolls back the user insert.
+                                    Logger::error("Failed to add credit record, rolling back: " + std::string(e.base().what()));
+                                    callback(makeErrorResponse(500, "注册失败"));
+                                },
+                                userId, userId
+                            );
                         },
                         [this, callback](const orm::DrogonDbException& e) {
-                            Logger::error("Failed to fetch user: " + std::string(e.base().what()));
+                            Logger::error("Failed to create user: " + std::string(e.base().what()));
                             callback(makeErrorResponse(500, "注册失败"));
                         },
-                        userId
+                        username, hashedPassword, nickname, qq
                     );
                 },
                 [this, callback](const orm::DrogonDbException& e) {
-                    Logger::error("Failed to create user: " + std::string(e.base().what()));
-                    callback(makeErrorResponse(500, "注册失败"));
+                    Logger::error("Database error: " + std::string(e.base().what()));
+                    callback(makeErrorResponse(500, "数据库错误"));
                 },
-                username, hashedPassword, nickname, qq
+                username
             );
-        },
-        [this, callback](const orm::DrogonDbException& e) {
-            Logger::error("Database error: " + std::string(e.base().what()));
-            callback(makeErrorResponse(500, "数据库错误"));
-        },
-        username
+        }
     );
 }
 
@@ -161,9 +185,15 @@ void AuthController::login(const HttpRequestPtr& req,
     
     Logger::debug("[Auth] Attempting login", {{"username", username}});
 
-    // TODO: Validate captcha if provided
-    // std::string captchaId = json->get("captcha_id", "").asString();
-    // std::string captchaCode = json->get("captcha_code", "").asString();
+    // Validate captcha. The frontend always sends captcha_id/captcha_code;
+    // reject the login if they are missing or incorrect.
+    std::string captchaId = json->get("captcha_id", "").asString();
+    std::string captchaCode = json->get("captcha_code", "").asString();
+    if (!CaptchaController::validateCaptcha(captchaId, captchaCode)) {
+        Logger::warning("[Auth] Login failed: invalid captcha", {{"username", username}});
+        callback(makeErrorResponse(400, "验证码错误或已过期"));
+        return;
+    }
 
     auto dbClient = Database::getClient();
 
@@ -229,6 +259,12 @@ void AuthController::refresh(const HttpRequestPtr& req,
     }
 
     std::string userId = payload->sub;
+    auto parsedId = parseUserId(userId);
+    if (!parsedId.has_value()) {
+        Logger::warning("[Auth] Refresh failed: non-numeric subject");
+        callback(makeErrorResponse(401, "无效的刷新令牌"));
+        return;
+    }
 
     auto dbClient = Database::getClient();
     dbClient->execSqlAsync(
@@ -256,7 +292,7 @@ void AuthController::refresh(const HttpRequestPtr& req,
             Logger::error("Database error: " + std::string(e.base().what()));
             callback(makeErrorResponse(500, "数据库错误"));
         },
-        std::stoll(userId)
+        parsedId.value()
     );
 }
 
@@ -268,6 +304,11 @@ void AuthController::me(const HttpRequestPtr& req,
     Logger::debug("[Auth] Get current user", {{"userid", userId}});
     
     if (userId.empty()) {
+        callback(makeErrorResponse(401, "认证失败"));
+        return;
+    }
+    auto parsedId = parseUserId(userId);
+    if (!parsedId.has_value()) {
         callback(makeErrorResponse(401, "认证失败"));
         return;
     }
@@ -288,7 +329,7 @@ void AuthController::me(const HttpRequestPtr& req,
             Logger::error("Database error: " + std::string(e.base().what()));
             callback(makeErrorResponse(500, "数据库错误"));
         },
-        std::stoll(userId)
+        parsedId.value()
     );
 }
 

@@ -24,10 +24,14 @@ cd "$SCRIPT_DIR"
 echo "[1/7] 更新代码..."
 git pull origin dev_cpp
 if [ $? -ne 0 ]; then
-    echo "[错误] Git pull 失败，终止重启"
-    exit 1
+    if [ "$MODE" = "prod" ]; then
+        echo "[错误] Git pull 失败，终止重启"
+        exit 1
+    fi
+    echo "     [警告] Git pull 失败（本地可能有未提交改动），开发模式下继续使用本地代码"
+else
+    echo "     代码已更新"
 fi
-echo "     代码已更新"
 
 echo "[2/7] 停止服务..."
 bash "$SCRIPT_DIR/stop_app.sh"
@@ -36,11 +40,13 @@ echo "[3/7] 清理缓存..."
 # 删除旧的构建产物和缓存
 rm -rf "$SCRIPT_DIR/frontend/dist"
 rm -rf "$SCRIPT_DIR/frontend/node_modules/.vite"
-# 清理 nginx 缓存（如果存在）
-sudo rm -rf /var/cache/nginx/* 2>/dev/null || true
+# 清理 nginx 缓存（仅生产模式需要；开发模式无 Nginx，跳过以免触发 sudo 密码提示）
+if [ "$MODE" = "prod" ]; then
+    sudo rm -rf /var/cache/nginx/* 2>/dev/null || true
+fi
 : > "$SCRIPT_DIR/backend.log"
 : > "$SCRIPT_DIR/frontend.log"
-echo "     缓存已清理（包括 nginx 缓存）"
+echo "     缓存已清理"
 
 echo "[4/7] 生成缩略图..."
 THUMB_SCRIPT="$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py"
@@ -59,29 +65,35 @@ echo "[5/7] 更新 Nginx 配置..."
 NGINX_CONF_SRC="$SCRIPT_DIR/configs/woniunote_nginx_prod.conf"
 NGINX_CONF_DST="/etc/nginx/nginx.conf"
 
-if [ ! -f "$NGINX_CONF_SRC" ]; then
+# Nginx 仅用于生产模式（托管前端静态文件）。开发模式由 Vite dev server
+# 提供前端，无需 Nginx，因此跳过此步，避免在本地（如 macOS 无 /etc/nginx）误报错。
+if [ "$MODE" != "prod" ]; then
+    echo "     开发模式，跳过 Nginx 配置（前端由 Vite dev server 提供）"
+elif [ ! -d "$(dirname "$NGINX_CONF_DST")" ]; then
+    echo "     未检测到 $(dirname "$NGINX_CONF_DST")，跳过 Nginx 配置（本机未安装 Nginx？）"
+elif [ ! -f "$NGINX_CONF_SRC" ]; then
     echo "[错误] Nginx 配置文件不存在: $NGINX_CONF_SRC"
     exit 1
-fi
-
-sudo cp "$NGINX_CONF_SRC" "$NGINX_CONF_DST"
-if [ $? -ne 0 ]; then
-    echo "[错误] 复制 Nginx 配置失败，请检查 sudo 权限"
-    exit 1
-fi
-
-sudo nginx -t
-if [ $? -eq 0 ]; then
-    sudo systemctl reload nginx
-    echo "     Nginx 配置已更新并重载"
 else
-    echo "[错误] Nginx 配置检查失败，请手动检查"
+    sudo cp "$NGINX_CONF_SRC" "$NGINX_CONF_DST"
+    if [ $? -ne 0 ]; then
+        echo "[错误] 复制 Nginx 配置失败，请检查 sudo 权限"
+        exit 1
+    fi
+
     sudo nginx -t
-    exit 1
+    if [ $? -eq 0 ]; then
+        sudo systemctl reload nginx
+        echo "     Nginx 配置已更新并重载"
+    else
+        echo "[错误] Nginx 配置检查失败，请手动检查"
+        sudo nginx -t
+        exit 1
+    fi
 fi
 
 echo "[6/7] 删除旧的同步目录（如果存在）..."
-if [ -d "/var/www/woniunote/frontend" ]; then
+if [ "$MODE" = "prod" ] && [ -d "/var/www/woniunote/frontend" ]; then
     sudo rm -rf /var/www/woniunote/frontend
     echo "     旧目录已删除"
 else
@@ -93,40 +105,46 @@ bash "$SCRIPT_DIR/start_app.sh" "$MODE"
 
 echo ""
 echo "========================================"
-echo "  重启完成!"
+echo "  重启完成! (模式: $MODE)"
 echo "========================================"
-echo "  前端: https://www.yunjinqi.top"
+if [ "$MODE" = "prod" ]; then
+    echo "  前端: https://www.yunjinqi.top"
+else
+    echo "  前端: http://localhost:8888"
+fi
 echo "  后端: http://localhost:5173"
 echo ""
 echo "  重要提示："
 echo "  浏览器按 Ctrl+Shift+R (Mac: Cmd+Shift+R) 强制刷新"
 echo ""
 
-# 验证前端构建文件是否正确部署
-echo "[验证] 检查前端构建文件..."
-if [ -f "$SCRIPT_DIR/frontend/dist/index.html" ]; then
-    CSS_FILE=$(grep -o 'href="/assets/[^"]*\.css"' "$SCRIPT_DIR/frontend/dist/index.html" | head -1 | sed 's/href="\/assets\///;s/"//')
-    JS_FILE=$(grep -o 'src="/assets/[^"]*\.js"' "$SCRIPT_DIR/frontend/dist/index.html" | head -1 | sed 's/src="\/assets\///;s/"//')
-    echo "  index.html 引用的 CSS: $CSS_FILE"
-    echo "  index.html 引用的 JS: $JS_FILE"
+# 验证前端构建文件是否正确部署（仅生产模式有 dist 构建产物；开发模式由 Vite 提供，跳过）
+if [ "$MODE" = "prod" ]; then
+    echo "[验证] 检查前端构建文件..."
+    if [ -f "$SCRIPT_DIR/frontend/dist/index.html" ]; then
+        CSS_FILE=$(grep -o 'href="/assets/[^"]*\.css"' "$SCRIPT_DIR/frontend/dist/index.html" | head -1 | sed 's/href="\/assets\///;s/"//')
+        JS_FILE=$(grep -o 'src="/assets/[^"]*\.js"' "$SCRIPT_DIR/frontend/dist/index.html" | head -1 | sed 's/src="\/assets\///;s/"//')
+        echo "  index.html 引用的 CSS: $CSS_FILE"
+        echo "  index.html 引用的 JS: $JS_FILE"
 
-    # 检查文件是否实际存在
-    if [ -f "$SCRIPT_DIR/frontend/dist/assets/$CSS_FILE" ] && [ -f "$SCRIPT_DIR/frontend/dist/assets/$JS_FILE" ]; then
-        echo "  ✓ 所有引用文件存在"
-    else
-        echo "  ✗ 警告: 部分引用文件不存在，可能构建不完整"
-    fi
-
-    # 检查 nginx root 目录是否正确
-    NGINX_ROOT=$(grep -A 20 "server_name yunjinqi.top" "$NGINX_CONF_DST" 2>/dev/null | grep "root" | head -1 | awk '{print $2}' | sed 's/;//')
-    if [ -n "$NGINX_ROOT" ]; then
-        echo "  Nginx root 目录: $NGINX_ROOT"
-        if [ "$NGINX_ROOT" != "$SCRIPT_DIR/frontend/dist" ]; then
-            echo "  ✗ 警告: Nginx root 与项目目录不一致"
+        # 检查文件是否实际存在
+        if [ -f "$SCRIPT_DIR/frontend/dist/assets/$CSS_FILE" ] && [ -f "$SCRIPT_DIR/frontend/dist/assets/$JS_FILE" ]; then
+            echo "  ✓ 所有引用文件存在"
+        else
+            echo "  ✗ 警告: 部分引用文件不存在，可能构建不完整"
         fi
+
+        # 检查 nginx root 目录是否正确
+        NGINX_ROOT=$(grep -A 20 "server_name yunjinqi.top" "$NGINX_CONF_DST" 2>/dev/null | grep "root" | head -1 | awk '{print $2}' | sed 's/;//')
+        if [ -n "$NGINX_ROOT" ]; then
+            echo "  Nginx root 目录: $NGINX_ROOT"
+            if [ "$NGINX_ROOT" != "$SCRIPT_DIR/frontend/dist" ]; then
+                echo "  ✗ 警告: Nginx root 与项目目录不一致"
+            fi
+        fi
+    else
+        echo "  ✗ 警告: dist/index.html 不存在"
     fi
-else
-    echo "  ✗ 警告: dist/index.html 不存在"
 fi
 
 # 验证缩略图是否生成

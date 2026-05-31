@@ -147,8 +147,8 @@ onMounted(() => {
 
 .loading-container {
   padding: 20px;
-  background: #fff;
-  border-radius: 4px;
+  background: var(--wn-color-surface);
+  border-radius: var(--wn-radius-sm);
 }
 
 .article-grid {
