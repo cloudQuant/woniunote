@@ -102,7 +102,7 @@ function applyEditorTheme() {
   try {
     const iframe = editor.iframe
     if (iframe) iframe.style.background = bg
-  } catch (e) { /* 忽略 */ }
+  } catch { /* 忽略 */ }
 }
 
 // 默认配置
@@ -183,7 +183,7 @@ async function initEditor() {
           if (editor.document && !editor.document.getElementById('wn-editor-theme')) {
             applyEditorTheme()
           }
-        } catch (e) { /* 忽略 */ }
+        } catch { /* 忽略 */ }
       })
       
       // 监听UEditor的文件上传成功事件

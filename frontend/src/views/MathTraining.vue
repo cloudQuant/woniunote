@@ -455,7 +455,7 @@ async function endSession() {
     ElMessage.success('训练记录已保存')
     loadHistory()
     loadSummary()
-  } catch (e) {
+  } catch {
     ElMessage.error('保存训练记录失败')
   }
 }

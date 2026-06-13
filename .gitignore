@@ -3,7 +3,17 @@
 *.log
 # 用户密码/密钥配置（真实凭据，禁止入库）
 configs/user_password_config.yaml
+configs/mysql_test_config.yaml
+tests/configs/user_password_config.yaml
 user_password_config.yaml
+
+# Certificates, private keys, and local deployment backups
+*.key
+*.pem
+*.crt
+*.csr
+configs/yunjinqi.top_nginx/
+backups/
 
 .DS_Store
 
@@ -56,6 +66,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+coverage.json
 *.cover
 *.py,cover
 .hypothesis/
@@ -215,6 +226,9 @@ backend_cpp/config.local.json
 backend_cpp/config.integration.json
 backend_cpp/.env
 .env.local
+tests/test_db/
+*.sqlite
+*.sqlite3
 
 # Test coverage
 *.gcda

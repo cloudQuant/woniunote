@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { reactive } from 'vue'
-import { installLocalStorage, mountOptions } from '@/test/harness'
+import { installLocalStorage, mountOptions, silenceExpectedConsole } from '@/test/harness'
 
 installLocalStorage()
+silenceExpectedConsole(['log', 'error'])
 
 const routeState = vi.hoisted(() => ({ current: null }))
 const push = vi.fn()

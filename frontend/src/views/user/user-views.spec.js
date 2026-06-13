@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import { installLocalStorage, mountOptions } from '@/test/harness'
+import { installLocalStorage, mountOptions, silenceExpectedConsole } from '@/test/harness'
 
 installLocalStorage()
+silenceExpectedConsole(['error'])
 
 // ---- Shared mocks ----
 const push = vi.fn()

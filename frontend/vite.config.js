@@ -61,6 +61,12 @@ export default defineConfig(() => {
       // in its own lazily-loaded chunk, so it should not flag the whole build.
       chunkSizeWarningLimit: 1600,
       rollupOptions: {
+        onwarn(warning, warn) {
+          if (warning.code === 'INVALID_ANNOTATION' && warning.id?.includes('@vueuse/core')) {
+            return
+          }
+          warn(warning)
+        },
         output: {
           // Split heavy third-party libs into their own long-cached vendor
           // chunks so the app shell stays small and library upgrades don't

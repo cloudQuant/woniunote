@@ -1,5 +1,7 @@
 # Woniunote - Modern Personal Blog System
 
+> **Legacy note:** this English document describes the historical Python/Flask implementation. The active `dev_cpp` branch uses a C++ Drogon backend with a Vue 3 frontend. Use `README.md`, `REFACTORING_GUIDE.md`, `backend_cpp/`, `frontend/`, and `.github/workflows/cpp-vue-ci.yml` for current development and release gates.
+
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

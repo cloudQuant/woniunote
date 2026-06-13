@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint \"src/**/*.{js,vue}\"",
-    "lint:ci": "eslint \"src/**/*.{js,vue}\" \"e2e/**/*.js\" --max-warnings=16",
+    "lint:ci": "eslint \"src/**/*.{js,vue}\" \"e2e/**/*.js\" --max-warnings=0",
     "test": "vitest run --config vitest.config.js",
     "test:watch": "vitest --config vitest.config.js",
     "test:coverage": "vitest run --coverage --config vitest.config.js",

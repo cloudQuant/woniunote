@@ -104,9 +104,9 @@ woniunote/
 │
 ├── 📁 configs/                      # 配置文件
 │   ├── woniunote_nginx_prod.conf    # Nginx 生产配置
-│   └── yunjinqi.top_nginx/          # SSL 证书
+│   └── yunjinqi.top_nginx/          # 本地/服务器 SSL 证书目录（不入库）
 │
-├── 📁 tests/                        # 测试套件
+├── 📁 tests/                        # 旧 Flask 测试归档（非当前主线门禁）
 ├── 📁 docs/                         # 项目文档
 ├── start_app.sh                     # 一键启动脚本
 ├── stop_app.sh                      # 停止脚本
@@ -300,18 +300,26 @@ bash restart_app.sh prod
 
 ## 🧪 测试
 
+当前发布门禁以 C++ Drogon 后端与 Vue 前端为准。根目录 `tests/` 是旧 Flask 栈测试归档，不再作为当前主线覆盖率来源。
+
 ```bash
-# 运行所有测试
-pytest tests/ -v
+# 后端 C++ 单元测试
+cd backend_cpp/build
+ctest --output-on-failure
 
-# 运行单元测试
-pytest tests/unit/ -v
+# 后端 HTTP 集成测试（需要测试 MySQL/Redis）
+cd ../..
+bash backend_cpp/tests/integration/run_integration.sh
 
-# 运行集成测试
-pytest tests/integration/ -v
+# 前端 lint / 单测覆盖率 / 构建 / E2E
+cd frontend
+npm run lint:ci
+npm run test:coverage
+npm run build
+npm run test:e2e
 
-# 查看覆盖率报告
-pytest tests/ --cov=backend --cov-report=html
+# 前端生产依赖安全审计
+npm audit --omit=dev --audit-level=moderate
 ```
 
 ---
@@ -323,12 +331,12 @@ pytest tests/ --cov=backend --cov-report=html
 | 模块 | 端点 | 说明 |
 |------|------|------|
 | **认证** | `/api/auth/login`, `/api/auth/register`, `/api/auth/logout` | 登录/注册/登出 |
-| **用户** | `/api/auth/me`, `/api/user/profile`, `/api/user/password` | 用户信息/资料/密码 |
-| **文章** | `/api/article/list`, `/api/article/{id}`, `/api/article/create` | 文章 CRUD |
-| **评论** | `/api/comment/list`, `/api/comment/create`, `/api/comment/vote` | 评论/回复/点赞 |
-| **收藏** | `/api/favorite/list`, `/api/favorite/add`, `/api/favorite/remove` | 收藏管理 |
-| **积分** | `/api/credit/balance`, `/api/credit/history` | 积分查询 |
-| **数学** | `/api/math/problems`, `/api/math/submit`, `/api/math/history` | 数学训练 |
+| **用户** | `/api/auth/me`, `/api/users/{id}`, `/api/users/profile`, `/api/users/password` | 用户信息/资料/密码 |
+| **文章** | `/api/articles`, `/api/articles/{id}`, `/api/articles/hot`, `/api/articles/types` | 文章 CRUD/列表/分类 |
+| **评论** | `/api/comments/article/{id}`, `/api/comments`, `/api/comments/{id}/vote` | 评论/回复/点赞 |
+| **收藏** | `/api/favorites`, `/api/favorites/{articleId}`, `/api/favorites/check/{articleId}` | 收藏管理 |
+| **积分** | `/api/credits/balance`, `/api/credits/history`, `/api/credits/pay-article/{id}` | 积分查询/支付 |
+| **数学** | `/api/math-training/records`, `/api/math-training/wrong-answers`, `/api/math-training/summary` | 数学训练 |
 | **上传** | `/api/upload/image`, `/api/upload/file`, `/api/upload/avatar` | 文件上传 |
 | **验证码** | `/api/captcha/generate`, `/api/captcha/verify` | 验证码 |
 | **管理** | `/api/admin/stats`, `/api/admin/users`, `/api/admin/articles` | 管理后台 |
@@ -346,9 +354,9 @@ pytest tests/ --cov=backend --cov-report=html
 
 ### 开发规范
 
-- 遵循 PEP 8 Python 代码规范
+- 后端遵循 C++17 / Drogon 现有控制器、模型、过滤器组织方式
 - 前端遵循 Vue 3 Composition API 风格
-- 提交前运行测试和代码检查
+- 提交前运行当前主线测试和代码检查（见“测试”章节）
 - 添加适当的注释和文档
 
 ---

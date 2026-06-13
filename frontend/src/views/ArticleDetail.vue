@@ -333,7 +333,7 @@ function replacePdfPlaceholders() {
   
   // 清理之前创建的应用实例
   pdfViewerApps.forEach(app => {
-    try { app.unmount() } catch (e) { /* already unmounted, ignore */ }
+    try { app.unmount() } catch { /* already unmounted, ignore */ }
   })
   pdfViewerApps.length = 0
   
@@ -552,7 +552,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   // 清理PDF查看器应用实例
   pdfViewerApps.forEach(app => {
-    try { app.unmount() } catch (e) { /* already unmounted, ignore */ }
+    try { app.unmount() } catch { /* already unmounted, ignore */ }
   })
   pdfViewerApps.length = 0
   

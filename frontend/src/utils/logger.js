@@ -62,7 +62,7 @@ function addToStorage(level, message, data) {
   // 同时保存到 localStorage
   try {
     localStorage.setItem('woniunote_logs', JSON.stringify(logStorage.slice(-50)))
-  } catch (e) {
+  } catch {
     // localStorage 可能已满
   }
 }
@@ -178,7 +178,7 @@ export function getStoredLogs() {
   try {
     const stored = localStorage.getItem('woniunote_logs')
     return stored ? JSON.parse(stored) : []
-  } catch (e) {
+  } catch {
     return []
   }
 }
@@ -190,7 +190,7 @@ export function clearLogs() {
   logStorage.length = 0
   try {
     localStorage.removeItem('woniunote_logs')
-  } catch (e) {
+  } catch {
     // ignore
   }
 }

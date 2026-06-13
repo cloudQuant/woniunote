@@ -1,5 +1,7 @@
 # WoniuNote 文档中心
 
+> 说明：本目录主要保存旧 Flask/Python 阶段的历史文档、迁移记录和测试报告。当前 `dev_cpp` 主线是 C++ Drogon 后端 + Vue 3 前端；当前开发、测试与发布说明以根目录 `README.md`、`REFACTORING_GUIDE.md`、`CLAUDE.md`、`backend_cpp/`、`frontend/` 和 `.github/workflows/cpp-vue-ci.yml` 为准。
+
 欢迎来到WoniuNote项目文档中心！这里提供了完整的项目文档，帮助您快速了解、部署和使用WoniuNote。
 
 ---

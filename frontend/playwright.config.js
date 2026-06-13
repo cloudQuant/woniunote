@@ -14,7 +14,7 @@ import { defineConfig, devices } from '@playwright/test'
  * remove the per-test route mocks.
  */
 const PORT = process.env.E2E_PORT || 4173
-const BASE_URL = process.env.E2E_BASE_URL || `http://localhost:${PORT}`
+const BASE_URL = process.env.E2E_BASE_URL || `http://127.0.0.1:${PORT}`
 
 // Which browser projects to run. Default to chromium-only locally (so a bare
 // `npx playwright install chromium` is enough); set PW_BROWSERS=all in CI to
@@ -68,7 +68,7 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
+        command: `npm run build && npm run preview -- --host 127.0.0.1 --port ${PORT} --strictPort`,
         url: BASE_URL,
         timeout: 180000,
         reuseExistingServer: !process.env.CI

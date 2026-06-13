@@ -84,7 +84,6 @@ const numPages = ref(0)
 const scale = ref(1)
 const fitMode = ref('width') // 'width' 或 'manual'
 let pdfDoc = null
-let currentPage = null // 缓存当前页面对象
 
 /**
  * 计算适应宽度的缩放比例
@@ -118,7 +117,6 @@ async function renderPage(num) {
     error.value = ''
     
     const page = await pdfDoc.getPage(num)
-    currentPage = page
     
     // 如果是适应宽度模式，自动计算缩放比例
     if (fitMode.value === 'width') {

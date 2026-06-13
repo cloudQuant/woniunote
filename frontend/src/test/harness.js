@@ -9,7 +9,7 @@
  * and deterministic while still executing the component's own <script setup>
  * logic (the part we want coverage on).
  */
-import { vi } from 'vitest'
+import { afterEach, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { h } from 'vue'
 
@@ -25,6 +25,17 @@ export function installLocalStorage() {
   })()
   vi.stubGlobal('localStorage', memoryStore)
   return memoryStore
+}
+
+export function silenceExpectedConsole(methods = ['log', 'warn', 'error']) {
+  let spies = []
+  beforeEach(() => {
+    spies = methods.map((method) => vi.spyOn(console, method).mockImplementation(() => {}))
+  })
+  afterEach(() => {
+    spies.forEach((spy) => spy.mockRestore())
+    spies = []
+  })
 }
 
 // A permissive stub that renders its default slot inside a div. Good enough to
@@ -57,7 +68,7 @@ const EP_COMPONENTS = [
   'el-radio', 'el-radio-button', 'el-checkbox', 'el-image', 'el-upload', 'el-badge',
   'el-divider', 'el-skeleton', 'el-skeleton-item', 'el-result', 'el-breadcrumb', 'el-breadcrumb-item',
   'el-menu', 'el-menu-item', 'el-descriptions', 'el-descriptions-item', 'el-link',
-  'el-rate', 'el-tooltip', 'el-alert'
+  'el-rate', 'el-tooltip', 'el-alert', 'el-cascader', 'el-input-number', 'el-button-group'
 ]
 
 export function globalStubs(extra = {}) {

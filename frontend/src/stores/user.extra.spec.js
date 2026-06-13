@@ -19,7 +19,7 @@ const api = vi.hoisted(() => ({
     data: { access_token: 'a', refresh_token: 'r', user: { userid: 1, role: 'editor' } }
   }))
 }))
-const { getMe, register, login } = api
+const { getMe, register } = api
 vi.mock('@/api', () => ({
   authApi: { login: api.login, register: api.register, getMe: api.getMe }
 }))

@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { installLocalStorage, mountOptions } from '@/test/harness'
+import { installLocalStorage, mountOptions, silenceExpectedConsole } from '@/test/harness'
 
 installLocalStorage()
+silenceExpectedConsole(['error'])
 
 const push = vi.fn()
 vi.mock('vue-router', () => ({

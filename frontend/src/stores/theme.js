@@ -38,7 +38,7 @@ function resolveInitialTheme() {
   try {
     const saved = localStorage.getItem(THEME_STORAGE_KEY)
     if (saved && THEME_KEYS.includes(saved)) return saved
-  } catch (e) {
+  } catch {
     // localStorage 不可用（隐私模式等），忽略
   }
   // 首次访问：跟随系统明暗偏好挑默认
@@ -46,7 +46,7 @@ function resolveInitialTheme() {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'linear' // 暗色默认
     }
-  } catch (e) {
+  } catch {
     // 忽略
   }
   return DEFAULT_THEME
@@ -88,7 +88,7 @@ export const useThemeStore = defineStore('theme', {
       applyThemeToDom(key)
       try {
         localStorage.setItem(THEME_STORAGE_KEY, key)
-      } catch (e) {
+      } catch {
         // localStorage 不可用，忽略
       }
     },

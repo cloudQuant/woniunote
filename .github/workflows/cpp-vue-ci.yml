@@ -1,7 +1,7 @@
 name: WoniuNote C++/Vue CI
 
 # CI for the active dev_cpp stack: C++ Drogon backend + Vue 3 frontend.
-# The legacy Flask CI lives in ci.yml and is unaffected.
+# Legacy Flask workflows are manual no-op notices and do not run automatically.
 
 on:
   push:
@@ -10,9 +10,38 @@ on:
     branches: [ dev_cpp, master, main ]
 
 jobs:
+  repo-hygiene:
+    name: Repo hygiene (tracked secrets + generated artifacts)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Block tracked secrets and generated artifacts
+        run: |
+          set -euo pipefail
+          tracked="$(
+            {
+              git ls-files '*.key' '*.pem' '*.crt' '*.csr'
+              git ls-files backups
+              git ls-files coverage.json coverage.xml
+              git ls-files tests/test_db
+              git ls-files configs/mysql_test_config.yaml tests/configs/user_password_config.yaml
+            } | sort -u
+          )"
+          if [ -n "$tracked" ]; then
+            echo "The following sensitive/generated files are tracked and must be removed:" >&2
+            echo "$tracked" >&2
+            exit 1
+          fi
+          if git grep -n -I -E 'BEGIN ((RSA|EC|OPENSSH) )?PRIVATE KEY' -- . ':!frontend/package-lock.json'; then
+            echo "Potential private key material found in tracked files." >&2
+            exit 1
+          fi
+
   backend-cpp:
     name: Backend (C++ build + tests)
     runs-on: ubuntu-latest
+    needs: repo-hygiene
     steps:
       - uses: actions/checkout@v4
 
@@ -52,6 +81,7 @@ jobs:
   backend-static-analysis:
     name: Backend (cppcheck static analysis)
     runs-on: ubuntu-latest
+    needs: repo-hygiene
     steps:
       - uses: actions/checkout@v4
 
@@ -77,6 +107,7 @@ jobs:
   frontend-vue:
     name: Frontend (build + vitest)
     runs-on: ubuntu-latest
+    needs: repo-hygiene
     steps:
       - uses: actions/checkout@v4
 
@@ -94,9 +125,9 @@ jobs:
       - name: Audit production dependencies (blocking)
         working-directory: frontend
         # Supply-chain gate: fail on high/critical advisories in *runtime*
-        # dependencies. Dev-only build-chain advisories (rollup/postcss via
-        # vite) are surfaced separately below but do not block.
-        run: npm audit --omit=dev --audit-level=high
+        # dependencies. Iteration 14 tightens this to moderate now that the
+        # PostCSS baseline is fixed in package-lock.
+        run: npm audit --omit=dev --audit-level=moderate
 
       - name: Audit all dependencies (advisory only)
         working-directory: frontend
@@ -104,8 +135,7 @@ jobs:
 
       - name: Lint
         working-directory: frontend
-        # Real bugs (errors) always fail; warnings are capped at the current
-        # baseline so they cannot silently grow.
+        # Iteration 14 drives the warning baseline to zero.
         run: npm run lint:ci
 
       - name: Run unit tests
@@ -120,6 +150,7 @@ jobs:
   frontend-e2e:
     name: Frontend (Playwright E2E)
     runs-on: ubuntu-latest
+    needs: repo-hygiene
     steps:
       - uses: actions/checkout@v4
 
@@ -158,6 +189,7 @@ jobs:
   backend-integration:
     name: Backend (HTTP integration tests)
     runs-on: ubuntu-latest
+    needs: repo-hygiene
 
     # Live dependencies for the real backend: MySQL holds the isolated test
     # schema; Redis backs rate limiting and refresh-token rotation.

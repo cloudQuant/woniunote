@@ -59,7 +59,7 @@ async function refreshAccessToken() {
       return data.data.access_token
     }
     return null
-  } catch (e) {
+  } catch {
     return null
   }
 }

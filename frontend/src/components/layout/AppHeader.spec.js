@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { h } from 'vue'
 import fc from 'fast-check'
 import { mount, flushPromises } from '@vue/test-utils'
-import { installLocalStorage, mountOptions } from '@/test/harness'
+import { installLocalStorage, mountOptions, silenceExpectedConsole } from '@/test/harness'
 
 installLocalStorage()
+silenceExpectedConsole(['error'])
 
 const push = vi.fn()
 vi.mock('vue-router', () => ({
@@ -17,7 +18,7 @@ const m = vi.hoisted(() => ({
   logout: vi.fn(),
   fetchArticleTypes: vi.fn(() => Promise.resolve({}))
 }))
-const { msg, login, logout, fetchArticleTypes } = m
+const { msg, login, logout } = m
 
 vi.mock('element-plus', () => ({ ElMessage: m.msg }))
 

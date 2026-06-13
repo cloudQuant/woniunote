@@ -1,156 +1,85 @@
-# WoniuNote 项目重构指南
+# WoniuNote 重构现状指南
 
-## 重构概述
+## 当前结论
 
-本次重构将原有的 Flask 单体应用重构为前后端分离架构：
+WoniuNote 已从早期 Flask 单体架构演进到当前主线：
 
-- **前端**: Vue 3 + Vite + Element Plus + Pinia
-- **后端**: FastAPI + SQLAlchemy + MySQL + Redis
+- **前端**：Vue 3 + Vite + Element Plus + Pinia
+- **后端**：C++17 + Drogon + JWT + MySQL + Redis
+- **部署**：Nginx + HTTPS + systemd
 
-## 新项目结构
+历史上的 FastAPI 方案和根目录旧 Python/Flask 测试仅作为迁移背景参考，不是当前 `dev_cpp` 分支的开发目标。
 
-```
+## 当前项目结构
+
+```text
 woniunote/
-├── backend/                 # FastAPI 后端
-│   ├── app/
-│   │   ├── api/            # API 路由
-│   │   ├── core/           # 核心配置
-│   │   ├── models/         # 数据库模型
-│   │   └── schemas/        # Pydantic Schema
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/                # Vue 3 前端
+├── backend_cpp/                 # 当前 C++ Drogon 后端
+│   ├── controllers/             # API 控制器
+│   ├── core/                    # 配置、数据库、安全、日志
+│   ├── filters/                 # 鉴权、管理员、限流过滤器
+│   ├── models/                  # 数据模型
+│   └── tests/                   # C++ 单元测试与 HTTP 集成测试
+├── frontend/                    # 当前 Vue 3 前端
 │   ├── src/
-│   │   ├── api/            # API 封装
-│   │   ├── components/     # 公共组件
-│   │   ├── router/         # 路由配置
-│   │   ├── stores/         # 状态管理
-│   │   └── views/          # 页面视图
-│   ├── package.json
-│   └── Dockerfile.new
-├── woniunote/               # 旧版 Flask 应用（待删除）
-├── docker-compose.new.yml   # Docker 编排配置
-└── REFACTORING_GUIDE.md     # 本指南
+│   └── e2e/                     # Playwright 端到端测试
+├── scripts/sql/                 # MySQL 表结构与迁移脚本
+├── configs/                     # Nginx/systemd/示例配置
+├── tests/                       # legacy Flask 测试归档
+└── _bmad-output/                # BMad 规划与实施产物
 ```
 
-## 快速开始
+## 当前开发与验证命令
 
-### 1. 启动后端
+### 后端
 
 ```bash
-cd backend
+cd backend_cpp
+./build.sh
 
-# 创建虚拟环境
-python -m venv venv
-.\venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 配置环境变量
-cp .env.example .env
-# 编辑 .env 文件配置数据库等
-
-# 启动服务
-uvicorn app.main:app --reload --port 8000
+cd build
+ctest --output-on-failure
 ```
 
-### 2. 启动前端
+后端 HTTP 集成测试需要测试 MySQL 和 Redis：
+
+```bash
+bash backend_cpp/tests/integration/run_integration.sh
+```
+
+如本机 MySQL root 需要密码，先设置：
+
+```bash
+export WONIUNOTE_TEST_DB_USER=root
+export WONIUNOTE_TEST_DB_PASSWORD='<password>'
+```
+
+### 前端
 
 ```bash
 cd frontend
-
-# 安装依赖
 npm install
-
-# 启动开发服务器
-npm run dev
+npm run lint:ci
+npm run test:coverage
+npm run build
+npm run test:e2e
 ```
 
-### 3. 使用 Docker Compose
+## 配置与密钥策略
 
-```bash
-# 使用新的 docker-compose 配置
-docker-compose -f docker-compose.new.yml up -d
-```
+- 真实证书、私钥、数据库密码、JWT secret 不入库。
+- `configs/yunjinqi.top_nginx/` 是本地/服务器证书目录，部署时由运维环境提供。
+- C++ 后端本地私有覆盖配置使用 `backend_cpp/config.local.json`，该文件不入库。
+- 生产环境必须通过环境变量提供强随机 `WONIUNOTE_JWT_SECRET`。
 
-## 功能对照
+如果证书或私钥曾经被提交到远端仓库，应按泄露处理：轮换证书/私钥，并评估是否需要重写 Git 历史。
 
-| 原功能 | 新前端路由 | 新API端点 |
-|-------|-----------|----------|
-| 首页 | `/` | `GET /api/articles/` |
-| 文章详情 | `/article/:id` | `GET /api/articles/:id` |
-| 分类浏览 | `/category/:type` | `GET /api/articles/?type=` |
-| 搜索 | `/search?keyword=` | `GET /api/articles/?keyword=` |
-| 登录 | `/login` | `POST /api/auth/login` |
-| 注册 | `/register` | `POST /api/auth/register` |
-| 个人中心 | `/user` | `GET /api/auth/me` |
-| 写文章 | `/write` | `POST /api/articles/` |
-| 评论 | - | `POST /api/comments/` |
-| 收藏 | - | `POST /api/favorites/` |
+## Legacy 边界
 
-## API 文档
+以下内容仅供迁移背景或历史维护参考：
 
-启动后端后访问：
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- 根目录 `tests/` 中的旧 Flask 测试。
+- `requirements.txt` / `setup.py` 中面向旧 Python 包的配置。
+- `docs/others/` 中大量旧 Flask 性能、覆盖率和部署报告。
 
-## 数据库迁移
-
-新系统使用相同的数据库表结构，可以直接复用现有数据。
-
-主要表：
-- `users` - 用户表
-- `article` - 文章表
-- `comment` - 评论表
-- `favorite` - 收藏表
-- `credit` - 积分表
-
-## 认证方式变更
-
-- **旧系统**: Flask Session + Cookie
-- **新系统**: JWT Token (Bearer)
-
-前端会自动在请求头中携带 Token：
-```
-Authorization: Bearer <token>
-```
-
-## 配置说明
-
-### 后端配置 (`.env`)
-
-```env
-DATABASE_URL=mysql+asyncmy://user:pass@localhost:3306/woniunote
-REDIS_URL=redis://localhost:6379/0
-SECRET_KEY=your-secret-key
-JWT_SECRET_KEY=jwt-secret-key
-CORS_ORIGINS=["http://localhost:5173"]
-```
-
-### 前端配置 (`vite.config.js`)
-
-开发时 API 代理已配置，生产部署时通过 Nginx 代理。
-
-## 待完成功能
-
-- [ ] 富文本编辑器集成（替代 UEditor）
-- [ ] 文件上传预览
-- [ ] 管理后台
-- [ ] 卡片中心
-- [ ] Todo 中心
-- [ ] 邮件通知
-
-## 清理旧代码
-
-完成迁移验证后，可删除以下目录：
-- `woniunote/` - 旧 Flask 应用
-- `tests/` - 旧测试（如需保留逻辑可迁移至 `backend/tests/`）
-
-## 注意事项
-
-1. **密码兼容**: 新系统同时支持 MD5 和 bcrypt 密码验证，确保旧用户可登录
-2. **文章类型**: 类型配置保持不变，前端会动态获取
-3. **静态资源**: 需要迁移 `woniunote/resource/` 中的上传文件
-4. **缩略图**: 新系统支持自动生成默认缩略图
+当前新功能和质量门禁应以 `backend_cpp/`、`frontend/`、`.github/workflows/cpp-vue-ci.yml` 为准。
