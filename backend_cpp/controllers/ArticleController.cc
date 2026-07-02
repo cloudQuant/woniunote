@@ -8,6 +8,7 @@
 #include "core/logger.h"
 #include "core/response.h"
 #include "models/Article.h"
+#include "models/ArticleCategory.h"
 #include <drogon/HttpResponse.h>
 #include <sstream>
 #include <vector>
@@ -17,29 +18,30 @@ using namespace drogon;
 namespace woniunote {
 namespace controllers {
 
-// Article type configuration (matching Python backend)
-static const std::map<int, std::string> ARTICLE_TYPES = {
-    {1, "交易策略"}, {101, "CTA策略"}, {102, "统计套利"}, {103, "高频交易"},
-    {104, "因子策略"}, {105, "选股与择时"}, {106, "机器学习"}, {107, "深度学习"},
-    {2, "量化框架"}, {201, "backtrader"}, {202, "wondertrader"}, {203, "wtpy"},
-    {204, "pyfolio"}, {205, "alphalens"},
-    {3, "投资"}, {301, "股票"}, {302, "期货"}, {303, "期权"},
-    {304, "外汇"}, {305, "crypto"}, {306, "黄金"}, {307, "债券"},
-    {4, "理财"}, {401, "基金"}, {402, "保险"}, {403, "信托"},
-    {404, "银行理财"}, {405, "存款"},
-    {5, "区块链与defi"}, {501, "去中心化交易所"}, {502, "去中心化金融"}, {503, "去中心化借贷"},
-    {504, "去中心化治理"}, {505, "其他defi"}, {506, "区块链"}, {507, "比特币"}, {508, "以太坊"},
-    {6, "机器学习"}, {601, "tensorflow"}, {602, "pytorch"}, {603, "keras"},
-    {604, "scikit-learn"}, {605, "机器学习与交易"}, {606, "深度学习与交易"},
-    {7, "编程"}, {701, "python"}, {702, "c++"}, {703, "cython"},
-    {704, "java"}, {705, "javascript"}, {706, "swing"}, {707, "pybind11"},
-    {8, "笔记"}, {801, "幸福"}, {802, "金融"}, {803, "经济"},
-    {804, "哲学"}, {805, "历史"}, {806, "科技"}, {807, "读书笔记"},
-    {808, "其他笔记"}, {809, "个人知识库"},
-    {9, "教程"}, {901, "woniunote入门教程"}, {902, "backtrader基础教程"},
-    {903, "airflow入门教程"}, {904, "arrow入门教程"}, {905, "量化交易入门教程"},
-    {906, "机器学习入门教程"}, {907, "ib_tws_api入门教程"}
-};
+namespace {
+
+models::ArticleCategory categoryFromRow(const orm::Row& row) {
+    models::ArticleCategory category;
+    if (!row["id"].isNull()) category.id = row["id"].as<int>();
+    if (!row["parent_id"].isNull()) category.parentId = row["parent_id"].as<int>();
+    if (!row["name"].isNull()) category.name = row["name"].as<std::string>();
+    if (!row["sort_order"].isNull()) category.sortOrder = row["sort_order"].as<int>();
+    if (!row["visible"].isNull()) category.visible = row["visible"].as<int>() != 0;
+    if (!row["article_count"].isNull()) category.articleCount = row["article_count"].as<int>();
+    return category;
+}
+
+Json::Value categoryResponseData(const std::vector<models::ArticleCategory>& categories,
+                                 bool visibleOnly,
+                                 bool includeArticleCount) {
+    Json::Value data;
+    data["types"] = models::articleCategoryTypeMap(categories, visibleOnly);
+    data["flat"] = models::articleCategoryFlatJson(categories, visibleOnly, includeArticleCount);
+    data["tree"] = models::articleCategoryTreeJson(categories, visibleOnly, includeArticleCount);
+    return data;
+}
+
+} // namespace
 
 void ArticleController::list(const HttpRequestPtr& req,
                              std::function<void(const HttpResponsePtr&)>&& callback)
@@ -182,14 +184,29 @@ void ArticleController::getTypes(const HttpRequestPtr& req,
                                  std::function<void(const HttpResponsePtr&)>&& callback)
 {
     Logger::debug("[Article] GetTypes request");
-    Json::Value types(Json::objectValue);
-    for (const auto& [id, name] : ARTICLE_TYPES) {
-        types[std::to_string(id)] = name;
-    }
+    auto dbClient = Database::getClient();
 
-    Json::Value data;
-    data["types"] = types;
-    callback(Response::success(data));
+    dbClient->execSqlAsync(
+        "SELECT c.id, c.parent_id, c.name, c.sort_order, c.visible, COUNT(a.articleid) AS article_count "
+        "FROM article_category c "
+        "LEFT JOIN article a ON a.type = c.id "
+        "WHERE c.visible = 1 "
+        "GROUP BY c.id, c.parent_id, c.name, c.sort_order, c.visible "
+        "ORDER BY COALESCE(c.parent_id, 0), c.sort_order, c.id",
+        [callback](const orm::Result& result) {
+            std::vector<models::ArticleCategory> categories;
+            categories.reserve(result.size());
+            for (const auto& row : result) {
+                categories.push_back(categoryFromRow(row));
+            }
+            callback(Response::success(categoryResponseData(categories, true, false)));
+        },
+        [callback](const orm::DrogonDbException& e) {
+            Logger::warning("[Article] GetTypes DB fallback: " + std::string(e.base().what()));
+            const auto legacy = models::legacyArticleCategories();
+            callback(Response::success(categoryResponseData(legacy, true, false)));
+        }
+    );
 }
 
 void ArticleController::getHot(const HttpRequestPtr& req,

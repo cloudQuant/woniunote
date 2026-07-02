@@ -19,28 +19,37 @@
           <router-link to="/" class="nav-item">快捷导航</router-link>
           
           <!-- 带下拉菜单的分类导航 -->
-          <el-dropdown 
-            v-for="cat in categoriesWithSubs" 
-            :key="cat.id"
-            trigger="hover"
-            @command="handleCategoryClick"
-            class="nav-dropdown"
-          >
-            <span class="nav-item">
+          <template v-for="cat in categoriesWithSubs" :key="cat.id">
+            <el-dropdown
+              v-if="cat.subs.length > 0"
+              trigger="hover"
+              @command="handleCategoryClick"
+              class="nav-dropdown"
+            >
+              <span class="nav-item" @click="handleCategoryClick(cat.id)">
+                {{ cat.name }}
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    v-for="sub in cat.subs"
+                    :key="sub.id"
+                    :command="sub.id"
+                  >
+                    {{ sub.label }}
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+            <button
+              v-else
+              type="button"
+              class="nav-item nav-button"
+              @click="handleCategoryClick(cat.id)"
+            >
               {{ cat.name }}
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item 
-                  v-for="sub in cat.subs" 
-                  :key="sub.id"
-                  :command="sub.id"
-                >
-                  {{ sub.name }}
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+            </button>
+          </template>
         </nav>
         
         <div class="nav-right">
@@ -221,39 +230,57 @@ const loginRules = {
 }
 
 /**
- * 计算带子分类的分类列表
- * 将扁平的分类数据转换为层级结构（主分类 -> 子分类）
+ * 计算带子分类的分类列表。
+ * 优先使用后端返回的分类树；没有 tree 时由 store 用旧 ID 规则兜底。
  */
 const categoriesWithSubs = computed(() => {
-  const types = articleStore.articleTypes
-  const result = []
-  
-  // 获取主分类（ID < 100）
-  const mainIds = Object.keys(types)
-    .filter(id => parseInt(id) < 100)
-    .sort((a, b) => parseInt(a) - parseInt(b))
-  
-  for (const mainId of mainIds) {
-    const id = parseInt(mainId)
-    const subs = []
-    
-    // 获取子分类（ID 在 mainId*100 到 (mainId+1)*100 之间）
-    for (const [subId, subName] of Object.entries(types)) {
-      const sid = parseInt(subId)
-      if (sid >= id * 100 && sid < (id + 1) * 100) {
-        subs.push({ id: sid, name: subName })
-      }
-    }
-    
-    result.push({
-      id,
-      name: types[mainId],
-      subs
-    })
-  }
-  
-  return result
+  const sourceTree = articleStore.articleTypeTree?.length
+    ? articleStore.articleTypeTree
+    : buildTreeFromTypes(articleStore.articleTypes || {})
+  return sourceTree.map((cat) => ({
+    id: cat.id,
+    name: cat.name,
+    subs: flattenMenuNodes(cat.children || [])
+  }))
 })
+
+function buildTreeFromTypes(types) {
+  const roots = []
+  const byId = new Map()
+  for (const [rawId, name] of Object.entries(types)) {
+    const id = parseInt(rawId)
+    byId.set(id, { id, name, children: [] })
+  }
+  for (const node of byId.values()) {
+    const parentId = node.id >= 100 ? Math.floor(node.id / 100) : null
+    if (parentId && byId.has(parentId)) {
+      byId.get(parentId).children.push(node)
+    } else {
+      roots.push(node)
+    }
+  }
+  const sortById = (nodes) => {
+    nodes.sort((a, b) => a.id - b.id)
+    nodes.forEach((node) => sortById(node.children || []))
+    return nodes
+  }
+  return sortById(roots)
+}
+
+function flattenMenuNodes(nodes, depth = 0) {
+  const result = []
+  for (const node of nodes) {
+    result.push({
+      id: node.id,
+      name: node.name,
+      label: `${'　'.repeat(depth)}${node.name}`
+    })
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      result.push(...flattenMenuNodes(node.children, depth + 1))
+    }
+  }
+  return result
+}
 
 // 初始化
 onMounted(async () => {
@@ -457,6 +484,12 @@ function handleUserCommand(command) {
   align-items: center;
   gap: var(--wn-space-1);
   cursor: pointer;
+}
+
+.nav-button {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
 }
 
 .nav-item:hover {

@@ -29,7 +29,16 @@ vi.mock('@/stores/user', () => ({
 vi.mock('@/stores/article', () => ({
   useArticleStore: () => ({
     fetchArticleTypes: m.fetchArticleTypes,
-    articleTypes: { 1: '交易策略', 101: '股票策略', 102: '期货策略', 2: '量化框架', 201: 'vnpy' }
+    articleTypes: { 1: '交易策略', 101: '股票策略', 102: '期货策略', 2: '量化框架', 201: 'vnpy' },
+    articleTypeTree: [
+      { id: 1, name: '交易策略', children: [
+        { id: 101, name: '股票策略', children: [] },
+        { id: 102, name: '期货策略', children: [] }
+      ] },
+      { id: 2, name: '量化框架', children: [
+        { id: 201, name: 'vnpy', children: [] }
+      ] }
+    ]
   })
 }))
 

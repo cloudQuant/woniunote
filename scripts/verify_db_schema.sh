@@ -38,6 +38,7 @@ EXPECTED_TABLES=(
     ["comment"]="commentid,userid,articleid,content,ipaddr,replyid,agreecount,opposecount,hidden,createtime,updatetime"
     ["favorite"]="favoriteid,userid,articleid,canceled,createtime,updatetime"
     ["credit"]="creditid,userid,category,target,credit,createtime,updatetime"
+    ["article_category"]="id,parent_id,name,sort_order,visible,createtime,updatetime"
     ["category"]="id,name"
     ["cardcategory"]="id,name"
     ["card"]="id,type,headline,content,createtime,updatetime,donetime,usedtime,begintime,endtime,cardcategory_id"
@@ -55,6 +56,7 @@ EXPECTED_INDEXES=(
     ["comment"]="PRIMARY,idx_userid,idx_articleid,idx_replyid,idx_createtime"
     ["favorite"]="PRIMARY,uk_user_article,idx_userid,idx_articleid"
     ["credit"]="PRIMARY,idx_userid,idx_category,idx_createtime"
+    ["article_category"]="PRIMARY,idx_parent_sort,idx_visible_sort"
     ["math_training_records"]="PRIMARY,idx_user_id,idx_difficulty,idx_created_at"
     ["math_training_wrong_answers"]="PRIMARY,idx_record_id,idx_user_id,idx_difficulty,idx_operation,idx_created_at"
 )

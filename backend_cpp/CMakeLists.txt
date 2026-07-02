@@ -71,6 +71,7 @@ set(MODEL_SOURCES
     models/Credit.cc
     models/CommentVote.cc
     models/MathTraining.cc
+    models/ArticleCategory.cc
 )
 
 set(CONTROLLER_SOURCES
@@ -164,4 +165,3 @@ endif()
 # Installation
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 install(FILES config.json DESTINATION etc/woniunote)
-

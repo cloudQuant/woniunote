@@ -4,7 +4,22 @@ import { setActivePinia, createPinia } from 'pinia'
 // Mock the API module so the store can be tested without network.
 vi.mock('@/api', () => ({
   articleApi: {
-    getTypes: vi.fn(() => Promise.resolve({ data: { types: { 1: '交易策略', 701: 'python' } } })),
+    getTypes: vi.fn(() => Promise.resolve({
+      data: {
+        types: { 1: '交易策略', 101: 'CTA策略', 701: 'python' },
+        flat: [
+          { id: 1, parent_id: null, name: '交易策略', sort_order: 10, visible: 1 },
+          { id: 101, parent_id: 1, name: 'CTA策略', sort_order: 10, visible: 1 },
+          { id: 701, parent_id: null, name: 'python', sort_order: 70, visible: 1 }
+        ],
+        tree: [
+          { id: 1, parent_id: null, name: '交易策略', sort_order: 10, visible: 1, children: [
+            { id: 101, parent_id: 1, name: 'CTA策略', sort_order: 10, visible: 1, children: [] }
+          ] },
+          { id: 701, parent_id: null, name: 'python', sort_order: 70, visible: 1, children: [] }
+        ]
+      }
+    })),
     getHot: vi.fn(() => Promise.resolve({
       data: { latest: [{ articleid: 1 }], most: [], recommended: [] }
     }))
@@ -36,6 +51,22 @@ describe('article store', () => {
     await store.fetchArticleTypes()
     expect(store.getTypeName(701)).toBe('python')
     expect(store.getTypeName(99999)).toBe('未知分类')
+  })
+
+  it('normalizes tree data for paths and cascader options', async () => {
+    const store = useArticleStore()
+    await store.fetchArticleTypes()
+    expect(store.articleTypeFlat).toHaveLength(3)
+    expect(store.articleTypeTree[0].children[0].id).toBe(101)
+    expect(store.getTypePath(101)).toEqual([1, 101])
+    expect(store.categoryOptions[0].children[0]).toEqual({ value: 101, label: 'CTA策略' })
+  })
+
+  it('refreshArticleTypes bypasses cache', async () => {
+    const store = useArticleStore()
+    await store.fetchArticleTypes()
+    await store.refreshArticleTypes()
+    expect(articleApi.getTypes).toHaveBeenCalledTimes(2)
   })
 
   it('fetchHotArticles populates hotArticles', async () => {

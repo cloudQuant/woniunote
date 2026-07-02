@@ -28,7 +28,15 @@ vi.mock('@/api', () => ({ articleApi: m.articleApi, uploadApi: m.uploadApi }))
 vi.mock('@/stores/article', () => ({
   useArticleStore: () => ({
     fetchArticleTypes: vi.fn(() => Promise.resolve({})),
-    articleTypes: { 1: '交易策略', 101: '股票策略', 102: '期货策略', 2: '量化框架' }
+    articleTypes: { 1: '交易策略', 101: '股票策略', 102: '期货策略', 2: '量化框架' },
+    categoryOptions: [
+      { value: 1, label: '交易策略', children: [
+        { value: 101, label: '股票策略' },
+        { value: 102, label: '期货策略' }
+      ] },
+      { value: 2, label: '量化框架' }
+    ],
+    getTypePath: vi.fn((type) => (type >= 100 ? [Math.floor(type / 100), type] : [type]))
   })
 }))
 vi.mock('@/components/editor/UEditor.vue', () => ({

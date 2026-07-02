@@ -142,45 +142,7 @@ const rules = {
 }
 
 const categoryOptions = computed(() => {
-  const types = articleStore.articleTypes
-  const options = []
-  const mainCategories = {}
-  
-  // 分组
-  for (const [id, name] of Object.entries(types)) {
-    const typeId = parseInt(id)
-    if (typeId < 100) {
-      mainCategories[typeId] = {
-        value: typeId,
-        label: name,
-        children: []
-      }
-    }
-  }
-  
-  // 添加子分类
-  for (const [id, name] of Object.entries(types)) {
-    const typeId = parseInt(id)
-    if (typeId >= 100) {
-      const mainId = Math.floor(typeId / 100)
-      if (mainCategories[mainId]) {
-        mainCategories[mainId].children.push({
-          value: typeId,
-          label: name
-        })
-      }
-    }
-  }
-  
-  // 转换为数组
-  for (const category of Object.values(mainCategories)) {
-    if (category.children.length === 0) {
-      delete category.children
-    }
-    options.push(category)
-  }
-  
-  return options
+  return articleStore.categoryOptions || []
 })
 
 function onTypeChange(value) {
@@ -268,13 +230,7 @@ async function fetchArticle() {
     form.credit = article.credit
     form.drafted = article.drafted
     
-    // 设置级联选择器的值
-    const mainType = Math.floor(article.type / 100)
-    if (article.type >= 100) {
-      form.typeArray = [mainType, article.type]
-    } else {
-      form.typeArray = [article.type]
-    }
+    form.typeArray = articleStore.getTypePath(article.type)
   } catch (error) {
     console.error('获取文章失败:', error)
     ElMessage.error('文章不存在')

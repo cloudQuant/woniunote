@@ -221,7 +221,19 @@
         </el-table-column>
         <el-table-column label="类型" width="120">
           <template #default="{ row }">
-            {{ getTypeName(row.type) }}
+            <el-select
+              :model-value="row.type"
+              size="small"
+              filterable
+              @change="(value) => handleArticleTypeChange(row, value)"
+            >
+              <el-option
+                v-for="item in articleCategoryOptions"
+                :key="item.id"
+                :label="item.label"
+                :value="item.id"
+              />
+            </el-select>
           </template>
         </el-table-column>
         <el-table-column prop="readcount" label="阅读" width="80" />
@@ -265,6 +277,9 @@
       </div>
     </div>
       </el-tab-pane>
+      <el-tab-pane label="菜单分类" name="categories">
+        <ArticleCategoryManager @changed="handleCategoriesChanged" />
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -282,7 +297,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useArticleStore } from '@/stores/article'
-import { articleApi, systemApi } from '@/api'
+import { adminApi, articleApi, systemApi } from '@/api'
+import ArticleCategoryManager from '@/views/admin/ArticleCategoryManager.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -314,10 +330,14 @@ const systemStatus = ref({})
 const lastUpdateTime = ref('')
 
 const articleTypes = computed(() => articleStore.articleTypes)
-
-function getTypeName(typeId) {
-  return articleStore.getTypeName(typeId) || '未分类'
-}
+const articleCategoryOptions = computed(() => {
+  return (articleStore.articleTypeFlat || [])
+    .filter((item) => item.visible !== 0)
+    .map((item) => ({
+      id: item.id,
+      label: `${item.parent_id ? '　' : ''}${item.name}`
+    }))
+})
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
@@ -406,6 +426,24 @@ async function toggleRecommend(article) {
   } catch (error) {
     ElMessage.error(error.message || '操作失败')
   }
+}
+
+async function handleArticleTypeChange(article, type) {
+  if (article.type === type) return
+  const previousType = article.type
+  article.type = type
+  try {
+    await adminApi.updateArticleType(article.articleid, type)
+    ElMessage.success('分类已更新')
+  } catch (error) {
+    article.type = previousType
+    ElMessage.error(error.message || '分类更新失败')
+  }
+}
+
+async function handleCategoriesChanged() {
+  await articleStore.refreshArticleTypes()
+  fetchArticles()
 }
 
 async function handleDelete(article) {

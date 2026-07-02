@@ -341,6 +341,18 @@ export const adminApi = {
   getStats: () => api.get('/admin/stats'),
   /** 获取用户列表 */
   getUsers: (params) => api.get('/admin/users', { params }),
+  /** 获取管理员文章列表 */
+  getArticles: (params) => api.get('/admin/articles', { params }),
+  /** 获取文章分类/菜单节点 */
+  getArticleCategories: () => api.get('/admin/article-categories'),
+  /** 创建文章分类/菜单节点 */
+  createArticleCategory: (data) => api.post('/admin/article-categories', data),
+  /** 更新文章分类/菜单节点 */
+  updateArticleCategory: (id, data) => api.put(`/admin/article-categories/${id}`, data),
+  /** 删除文章分类/菜单节点 */
+  deleteArticleCategory: (id, params) => api.delete(`/admin/article-categories/${id}`, { params }),
+  /** 管理员切换文章分类 */
+  updateArticleType: (articleId, type) => api.put(`/admin/articles/${articleId}/type`, { type }),
   /** 切换文章隐藏状态 */
   toggleHide: (articleId) => api.post(`/articles/${articleId}/hide`),
   /** 切换文章审核状态 */

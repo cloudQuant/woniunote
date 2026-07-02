@@ -329,5 +329,21 @@ describe('api interceptors', () => {
       expect(apiInstance.get).toHaveBeenCalledWith('/system/health')
       expect(apiInstance.get).toHaveBeenCalledWith('/math-training/summary')
     })
+
+    it('admin category wrappers hit expected paths', () => {
+      adminApi.getArticles({ page: 1 })
+      adminApi.getArticleCategories()
+      adminApi.createArticleCategory({ name: '新分类' })
+      adminApi.updateArticleCategory(9, { name: '改名' })
+      adminApi.deleteArticleCategory(9, { move_articles_to: 1 })
+      adminApi.updateArticleType(7, 101)
+
+      expect(apiInstance.get).toHaveBeenCalledWith('/admin/articles', { params: { page: 1 } })
+      expect(apiInstance.get).toHaveBeenCalledWith('/admin/article-categories')
+      expect(apiInstance.post).toHaveBeenCalledWith('/admin/article-categories', { name: '新分类' })
+      expect(apiInstance.put).toHaveBeenCalledWith('/admin/article-categories/9', { name: '改名' })
+      expect(apiInstance.delete).toHaveBeenCalledWith('/admin/article-categories/9', { params: { move_articles_to: 1 } })
+      expect(apiInstance.put).toHaveBeenCalledWith('/admin/articles/7/type', { type: 101 })
+    })
   })
 })

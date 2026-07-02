@@ -14,9 +14,11 @@ add_executable(woniunote_tests
     test_security.cc
     test_upload_safety.cc
     test_response.cc
+    test_article_category.cc
     ${CMAKE_SOURCE_DIR}/core/security.cc
     ${CMAKE_SOURCE_DIR}/core/config.cc
     ${CMAKE_SOURCE_DIR}/core/logger.cc
+    ${CMAKE_SOURCE_DIR}/models/ArticleCategory.cc
 )
 
 target_include_directories(woniunote_tests PRIVATE
