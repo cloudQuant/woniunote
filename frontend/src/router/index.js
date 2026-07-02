@@ -110,8 +110,8 @@ const routes = [
       {
         path: 'categories',
         name: 'UserArticleCategories',
-        component: () => import('@/views/admin/ArticleCategoryManager.vue'),
-        meta: { title: '文章分类', requiresAdmin: true }
+        component: () => import('@/views/user/ArticleCategoryCenter.vue'),
+        meta: { title: '文章分类管理', requiresAdmin: true }
       }
     ]
   },

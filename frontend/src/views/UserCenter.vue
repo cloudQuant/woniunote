@@ -24,6 +24,10 @@
               <el-icon><Document /></el-icon>
               <span>我的文章</span>
             </el-menu-item>
+            <el-menu-item v-if="userStore.isAdmin" index="/user/categories">
+              <el-icon><Menu /></el-icon>
+              <span>分类管理</span>
+            </el-menu-item>
             <el-menu-item index="/user/favorites">
               <el-icon><Star /></el-icon>
               <span>我的收藏</span>
@@ -39,10 +43,6 @@
             <el-menu-item index="/user/drafts">
               <el-icon><EditPen /></el-icon>
               <span>我的草稿</span>
-            </el-menu-item>
-            <el-menu-item v-if="userStore.isAdmin" index="/user/categories">
-              <el-icon><Menu /></el-icon>
-              <span>文章分类</span>
             </el-menu-item>
           </el-menu>
         </div>

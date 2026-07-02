@@ -24,6 +24,40 @@ export const fixtures = {
     ],
     total: 2
   },
+  articleCategories: {
+    tree: [
+      {
+        id: 1,
+        parent_id: null,
+        name: '交易策略',
+        sort_order: 1,
+        visible: 1,
+        article_count: 0,
+        children: [
+          { id: 101, parent_id: 1, name: '股票策略', sort_order: 1, visible: 1, article_count: 1, children: [] },
+          { id: 102, parent_id: 1, name: '期货策略', sort_order: 2, visible: 1, article_count: 0, children: [] }
+        ]
+      },
+      {
+        id: 7,
+        parent_id: null,
+        name: '编程',
+        sort_order: 7,
+        visible: 1,
+        article_count: 0,
+        children: [
+          { id: 701, parent_id: 7, name: 'python', sort_order: 1, visible: 1, article_count: 1, children: [] }
+        ]
+      }
+    ],
+    flat: [
+      { id: 1, parent_id: null, name: '交易策略', sort_order: 1, visible: 1, article_count: 0 },
+      { id: 101, parent_id: 1, name: '股票策略', sort_order: 1, visible: 1, article_count: 1 },
+      { id: 102, parent_id: 1, name: '期货策略', sort_order: 2, visible: 1, article_count: 0 },
+      { id: 7, parent_id: null, name: '编程', sort_order: 7, visible: 1, article_count: 0 },
+      { id: 701, parent_id: 7, name: 'python', sort_order: 1, visible: 1, article_count: 1 }
+    ]
+  },
   articleDetail: {
     articleid: 1,
     headline: '量化投资入门',
@@ -130,6 +164,13 @@ export async function mockApi(page, options = {}) {
 
     if (path === '/admin/stats') return json({ users: 10, articles: 2, comments: 1 })
     if (path === '/admin/users') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...ok([fixtures.user, fixtures.adminUser]), total: 2 }) })
+    if (path === '/admin/articles' && method === 'GET') {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...ok(fixtures.articleList.data), total: fixtures.articleList.total }) })
+    }
+    if (path === '/admin/article-categories' && method === 'GET') return json(fixtures.articleCategories)
+    if (/^\/admin\/articles\/\d+\/type$/.test(path) && method === 'PUT') {
+      return json({ type: req.postDataJSON()?.type }, '分类已更新')
+    }
 
     if (path === '/system/health') return json({ status: 'ok' })
 

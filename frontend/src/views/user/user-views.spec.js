@@ -21,7 +21,6 @@ vi.mock('element-plus', () => ({
 const api = vi.hoisted(() => ({
   articleApi: {
     getMyList: vi.fn(() => Promise.resolve({ data: [{ articleid: 1, headline: 'A', type: 1, drafted: 0 }], total: 1 })),
-    updateType: vi.fn(() => Promise.resolve({ data: { type: 101 } })),
     delete: vi.fn(() => Promise.resolve({}))
   },
   myCommentApi: { getMyComments: vi.fn(() => Promise.resolve({ data: [{ commentid: 5, content: 'hi', article_id: 2 }], total: 1 })) },
@@ -92,33 +91,6 @@ describe('MyArticles.vue', () => {
     await flushPromises()
     expect(api.articleApi.getMyList).toHaveBeenCalled()
     expect(wrapper.vm.loading).toBe(false)
-  })
-
-  it('changes an article category from the personal center', async () => {
-    const wrapper = mount(MyArticles, mountOptions())
-    await flushPromises()
-    await wrapper.vm.changeArticleType(wrapper.vm.articles[0], 101)
-    expect(api.articleApi.updateType).toHaveBeenCalledWith(1, 101)
-    expect(wrapper.vm.articles[0].type).toBe(101)
-    expect(success).toHaveBeenCalledWith('分类已更新')
-  })
-
-  it('ignores empty or unchanged article category changes', async () => {
-    const wrapper = mount(MyArticles, mountOptions())
-    await flushPromises()
-    const article = wrapper.vm.articles[0]
-    await wrapper.vm.changeArticleType(article, 0)
-    await wrapper.vm.changeArticleType(article, article.type)
-    expect(api.articleApi.updateType).not.toHaveBeenCalled()
-  })
-
-  it('reverts the article category when update fails', async () => {
-    api.articleApi.updateType.mockRejectedValueOnce(new Error('update fail'))
-    const wrapper = mount(MyArticles, mountOptions())
-    await flushPromises()
-    await wrapper.vm.changeArticleType(wrapper.vm.articles[0], 101)
-    expect(wrapper.vm.articles[0].type).toBe(1)
-    expect(wrapper.vm.isTypeChanging(1)).toBe(false)
   })
 
   it('editArticle navigates to EditArticle', () => {

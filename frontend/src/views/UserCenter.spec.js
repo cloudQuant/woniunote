@@ -25,11 +25,14 @@ describe('UserCenter.vue', () => {
     localStorage.clear()
   })
 
-  it('shows article category management entry for admins', () => {
+  it('shows category management entry below my articles for admins', () => {
     localStorage.setItem('user', JSON.stringify({ nickname: 'admin', credit: 50, avatar: '', role: 'admin' }))
     localStorage.setItem('token', 'tok')
     const wrapper = mount(UserCenter, mountOptions())
-    expect(wrapper.text()).toContain('文章分类')
+    const text = wrapper.text()
+    expect(text).toContain('分类管理')
+    expect(text.indexOf('我的文章')).toBeLessThan(text.indexOf('分类管理'))
+    expect(text.indexOf('分类管理')).toBeLessThan(text.indexOf('我的收藏'))
     localStorage.clear()
   })
 })
