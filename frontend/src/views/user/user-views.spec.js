@@ -55,6 +55,14 @@ vi.mock('@/stores/article', () => ({
   useArticleStore: () => articleStoreMock
 }))
 
+vi.mock('./ArticleCategoryCenter.vue', () => ({
+  default: {
+    name: 'ArticleCategoryCenter',
+    props: ['showHeader'],
+    template: '<div class="category-center-stub">分类管理</div>'
+  }
+}))
+
 import MyArticles from './MyArticles.vue'
 import MyComments from './MyComments.vue'
 import MyDrafts from './MyDrafts.vue'
@@ -64,6 +72,7 @@ import Profile from './Profile.vue'
 
 beforeEach(() => {
   vi.clearAllMocks()
+  localStorage.clear()
   articleStoreMock.fetchArticleTypes.mockReset()
   articleStoreMock.fetchArticleTypes.mockResolvedValue({})
   articleStoreMock.getTypeName.mockImplementation((id) => `type-${id}`)
@@ -91,6 +100,16 @@ describe('MyArticles.vue', () => {
     await flushPromises()
     expect(api.articleApi.getMyList).toHaveBeenCalled()
     expect(wrapper.vm.loading).toBe(false)
+  })
+
+  it('shows category management tab on the articles page for admins', async () => {
+    localStorage.setItem('user', JSON.stringify({ userid: 1, role: 'admin', nickname: 'admin' }))
+    localStorage.setItem('token', 'tok')
+    const wrapper = mount(MyArticles, mountOptions())
+    await flushPromises()
+    expect(wrapper.vm.userStore.isAdmin).toBe(true)
+    expect(wrapper.find('.category-center-stub').exists()).toBe(true)
+    expect(wrapper.text()).toContain('分类管理')
   })
 
   it('editArticle navigates to EditArticle', () => {

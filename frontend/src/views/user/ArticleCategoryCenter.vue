@@ -1,6 +1,6 @@
 <template>
   <div class="article-category-center">
-    <div class="page-header">
+    <div v-if="showHeader" class="page-header">
       <h3 class="page-title">文章分类管理</h3>
       <el-button :icon="Refresh" @click="refreshAll" :loading="loading || refreshingTypes">
         刷新
@@ -114,6 +114,13 @@ import { Edit, Refresh } from '@element-plus/icons-vue'
 import { adminApi } from '@/api'
 import { useArticleStore } from '@/stores/article'
 import ArticleCategoryManager from '@/views/admin/ArticleCategoryManager.vue'
+
+defineProps({
+  showHeader: {
+    type: Boolean,
+    default: true
+  }
+})
 
 const articleStore = useArticleStore()
 
