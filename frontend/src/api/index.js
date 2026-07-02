@@ -52,7 +52,7 @@ async function refreshAccessToken() {
   const rt = userStore.refreshToken
   if (!rt) return null
   try {
-    const resp = await axios.post('/api/auth/refresh', { refresh_token: rt })
+    const resp = await axios.post('/api/auth/refresh', { refresh_token: rt }, { timeout: 5000 })
     const data = resp.data
     if (data?.code === 200 && data.data?.access_token) {
       userStore.setTokens(data.data.access_token, data.data.refresh_token)

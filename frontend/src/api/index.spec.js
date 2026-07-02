@@ -226,7 +226,7 @@ describe('api interceptors', () => {
         config: { method: 'get', url: '/articles/my', headers: {} }
       }
       const out = await handlers.responseRejected(error)
-      expect(postMock).toHaveBeenCalledWith('/api/auth/refresh', { refresh_token: 'r1' })
+      expect(postMock).toHaveBeenCalledWith('/api/auth/refresh', { refresh_token: 'r1' }, { timeout: 5000 })
       expect(userStore.setTokens).toHaveBeenCalledWith('new-acc', 'new-ref')
       // Original request replayed via api(config) → resolves to fake instance result.
       expect(out).toEqual({ replayed: true })

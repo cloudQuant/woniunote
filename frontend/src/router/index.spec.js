@@ -34,6 +34,7 @@ describe('router', () => {
     expect(names).toContain('ArticleDetail')
     expect(names).toContain('Login')
     expect(names).toContain('AdminDashboard')
+    expect(names).toContain('UserArticleCategories')
     expect(names).toContain('NotFound')
   })
 
@@ -65,6 +66,14 @@ describe('router', () => {
     store.user = { userid: 1, role: 'admin' }
     await router.push('/admin')
     expect(router.currentRoute.value.name).toBe('AdminDashboard')
+  })
+
+  it('allows admins into personal-center article category management', async () => {
+    const store = useUserStore()
+    store.token = 'tok'
+    store.user = { userid: 1, role: 'admin' }
+    await router.push('/user/categories')
+    expect(router.currentRoute.value.name).toBe('UserArticleCategories')
   })
 
   it('redirects logged-in users away from guest-only pages', async () => {

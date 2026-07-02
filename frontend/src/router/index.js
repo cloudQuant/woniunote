@@ -106,6 +106,12 @@ const routes = [
         name: 'UserDrafts',
         component: () => import('@/views/user/MyDrafts.vue'),
         meta: { title: '我的草稿' }
+      },
+      {
+        path: 'categories',
+        name: 'UserArticleCategories',
+        component: () => import('@/views/admin/ArticleCategoryManager.vue'),
+        meta: { title: '文章分类', requiresAdmin: true }
       }
     ]
   },

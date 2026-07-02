@@ -40,6 +40,10 @@
               <el-icon><EditPen /></el-icon>
               <span>我的草稿</span>
             </el-menu-item>
+            <el-menu-item v-if="userStore.isAdmin" index="/user/categories">
+              <el-icon><Menu /></el-icon>
+              <span>文章分类</span>
+            </el-menu-item>
           </el-menu>
         </div>
       </el-col>
@@ -62,7 +66,7 @@
  */
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { User, Document, Star, ChatDotRound, Coin, EditPen } from '@element-plus/icons-vue'
+import { User, Document, Star, ChatDotRound, Coin, EditPen, Menu } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()

@@ -14,6 +14,7 @@
 #include "core/response.h"
 #include <drogon/HttpResponse.h>
 #include <drogon/drogon.h>
+#include <atomic>
 #include <memory>
 
 using namespace drogon;
@@ -57,10 +58,34 @@ void RateLimitFilter::doFilter(const HttpRequestPtr& req,
 
     auto sharedChain = std::make_shared<FilterChainCallback>(std::move(chainCallback));
     auto sharedCallback = std::make_shared<FilterCallback>(std::move(callback));
+    auto completed = std::make_shared<std::atomic_bool>(false);
+
+    app().getLoop()->runAfter(1.0, [req, sharedCallback, sharedChain, completed, failClosed]() {
+        bool expected = false;
+        if (!completed->compare_exchange_strong(expected, true)) {
+            return;
+        }
+
+        Logger::warning("[RateLimit] Redis check timed out", {
+            {"ip", req->getPeerAddr().toIp()},
+            {"path", req->getPath()}
+        });
+        if (failClosed) {
+            (*sharedCallback)(Response::error(503, "服务暂时不可用，请稍后再试",
+                                              drogon::k503ServiceUnavailable));
+        } else {
+            (*sharedChain)();
+        }
+    });
 
     redisClient->execCommandAsync(
-        [req, sharedCallback, sharedChain, limit]
+        [req, sharedCallback, sharedChain, completed, limit]
         (const nosql::RedisResult& result) {
+            bool expected = false;
+            if (!completed->compare_exchange_strong(expected, true)) {
+                return;
+            }
+
             int64_t count = 0;
             if (result.type() == nosql::RedisResultType::kInteger) {
                 count = result.asInteger();
@@ -80,7 +105,12 @@ void RateLimitFilter::doFilter(const HttpRequestPtr& req,
 
             (*sharedChain)();
         },
-        [sharedCallback, sharedChain, failClosed](const nosql::RedisException& e) {
+        [sharedCallback, sharedChain, completed, failClosed](const nosql::RedisException& e) {
+            bool expected = false;
+            if (!completed->compare_exchange_strong(expected, true)) {
+                return;
+            }
+
             Logger::error("[RateLimit] Redis error: " + std::string(e.what()));
             if (failClosed) {
                 (*sharedCallback)(Response::error(503, "服务暂时不可用，请稍后再试",

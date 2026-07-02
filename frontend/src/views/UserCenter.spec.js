@@ -24,4 +24,12 @@ describe('UserCenter.vue', () => {
     expect(wrapper.find('.user-center-page').exists()).toBe(true)
     localStorage.clear()
   })
+
+  it('shows article category management entry for admins', () => {
+    localStorage.setItem('user', JSON.stringify({ nickname: 'admin', credit: 50, avatar: '', role: 'admin' }))
+    localStorage.setItem('token', 'tok')
+    const wrapper = mount(UserCenter, mountOptions())
+    expect(wrapper.text()).toContain('文章分类')
+    localStorage.clear()
+  })
 })
