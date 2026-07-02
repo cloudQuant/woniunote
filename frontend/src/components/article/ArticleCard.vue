@@ -204,7 +204,7 @@ const articleStore = useArticleStore()
 const themeStore = useThemeStore()
 
 // 缓存破坏版本号（更新缩略图后递增此值）
-const THUMB_VERSION = 'v2'
+const THUMB_VERSION = 'v3'
 
 /**
  * 计算缩略图 URL

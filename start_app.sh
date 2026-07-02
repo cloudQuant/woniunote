@@ -52,7 +52,14 @@ sleep 1
 # 生成缩略图
 echo "[3/5] 生成文章缩略图..."
 if [ -f "$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py" ]; then
-    python3 "$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py" > /dev/null 2>&1
+    CONDA_BIN="${CONDA_EXE:-/Users/yunjinqi/opt/anaconda3/bin/conda}"
+    if [ -x "$CONDA_BIN" ]; then
+        "$CONDA_BIN" run -n base python "$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py" > /dev/null 2>&1
+    elif command -v conda > /dev/null 2>&1; then
+        conda run -n base python "$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py" > /dev/null 2>&1
+    else
+        python3 "$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py" > /dev/null 2>&1
+    fi
     echo "     缩略图生成完成"
 else
     echo "     跳过缩略图生成（脚本不存在）"

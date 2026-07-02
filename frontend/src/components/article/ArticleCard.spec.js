@@ -161,6 +161,7 @@ describe('ArticleCard.vue —— 缩略图三级回退与主题响应式', () =>
     const url = wrapper.vm.thumbnailUrl
     expect(url.startsWith('/api/thumb/')).toBe(true)
     expect(url).toContain('101.png')
+    expect(url).toContain('v3')
     expect(url.startsWith(DATA_URI_PREFIX)).toBe(false)
   })
 
