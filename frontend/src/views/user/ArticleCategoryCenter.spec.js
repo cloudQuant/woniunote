@@ -95,6 +95,14 @@ describe('ArticleCategoryCenter.vue', () => {
     expect(wrapper.vm.total).toBe(25)
   })
 
+  it('can open category maintenance as the initial tab', async () => {
+    const wrapper = mount(ArticleCategoryCenter, mountOptions({ props: { initialTab: 'categories' } }))
+    await flushPromises()
+
+    expect(wrapper.vm.activeTab).toBe('categories')
+    expect(wrapper.text()).toContain('分类维护')
+  })
+
   it('filters articles by selected category', async () => {
     const wrapper = mount(ArticleCategoryCenter, mountOptions())
     await flushPromises()

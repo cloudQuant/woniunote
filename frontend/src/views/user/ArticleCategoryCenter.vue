@@ -124,12 +124,17 @@ const props = defineProps({
     type: String,
     default: 'mine',
     validator: (value) => ['mine', 'admin'].includes(value)
+  },
+  initialTab: {
+    type: String,
+    default: 'articles',
+    validator: (value) => ['articles', 'categories'].includes(value)
   }
 })
 
 const articleStore = useArticleStore()
 
-const activeTab = ref('articles')
+const activeTab = ref(props.initialTab)
 const articles = ref([])
 const selectedArticles = ref([])
 const loading = ref(false)

@@ -8,6 +8,37 @@
       </div>
     </div>
 
+    <div v-if="flatRows.length > 0" class="category-overview">
+      <div class="overview-item">
+        <span>当前分类</span>
+        <strong>{{ flatRows.length }}</strong>
+      </div>
+      <div class="overview-item">
+        <span>顶级分类</span>
+        <strong>{{ rootCategoryCount }}</strong>
+      </div>
+      <div class="overview-item">
+        <span>显示分类</span>
+        <strong>{{ visibleCategoryCount }}</strong>
+      </div>
+      <div class="overview-item">
+        <span>已关联文章</span>
+        <strong>{{ linkedArticleCount }}</strong>
+      </div>
+    </div>
+
+    <div v-if="categoryPathRows.length > 0" class="category-paths">
+      <span
+        v-for="row in categoryPathRows"
+        :key="row.id"
+        class="category-path-item"
+        :class="{ 'is-hidden': !row.visible }"
+      >
+        <span class="category-path-name">{{ row.path }}</span>
+        <span class="category-path-count">{{ Number(row.article_count || 0) }} 篇</span>
+      </span>
+    </div>
+
     <el-table :data="flatRows" row-key="id" stripe v-loading="loading">
       <el-table-column label="名称" min-width="220">
         <template #default="{ row }">
@@ -44,6 +75,8 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <el-empty v-if="!loading && flatRows.length === 0" description="暂无分类" />
 
     <el-dialog v-model="editorVisible" :title="editingId ? '编辑分类' : '新增分类'" width="520px">
       <el-form label-position="top">
@@ -120,6 +153,16 @@ const editForm = reactive({
 })
 
 const flatRows = computed(() => flattenRows(categoriesTree.value))
+const rootCategoryCount = computed(() => flatRows.value.filter((row) => !row.parent_id).length)
+const visibleCategoryCount = computed(() => flatRows.value.filter((row) => row.visible).length)
+const linkedArticleCount = computed(() => flatRows.value.reduce(
+  (sum, row) => sum + Number(row.article_count || 0),
+  0
+))
+const categoryPathRows = computed(() => flatRows.value.map((row) => ({
+  ...row,
+  path: buildCategoryPath(row)
+})))
 
 const parentOptions = computed(() => {
   const options = [{ id: 0, label: '顶级分类' }]
@@ -158,6 +201,50 @@ function flattenRows(nodes, depth = 0) {
   return rows
 }
 
+function buildTreeFromFlat(flat) {
+  const nodes = new Map()
+  const roots = []
+
+  for (const item of flat || []) {
+    nodes.set(item.id, { ...item, children: [], visible: item.visible !== 0 })
+  }
+
+  for (const node of nodes.values()) {
+    if (node.parent_id && nodes.has(node.parent_id)) {
+      nodes.get(node.parent_id).children.push(node)
+    } else {
+      roots.push(node)
+    }
+  }
+
+  const sortNodes = (items) => {
+    items.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || a.id - b.id)
+    for (const item of items) {
+      sortNodes(item.children || [])
+    }
+    return items
+  }
+
+  return sortNodes(roots)
+}
+
+function buildCategoryPath(row) {
+  const byId = new Map(categoriesFlat.value.map((item) => [item.id, item]))
+  if (byId.size === 0) {
+    return row.name
+  }
+
+  const names = []
+  const seen = new Set()
+  let current = row
+  while (current && !seen.has(current.id)) {
+    seen.add(current.id)
+    names.unshift(current.name)
+    current = current.parent_id ? byId.get(current.parent_id) : null
+  }
+  return names.join(' / ')
+}
+
 function isDescendant(candidateId, ancestorId) {
   const byId = new Map(categoriesFlat.value.map((item) => [item.id, item]))
   let current = byId.get(candidateId)
@@ -174,8 +261,12 @@ async function loadCategories() {
   loading.value = true
   try {
     const res = await adminApi.getArticleCategories()
-    categoriesTree.value = res.data.tree || []
-    categoriesFlat.value = res.data.flat || []
+    const flat = Array.isArray(res.data?.flat) ? res.data.flat : []
+    const tree = Array.isArray(res.data?.tree) && res.data.tree.length > 0
+      ? res.data.tree
+      : buildTreeFromFlat(flat)
+    categoriesFlat.value = flat
+    categoriesTree.value = tree
   } catch (error) {
     ElMessage.error(error.message || '获取分类失败')
   } finally {
@@ -321,6 +412,73 @@ onMounted(loadCategories)
   align-items: center;
 }
 
+.category-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.overview-item {
+  border: 1px solid var(--wn-color-border);
+  border-radius: var(--wn-radius-sm);
+  padding: 12px 14px;
+  min-width: 0;
+}
+
+.overview-item span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--wn-color-text-secondary);
+  font-size: 13px;
+}
+
+.overview-item strong {
+  color: var(--wn-color-text);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.category-paths {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 2px 2px 14px;
+  margin-bottom: 4px;
+}
+
+.category-path-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  border: 1px solid var(--wn-color-border);
+  border-radius: 16px;
+  padding: 5px 10px;
+  background: var(--wn-color-surface);
+  color: var(--wn-color-text);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.category-path-item.is-hidden {
+  color: var(--wn-color-text-secondary);
+  background: var(--wn-color-surface-soft);
+}
+
+.category-path-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-path-count {
+  flex: none;
+  color: var(--wn-color-text-secondary);
+}
+
 .category-name {
   display: inline-block;
   font-weight: 500;
@@ -340,6 +498,10 @@ onMounted(loadCategories)
 
   .category-actions {
     flex-wrap: wrap;
+  }
+
+  .category-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>

@@ -47,5 +47,17 @@ test.describe('User center', () => {
     await expect(page.locator('.article-category-center .el-pagination')).toBeVisible()
     await page.getByRole('tab', { name: '分类维护' }).click()
     await expect(page.getByText('文章菜单分类')).toBeVisible()
+    await expect(page.locator('.category-overview').getByText('当前分类')).toBeVisible()
+    await expect(page.getByText('交易策略 / 股票策略')).toBeVisible()
+    await expect(page.getByText('1 篇').first()).toBeVisible()
+  })
+
+  test('category route opens maintenance details directly', async ({ page }) => {
+    await page.goto('/user/categories')
+    await expect(page).toHaveURL(/\/user\/categories/)
+    await expect(page.getByText('文章菜单分类')).toBeVisible()
+    await expect(page.locator('.category-overview').getByText('当前分类')).toBeVisible()
+    await expect(page.getByText('交易策略 / 股票策略')).toBeVisible()
+    await expect(page.getByText('编程 / python')).toBeVisible()
   })
 })

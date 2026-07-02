@@ -76,6 +76,11 @@ describe('router', () => {
     expect(router.currentRoute.value.name).toBe('UserArticleCategories')
   })
 
+  it('opens the personal category route on the maintenance tab', () => {
+    const record = router.resolve('/user/categories').matched.at(-1)
+    expect(record.props.default).toEqual({ initialTab: 'categories' })
+  })
+
   it('redirects logged-in users away from guest-only pages', async () => {
     const store = useUserStore()
     store.token = 'tok'

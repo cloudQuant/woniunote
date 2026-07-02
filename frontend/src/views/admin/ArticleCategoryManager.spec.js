@@ -47,6 +47,36 @@ describe('ArticleCategoryManager.vue', () => {
     expect(wrapper.vm.flatRows.map((row) => [row.id, row.depth])).toEqual([[1, 0], [101, 1], [2, 0]])
   })
 
+  it('renders current category overview with paths and article counts', async () => {
+    const wrapper = mount(ArticleCategoryManager, mountOptions())
+    await flushPromises()
+
+    const text = wrapper.text()
+    expect(text).toContain('当前分类3')
+    expect(text).toContain('顶级分类2')
+    expect(text).toContain('已关联文章2')
+    expect(text).toContain('交易策略 / CTA策略')
+    expect(text).toContain('2 篇')
+  })
+
+  it('builds display rows from flat categories when tree is empty', async () => {
+    m.adminApi.getArticleCategories.mockResolvedValueOnce({
+      data: {
+        flat: [
+          { id: 1, parent_id: null, name: '交易策略', sort_order: 10, visible: 1, article_count: 0 },
+          { id: 101, parent_id: 1, name: 'CTA策略', sort_order: 10, visible: 1, article_count: 1 }
+        ],
+        tree: []
+      }
+    })
+
+    const wrapper = mount(ArticleCategoryManager, mountOptions())
+    await flushPromises()
+
+    expect(wrapper.vm.flatRows.map((row) => [row.id, row.depth])).toEqual([[1, 0], [101, 1]])
+    expect(wrapper.text()).toContain('交易策略 / CTA策略')
+  })
+
   it('creates a child category with selected parent', async () => {
     const wrapper = mount(ArticleCategoryManager, mountOptions())
     await flushPromises()

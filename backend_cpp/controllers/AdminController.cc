@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cctype>
 #include <optional>
+#include <sstream>
 #include <vector>
 
 using namespace drogon;
@@ -153,6 +154,123 @@ const std::string ARTICLE_CATEGORY_SELECT_SQL =
     "LEFT JOIN article a ON a.type = c.id "
     "GROUP BY c.id, c.parent_id, c.name, c.sort_order, c.visible "
     "ORDER BY COALESCE(c.parent_id, 0), c.sort_order, c.id";
+
+const std::string ARTICLE_CATEGORY_CREATE_SQL =
+    "CREATE TABLE IF NOT EXISTS article_category ("
+    "id INT NOT NULL AUTO_INCREMENT,"
+    "parent_id INT DEFAULT NULL COMMENT 'Parent category ID; NULL for root nodes',"
+    "name VARCHAR(64) NOT NULL COMMENT 'Category/menu node name',"
+    "sort_order INT NOT NULL DEFAULT 0 COMMENT 'Display order among siblings',"
+    "visible TINYINT(1) NOT NULL DEFAULT 1 COMMENT 'Whether shown in public navigation',"
+    "createtime DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation time',"
+    "updatetime DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',"
+    "PRIMARY KEY (id),"
+    "KEY idx_parent_sort (parent_id, visible, sort_order, id),"
+    "KEY idx_visible_sort (visible, sort_order, id),"
+    "CONSTRAINT fk_article_category_parent FOREIGN KEY (parent_id) "
+    "REFERENCES article_category (id) ON DELETE SET NULL"
+    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci "
+    "COMMENT='Article category/menu tree'";
+
+std::string sqlStringLiteral(const std::string& value) {
+    std::string escaped;
+    escaped.reserve(value.size() + 2);
+    escaped.push_back('\'');
+    for (char ch : value) {
+        if (ch == '\'' || ch == '\\') {
+            escaped.push_back(ch);
+        }
+        escaped.push_back(ch);
+    }
+    escaped.push_back('\'');
+    return escaped;
+}
+
+std::string legacyCategoryInsertSql(bool rootOnly) {
+    std::ostringstream sql;
+    sql << "INSERT IGNORE INTO article_category "
+        << "(id, parent_id, name, sort_order, visible) VALUES ";
+
+    bool first = true;
+    for (const auto& category : models::legacyArticleCategories()) {
+        const bool isRoot = !category.parentId.has_value();
+        if (isRoot != rootOnly) {
+            continue;
+        }
+        if (!first) {
+            sql << ",";
+        }
+        first = false;
+        sql << "(" << category.id << ",";
+        if (category.parentId.has_value()) {
+            sql << *category.parentId;
+        } else {
+            sql << "NULL";
+        }
+        sql << "," << sqlStringLiteral(category.name)
+            << "," << category.sortOrder
+            << "," << (category.visible ? 1 : 0)
+            << ")";
+    }
+    return sql.str();
+}
+
+void bootstrapArticleCategoryTable(const DbClientPtr& dbClient,
+                                   std::function<void()> onDone,
+                                   std::function<void(const orm::DrogonDbException&)> onError) {
+    dbClient->execSqlAsync(
+        ARTICLE_CATEGORY_CREATE_SQL,
+        [dbClient, onDone, onError](const orm::Result&) {
+            dbClient->execSqlAsync(
+                legacyCategoryInsertSql(true),
+                [dbClient, onDone, onError](const orm::Result&) {
+                    dbClient->execSqlAsync(
+                        legacyCategoryInsertSql(false),
+                        [onDone](const orm::Result&) { onDone(); },
+                        onError
+                    );
+                },
+                onError
+            );
+        },
+        onError
+    );
+}
+
+void applyLegacyArticleCounts(std::vector<models::ArticleCategory>& categories,
+                              const orm::Result& result) {
+    for (const auto& row : result) {
+        if (row["type"].isNull() || row["article_count"].isNull()) {
+            continue;
+        }
+        const int type = row["type"].as<int>();
+        const int articleCount = row["article_count"].as<int>();
+        for (auto& category : categories) {
+            if (category.id == type) {
+                category.articleCount = articleCount;
+                break;
+            }
+        }
+    }
+}
+
+void respondWithLegacyArticleCategories(const DbClientPtr& dbClient,
+                                        std::function<void(const HttpResponsePtr&)> callback) {
+    dbClient->execSqlAsync(
+        "SELECT type, COUNT(*) AS article_count FROM article GROUP BY type",
+        [callback](const orm::Result& result) {
+            auto categories = models::legacyArticleCategories();
+            applyLegacyArticleCounts(categories, result);
+            callback(Response::success(articleCategoryResponseData(categories, false, true)));
+        },
+        [callback](const orm::DrogonDbException& e) {
+            Logger::warning("[Admin] Legacy article category counts unavailable: " + std::string(e.base().what()));
+            callback(Response::success(articleCategoryResponseData(
+                models::legacyArticleCategories(), false, true
+            )));
+        }
+    );
+}
 } // namespace
 
 void AdminController::getStats(const HttpRequestPtr& req,
@@ -358,16 +476,44 @@ void AdminController::listArticleCategories(const HttpRequestPtr& req,
     Logger::debug("[Admin] List article categories request");
     auto dbClient = Database::getClient();
 
+    auto sendCategories = [callback](const orm::Result& result) {
+        callback(Response::success(articleCategoryResponseData(
+            articleCategoriesFromResult(result), false, true
+        )));
+    };
+
+    auto bootstrapAndReload = [callback, dbClient, sendCategories]() {
+        bootstrapArticleCategoryTable(
+            dbClient,
+            [callback, dbClient, sendCategories]() {
+                dbClient->execSqlAsync(
+                    ARTICLE_CATEGORY_SELECT_SQL,
+                    sendCategories,
+                    [callback, dbClient](const orm::DrogonDbException& e) {
+                        Logger::warning("[Admin] Reload article categories after bootstrap failed: " + std::string(e.base().what()));
+                        respondWithLegacyArticleCategories(dbClient, callback);
+                    }
+                );
+            },
+            [callback, dbClient](const orm::DrogonDbException& e) {
+                Logger::warning("[Admin] Bootstrap article categories failed: " + std::string(e.base().what()));
+                respondWithLegacyArticleCategories(dbClient, callback);
+            }
+        );
+    };
+
     dbClient->execSqlAsync(
         ARTICLE_CATEGORY_SELECT_SQL,
-        [callback](const orm::Result& result) {
-            callback(Response::success(articleCategoryResponseData(
-                articleCategoriesFromResult(result), false, true
-            )));
+        [sendCategories, bootstrapAndReload](const orm::Result& result) {
+            if (result.size() == 0) {
+                bootstrapAndReload();
+                return;
+            }
+            sendCategories(result);
         },
-        [callback](const orm::DrogonDbException& e) {
-            Logger::error("[Admin] List article categories failed: " + std::string(e.base().what()));
-            callback(Response::serverError("数据库错误"));
+        [bootstrapAndReload](const orm::DrogonDbException& e) {
+            Logger::warning("[Admin] List article categories needs bootstrap: " + std::string(e.base().what()));
+            bootstrapAndReload();
         }
     );
 }

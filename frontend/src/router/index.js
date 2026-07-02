@@ -111,6 +111,7 @@ const routes = [
         path: 'categories',
         name: 'UserArticleCategories',
         component: () => import('@/views/user/ArticleCategoryCenter.vue'),
+        props: { initialTab: 'categories' },
         meta: { title: '文章分类管理' }
       }
     ]

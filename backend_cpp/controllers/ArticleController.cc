@@ -202,6 +202,12 @@ void ArticleController::getTypes(const HttpRequestPtr& req,
         "GROUP BY c.id, c.parent_id, c.name, c.sort_order, c.visible "
         "ORDER BY COALESCE(c.parent_id, 0), c.sort_order, c.id",
         [callback](const orm::Result& result) {
+            if (result.size() == 0) {
+                const auto legacy = models::legacyArticleCategories();
+                callback(Response::success(categoryResponseData(legacy, true, false)));
+                return;
+            }
+
             std::vector<models::ArticleCategory> categories;
             categories.reserve(result.size());
             for (const auto& row : result) {
