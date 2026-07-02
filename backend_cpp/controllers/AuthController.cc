@@ -13,6 +13,7 @@
 #include "models/User.h"
 #include <drogon/HttpResponse.h>
 #include <drogon/drogon.h>
+#include <atomic>
 #include <memory>
 #include <optional>
 
@@ -59,9 +60,31 @@ void storeRefreshJti(const std::string& userId, const std::string& jti,
     int ttlSeconds = Config::instance().getRefreshTokenExpireDays() * 24 * 3600;
     if (ttlSeconds <= 0) ttlSeconds = 7 * 24 * 3600;
     auto sharedDone = std::make_shared<std::function<void()>>(std::move(done));
+    auto completed = std::make_shared<std::atomic_bool>(false);
+
+    drogon::app().getLoop()->runAfter(1.0, [userId, sharedDone, completed]() {
+        bool expected = false;
+        if (!completed->compare_exchange_strong(expected, true)) {
+            return;
+        }
+        Logger::warning("[Auth] Store refresh jti timed out; continuing login",
+                        {{"userid", userId}});
+        (*sharedDone)();
+    });
+
     redis->execCommandAsync(
-        [sharedDone](const nosql::RedisResult&) { (*sharedDone)(); },
-        [sharedDone](const nosql::RedisException& e) {
+        [sharedDone, completed](const nosql::RedisResult&) {
+            bool expected = false;
+            if (!completed->compare_exchange_strong(expected, true)) {
+                return;
+            }
+            (*sharedDone)();
+        },
+        [sharedDone, completed](const nosql::RedisException& e) {
+            bool expected = false;
+            if (!completed->compare_exchange_strong(expected, true)) {
+                return;
+            }
             Logger::warning("[Auth] Failed to store refresh jti: " + std::string(e.what()));
             (*sharedDone)();
         },
