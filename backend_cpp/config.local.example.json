@@ -1,0 +1,103 @@
+{
+    "listeners": [
+        {
+            "address": "0.0.0.0",
+            "port": 5173,
+            "https": false
+        }
+    ],
+    "plugins": [
+        {
+            "name": "drogon::plugin::AccessLogger",
+            "dependencies": [],
+            "config": {
+                "use_spdlog": true,
+                "log_path": "./logs",
+                "log_file": "access.log",
+                "log_size_limit": 134217728,
+                "max_files": 30,
+                "use_local_time": true,
+                "log_format": "[%Y-%m-%d %H:%M:%S.%e] %v"
+            }
+        }
+    ],
+    "app": {
+        "threads_num": 0,
+        "enable_session": true,
+        "session_timeout": 3600,
+        "document_root": "./uploads",
+        "upload_path": "./uploads",
+        "max_connection_num": 100000,
+        "max_connection_num_per_ip": 0,
+        "client_max_body_size": "16M",
+        "client_max_memory_body_size": "16M",
+        "client_max_websocket_message_size": "16M",
+        "static_files_cache_time": 300,
+        "simple_controllers_map": [],
+        "idle_connection_timeout": 60,
+        "server_header_field": "WoniuNote/2.0",
+        "enable_server_header": true,
+        "enable_date_header": true,
+        "keepalive_requests": 100,
+        "pipelining_requests": 10,
+        "gzip_static": true,
+        "br_static": true,
+        "log": {
+            "use_spdlog": true,
+            "log_path": "./logs",
+            "logfile_base_name": "drogon",
+            "log_level": "INFO",
+            "log_size_limit": 134217728,
+            "max_files": 30,
+            "use_local_time": true
+        },
+        "run_as_daemon": false,
+        "relaunch_on_error": false,
+        "use_sendfile": true,
+        "use_gzip": true,
+        "use_brotli": true
+    },
+    "db_clients": [
+        {
+            "name": "mysql",
+            "rdbms": "mysql",
+            "host": "localhost",
+            "port": 3306,
+            "dbname": "woniunote",
+            "user": "CHANGE_ME_DB_USER",
+            "passwd": "CHANGE_ME_DB_PASSWORD",
+            "number_of_connections": 10,
+            "is_fast": false,
+            "client_encoding": "utf8mb4",
+            "timeout": 10.0
+        }
+    ],
+    "redis_clients": [
+        {
+            "name": "default",
+            "host": "127.0.0.1",
+            "port": 6379,
+            "passwd": "CHANGE_ME_REDIS_PASSWORD_OR_EMPTY",
+            "db": 0,
+            "number_of_connections": 5,
+            "is_fast": false,
+            "timeout": -1.0
+        }
+    ],
+    "custom_config": {
+        "app_name": "WoniuNote",
+        "jwt_secret": "CHANGE_ME_STRONG_JWT_SECRET",
+        "jwt_algorithm": "HS256",
+        "access_token_expire_minutes": 120,
+        "refresh_token_expire_days": 7,
+        "cors_origins": [
+            "http://localhost:3000",
+            "http://localhost:8888",
+            "http://127.0.0.1:8888",
+            "https://www.example.com",
+            "https://example.com"
+        ],
+        "rate_limit_per_minute": 60,
+        "rate_limit_fail_closed": false
+    }
+}
