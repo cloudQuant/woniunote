@@ -111,14 +111,19 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Edit, Refresh } from '@element-plus/icons-vue'
-import { adminApi } from '@/api'
+import { adminApi, articleApi } from '@/api'
 import { useArticleStore } from '@/stores/article'
 import ArticleCategoryManager from '@/views/admin/ArticleCategoryManager.vue'
 
-defineProps({
+const props = defineProps({
   showHeader: {
     type: Boolean,
     default: true
+  },
+  articleScope: {
+    type: String,
+    default: 'mine',
+    validator: (value) => ['mine', 'admin'].includes(value)
   }
 })
 
@@ -193,7 +198,10 @@ async function loadArticleTypes() {
 async function fetchArticles() {
   loading.value = true
   try {
-    const res = await adminApi.getArticles(buildArticleParams())
+    const apiCall = props.articleScope === 'admin'
+      ? adminApi.getArticles
+      : articleApi.getMyList
+    const res = await apiCall(buildArticleParams())
     const list = Array.isArray(res?.data) ? res.data : []
     articles.value = list
     total.value = Number(res?.total ?? list.length)
@@ -231,7 +239,11 @@ async function changeSingleArticleType(article, type) {
   const previousType = article.type
   setArticleChanging(article.articleid, true)
   try {
-    await adminApi.updateArticleType(article.articleid, nextType)
+    if (props.articleScope === 'admin') {
+      await adminApi.updateArticleType(article.articleid, nextType)
+    } else {
+      await articleApi.updateType(article.articleid, nextType)
+    }
     article.type = nextType
     ElMessage.success('分类已更新')
   } catch (error) {
@@ -255,8 +267,11 @@ async function batchChangeType() {
 
   batchChanging.value = true
   try {
+    const updateArticleType = props.articleScope === 'admin'
+      ? (article) => adminApi.updateArticleType(article.articleid, nextType)
+      : (article) => articleApi.updateType(article.articleid, nextType)
     await Promise.all(
-      selectedArticles.value.map((article) => adminApi.updateArticleType(article.articleid, nextType))
+      selectedArticles.value.map(updateArticleType)
     )
     ElMessage.success(`已更新 ${selectedArticles.value.length} 篇文章`)
     batchTargetType.value = null

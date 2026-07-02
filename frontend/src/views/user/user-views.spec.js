@@ -102,12 +102,11 @@ describe('MyArticles.vue', () => {
     expect(wrapper.vm.loading).toBe(false)
   })
 
-  it('shows category management tab on the articles page for admins', async () => {
-    localStorage.setItem('user', JSON.stringify({ userid: 1, role: 'admin', nickname: 'admin' }))
+  it('shows category management tab on the articles page for logged-in users', async () => {
+    localStorage.setItem('user', JSON.stringify({ userid: 1, role: 'user', nickname: 'tester' }))
     localStorage.setItem('token', 'tok')
     const wrapper = mount(MyArticles, mountOptions())
     await flushPromises()
-    expect(wrapper.vm.userStore.isAdmin).toBe(true)
     expect(wrapper.find('.category-center-stub').exists()).toBe(true)
     expect(wrapper.text()).toContain('分类管理')
   })

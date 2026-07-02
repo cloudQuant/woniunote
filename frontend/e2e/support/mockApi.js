@@ -122,7 +122,7 @@ export async function mockApi(page, options = {}) {
     // ---- Default routing ----
     if (path === '/articles/types') return json({ types: fixtures.articleTypes })
     if (path === '/articles/hot') return json(fixtures.hot)
-    if (path === '/articles/my') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...ok(fixtures.articleList.data), total: fixtures.articleList.total }) })
+    if (path === '/articles/my') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...ok(fixtures.articleList.data), total: 25, page: Number(url.searchParams.get('page') || 1), page_size: Number(url.searchParams.get('page_size') || 10) }) })
     if (path === '/articles/drafts/my') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...ok([]), total: 0 }) })
     if (path === '/articles' && method === 'GET') {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...ok(fixtures.articleList.data), total: fixtures.articleList.total }) })

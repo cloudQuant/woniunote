@@ -29,10 +29,10 @@ public:
     ADD_METHOD_TO(AdminController::deleteArticle, "/api/admin/articles/{id}", drogon::Delete, "woniunote::AdminFilter");
 
     // Article Category/Menu Management
-    ADD_METHOD_TO(AdminController::listArticleCategories, "/api/admin/article-categories", drogon::Get, "woniunote::AdminFilter");
-    ADD_METHOD_TO(AdminController::createArticleCategory, "/api/admin/article-categories", drogon::Post, "woniunote::AdminFilter");
-    ADD_METHOD_TO(AdminController::updateArticleCategory, "/api/admin/article-categories/{id}", drogon::Put, "woniunote::AdminFilter");
-    ADD_METHOD_TO(AdminController::deleteArticleCategory, "/api/admin/article-categories/{id}", drogon::Delete, "woniunote::AdminFilter");
+    ADD_METHOD_TO(AdminController::listArticleCategories, "/api/admin/article-categories", drogon::Get, "woniunote::AuthFilter");
+    ADD_METHOD_TO(AdminController::createArticleCategory, "/api/admin/article-categories", drogon::Post, "woniunote::AuthFilter");
+    ADD_METHOD_TO(AdminController::updateArticleCategory, "/api/admin/article-categories/{id}", drogon::Put, "woniunote::AuthFilter");
+    ADD_METHOD_TO(AdminController::deleteArticleCategory, "/api/admin/article-categories/{id}", drogon::Delete, "woniunote::AuthFilter");
     
     // Comment Management
     ADD_METHOD_TO(AdminController::listComments, "/api/admin/comments", drogon::Get, "woniunote::AdminFilter");

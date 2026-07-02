@@ -1,5 +1,5 @@
 <template>
-  <div class="my-articles-page" :class="{ 'admin-tabs': userStore.isAdmin }">
+  <div class="my-articles-page">
     <el-tabs v-model="activeTab">
       <el-tab-pane label="我的文章" name="articles">
         <div class="page-header">
@@ -70,8 +70,8 @@
 
         <el-empty v-if="!loading && articles.length === 0" description="暂无文章" />
       </el-tab-pane>
-      <el-tab-pane v-if="userStore.isAdmin" label="分类管理" name="categories">
-        <ArticleCategoryCenter :show-header="false" />
+      <el-tab-pane label="分类管理" name="categories">
+        <ArticleCategoryCenter :show-header="false" article-scope="mine" />
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -89,13 +89,11 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useArticleStore } from '@/stores/article'
-import { useUserStore } from '@/stores/user'
 import { articleApi } from '@/api'
 import ArticleCategoryCenter from './ArticleCategoryCenter.vue'
 
 const router = useRouter()
 const articleStore = useArticleStore()
-const userStore = useUserStore()
 
 const activeTab = ref('articles')
 const articles = ref([])
@@ -161,10 +159,6 @@ onMounted(() => {
 <style scoped>
 .my-articles-page {
   padding: 10px;
-}
-
-.my-articles-page:not(.admin-tabs) :deep(.el-tabs__header) {
-  display: none;
 }
 
 .page-header {

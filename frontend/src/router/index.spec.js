@@ -68,10 +68,10 @@ describe('router', () => {
     expect(router.currentRoute.value.name).toBe('AdminDashboard')
   })
 
-  it('allows admins into personal-center article category management', async () => {
+  it('allows regular users into personal-center article category management', async () => {
     const store = useUserStore()
     store.token = 'tok'
-    store.user = { userid: 1, role: 'admin' }
+    store.user = { userid: 1, role: 'user' }
     await router.push('/user/categories')
     expect(router.currentRoute.value.name).toBe('UserArticleCategories')
   })

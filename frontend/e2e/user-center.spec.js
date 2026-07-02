@@ -33,8 +33,7 @@ test.describe('User center', () => {
     await expect(page.locator('.user-content .page-title').first()).toContainText('我的积分')
   })
 
-  test('admin category management sub-route renders article and category tabs', async ({ page }) => {
-    await loginAs(page, 'admin')
+  test('category management tab renders for regular users with pagination', async ({ page }) => {
     await page.goto('/user/articles')
     await expect(page).toHaveURL(/\/user\/articles/)
     await expect(page.locator('.user-sidebar')).toContainText('分类管理')
@@ -45,6 +44,7 @@ test.describe('User center', () => {
     await expect(page.getByRole('tab', { name: '分类维护' })).toBeVisible()
     await expect(page.getByText('批量修改')).toBeVisible()
     await expect(page.locator('.article-category-center').getByText('量化投资入门').first()).toBeVisible()
+    await expect(page.locator('.article-category-center .el-pagination')).toBeVisible()
     await page.getByRole('tab', { name: '分类维护' }).click()
     await expect(page.getByText('文章菜单分类')).toBeVisible()
   })

@@ -18,6 +18,10 @@ vi.mock('element-plus', () => ({
 }))
 
 const api = vi.hoisted(() => ({
+  articleApi: {
+    getMyList: vi.fn(),
+    updateType: vi.fn()
+  },
   adminApi: {
     getArticles: vi.fn(),
     updateArticleType: vi.fn()
@@ -55,44 +59,52 @@ const articleRows = [
 ]
 
 function mockArticleList(rows = articleRows) {
+  api.articleApi.getMyList.mockResolvedValue({
+    data: rows.map((row) => ({ ...row })),
+    total: 25
+  })
   api.adminApi.getArticles.mockResolvedValue({
     data: rows.map((row) => ({ ...row })),
-    total: rows.length
+    total: 25
   })
 }
 
 beforeEach(() => {
   vi.clearAllMocks()
+  api.articleApi.getMyList.mockReset()
+  api.articleApi.updateType.mockReset()
   api.adminApi.getArticles.mockReset()
   api.adminApi.updateArticleType.mockReset()
   articleStoreMock.refreshArticleTypes.mockReset()
   articleStoreMock.getTypeName.mockImplementation((id) => `type-${id}`)
   articleStoreMock.refreshArticleTypes.mockResolvedValue({})
+  api.articleApi.updateType.mockResolvedValue({})
   api.adminApi.updateArticleType.mockResolvedValue({})
   mockArticleList()
 })
 
 describe('ArticleCategoryCenter.vue', () => {
-  it('loads article types and admin articles on mount', async () => {
+  it('loads article types and paged personal articles on mount', async () => {
     const wrapper = mount(ArticleCategoryCenter, mountOptions())
     await flushPromises()
 
     expect(articleStoreMock.refreshArticleTypes).toHaveBeenCalled()
-    expect(api.adminApi.getArticles).toHaveBeenCalledWith({ page: 1, page_size: 10 })
+    expect(api.articleApi.getMyList).toHaveBeenCalledWith({ page: 1, page_size: 10 })
+    expect(api.adminApi.getArticles).not.toHaveBeenCalled()
     expect(wrapper.vm.articles).toHaveLength(2)
-    expect(wrapper.vm.total).toBe(2)
+    expect(wrapper.vm.total).toBe(25)
   })
 
   it('filters articles by selected category', async () => {
     const wrapper = mount(ArticleCategoryCenter, mountOptions())
     await flushPromises()
 
-    api.adminApi.getArticles.mockClear()
+    api.articleApi.getMyList.mockClear()
     wrapper.vm.typeFilter = 101
     await wrapper.vm.handleFilterChange()
 
     expect(wrapper.vm.currentPage).toBe(1)
-    expect(api.adminApi.getArticles).toHaveBeenCalledWith({ page: 1, page_size: 10, type: 101 })
+    expect(api.articleApi.getMyList).toHaveBeenCalledWith({ page: 1, page_size: 10, type: 101 })
   })
 
   it('changes a single article category', async () => {
@@ -101,13 +113,13 @@ describe('ArticleCategoryCenter.vue', () => {
 
     await wrapper.vm.changeSingleArticleType(wrapper.vm.articles[0], 101)
 
-    expect(api.adminApi.updateArticleType).toHaveBeenCalledWith(1, 101)
+    expect(api.articleApi.updateType).toHaveBeenCalledWith(1, 101)
     expect(wrapper.vm.articles[0].type).toBe(101)
     expect(messages.success).toHaveBeenCalledWith('分类已更新')
   })
 
   it('reverts a single article category when update fails', async () => {
-    api.adminApi.updateArticleType.mockRejectedValueOnce(new Error('update fail'))
+    api.articleApi.updateType.mockRejectedValueOnce(new Error('update fail'))
     const wrapper = mount(ArticleCategoryCenter, mountOptions())
     await flushPromises()
 
@@ -122,16 +134,16 @@ describe('ArticleCategoryCenter.vue', () => {
     const wrapper = mount(ArticleCategoryCenter, mountOptions())
     await flushPromises()
 
-    api.adminApi.getArticles.mockClear()
+    api.articleApi.getMyList.mockClear()
     wrapper.vm.handleSelectionChange([wrapper.vm.articles[0], wrapper.vm.articles[1]])
     wrapper.vm.batchTargetType = 101
     await wrapper.vm.batchChangeType()
 
-    expect(api.adminApi.updateArticleType).toHaveBeenCalledWith(1, 101)
-    expect(api.adminApi.updateArticleType).toHaveBeenCalledWith(2, 101)
+    expect(api.articleApi.updateType).toHaveBeenCalledWith(1, 101)
+    expect(api.articleApi.updateType).toHaveBeenCalledWith(2, 101)
     expect(messages.success).toHaveBeenCalledWith('已更新 2 篇文章')
     expect(wrapper.vm.batchTargetType).toBeNull()
-    expect(api.adminApi.getArticles).toHaveBeenCalledWith({ page: 1, page_size: 10 })
+    expect(api.articleApi.getMyList).toHaveBeenCalledWith({ page: 1, page_size: 10 })
   })
 
   it('requires selection and target category before batch change', async () => {
@@ -144,7 +156,7 @@ describe('ArticleCategoryCenter.vue', () => {
     wrapper.vm.handleSelectionChange([wrapper.vm.articles[0]])
     await wrapper.vm.batchChangeType()
     expect(messages.error).toHaveBeenCalledWith('请选择目标分类')
-    expect(api.adminApi.updateArticleType).not.toHaveBeenCalled()
+    expect(api.articleApi.updateType).not.toHaveBeenCalled()
   })
 
   it('refreshes article options and list after category maintenance changes', async () => {
@@ -152,10 +164,19 @@ describe('ArticleCategoryCenter.vue', () => {
     await flushPromises()
 
     articleStoreMock.refreshArticleTypes.mockClear()
-    api.adminApi.getArticles.mockClear()
+    api.articleApi.getMyList.mockClear()
     await wrapper.vm.handleCategoriesChanged()
 
     expect(articleStoreMock.refreshArticleTypes).toHaveBeenCalled()
+    expect(api.articleApi.getMyList).toHaveBeenCalledWith({ page: 1, page_size: 10 })
+  })
+
+  it('can opt into admin article APIs', async () => {
+    const wrapper = mount(ArticleCategoryCenter, mountOptions({ props: { articleScope: 'admin' } }))
+    await flushPromises()
+
     expect(api.adminApi.getArticles).toHaveBeenCalledWith({ page: 1, page_size: 10 })
+    await wrapper.vm.changeSingleArticleType(wrapper.vm.articles[0], 101)
+    expect(api.adminApi.updateArticleType).toHaveBeenCalledWith(1, 101)
   })
 })

@@ -319,24 +319,112 @@ void ArticleController::myArticles(const HttpRequestPtr& req,
 {
     auto userId = req->getAttributes()->get<std::string>("user_id");
     Logger::debug("[Article] MyArticles request", {{"userid", userId}});
+
+    auto parseIntParam = [&req](const std::string& name, int fallback) -> int {
+        const std::string raw = req->getParameter(name);
+        if (raw.empty()) {
+            return fallback;
+        }
+        try {
+            return std::stoi(raw);
+        } catch (const std::exception&) {
+            Logger::warning("[Article] Invalid integer parameter", {{"param", name}, {"value", raw}});
+            return fallback;
+        }
+    };
+
+    int page = parseIntParam("page", 1);
+    int pageSize = parseIntParam("page_size", 10);
+    int type = parseIntParam("type", 0);
+    if (page < 1) page = 1;
+    if (pageSize < 1) pageSize = 10;
+    pageSize = (std::min)(pageSize, 100);
+    int offset = (page - 1) * pageSize;
+    int64_t ownerId = std::stoll(userId);
+
     auto dbClient = Database::getClient();
 
+    std::string countSql = "SELECT COUNT(*) AS total FROM article a WHERE a.userid = ?";
+    std::string dataSql = "SELECT a.*, u.nickname FROM article a LEFT JOIN users u ON a.userid = u.userid "
+                          "WHERE a.userid = ?";
+    if (type > 0) {
+        countSql += " AND a.type = ?";
+        dataSql += " AND a.type = ?";
+    }
+    dataSql += " ORDER BY a.createtime DESC LIMIT " + std::to_string(pageSize) +
+               " OFFSET " + std::to_string(offset);
+
+    auto onData = [callback, page, pageSize](const orm::Result& result, int total) {
+        int totalPages = (total + pageSize - 1) / pageSize;
+        Json::Value ret;
+        ret["code"] = 200;
+        ret["message"] = "success";
+        ret["data"] = Json::arrayValue;
+        ret["total"] = total;
+        ret["page"] = page;
+        ret["page_size"] = pageSize;
+        ret["total_pages"] = totalPages;
+
+        Json::Value articles(Json::arrayValue);
+        for (const auto& row : result) {
+            models::Article article(row);
+            articles.append(article.toJsonBrief());
+        }
+        ret["data"] = articles;
+
+        Logger::debug("[Article] MyArticles returned",
+                      {{"total", std::to_string(total)},
+                       {"count", std::to_string(static_cast<int>(result.size()))}});
+        callback(HttpResponse::newHttpJsonResponse(ret));
+    };
+
+    auto onError = [callback](const orm::DrogonDbException& e) {
+        Logger::error("Database error: " + std::string(e.base().what()));
+        callback(Response::serverError("数据库错误"));
+    };
+
+    auto runData = [dbClient, dataSql, ownerId, type, onData, onError](int total) {
+        if (type > 0) {
+            dbClient->execSqlAsync(
+                dataSql,
+                [onData, total](const orm::Result& result) {
+                    onData(result, total);
+                },
+                onError,
+                ownerId, type
+            );
+            return;
+        }
+
+        dbClient->execSqlAsync(
+            dataSql,
+            [onData, total](const orm::Result& result) {
+                onData(result, total);
+            },
+            onError,
+            ownerId
+        );
+    };
+
+    if (type > 0) {
+        dbClient->execSqlAsync(
+            countSql,
+            [runData](const orm::Result& result) {
+                runData(result[0]["total"].as<int>());
+            },
+            onError,
+            ownerId, type
+        );
+        return;
+    }
+
     dbClient->execSqlAsync(
-        "SELECT a.*, u.nickname FROM article a LEFT JOIN users u ON a.userid = u.userid "
-        "WHERE a.userid = ? ORDER BY a.createtime DESC",
-        [callback](const orm::Result& result) {
-            Json::Value articles(Json::arrayValue);
-            for (const auto& row : result) {
-                models::Article article(row);
-                articles.append(article.toJsonBrief());
-            }
-            callback(Response::success(articles));
+        countSql,
+        [runData](const orm::Result& result) {
+            runData(result[0]["total"].as<int>());
         },
-        [callback](const orm::DrogonDbException& e) {
-            Logger::error("Database error: " + std::string(e.base().what()));
-            callback(Response::serverError("数据库错误"));
-        },
-        std::stoll(userId)
+        onError,
+        ownerId
     );
 }
 

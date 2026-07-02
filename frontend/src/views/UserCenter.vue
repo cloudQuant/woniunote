@@ -24,7 +24,7 @@
               <el-icon><Document /></el-icon>
               <span>我的文章</span>
             </el-menu-item>
-            <el-menu-item v-if="userStore.isAdmin" index="/user/categories">
+            <el-menu-item index="/user/categories">
               <el-icon><Menu /></el-icon>
               <span>分类管理</span>
             </el-menu-item>

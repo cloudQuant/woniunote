@@ -25,8 +25,8 @@ describe('UserCenter.vue', () => {
     localStorage.clear()
   })
 
-  it('shows category management entry below my articles for admins', () => {
-    localStorage.setItem('user', JSON.stringify({ nickname: 'admin', credit: 50, avatar: '', role: 'admin' }))
+  it('shows category management entry below my articles for regular users', () => {
+    localStorage.setItem('user', JSON.stringify({ nickname: 'bob', credit: 50, avatar: '', role: 'user' }))
     localStorage.setItem('token', 'tok')
     const wrapper = mount(UserCenter, mountOptions())
     const text = wrapper.text()
