@@ -275,11 +275,13 @@ describe('api interceptors', () => {
       articleApi.getList({ page: 1 })
       articleApi.getDetail(7)
       articleApi.update(7, { t: 1 })
+      articleApi.updateType(7, 101)
       articleApi.delete(7)
       articleApi.toggleRecommend(7)
       expect(apiInstance.get).toHaveBeenCalledWith('/articles', { params: { page: 1 } })
       expect(apiInstance.get).toHaveBeenCalledWith('/articles/7')
       expect(apiInstance.put).toHaveBeenCalledWith('/articles/7', { t: 1 })
+      expect(apiInstance.put).toHaveBeenCalledWith('/articles/7/type', { type: 101 })
       expect(apiInstance.delete).toHaveBeenCalledWith('/articles/7')
     })
 

@@ -5,19 +5,21 @@
     <div class="favorites-list" v-loading="loading">
       <div 
         v-for="item in favorites" 
-        :key="item.favoriteid" 
+        :key="getFavoriteKey(item)"
         class="favorite-item"
       >
         <div class="article-info">
           <router-link 
-            :to="{ name: 'ArticleDetail', params: { id: item.article?.articleid } }"
+            v-if="getArticleId(item)"
+            :to="{ name: 'ArticleDetail', params: { id: getArticleId(item) } }"
             class="article-title"
           >
-            {{ item.article?.headline }}
+            {{ getArticle(item).headline || '未命名文章' }}
           </router-link>
+          <span v-else class="article-title">{{ getArticle(item).headline || '未命名文章' }}</span>
           <div class="article-meta">
             <span>{{ formatDate(item.createtime) }} 收藏</span>
-            <span>阅读 {{ item.article?.readcount }}</span>
+            <span>阅读 {{ getArticle(item).readcount || 0 }}</span>
           </div>
         </div>
         <el-popconfirm 
@@ -74,8 +76,9 @@ async function fetchFavorites() {
       page: currentPage.value,
       page_size: pageSize.value
     })
-    favorites.value = res.data
-    total.value = res.total
+    const list = Array.isArray(res?.data) ? res.data : []
+    favorites.value = list.map(normalizeFavorite)
+    total.value = Number(res?.total ?? favorites.value.length)
   } catch (error) {
     console.error('获取收藏列表失败:', error)
   } finally {
@@ -84,13 +87,43 @@ async function fetchFavorites() {
 }
 
 async function removeFavorite(item) {
+  const articleId = getArticleId(item)
+  if (!articleId) {
+    ElMessage.error('文章ID不存在')
+    return
+  }
+
   try {
-    await favoriteApi.remove(item.articleid)
+    await favoriteApi.remove(articleId)
     ElMessage.success('已取消收藏')
     await fetchFavorites()
   } catch (error) {
     console.error('取消收藏失败:', error)
   }
+}
+
+function normalizeFavorite(item) {
+  if (item?.article) {
+    return item
+  }
+  return {
+    favoriteid: item?.favoriteid || item?.articleid,
+    articleid: item?.articleid,
+    createtime: item?.createtime,
+    article: item
+  }
+}
+
+function getArticle(item) {
+  return item?.article || item || {}
+}
+
+function getArticleId(item) {
+  return item?.articleid || item?.article?.articleid
+}
+
+function getFavoriteKey(item) {
+  return item?.favoriteid || getArticleId(item)
 }
 
 onMounted(() => {

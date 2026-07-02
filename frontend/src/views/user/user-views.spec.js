@@ -21,6 +21,7 @@ vi.mock('element-plus', () => ({
 const api = vi.hoisted(() => ({
   articleApi: {
     getMyList: vi.fn(() => Promise.resolve({ data: [{ articleid: 1, headline: 'A', type: 1, drafted: 0 }], total: 1 })),
+    updateType: vi.fn(() => Promise.resolve({ data: { type: 101 } })),
     delete: vi.fn(() => Promise.resolve({}))
   },
   myCommentApi: { getMyComments: vi.fn(() => Promise.resolve({ data: [{ commentid: 5, content: 'hi', article_id: 2 }], total: 1 })) },
@@ -42,11 +43,17 @@ const api = vi.hoisted(() => ({
 }))
 vi.mock('@/api', () => api)
 
+const articleStoreMock = vi.hoisted(() => ({
+  fetchArticleTypes: vi.fn(() => Promise.resolve({})),
+  getTypeName: vi.fn((id) => `type-${id}`),
+  categoryOptions: [
+    { value: 1, label: '交易策略', children: [{ value: 101, label: 'CTA策略' }] },
+    { value: 2, label: '量化框架' }
+  ]
+}))
+
 vi.mock('@/stores/article', () => ({
-  useArticleStore: () => ({
-    fetchArticleTypes: vi.fn(() => Promise.resolve({})),
-    getTypeName: (id) => `type-${id}`
-  })
+  useArticleStore: () => articleStoreMock
 }))
 
 import MyArticles from './MyArticles.vue'
@@ -56,7 +63,12 @@ import MyFavorites from './MyFavorites.vue'
 import MyCredits from './MyCredits.vue'
 import Profile from './Profile.vue'
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  articleStoreMock.fetchArticleTypes.mockReset()
+  articleStoreMock.fetchArticleTypes.mockResolvedValue({})
+  articleStoreMock.getTypeName.mockImplementation((id) => `type-${id}`)
+})
 
 describe('MyArticles.vue', () => {
   it('loads articles on mount', async () => {
@@ -72,6 +84,41 @@ describe('MyArticles.vue', () => {
     expect(wrapper.vm.getTypeName(1)).toBe('type-1')
     expect(wrapper.vm.formatDate('')).toBe('')
     expect(wrapper.vm.formatDate('2026-01-01')).not.toBe('')
+  })
+
+  it('keeps loading articles when category loading fails', async () => {
+    articleStoreMock.fetchArticleTypes.mockRejectedValueOnce(new Error('types fail'))
+    const wrapper = mount(MyArticles, mountOptions())
+    await flushPromises()
+    expect(api.articleApi.getMyList).toHaveBeenCalled()
+    expect(wrapper.vm.loading).toBe(false)
+  })
+
+  it('changes an article category from the personal center', async () => {
+    const wrapper = mount(MyArticles, mountOptions())
+    await flushPromises()
+    await wrapper.vm.changeArticleType(wrapper.vm.articles[0], 101)
+    expect(api.articleApi.updateType).toHaveBeenCalledWith(1, 101)
+    expect(wrapper.vm.articles[0].type).toBe(101)
+    expect(success).toHaveBeenCalledWith('分类已更新')
+  })
+
+  it('ignores empty or unchanged article category changes', async () => {
+    const wrapper = mount(MyArticles, mountOptions())
+    await flushPromises()
+    const article = wrapper.vm.articles[0]
+    await wrapper.vm.changeArticleType(article, 0)
+    await wrapper.vm.changeArticleType(article, article.type)
+    expect(api.articleApi.updateType).not.toHaveBeenCalled()
+  })
+
+  it('reverts the article category when update fails', async () => {
+    api.articleApi.updateType.mockRejectedValueOnce(new Error('update fail'))
+    const wrapper = mount(MyArticles, mountOptions())
+    await flushPromises()
+    await wrapper.vm.changeArticleType(wrapper.vm.articles[0], 101)
+    expect(wrapper.vm.articles[0].type).toBe(1)
+    expect(wrapper.vm.isTypeChanging(1)).toBe(false)
   })
 
   it('editArticle navigates to EditArticle', () => {
@@ -144,6 +191,37 @@ describe('MyFavorites.vue', () => {
     await wrapper.vm.removeFavorite({ articleid: 9 })
     expect(api.favoriteApi.remove).toHaveBeenCalledWith(9)
     expect(success).toHaveBeenCalledWith('已取消收藏')
+  })
+
+  it('normalizes the flat article array returned by the C++ backend', async () => {
+    api.favoriteApi.getList.mockResolvedValueOnce({
+      data: [{ articleid: 12, headline: 'Flat Favorite', readcount: 8, createtime: '2026-01-01' }]
+    })
+    const wrapper = mount(MyFavorites, mountOptions())
+    await flushPromises()
+    expect(wrapper.vm.favorites[0].article.headline).toBe('Flat Favorite')
+    await wrapper.vm.removeFavorite(wrapper.vm.favorites[0])
+    expect(api.favoriteApi.remove).toHaveBeenCalledWith(12)
+  })
+
+  it('does not remove a favorite when the article id is missing', async () => {
+    const wrapper = mount(MyFavorites, mountOptions())
+    await flushPromises()
+    api.favoriteApi.remove.mockClear()
+    await wrapper.vm.removeFavorite({})
+    expect(api.favoriteApi.remove).not.toHaveBeenCalled()
+    expect(error).toHaveBeenCalledWith('文章ID不存在')
+  })
+
+  it('handles favorite fetch and remove errors', async () => {
+    api.favoriteApi.getList.mockRejectedValueOnce(new Error('fetch fail'))
+    const wrapper = mount(MyFavorites, mountOptions())
+    await flushPromises()
+    expect(wrapper.vm.loading).toBe(false)
+
+    api.favoriteApi.remove.mockRejectedValueOnce(new Error('remove fail'))
+    await wrapper.vm.removeFavorite({ articleid: 9 })
+    expect(wrapper.vm.loading).toBe(false)
   })
 })
 

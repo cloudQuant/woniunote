@@ -16,9 +16,18 @@
         </template>
       </el-table-column>
       
-      <el-table-column prop="type" label="分类" width="100">
+      <el-table-column prop="type" label="分类" min-width="180">
         <template #default="{ row }">
-          {{ getTypeName(row.type) }}
+          <el-cascader
+            :model-value="Number(row.type)"
+            :options="articleStore.categoryOptions"
+            :props="categoryCascaderProps"
+            :placeholder="getTypeName(row.type)"
+            :disabled="isTypeChanging(row.articleid)"
+            size="small"
+            filterable
+            @change="(type) => changeArticleType(row, type)"
+          />
         </template>
       </el-table-column>
       
@@ -88,10 +97,15 @@ const router = useRouter()
 const articleStore = useArticleStore()
 
 const articles = ref([])
-const loading = ref(true)
+const loading = ref(false)
+const typeChangingIds = ref(new Set())
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+const categoryCascaderProps = {
+  checkStrictly: true,
+  emitPath: false
+}
 
 function getTypeName(typeId) {
   return articleStore.getTypeName(typeId)
@@ -109,12 +123,55 @@ async function fetchArticles() {
       page: currentPage.value,
       page_size: pageSize.value
     })
-    articles.value = res.data
-    total.value = res.total
+    const list = Array.isArray(res?.data) ? res.data : []
+    articles.value = list
+    total.value = Number(res?.total ?? list.length)
   } catch (error) {
     console.error('获取文章列表失败:', error)
   } finally {
     loading.value = false
+  }
+}
+
+function isTypeChanging(articleId) {
+  return typeChangingIds.value.has(articleId)
+}
+
+function setTypeChanging(articleId, changing) {
+  const next = new Set(typeChangingIds.value)
+  if (changing) {
+    next.add(articleId)
+  } else {
+    next.delete(articleId)
+  }
+  typeChangingIds.value = next
+}
+
+async function loadArticleTypes() {
+  try {
+    await articleStore.fetchArticleTypes()
+  } catch (error) {
+    console.error('获取文章分类失败:', error)
+  }
+}
+
+async function changeArticleType(article, type) {
+  const nextType = Number(type)
+  if (!nextType || nextType === Number(article.type)) {
+    return
+  }
+
+  const previousType = article.type
+  setTypeChanging(article.articleid, true)
+  try {
+    await articleApi.updateType(article.articleid, nextType)
+    article.type = nextType
+    ElMessage.success('分类已更新')
+  } catch (error) {
+    article.type = previousType
+    console.error('分类更新失败:', error)
+  } finally {
+    setTypeChanging(article.articleid, false)
   }
 }
 
@@ -132,9 +189,9 @@ async function deleteArticle(article) {
   }
 }
 
-onMounted(async () => {
-  await articleStore.fetchArticleTypes()
-  await fetchArticles()
+onMounted(() => {
+  loadArticleTypes()
+  fetchArticles()
 })
 </script>
 

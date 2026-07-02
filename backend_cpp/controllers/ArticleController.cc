@@ -10,6 +10,7 @@
 #include "models/Article.h"
 #include "models/ArticleCategory.h"
 #include <drogon/HttpResponse.h>
+#include <algorithm>
 #include <sstream>
 #include <vector>
 
@@ -39,6 +40,13 @@ Json::Value categoryResponseData(const std::vector<models::ArticleCategory>& cat
     data["flat"] = models::articleCategoryFlatJson(categories, visibleOnly, includeArticleCount);
     data["tree"] = models::articleCategoryTreeJson(categories, visibleOnly, includeArticleCount);
     return data;
+}
+
+bool legacyCategoryExists(int type) {
+    const auto categories = models::legacyArticleCategories();
+    return std::any_of(categories.begin(), categories.end(), [type](const auto& category) {
+        return category.id == type && category.visible;
+    });
 }
 
 } // namespace
@@ -461,6 +469,83 @@ void ArticleController::update(const HttpRequestPtr& req,
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Database error: " + std::string(e.base().what()));
+            callback(Response::serverError("数据库错误"));
+        },
+        id
+    );
+}
+
+void ArticleController::updateType(const HttpRequestPtr& req,
+                                   std::function<void(const HttpResponsePtr&)>&& callback,
+                                   int64_t id)
+{
+    auto userId = req->getAttributes()->get<std::string>("user_id");
+    auto json = req->getJsonObject();
+
+    if (!json || !json->isMember("type")) {
+        callback(Response::badRequest("分类不能为空"));
+        return;
+    }
+
+    int type = (*json)["type"].asInt();
+    if (type <= 0) {
+        callback(Response::badRequest("分类不合法"));
+        return;
+    }
+
+    auto dbClient = Database::getClient();
+    dbClient->execSqlAsync(
+        "SELECT userid FROM article WHERE articleid = ?",
+        [callback, id, userId, type, dbClient](const orm::Result& articleResult) {
+            if (articleResult.size() == 0) {
+                callback(Response::notFound("文章不存在"));
+                return;
+            }
+
+            int64_t ownerId = articleResult[0]["userid"].as<int64_t>();
+            if (ownerId != std::stoll(userId)) {
+                callback(Response::forbidden("没有权限修改此文章"));
+                return;
+            }
+
+            auto applyUpdate = [callback, id, type, dbClient]() {
+                dbClient->execSqlAsync(
+                    "UPDATE article SET type = ?, updatetime = NOW() WHERE articleid = ?",
+                    [callback, type](const orm::Result&) {
+                        Json::Value data;
+                        data["type"] = type;
+                        callback(Response::ok("分类已更新", data));
+                    },
+                    [callback](const orm::DrogonDbException& e) {
+                        Logger::error("[Article] Update type failed: " + std::string(e.base().what()));
+                        callback(Response::serverError("分类更新失败"));
+                    },
+                    type, id
+                );
+            };
+
+            dbClient->execSqlAsync(
+                "SELECT id FROM article_category WHERE id = ? AND visible = 1",
+                [callback, applyUpdate](const orm::Result& categoryResult) {
+                    if (categoryResult.size() == 0) {
+                        callback(Response::badRequest("分类不存在或不可用"));
+                        return;
+                    }
+                    applyUpdate();
+                },
+                [callback, type, applyUpdate](const orm::DrogonDbException& e) {
+                    Logger::warning("[Article] Category validation fell back to legacy map: " + std::string(e.base().what()));
+                    if (!legacyCategoryExists(type)) {
+                        callback(Response::badRequest("分类不存在或不可用"));
+                        return;
+                    }
+                    applyUpdate();
+                },
+                type
+            );
+        },
+        [callback](const orm::DrogonDbException& e) {
+            Logger::error("[Article] Update type owner check failed: " + std::string(e.base().what()));
             callback(Response::serverError("数据库错误"));
         },
         id

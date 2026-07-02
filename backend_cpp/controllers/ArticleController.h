@@ -21,12 +21,12 @@ public:
     ADD_METHOD_TO(ArticleController::list, "/api/articles", drogon::Get);
     ADD_METHOD_TO(ArticleController::getTypes, "/api/articles/types", drogon::Get);
     ADD_METHOD_TO(ArticleController::getHot, "/api/articles/hot", drogon::Get);
-    ADD_METHOD_TO(ArticleController::get, "/api/articles/{id}", drogon::Get);
     
     // Protected endpoints
     ADD_METHOD_TO(ArticleController::myArticles, "/api/articles/my", drogon::Get, "woniunote::AuthFilter");
     ADD_METHOD_TO(ArticleController::myDrafts, "/api/articles/drafts/my", drogon::Get, "woniunote::AuthFilter");
     ADD_METHOD_TO(ArticleController::create, "/api/articles", drogon::Post, "woniunote::AuthFilter");
+    ADD_METHOD_TO(ArticleController::updateType, "/api/articles/{id}/type", drogon::Put, "woniunote::AuthFilter");
     ADD_METHOD_TO(ArticleController::update, "/api/articles/{id}", drogon::Put, "woniunote::AuthFilter");
     ADD_METHOD_TO(ArticleController::remove, "/api/articles/{id}", drogon::Delete, "woniunote::AuthFilter");
     
@@ -34,6 +34,8 @@ public:
     ADD_METHOD_TO(ArticleController::toggleRecommend, "/api/articles/{id}/recommend", drogon::Post, "woniunote::AdminFilter");
     ADD_METHOD_TO(ArticleController::toggleHide, "/api/articles/{id}/hide", drogon::Post, "woniunote::AdminFilter");
     ADD_METHOD_TO(ArticleController::toggleCheck, "/api/articles/{id}/check", drogon::Post, "woniunote::AdminFilter");
+
+    ADD_METHOD_TO(ArticleController::get, "/api/articles/{id}", drogon::Get);
     METHOD_LIST_END
 
     void list(const drogon::HttpRequestPtr& req,
@@ -61,6 +63,10 @@ public:
     void update(const drogon::HttpRequestPtr& req,
                 std::function<void(const drogon::HttpResponsePtr&)>&& callback,
                 int64_t id);
+
+    void updateType(const drogon::HttpRequestPtr& req,
+                    std::function<void(const drogon::HttpResponsePtr&)>&& callback,
+                    int64_t id);
 
     void remove(const drogon::HttpRequestPtr& req,
                 std::function<void(const drogon::HttpResponsePtr&)>&& callback,

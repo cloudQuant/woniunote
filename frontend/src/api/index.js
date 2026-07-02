@@ -241,6 +241,8 @@ export const articleApi = {
   create: (data) => api.post('/articles', data),
   /** 更新文章 */
   update: (id, data) => api.put(`/articles/${id}`, data),
+  /** 切换本人文章分类 */
+  updateType: (id, type) => api.put(`/articles/${id}/type`, { type }),
   /** 删除文章 */
   delete: (id) => api.delete(`/articles/${id}`),
   /** 切换文章推荐状态 */
