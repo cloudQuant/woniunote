@@ -50,7 +50,7 @@ describe('Home.vue —— 布局结构（R2.1 / R2.3）', () => {
   })
 
   // R2.3: 两栏布局（文章列表 + 侧边栏）在改动后仍维持正常结构。
-  it('两栏结构存在：ArticleList 与 Sidebar 渲染于两个 el-col 中', () => {
+  it('两栏结构存在，并标记可在桌面端将侧边栏排到左侧的列', () => {
     const wrapper = mount(Home, mountOptions())
 
     // 两个栅格列（:span="17" / :span="7"）。
@@ -62,10 +62,12 @@ describe('Home.vue —— 布局结构（R2.1 / R2.3）', () => {
     expect(articleList.exists()).toBe(true)
     expect(sidebar.exists()).toBe(true)
 
-    // 文章列表位于主内容区内（左栏），侧边栏存在于布局中（右栏）。
+    // 文章列表与侧边栏分别具有布局类；实际左右位置由 Home.vue 的 scoped CSS 控制。
     expect(wrapper.find('.main-content').exists()).toBe(true)
     expect(wrapper.find('.main-content .stub-article-list').exists()).toBe(true)
     expect(wrapper.find('.stub-sidebar').exists()).toBe(true)
+    expect(wrapper.find('.home-main-column').exists()).toBe(true)
+    expect(wrapper.find('.home-sidebar-column').exists()).toBe(true)
   })
 
   // 文章列表接收由路由 page 参数驱动的 currentPage（默认 1）。

@@ -17,6 +17,36 @@ test.describe('Home & navigation', () => {
     await expect(page.getByText('量化投资入门').first()).toBeVisible()
   })
 
+  test('keeps search and popular articles on the left at desktop widths', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+
+    const mainColumn = page.locator('.home-main-column')
+    const sidebarColumn = page.locator('.home-sidebar-column')
+    await expect(mainColumn).toBeVisible()
+    await expect(sidebarColumn).toBeVisible()
+    await expect(sidebarColumn.getByPlaceholder('请输入关键字')).toBeVisible()
+    await expect(sidebarColumn.getByText('热门文章')).toBeVisible()
+
+    const main = await mainColumn.boundingBox()
+    const sidebar = await sidebarColumn.boundingBox()
+    expect(main).not.toBeNull()
+    expect(sidebar).not.toBeNull()
+    expect(sidebar.x + sidebar.width).toBeLessThanOrEqual(main.x)
+
+    // 与 Element Plus 的 xs 栅格边界一致：768px 仍保持侧栏在左；
+    // 767px 以下切为单列，并让文章内容优先展示。
+    await page.setViewportSize({ width: 768, height: 800 })
+    const boundaryMain = await mainColumn.boundingBox()
+    const boundarySidebar = await sidebarColumn.boundingBox()
+    expect(boundarySidebar.x + boundarySidebar.width).toBeLessThanOrEqual(boundaryMain.x)
+
+    await page.setViewportSize({ width: 767, height: 800 })
+    const mobileMain = await mainColumn.boundingBox()
+    const mobileSidebar = await sidebarColumn.boundingBox()
+    expect(mobileMain.y).toBeLessThan(mobileSidebar.y)
+  })
+
   test('navigates to an article detail from the list', async ({ page }) => {
     await page.goto('/')
     await page.getByText('量化投资入门').first().click()

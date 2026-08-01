@@ -26,6 +26,28 @@ echo ""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# 端口被占用只能说明进程存在，不能说明应用真的已经可以响应请求。
+# 启动/重启脚本需要等到 HTTP 服务可用后才能报告成功，避免出现“启动成功”
+# 但浏览器实际无法访问的假阳性。
+wait_for_http() {
+    local SERVICE_NAME="$1"
+    local URL="$2"
+    local TIMEOUT_SECONDS="${3:-30}"
+    local ELAPSED_SECONDS=0
+
+    while [ "$ELAPSED_SECONDS" -lt "$TIMEOUT_SECONDS" ]; do
+        if curl -fsS --max-time 2 "$URL" >/dev/null 2>&1; then
+            echo "     $SERVICE_NAME 已就绪"
+            return 0
+        fi
+        sleep 1
+        ELAPSED_SECONDS=$((ELAPSED_SECONDS + 1))
+    done
+
+    echo "[错误] $SERVICE_NAME 未在 ${TIMEOUT_SECONDS} 秒内响应: $URL"
+    return 1
+}
+
 # 检查并关闭占用端口5173的进程（后端）
 echo "[1/5] 检查后端端口 5173..."
 PID_5173=$(lsof -ti:5173 2>/dev/null)
@@ -103,12 +125,10 @@ BACKEND_PID=$!
 
 echo "     后端服务已启动 (PID: $BACKEND_PID)"
 
-# 等待后端启动
-sleep 3
-
-# 检查后端是否成功启动
-if ! lsof -ti:5173 >/dev/null 2>&1; then
-    echo "[警告] 后端可能未成功启动，请检查 backend.log"
+# 等待后端真正开始接受 HTTP 请求，而不仅是检查端口是否暂时存在。
+if ! wait_for_http "后端服务" "http://127.0.0.1:5173/health"; then
+    echo "       请查看 backend.log 了解详情"
+    exit 1
 fi
 
 # 启动前端
@@ -181,16 +201,16 @@ if [ "$MODE" = "prod" ]; then
     echo "     前端由 Nginx 提供服务 (端口 80/443)"
 else
     # 开发模式: 使用 npm run dev
+    echo "     开发模式由 Vite 直接提供 frontend/src 源码，不生成 dist。"
     nohup npm run dev >> ../frontend.log 2>&1 &
     FRONTEND_PID=$!
     echo "     前端开发服务已启动 (PID: $FRONTEND_PID)"
-    
-    # 等待前端启动
-    sleep 5
-    
-    # 检查前端是否成功启动
-    if ! lsof -ti:8888 >/dev/null 2>&1; then
-        echo "[警告] 前端可能未成功启动，请检查 frontend.log"
+
+    # Vite 在开发模式下按需转换模块；检查首页 HTTP 响应可确保本次启动的
+    # 开发服务器确实可用，而非仅检查到残留端口。
+    if ! wait_for_http "前端 Vite 服务" "http://127.0.0.1:8888/"; then
+        echo "       请查看 frontend.log 了解详情"
+        exit 1
     fi
 fi
 

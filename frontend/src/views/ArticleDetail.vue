@@ -1,8 +1,8 @@
 <template>
   <div class="article-detail-page">
     <div class="article-detail-container">
-      <el-row :gutter="20">
-        <el-col :span="17" :xs="24">
+      <el-row :gutter="20" class="article-detail-layout">
+        <el-col :span="17" :xs="24" class="article-detail-main-column">
         <div v-if="loading" class="loading-container">
           <el-skeleton animated>
             <template #template>
@@ -201,7 +201,7 @@
           <el-empty v-else description="文章不存在" />
         </div>
       </el-col>
-        <el-col :span="7" :xs="24">
+        <el-col :span="7" :xs="24" class="article-detail-sidebar-column">
           <Sidebar />
         </el-col>
       </el-row>
@@ -617,6 +617,19 @@ onBeforeUnmount(() => {
   padding: 0 20px;
 }
 
+.article-detail-layout {
+  align-items: flex-start;
+}
+
+.article-detail-main-column {
+  min-width: 0;
+}
+
+/* 桌面端把搜索与热门文章放到文章详情左侧。 */
+.article-detail-sidebar-column {
+  order: -1;
+}
+
 .article-container {
   background: var(--wn-color-surface);
   border-radius: var(--wn-radius-md);
@@ -928,6 +941,19 @@ onBeforeUnmount(() => {
   }
   .comment-actions {
     flex-wrap: wrap;
+  }
+}
+
+/* Element Plus 的 xs 栅格在 767px 以下切换为单列。 */
+@media (max-width: 767px) {
+  .article-detail-container {
+    padding: 0 var(--wn-space-4);
+  }
+
+  /* 小屏保留文章内容优先的阅读顺序。 */
+  .article-detail-sidebar-column {
+    order: initial;
+    margin-top: var(--wn-space-4);
   }
 }
 </style>

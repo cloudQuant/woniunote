@@ -101,7 +101,10 @@ else
 fi
 
 echo "[7/7] 启动服务..."
-bash "$SCRIPT_DIR/start_app.sh" "$MODE"
+if ! bash "$SCRIPT_DIR/start_app.sh" "$MODE"; then
+    echo "[错误] 服务启动失败，重启终止。请查看 backend.log 和 frontend.log。"
+    exit 1
+fi
 
 echo ""
 echo "========================================"

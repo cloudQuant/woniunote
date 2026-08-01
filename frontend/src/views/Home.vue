@@ -1,13 +1,13 @@
 <template>
   <div class="home-page">
     <div class="home-container">
-      <el-row :gutter="24">
-        <el-col :span="17" :xs="24">
+      <el-row :gutter="24" class="home-layout">
+        <el-col :span="17" :xs="24" class="home-main-column">
           <div class="main-content">
             <ArticleList :page="currentPage" @page-change="handlePageChange" />
           </div>
         </el-col>
-        <el-col :span="7" :xs="24">
+        <el-col :span="7" :xs="24" class="home-sidebar-column">
           <Sidebar />
         </el-col>
       </el-row>
@@ -65,9 +65,29 @@ function handlePageChange(page) {
   padding: 0 var(--wn-space-5);
 }
 
-@media (max-width: 768px) {
+.home-layout {
+  align-items: flex-start;
+}
+
+.home-main-column {
+  min-width: 0;
+}
+
+/* 桌面端把搜索与热门文章放到文章列表左侧。 */
+.home-sidebar-column {
+  order: -1;
+}
+
+/* Element Plus 的 xs 栅格在 767px 以下切换为单列。 */
+@media (max-width: 767px) {
   .home-container {
     padding: 0 var(--wn-space-4);  /* 移动端两侧留边 */
+  }
+
+  /* 小屏保留文章优先的阅读顺序。 */
+  .home-sidebar-column {
+    order: initial;
+    margin-top: var(--wn-space-4);
   }
 }
 

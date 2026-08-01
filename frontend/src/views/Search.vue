@@ -1,8 +1,8 @@
 <template>
   <div class="search-page">
     <div class="container">
-      <el-row :gutter="20">
-        <el-col :span="17" :xs="24">
+      <el-row :gutter="20" class="search-layout">
+        <el-col :span="17" :xs="24" class="search-main-column">
           <div class="main-content">
             <h2 class="section-title">
               搜索结果：{{ keyword }}
@@ -12,7 +12,7 @@
             <ArticleList :keyword="keyword" @loaded="onLoaded" />
           </div>
         </el-col>
-        <el-col :span="7" :xs="24">
+        <el-col :span="7" :xs="24" class="search-sidebar-column">
           <Sidebar />
         </el-col>
       </el-row>
@@ -55,6 +55,19 @@ function onLoaded({ total: count }) {
   padding: 0 20px;
 }
 
+.search-layout {
+  align-items: flex-start;
+}
+
+.search-main-column {
+  min-width: 0;
+}
+
+/* 桌面端把搜索与热门文章放到搜索结果左侧。 */
+.search-sidebar-column {
+  order: -1;
+}
+
 .section-title {
   font-size: 20px;
   font-weight: 600;
@@ -71,5 +84,18 @@ function onLoaded({ total: count }) {
   font-weight: normal;
   color: var(--wn-color-text-muted);
   margin-left: 10px;
+}
+
+/* Element Plus 的 xs 栅格在 767px 以下切换为单列。 */
+@media (max-width: 767px) {
+  .container {
+    padding: 0 var(--wn-space-4);
+  }
+
+  /* 小屏保留搜索结果优先的阅读顺序。 */
+  .search-sidebar-column {
+    order: initial;
+    margin-top: var(--wn-space-4);
+  }
 }
 </style>

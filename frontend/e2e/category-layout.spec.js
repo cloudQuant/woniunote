@@ -6,7 +6,7 @@ test.describe('Category layout', () => {
     await mockApi(page)
   })
 
-  test('desktop uses a left sidebar, while mobile keeps article content first', async ({ page }) => {
+  test('keeps the sidebar left through the 768px boundary, then keeps article content first on smaller screens', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/type/909/3')
 
@@ -24,7 +24,16 @@ test.describe('Category layout', () => {
     expect(desktopSidebar).not.toBeNull()
     expect(desktopSidebar.x + desktopSidebar.width).toBeLessThanOrEqual(desktopMain.x)
 
-    await page.setViewportSize({ width: 375, height: 800 })
+    // Element Plus switches its xs columns below 768px. At exactly 768px the
+    // page must remain a two-column layout, with the sidebar still on the left.
+    await page.setViewportSize({ width: 768, height: 800 })
+    const boundaryMain = await mainColumn.boundingBox()
+    const boundarySidebar = await sidebarColumn.boundingBox()
+    expect(boundaryMain).not.toBeNull()
+    expect(boundarySidebar).not.toBeNull()
+    expect(boundarySidebar.x + boundarySidebar.width).toBeLessThanOrEqual(boundaryMain.x)
+
+    await page.setViewportSize({ width: 767, height: 800 })
     await expect(page.locator('.article-item').first()).toBeVisible()
 
     const mobileMain = await mainColumn.boundingBox()

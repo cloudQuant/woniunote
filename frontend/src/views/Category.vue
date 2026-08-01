@@ -160,7 +160,8 @@ onMounted(async () => {
   transform: translateY(-2px);
 }
 
-@media (max-width: 768px) {
+/* Element Plus 的 xs 栅格从 767px 以下才切换为单列，因此此处保持一致。 */
+@media (max-width: 767px) {
   .category-page {
     padding: var(--wn-space-4) 0;
   }

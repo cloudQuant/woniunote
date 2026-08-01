@@ -131,7 +131,10 @@ export const fixtures = {
 export async function mockApi(page, options = {}) {
   const overrides = options.overrides || {}
 
-  await page.route('**/api/**', async (route) => {
+  // Match the API path segment only. The previous glob also matched Vite's
+  // development module URL `/src/api/index.js`, causing it to receive JSON
+  // instead of JavaScript when E2E_BASE_URL points at `npm run dev`.
+  await page.route(/^https?:\/\/[^/]+\/api(?:\/|$)/, async (route) => {
     const req = route.request()
     const method = req.method()
     const url = new URL(req.url())
