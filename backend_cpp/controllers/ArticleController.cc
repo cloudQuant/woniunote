@@ -49,6 +49,20 @@ bool legacyCategoryExists(int type) {
     });
 }
 
+Json::Value emptyArticleNavigation() {
+    Json::Value navigation(Json::objectValue);
+    navigation["previous"] = Json::Value(Json::nullValue);
+    navigation["next"] = Json::Value(Json::nullValue);
+    return navigation;
+}
+
+Json::Value navigationArticleFromRow(const orm::Row& row) {
+    Json::Value article(Json::objectValue);
+    article["articleid"] = static_cast<Json::Int64>(row["articleid"].as<int64_t>());
+    article["headline"] = row["headline"].as<std::string>();
+    return article;
+}
+
 } // namespace
 
 void ArticleController::list(const HttpRequestPtr& req,
@@ -302,6 +316,8 @@ void ArticleController::get(const HttpRequestPtr& req,
             models::Article article(result[0]);
             Logger::debug("[Article] Found", {{"articleid", std::to_string(id)}, {"headline", article.getHeadline()}});
 
+            Json::Value articleData = article.toJson();
+
             // Increment read count
             dbClient->execSqlAsync(
                 "UPDATE article SET readcount = readcount + 1 WHERE articleid = ?",
@@ -310,7 +326,50 @@ void ArticleController::get(const HttpRequestPtr& req,
                 id
             );
 
-            callback(Response::success(article.toJson()));
+            // Article IDs are the stable sequence within a type. Restrict both
+            // directions to the same public collection used by the article
+            // list so hidden and drafted articles never leak via navigation.
+            const std::string navigationSql =
+                "(SELECT articleid, headline, 'previous' AS navigation_direction "
+                "FROM article "
+                "WHERE type = ? AND articleid < ? AND hidden = 0 AND drafted = 0 "
+                "ORDER BY articleid DESC LIMIT 1) "
+                "UNION ALL "
+                "(SELECT articleid, headline, 'next' AS navigation_direction "
+                "FROM article "
+                "WHERE type = ? AND articleid > ? AND hidden = 0 AND drafted = 0 "
+                "ORDER BY articleid ASC LIMIT 1)";
+
+            dbClient->execSqlAsync(
+                navigationSql,
+                [callback, articleData](const orm::Result& navigationResult) mutable {
+                    Json::Value navigation = emptyArticleNavigation();
+                    for (const auto& row : navigationResult) {
+                        if (row["navigation_direction"].isNull()) {
+                            continue;
+                        }
+
+                        const auto direction = row["navigation_direction"].as<std::string>();
+                        if (direction == "previous") {
+                            navigation["previous"] = navigationArticleFromRow(row);
+                        } else if (direction == "next") {
+                            navigation["next"] = navigationArticleFromRow(row);
+                        }
+                    }
+
+                    articleData["navigation"] = navigation;
+                    callback(Response::success(articleData));
+                },
+                [callback, articleData, id](const orm::DrogonDbException& e) mutable {
+                    Logger::warning(
+                        "[Article] Navigation query failed for article " + std::to_string(id) +
+                        ": " + std::string(e.base().what())
+                    );
+                    articleData["navigation"] = emptyArticleNavigation();
+                    callback(Response::success(articleData));
+                },
+                article.getType(), id, article.getType(), id
+            );
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Database error: " + std::string(e.base().what()));

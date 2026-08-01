@@ -119,6 +119,50 @@ def test_register_invalid_json_is_400():
 
 
 # --------------------------------------------------------------------------
+# Article detail navigation: same type, public-only, articleid sequence
+# --------------------------------------------------------------------------
+
+def test_article_detail_navigation_uses_public_same_type_neighbours():
+    r = requests.get(url("/api/articles/15004"), timeout=TIMEOUT)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    _envelope_ok(body)
+    assert body["code"] == 200
+
+    navigation = body["data"]["navigation"]
+    assert navigation["previous"] == {
+        "articleid": 15001,
+        "headline": "导航序号-第一篇",
+    }
+    assert navigation["next"] == {
+        "articleid": 15006,
+        "headline": "导航序号-最后篇",
+    }
+    assert set(navigation["previous"]) == {"articleid", "headline"}
+    assert set(navigation["next"]) == {"articleid", "headline"}
+
+
+@pytest.mark.parametrize(
+    ("article_id", "expected_previous", "expected_next"),
+    [
+        (15001, None, {"articleid": 15004, "headline": "导航序号-中间篇"}),
+        (15006, {"articleid": 15004, "headline": "导航序号-中间篇"}, None),
+    ],
+)
+def test_article_detail_navigation_returns_null_at_type_boundaries(
+    article_id, expected_previous, expected_next
+):
+    r = requests.get(url(f"/api/articles/{article_id}"), timeout=TIMEOUT)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    _envelope_ok(body)
+
+    navigation = body["data"]["navigation"]
+    assert navigation["previous"] == expected_previous
+    assert navigation["next"] == expected_next
+
+
+# --------------------------------------------------------------------------
 # Rate limiting (needs Redis): exceeding the per-minute limit returns 429
 # --------------------------------------------------------------------------
 

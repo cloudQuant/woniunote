@@ -77,6 +77,65 @@ describe('ArticleDetail.vue', () => {
     expect(wrapper.vm.typeName).toBe('cat-101')
   })
 
+  it('renders previous and next article titles as router links', async () => {
+    m.articleApi.getDetail.mockResolvedValueOnce({
+      data: {
+        articleid: 20,
+        headline: '当前文章',
+        type: 101,
+        userid: 1,
+        content: '<p>body</p>',
+        navigation: {
+          previous: { articleid: 10, headline: '上一篇标题' },
+          next: { articleid: 30, headline: '下一篇标题' }
+        }
+      }
+    })
+
+    const wrapper = mount(ArticleDetail, mountOptions())
+    await flushPromises()
+
+    const navigation = wrapper.get('nav[aria-label="同类文章导航"]')
+    expect(navigation.find('.article-navigation__previous').text()).toContain('上一篇文章')
+    expect(navigation.find('.article-navigation__next').text()).toContain('下一篇文章')
+    expect(navigation.findAll('a.router-link').map((link) => link.text()))
+      .toEqual(['上一篇标题', '下一篇标题'])
+  })
+
+  it('renders plain, non-navigable fallback text when navigation is absent', async () => {
+    const wrapper = mount(ArticleDetail, mountOptions())
+    await flushPromises()
+
+    const navigation = wrapper.get('nav[aria-label="同类文章导航"]')
+    expect(navigation.text()).toContain('暂无上一篇文章')
+    expect(navigation.text()).toContain('暂无下一篇文章')
+    expect(navigation.findAll('a')).toHaveLength(0)
+  })
+
+  it('only renders a link for the direction that has a neighbouring article', async () => {
+    m.articleApi.getDetail.mockResolvedValueOnce({
+      data: {
+        articleid: 10,
+        headline: '第一篇文章',
+        type: 101,
+        userid: 1,
+        content: '<p>body</p>',
+        navigation: {
+          previous: null,
+          next: { articleid: 20, headline: '下一篇标题' }
+        }
+      }
+    })
+
+    const wrapper = mount(ArticleDetail, mountOptions())
+    await flushPromises()
+
+    const navigation = wrapper.get('nav[aria-label="同类文章导航"]')
+    expect(navigation.find('.article-navigation__previous').text()).toContain('暂无上一篇文章')
+    expect(navigation.find('.article-navigation__previous').find('a').exists()).toBe(false)
+    expect(navigation.find('.article-navigation__next').find('a.router-link').text()).toBe('下一篇标题')
+  })
+
   it('canEdit true for author, false for anonymous', async () => {
     const wrapper = mount(ArticleDetail, mountOptions())
     await flushPromises()
@@ -197,6 +256,41 @@ describe('ArticleDetail.vue', () => {
     await wrapper.vm.$nextTick()
     await flushPromises()
     expect(m.articleApi.getDetail).toHaveBeenCalledWith('2')
+  })
+
+  it('replaces navigation data when the route changes', async () => {
+    m.articleApi.getDetail
+      .mockResolvedValueOnce({
+        data: {
+          articleid: 1,
+          headline: '第一篇文章',
+          type: 101,
+          userid: 1,
+          content: '<p>first</p>',
+          navigation: { previous: null, next: { articleid: 2, headline: '第二篇文章' } }
+        }
+      })
+      .mockResolvedValueOnce({
+        data: {
+          articleid: 2,
+          headline: '第二篇文章',
+          type: 101,
+          userid: 1,
+          content: '<p>second</p>',
+          navigation: { previous: { articleid: 1, headline: '第一篇文章' }, next: null }
+        }
+      })
+
+    const wrapper = mount(ArticleDetail, mountOptions())
+    await flushPromises()
+    expect(wrapper.get('.article-navigation__next').text()).toContain('第二篇文章')
+
+    routeState.current.params.id = '2'
+    await wrapper.vm.$nextTick()
+    await flushPromises()
+
+    expect(wrapper.get('.article-navigation__previous').text()).toContain('第一篇文章')
+    expect(wrapper.get('.article-navigation__next').text()).toContain('暂无下一篇文章')
   })
 
   it('renders el-skeleton placeholder while loading (first paint)', async () => {

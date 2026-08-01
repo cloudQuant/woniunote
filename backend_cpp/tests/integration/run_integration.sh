@@ -121,6 +121,31 @@ else
   done
 fi
 
+# Stable articles for the public article-detail navigation contract. The IDs
+# deliberately leave hidden, draft and other-type records between published
+# neighbours so the black-box test proves all selection predicates.
+echo "==> Seeding article-navigation integration fixtures"
+mysql_cmd "$DB_NAME" <<'SQL'
+INSERT INTO users (userid, username, password, nickname, role, credit, createtime, updatetime)
+VALUES (15001, 'itest_navigation_fixture', 'not-used-by-this-test', 'Navigation Fixture', 'user', 0, NOW(), NOW())
+ON DUPLICATE KEY UPDATE nickname = VALUES(nickname), updatetime = NOW();
+
+INSERT INTO article (
+  articleid, userid, type, headline, content, thumbnail, credit, readcount,
+  replycount, recommended, hidden, drafted, checked, createtime, updatetime
+) VALUES
+  (15001, 15001, 915, '导航序号-第一篇', '<p>first</p>', NULL, 0, 0, 0, 0, 0, 0, 1, NOW(), NOW()),
+  (15002, 15001, 915, '导航序号-隐藏文章', '<p>hidden</p>', NULL, 0, 0, 0, 0, 1, 0, 1, NOW(), NOW()),
+  (15003, 15001, 915, '导航序号-草稿文章', '<p>draft</p>', NULL, 0, 0, 0, 0, 0, 1, 1, NOW(), NOW()),
+  (15004, 15001, 915, '导航序号-中间篇', '<p>middle</p>', NULL, 0, 0, 0, 0, 0, 0, 1, NOW(), NOW()),
+  (15005, 15001, 916, '导航序号-其他分类', '<p>other type</p>', NULL, 0, 0, 0, 0, 0, 0, 1, NOW(), NOW()),
+  (15006, 15001, 915, '导航序号-最后篇', '<p>last</p>', NULL, 0, 0, 0, 0, 0, 0, 1, NOW(), NOW())
+ON DUPLICATE KEY UPDATE
+  userid = VALUES(userid), type = VALUES(type), headline = VALUES(headline),
+  content = VALUES(content), hidden = VALUES(hidden), drafted = VALUES(drafted),
+  checked = VALUES(checked), updatetime = NOW();
+SQL
+
 # --- 2. Render integration config -----------------------------------------
 CONFIG_OUT="$BACKEND_DIR/config.integration.json"
 echo "==> Writing $CONFIG_OUT"

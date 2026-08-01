@@ -71,6 +71,42 @@ export const fixtures = {
     createtime: '2026-01-01 10:00:00',
     nickname: 'tester'
   },
+  articleDetails: {
+    1: {
+      articleid: 1,
+      headline: '量化投资入门',
+      type: 101,
+      content: '<p>这是一篇关于量化投资的文章正文。</p>',
+      readcount: 121,
+      replycount: 1,
+      userid: 1,
+      credit: 0,
+      drafted: 0,
+      createtime: '2026-01-01 10:00:00',
+      nickname: 'tester',
+      navigation: {
+        previous: null,
+        next: { articleid: 3, headline: '量化投资进阶' }
+      }
+    },
+    3: {
+      articleid: 3,
+      headline: '量化投资进阶',
+      type: 101,
+      content: '<p>这是量化投资的进阶文章正文。</p>',
+      readcount: 60,
+      replycount: 0,
+      userid: 1,
+      credit: 0,
+      drafted: 0,
+      createtime: '2026-01-03 10:00:00',
+      nickname: 'tester',
+      navigation: {
+        previous: { articleid: 1, headline: '量化投资入门' },
+        next: null
+      }
+    }
+  },
   comments: {
     data: [
       { commentid: 10, content: '写得很好！', nickname: '读者A', userid: 2, agreecount: 1, opposecount: 0, createtime: '2026-01-03 09:00:00', replies: [] }
@@ -127,7 +163,10 @@ export async function mockApi(page, options = {}) {
     if (path === '/articles' && method === 'GET') {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...ok(fixtures.articleList.data), total: fixtures.articleList.total }) })
     }
-    if (/^\/articles\/\d+$/.test(path) && method === 'GET') return json(fixtures.articleDetail)
+    const articleDetailMatch = path.match(/^\/articles\/(\d+)$/)
+    if (articleDetailMatch && method === 'GET') {
+      return json(fixtures.articleDetails[articleDetailMatch[1]] || fixtures.articleDetail)
+    }
     if (path === '/articles' && method === 'POST') return json({ articleid: 3 }, '发布成功')
     if (/^\/articles\/\d+$/.test(path) && method === 'PUT') return json({ articleid: 1 }, '更新成功')
 

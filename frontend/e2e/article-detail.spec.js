@@ -11,6 +11,29 @@ test.describe('Article detail & comments', () => {
     await expect(page.getByText('写得很好！')).toBeVisible()
   })
 
+  test('navigates to the next article through the detail navigation link', async ({ page }) => {
+    await mockApi(page)
+    await page.goto('/article/1')
+
+    const navigation = page.getByRole('navigation', { name: '同类文章导航' })
+    await expect(navigation.getByText('暂无上一篇文章')).toBeVisible()
+    await navigation.getByRole('link', { name: '量化投资进阶' }).click()
+
+    await expect(page).toHaveURL(/\/article\/3$/)
+    await expect(page).toHaveTitle(/量化投资进阶/)
+    await expect(page.getByText('这是量化投资的进阶文章正文')).toBeVisible()
+    await expect(navigation.getByText('暂无下一篇文章')).toBeVisible()
+  })
+
+  test('does not render a previous link when there is no previous article', async ({ page }) => {
+    await mockApi(page)
+    await page.goto('/article/1')
+
+    const previousRow = page.locator('.article-navigation__previous')
+    await expect(previousRow.getByText('暂无上一篇文章')).toBeVisible()
+    await expect(previousRow.locator('a')).toHaveCount(0)
+  })
+
   test('anonymous favorite attempt redirects to login', async ({ page }) => {
     await mockApi(page)
     await page.goto('/article/1')
