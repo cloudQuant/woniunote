@@ -6,44 +6,50 @@
 [data-theme="starbucks"] {
   color-scheme: light;
 
-  --wn-color-primary: #00754a;
-  --wn-color-primary-hover: #00875a;
-  --wn-color-primary-active: #006241;
+  --wn-color-primary: #006241;
+  --wn-color-primary-hover: #004f3a;
+  --wn-color-primary-active: #003d2c;
   --wn-color-on-primary: #ffffff;
 
-  --wn-color-canvas: #f2f0eb;
-  --wn-color-surface: #ffffff;
-  --wn-color-surface-soft: #edebe9;
-  --wn-color-surface-2: #e3e0d8;
+  --wn-color-canvas: #f5f2ec;
+  --wn-color-surface: #fffcf8;
+  --wn-color-surface-soft: #f4ede2;
+  --wn-color-surface-2: #e9dfd0;
 
-  --wn-color-text: #1e3932;
-  --wn-color-text-secondary: #2a423a;
-  --wn-color-text-muted: #6b6b6b;
+  --wn-color-text: #18322c;
+  --wn-color-text-secondary: #345148;
+  --wn-color-text-muted: #625f58;
 
-  --wn-color-border: #d4d1c9;
-  --wn-color-border-strong: #b8b4a8;
+  --wn-color-border: #ddd4c6;
+  --wn-color-border-strong: #c3b8a7;
 
-  --wn-color-link: #00754a;
-  --wn-color-link-hover: #006241;
+  --wn-color-link: #006241;
+  --wn-color-link-hover: #004f3a;
 
-  --wn-color-success: #00754a;
-  --wn-color-warning: #cba258;
-  --wn-color-error: #d62b1f;
-  --wn-color-info: #1e3932;
+  --wn-color-success: #1e7a46;
+  --wn-color-warning: #8a5200;
+  --wn-color-error: #b42318;
+  --wn-color-info: #2457c5;
+  --wn-color-on-success: #ffffff;
+  --wn-color-on-warning: #ffffff;
+  --wn-color-on-error: #ffffff;
+  --wn-color-on-info: #ffffff;
 
-  --wn-color-nav-bg: #1e3932;
+  --wn-color-nav-bg: #18322c;
   --wn-color-nav-text: #ffffff;
   --wn-color-nav-hover: rgba(255, 255, 255, 0.12);
-  --wn-color-nav-active: rgba(0, 117, 74, 0.5);
+  --wn-color-nav-active: rgba(0, 98, 65, 0.50);
 
-  --wn-radius-sm: 8px;
-  --wn-radius-md: 12px;
-  --wn-radius-lg: 18px;
+  --wn-radius-sm: 10px;
+  --wn-radius-md: 16px;
+  --wn-radius-lg: 24px;
   --wn-radius-pill: 9999px;
 
-  --wn-shadow-sm: 0 0 6px rgba(0, 0, 0, 0.1);
-  --wn-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.14);
-  --wn-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+  --wn-shadow-sm: 0 1px 3px rgba(51, 44, 35, 0.05), 0 4px 12px rgba(51, 44, 35, 0.04);
+  --wn-shadow-card: 0 10px 26px rgba(51, 44, 35, 0.10), 0 2px 5px rgba(51, 44, 35, 0.04);
+  --wn-shadow-lg: 0 22px 48px rgba(51, 44, 35, 0.15), 0 5px 12px rgba(51, 44, 35, 0.05);
+
+  --wn-color-focus: #006241;
 
   --wn-font-display: "Iowan Old Style", Georgia, "Songti SC", serif;
   --wn-font-body: "Segoe UI", Inter, "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;

@@ -12,52 +12,56 @@
 /* ============ 默认令牌（= Claude 暖调，JS 未执行时的兜底，防 FOUC） ============ */
 :root {
   /* 品牌主色 */
-  --wn-color-primary: #cc785c;
-  --wn-color-primary-hover: #d68b71;
-  --wn-color-primary-active: #a9583e;
+  --wn-color-primary: #ae563d;
+  --wn-color-primary-hover: #93432e;
+  --wn-color-primary-active: #7c3423;
   --wn-color-on-primary: #ffffff;
 
   /* 表面层级 */
-  --wn-color-canvas: #faf9f5;        /* 页面底色 */
-  --wn-color-surface: #fffdfa;       /* 卡片 / 弹层 / 输入框 */
-  --wn-color-surface-soft: #f5f0e8;  /* 次级表面 / hover 底 */
-  --wn-color-surface-2: #efe9de;     /* 更深一档表面 */
+  --wn-color-canvas: #fcf8f3;        /* 页面底色 */
+  --wn-color-surface: #fffdf9;       /* 卡片 / 弹层 / 输入框 */
+  --wn-color-surface-soft: #f6eee7;  /* 次级表面 / hover 底 */
+  --wn-color-surface-2: #eee1d7;     /* 更深一档表面 */
 
   /* 文本 */
-  --wn-color-text: #141413;
-  --wn-color-text-secondary: #3d3d3a;
-  --wn-color-text-muted: #6c6a64;
+  --wn-color-text: #1d1815;
+  --wn-color-text-secondary: #493d36;
+  --wn-color-text-muted: #6e5d52;
 
   /* 边框 */
-  --wn-color-border: #e6dfd8;
-  --wn-color-border-strong: #d8cec0;
+  --wn-color-border: #eaded3;
+  --wn-color-border-strong: #d6c2b2;
 
   /* 链接 */
-  --wn-color-link: #cc785c;
-  --wn-color-link-hover: #a9583e;
+  --wn-color-link: #93432e;
+  --wn-color-link-hover: #7c3423;
 
   /* 语义色 */
-  --wn-color-success: #5db872;
-  --wn-color-warning: #d4a017;
-  --wn-color-error: #c64545;
-  --wn-color-info: #5db8a6;
+  --wn-color-success: #1e7a46;
+  --wn-color-warning: #8a5200;
+  --wn-color-error: #b42318;
+  --wn-color-info: #2457c5;
+  --wn-color-on-success: #ffffff;
+  --wn-color-on-warning: #ffffff;
+  --wn-color-on-error: #ffffff;
+  --wn-color-on-info: #ffffff;
 
   /* 导航条（站点主导航的彩色 bar） */
-  --wn-color-nav-bg: #1f1c19;
-  --wn-color-nav-text: #faf9f5;
+  --wn-color-nav-bg: #1d1815;
+  --wn-color-nav-text: #fffdf9;
   --wn-color-nav-hover: rgba(255, 255, 255, 0.12);
-  --wn-color-nav-active: rgba(255, 255, 255, 0.2);
+  --wn-color-nav-active: rgba(174, 86, 61, 0.38);
 
   /* 圆角 */
-  --wn-radius-sm: 6px;
-  --wn-radius-md: 8px;
-  --wn-radius-lg: 12px;
+  --wn-radius-sm: 7px;
+  --wn-radius-md: 12px;
+  --wn-radius-lg: 18px;
   --wn-radius-pill: 9999px;
 
   /* 阴影 */
-  --wn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --wn-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
-  --wn-shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.16);
+  --wn-shadow-sm: 0 1px 2px rgba(48, 40, 32, 0.05), 0 4px 12px rgba(48, 40, 32, 0.04);
+  --wn-shadow-card: 0 10px 28px rgba(48, 40, 32, 0.08), 0 2px 6px rgba(48, 40, 32, 0.04);
+  --wn-shadow-lg: 0 20px 52px rgba(48, 40, 32, 0.12), 0 4px 12px rgba(48, 40, 32, 0.05);
 
   /* 字体 */
   --wn-font-display: "Cormorant Garamond", Georgia, "Songti SC", "STSong", serif;
@@ -100,8 +104,8 @@
   --wn-hover-lift: -2px;                       /* 统一上移量（替代散乱的 -5px / -2px / scale） */
 
   /* 焦点（键盘可达焦点环，消费主色→随主题变化） */
-  --wn-color-focus: var(--wn-color-primary);
-  --wn-focus-ring: 0 0 0 3px color-mix(in srgb, var(--wn-color-primary) 45%, transparent);
+  --wn-color-focus: #8a3e2a;
+  --wn-focus-ring: 0 0 0 4px color-mix(in srgb, var(--wn-color-focus) 28%, transparent);
 }
 
 /* ============ Element Plus 变量映射（特异度 0,1,1，覆盖 EP 默认 & 暗色 css-vars） ============ */
@@ -121,6 +125,30 @@ html[data-theme] {
   --el-color-danger: var(--wn-color-error);
   --el-color-error: var(--wn-color-error);
   --el-color-info: var(--wn-color-info);
+  --el-color-success-light-3: color-mix(in srgb, var(--wn-color-success) 72%, var(--wn-color-surface));
+  --el-color-success-light-5: color-mix(in srgb, var(--wn-color-success) 48%, var(--wn-color-surface));
+  --el-color-success-light-7: color-mix(in srgb, var(--wn-color-success) 28%, var(--wn-color-surface));
+  --el-color-success-light-8: color-mix(in srgb, var(--wn-color-success) 18%, var(--wn-color-surface));
+  --el-color-success-light-9: color-mix(in srgb, var(--wn-color-success) 10%, var(--wn-color-surface));
+  --el-color-success-dark-2: color-mix(in srgb, var(--wn-color-success) 80%, var(--wn-color-text));
+  --el-color-warning-light-3: color-mix(in srgb, var(--wn-color-warning) 72%, var(--wn-color-surface));
+  --el-color-warning-light-5: color-mix(in srgb, var(--wn-color-warning) 48%, var(--wn-color-surface));
+  --el-color-warning-light-7: color-mix(in srgb, var(--wn-color-warning) 28%, var(--wn-color-surface));
+  --el-color-warning-light-8: color-mix(in srgb, var(--wn-color-warning) 18%, var(--wn-color-surface));
+  --el-color-warning-light-9: color-mix(in srgb, var(--wn-color-warning) 10%, var(--wn-color-surface));
+  --el-color-warning-dark-2: color-mix(in srgb, var(--wn-color-warning) 80%, var(--wn-color-text));
+  --el-color-danger-light-3: color-mix(in srgb, var(--wn-color-error) 72%, var(--wn-color-surface));
+  --el-color-danger-light-5: color-mix(in srgb, var(--wn-color-error) 48%, var(--wn-color-surface));
+  --el-color-danger-light-7: color-mix(in srgb, var(--wn-color-error) 28%, var(--wn-color-surface));
+  --el-color-danger-light-8: color-mix(in srgb, var(--wn-color-error) 18%, var(--wn-color-surface));
+  --el-color-danger-light-9: color-mix(in srgb, var(--wn-color-error) 10%, var(--wn-color-surface));
+  --el-color-danger-dark-2: color-mix(in srgb, var(--wn-color-error) 80%, var(--wn-color-text));
+  --el-color-info-light-3: color-mix(in srgb, var(--wn-color-info) 72%, var(--wn-color-surface));
+  --el-color-info-light-5: color-mix(in srgb, var(--wn-color-info) 48%, var(--wn-color-surface));
+  --el-color-info-light-7: color-mix(in srgb, var(--wn-color-info) 28%, var(--wn-color-surface));
+  --el-color-info-light-8: color-mix(in srgb, var(--wn-color-info) 18%, var(--wn-color-surface));
+  --el-color-info-light-9: color-mix(in srgb, var(--wn-color-info) 10%, var(--wn-color-surface));
+  --el-color-info-dark-2: color-mix(in srgb, var(--wn-color-info) 80%, var(--wn-color-text));
 
   /* 背景 */
   --el-bg-color: var(--wn-color-surface);
@@ -159,6 +187,123 @@ html[data-theme] {
   --el-box-shadow: var(--wn-shadow-card);
   --el-box-shadow-light: var(--wn-shadow-sm);
   --el-box-shadow-lighter: var(--wn-shadow-sm);
+}
+
+/*
+ * Element Plus uses a fixed white foreground for filled buttons.  That works
+ * for many light palettes but fails for bright accents in dark themes.  Each
+ * semantic action therefore consumes an explicit `on-*` token and gets a
+ * deterministic hover/active surface.  Plain/text/link buttons intentionally
+ * retain Element Plus' outlined treatment.
+ */
+html[data-theme] .el-button--primary:not(.is-plain):not(.is-text):not(.is-link):not(.is-dashed) {
+  --el-button-text-color: var(--wn-color-on-primary);
+  --el-button-hover-text-color: var(--wn-color-on-primary);
+  --el-button-hover-bg-color: var(--wn-color-primary-hover);
+  --el-button-hover-border-color: var(--wn-color-primary-hover);
+  --el-button-active-text-color: var(--wn-color-on-primary);
+  --el-button-active-bg-color: var(--wn-color-primary-active);
+  --el-button-active-border-color: var(--wn-color-primary-active);
+}
+
+html[data-theme] .el-button--primary {
+  --wn-button-color: var(--wn-color-primary);
+  --wn-button-hover-color: var(--wn-color-primary-hover);
+  --wn-button-active-color: var(--wn-color-primary-active);
+  --wn-button-on-color: var(--wn-color-on-primary);
+}
+
+html[data-theme] .el-button--success:not(.is-plain):not(.is-text):not(.is-link):not(.is-dashed) {
+  --el-button-text-color: var(--wn-color-on-success);
+  --el-button-hover-text-color: var(--wn-color-on-success);
+  --el-button-hover-bg-color: color-mix(in srgb, var(--wn-color-success) 88%, var(--wn-color-text));
+  --el-button-hover-border-color: color-mix(in srgb, var(--wn-color-success) 88%, var(--wn-color-text));
+  --el-button-active-text-color: var(--wn-color-on-success);
+  --el-button-active-bg-color: color-mix(in srgb, var(--wn-color-success) 75%, var(--wn-color-text));
+  --el-button-active-border-color: color-mix(in srgb, var(--wn-color-success) 75%, var(--wn-color-text));
+}
+
+html[data-theme] .el-button--success {
+  --wn-button-color: var(--wn-color-success);
+  --wn-button-hover-color: color-mix(in srgb, var(--wn-color-success) 88%, var(--wn-color-text));
+  --wn-button-active-color: color-mix(in srgb, var(--wn-color-success) 75%, var(--wn-color-text));
+  --wn-button-on-color: var(--wn-color-on-success);
+}
+
+html[data-theme] .el-button--warning:not(.is-plain):not(.is-text):not(.is-link):not(.is-dashed) {
+  --el-button-text-color: var(--wn-color-on-warning);
+  --el-button-hover-text-color: var(--wn-color-on-warning);
+  --el-button-hover-bg-color: color-mix(in srgb, var(--wn-color-warning) 88%, var(--wn-color-text));
+  --el-button-hover-border-color: color-mix(in srgb, var(--wn-color-warning) 88%, var(--wn-color-text));
+  --el-button-active-text-color: var(--wn-color-on-warning);
+  --el-button-active-bg-color: color-mix(in srgb, var(--wn-color-warning) 75%, var(--wn-color-text));
+  --el-button-active-border-color: color-mix(in srgb, var(--wn-color-warning) 75%, var(--wn-color-text));
+}
+
+html[data-theme] .el-button--warning {
+  --wn-button-color: var(--wn-color-warning);
+  --wn-button-hover-color: color-mix(in srgb, var(--wn-color-warning) 88%, var(--wn-color-text));
+  --wn-button-active-color: color-mix(in srgb, var(--wn-color-warning) 75%, var(--wn-color-text));
+  --wn-button-on-color: var(--wn-color-on-warning);
+}
+
+html[data-theme] .el-button--danger:not(.is-plain):not(.is-text):not(.is-link):not(.is-dashed) {
+  --el-button-text-color: var(--wn-color-on-error);
+  --el-button-hover-text-color: var(--wn-color-on-error);
+  --el-button-hover-bg-color: color-mix(in srgb, var(--wn-color-error) 88%, var(--wn-color-text));
+  --el-button-hover-border-color: color-mix(in srgb, var(--wn-color-error) 88%, var(--wn-color-text));
+  --el-button-active-text-color: var(--wn-color-on-error);
+  --el-button-active-bg-color: color-mix(in srgb, var(--wn-color-error) 75%, var(--wn-color-text));
+  --el-button-active-border-color: color-mix(in srgb, var(--wn-color-error) 75%, var(--wn-color-text));
+}
+
+html[data-theme] .el-button--danger {
+  --wn-button-color: var(--wn-color-error);
+  --wn-button-hover-color: color-mix(in srgb, var(--wn-color-error) 88%, var(--wn-color-text));
+  --wn-button-active-color: color-mix(in srgb, var(--wn-color-error) 75%, var(--wn-color-text));
+  --wn-button-on-color: var(--wn-color-on-error);
+}
+
+html[data-theme] .el-button--info:not(.is-plain):not(.is-text):not(.is-link):not(.is-dashed) {
+  --el-button-text-color: var(--wn-color-on-info);
+  --el-button-hover-text-color: var(--wn-color-on-info);
+  --el-button-hover-bg-color: color-mix(in srgb, var(--wn-color-info) 88%, var(--wn-color-text));
+  --el-button-hover-border-color: color-mix(in srgb, var(--wn-color-info) 88%, var(--wn-color-text));
+  --el-button-active-text-color: var(--wn-color-on-info);
+  --el-button-active-bg-color: color-mix(in srgb, var(--wn-color-info) 75%, var(--wn-color-text));
+  --el-button-active-border-color: color-mix(in srgb, var(--wn-color-info) 75%, var(--wn-color-text));
+}
+
+html[data-theme] .el-button--info {
+  --wn-button-color: var(--wn-color-info);
+  --wn-button-hover-color: color-mix(in srgb, var(--wn-color-info) 88%, var(--wn-color-text));
+  --wn-button-active-color: color-mix(in srgb, var(--wn-color-info) 75%, var(--wn-color-text));
+  --wn-button-on-color: var(--wn-color-on-info);
+}
+
+/* Outlined and textual variants must not fall back to Element Plus' white
+ * foreground.  Their hover state uses the same explicit on-color contract as
+ * filled buttons; text and link variants stay textual on a soft surface. */
+html[data-theme] .el-button:is(.el-button--primary, .el-button--success, .el-button--warning, .el-button--danger, .el-button--info).is-plain {
+  --el-button-text-color: var(--wn-button-color);
+  --el-button-hover-text-color: var(--wn-button-on-color);
+  --el-button-hover-bg-color: var(--wn-button-color);
+  --el-button-hover-border-color: var(--wn-button-color);
+  --el-button-active-text-color: var(--wn-button-on-color);
+  --el-button-active-bg-color: var(--wn-button-active-color);
+  --el-button-active-border-color: var(--wn-button-active-color);
+}
+
+html[data-theme] .el-button:is(.el-button--primary, .el-button--success, .el-button--warning, .el-button--danger, .el-button--info).is-text {
+  --el-button-text-color: var(--wn-button-color);
+  --el-button-hover-text-color: var(--wn-button-hover-color);
+  --el-button-active-text-color: var(--wn-button-active-color);
+}
+
+html[data-theme] .el-button:is(.el-button--primary, .el-button--success, .el-button--warning, .el-button--danger, .el-button--info).is-link {
+  --el-button-text-color: var(--wn-button-color);
+  --el-button-hover-link-text-color: var(--wn-button-hover-color);
+  --el-button-active-color: var(--wn-button-active-color);
 }
 
 /* ============ 全局基底 ============ */

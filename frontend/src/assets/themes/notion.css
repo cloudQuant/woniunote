@@ -6,43 +6,49 @@
 [data-theme="notion"] {
   color-scheme: light;
 
-  --wn-color-primary: #5645d4;
-  --wn-color-primary-hover: #6857e0;
-  --wn-color-primary-active: #4534b3;
+  --wn-color-primary: #5046a8;
+  --wn-color-primary-hover: #443c92;
+  --wn-color-primary-active: #373175;
   --wn-color-on-primary: #ffffff;
 
-  --wn-color-canvas: #ffffff;
+  --wn-color-canvas: #fdfdfc;
   --wn-color-surface: #ffffff;
   --wn-color-surface-soft: #f6f5f4;
-  --wn-color-surface-2: #f0eeec;
+  --wn-color-surface-2: #eceae6;
 
-  --wn-color-text: #1a1a1a;
-  --wn-color-text-secondary: #37352f;
-  --wn-color-text-muted: #787671;
+  --wn-color-text: #191919;
+  --wn-color-text-secondary: #3d3a35;
+  --wn-color-text-muted: #68645f;
 
-  --wn-color-border: #e5e3df;
-  --wn-color-border-strong: #c8c4be;
+  --wn-color-border: #e7e5e1;
+  --wn-color-border-strong: #cac6be;
 
-  --wn-color-link: #0075de;
-  --wn-color-link-hover: #005bab;
+  --wn-color-link: #3451b2;
+  --wn-color-link-hover: #293f91;
 
-  --wn-color-success: #1aae39;
-  --wn-color-warning: #dd5b00;
-  --wn-color-error: #e03131;
-  --wn-color-info: #0075de;
+  --wn-color-success: #1e7a46;
+  --wn-color-warning: #8a5200;
+  --wn-color-error: #b42318;
+  --wn-color-info: #2457c5;
+  --wn-color-on-success: #ffffff;
+  --wn-color-on-warning: #ffffff;
+  --wn-color-on-error: #ffffff;
+  --wn-color-on-info: #ffffff;
 
-  --wn-color-nav-bg: #0a1530;
+  --wn-color-nav-bg: #191919;
   --wn-color-nav-text: #ffffff;
   --wn-color-nav-hover: rgba(255, 255, 255, 0.1);
-  --wn-color-nav-active: rgba(86, 69, 212, 0.55);
+  --wn-color-nav-active: rgba(80, 70, 168, 0.52);
 
   --wn-radius-sm: 6px;
-  --wn-radius-md: 8px;
-  --wn-radius-lg: 12px;
+  --wn-radius-md: 10px;
+  --wn-radius-lg: 16px;
 
-  --wn-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --wn-shadow-card: 0 2px 10px rgba(0, 0, 0, 0.08);
-  --wn-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.14);
+  --wn-shadow-sm: 0 1px 2px rgba(25, 25, 25, 0.04);
+  --wn-shadow-card: 0 8px 22px rgba(25, 25, 25, 0.06), 0 1px 2px rgba(25, 25, 25, 0.04);
+  --wn-shadow-lg: 0 18px 42px rgba(25, 25, 25, 0.10), 0 3px 8px rgba(25, 25, 25, 0.05);
+
+  --wn-color-focus: #3451b2;
 
   --wn-font-display: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --wn-font-body: Inter, "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;

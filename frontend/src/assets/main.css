@@ -24,8 +24,9 @@ a:hover {
 /* 全局焦点环：仅键盘导航时显示（:focus-visible 不响应鼠标点击） */
 :focus-visible {
   outline: 2px solid var(--wn-color-focus);
-  outline-offset: 2px;
+  outline-offset: 3px;
   border-radius: var(--wn-radius-sm);
+  box-shadow: var(--wn-focus-ring);
 }
 
 /* 容器 */
@@ -38,10 +39,13 @@ a:hover {
 /* 卡片样式 */
 .card {
   background: var(--wn-color-surface);
+  border: 1px solid var(--wn-color-border);
   border-radius: var(--wn-radius-md);
   box-shadow: var(--wn-shadow-card);
   padding: 20px;
   margin-bottom: 20px;
+  transition: border-color var(--wn-transition-base), box-shadow var(--wn-transition-base),
+    background-color var(--wn-transition-base);
 }
 
 /* 文章列表 */
@@ -52,6 +56,7 @@ a:hover {
 
 .article-item {
   background: var(--wn-color-surface);
+  border: 1px solid var(--wn-color-border);
   border-radius: var(--wn-radius-md);
   overflow: hidden;
   box-shadow: var(--wn-shadow-card);
@@ -61,6 +66,7 @@ a:hover {
 
 /* 统一悬停反馈（R14）：抬升阴影 + 标准位移量，颜色/阴影消费令牌随主题变化 */
 .article-item:hover {
+  border-color: var(--wn-color-border-strong);
   box-shadow: var(--wn-elevation-hover);
   transform: translateY(var(--wn-hover-lift));
 }
@@ -102,10 +108,13 @@ a:hover {
 
 .sidebar-card {
   background: var(--wn-color-surface);
+  border: 1px solid var(--wn-color-border);
   border-radius: var(--wn-radius-md);
   box-shadow: var(--wn-shadow-card);
   padding: 15px;
   margin-bottom: 20px;
+  transition: border-color var(--wn-transition-base), box-shadow var(--wn-transition-base),
+    background-color var(--wn-transition-base);
 }
 
 .sidebar-title {

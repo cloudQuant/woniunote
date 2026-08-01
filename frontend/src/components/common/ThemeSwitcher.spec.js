@@ -39,6 +39,18 @@ describe('ThemeSwitcher', () => {
   it('renders one cell per configured theme', () => {
     const wrapper = mount(ThemeSwitcher, { global: { stubs } })
     expect(wrapper.findAll('.theme-cell').length).toBe(THEMES.length)
+    expect(wrapper.findAll('.theme-group').length).toBe(2)
+  })
+
+  it('uses a keyboard-accessible trigger and exposes the selected state', () => {
+    const wrapper = mount(ThemeSwitcher, { global: { stubs } })
+    const trigger = wrapper.get('button.theme-switcher-trigger')
+    const selected = wrapper.find('.theme-cell.active')
+
+    expect(trigger.attributes('type')).toBe('button')
+    expect(trigger.attributes('aria-haspopup')).toBe('dialog')
+    expect(trigger.attributes('aria-expanded')).toBe('false')
+    expect(selected.attributes('aria-pressed')).toBe('true')
   })
 
   it('marks the current theme cell active', async () => {
@@ -47,6 +59,7 @@ describe('ThemeSwitcher', () => {
     const wrapper = mount(ThemeSwitcher, { global: { stubs } })
     const active = wrapper.findAll('.theme-cell').filter((c) => c.classes('active'))
     expect(active.length).toBe(1)
+    expect(active[0].attributes('aria-pressed')).toBe('true')
   })
 
   it('clicking a cell switches the theme', async () => {

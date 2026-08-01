@@ -12,30 +12,75 @@ test.describe('Theme switching', () => {
     expect(theme).toBe('claude')
   })
 
-  test('switching to a dark theme updates html attributes and persists', async ({ page }) => {
+  test('each theme updates html attributes, selected state, and persistence', async ({ page }) => {
     await page.goto('/')
-    // Open the theme switcher in the header.
-    const trigger = page.getByText('主题', { exact: false }).first()
-    await trigger.click()
+    const trigger = page.locator('button.theme-switcher-trigger')
+    const themeCases = [
+      ['claude', false],
+      ['notion', false],
+      ['vercel', false],
+      ['stripe', false],
+      ['starbucks', false],
+      ['linear', true],
+      ['spotify', true],
+      ['supabase', true],
+      ['sentry', true],
+    ]
 
-    // Pick the Linear (dark) theme from the popover.
-    const linear = page.getByText('Linear', { exact: false }).first()
-    await linear.click()
+    for (const [themeKey, isDarkTheme] of themeCases) {
+      await trigger.click()
+      const themeCell = page.locator(`[data-theme-key="${themeKey}"]`)
+      await expect(themeCell).toBeVisible()
+      await themeCell.click()
 
-    await expect.poll(async () =>
-      page.evaluate(() => document.documentElement.getAttribute('data-theme'))
-    ).toBe('linear')
+      await expect.poll(async () =>
+        page.evaluate(() => document.documentElement.getAttribute('data-theme'))
+      ).toBe(themeKey)
+      await expect(themeCell).toHaveAttribute('aria-pressed', 'true')
 
-    const isDark = await page.evaluate(() => document.documentElement.classList.contains('dark'))
-    expect(isDark).toBe(true)
+      const isDark = await page.evaluate(() => document.documentElement.classList.contains('dark'))
+      expect(isDark).toBe(isDarkTheme)
 
-    const persisted = await page.evaluate(() => localStorage.getItem('wn-theme'))
-    expect(persisted).toBe('linear')
+      const persisted = await page.evaluate(() => localStorage.getItem('wn-theme'))
+      expect(persisted).toBe(themeKey)
+    }
 
-    // Reload preserves the chosen theme (no FOUC fallback to default).
+    // Reload preserves the final choice (no FOUC fallback to the default theme).
     await page.reload()
     await expect.poll(async () =>
       page.evaluate(() => document.documentElement.getAttribute('data-theme'))
+    ).toBe('sentry')
+  })
+
+  test('the theme selector can be opened and applied with the keyboard', async ({ page }) => {
+    await page.goto('/')
+    const trigger = page.locator('button.theme-switcher-trigger')
+
+    await trigger.focus()
+    await expect(trigger).toBeFocused()
+    await page.keyboard.press('Enter')
+
+    const linear = page.locator('[data-theme-key="linear"]')
+    await expect(linear).toBeVisible()
+    await linear.focus()
+    await page.keyboard.press('Enter')
+
+    await expect.poll(async () =>
+      page.evaluate(() => document.documentElement.getAttribute('data-theme'))
     ).toBe('linear')
+  })
+
+  test('the grouped selector stays inside a narrow viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    await page.locator('button.theme-switcher-trigger').click()
+
+    const panel = page.locator('.theme-switcher-popover')
+    await expect(panel).toBeVisible()
+    const box = await panel.boundingBox()
+
+    expect(box).not.toBeNull()
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(390)
   })
 })

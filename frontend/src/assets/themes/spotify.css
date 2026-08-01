@@ -7,43 +7,49 @@
   color-scheme: dark;
 
   --wn-color-primary: #1ed760;
-  --wn-color-primary-hover: #1fdf64;
-  --wn-color-primary-active: #1db954;
-  --wn-color-on-primary: #000000;
+  --wn-color-primary-hover: #3beb75;
+  --wn-color-primary-active: #17b950;
+  --wn-color-on-primary: #071b0d;
 
   --wn-color-canvas: #121212;
-  --wn-color-surface: #181818;
-  --wn-color-surface-soft: #1f1f1f;
-  --wn-color-surface-2: #252525;
+  --wn-color-surface: #1a1a1a;
+  --wn-color-surface-soft: #222222;
+  --wn-color-surface-2: #2b2b2b;
 
   --wn-color-text: #ffffff;
-  --wn-color-text-secondary: #cbcbcb;
-  --wn-color-text-muted: #b3b3b3;
+  --wn-color-text-secondary: #d2d2d2;
+  --wn-color-text-muted: #b9b9b9;
 
-  --wn-color-border: #2a2a2a;
-  --wn-color-border-strong: #4d4d4d;
+  --wn-color-border: #313131;
+  --wn-color-border-strong: #565656;
 
-  --wn-color-link: #1ed760;
-  --wn-color-link-hover: #1fdf64;
+  --wn-color-link: #52ed89;
+  --wn-color-link-hover: #7af3a6;
 
-  --wn-color-success: #1ed760;
-  --wn-color-warning: #ffa42b;
-  --wn-color-error: #f3727f;
-  --wn-color-info: #539df5;
+  --wn-color-success: #4ade80;
+  --wn-color-warning: #fbbf24;
+  --wn-color-error: #ff9aad;
+  --wn-color-info: #93c5fd;
+  --wn-color-on-success: #052e16;
+  --wn-color-on-warning: #2c1a00;
+  --wn-color-on-error: #3b0713;
+  --wn-color-on-info: #082f49;
 
   --wn-color-nav-bg: #000000;
   --wn-color-nav-text: #ffffff;
   --wn-color-nav-hover: rgba(255, 255, 255, 0.1);
-  --wn-color-nav-active: rgba(30, 215, 96, 0.45);
+  --wn-color-nav-active: rgba(30, 215, 96, 0.38);
 
-  --wn-radius-sm: 6px;
-  --wn-radius-md: 8px;
-  --wn-radius-lg: 12px;
+  --wn-radius-sm: 8px;
+  --wn-radius-md: 16px;
+  --wn-radius-lg: 26px;
   --wn-radius-pill: 9999px;
 
-  --wn-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
-  --wn-shadow-card: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --wn-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+  --wn-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.28);
+  --wn-shadow-card: 0 10px 26px rgba(0, 0, 0, 0.40), 0 1px 0 rgba(255, 255, 255, 0.03);
+  --wn-shadow-lg: 0 22px 50px rgba(0, 0, 0, 0.56), 0 2px 0 rgba(255, 255, 255, 0.04);
+
+  --wn-color-focus: #52ed89;
 
   --wn-font-display: "Helvetica Neue", Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --wn-font-body: "Helvetica Neue", Inter, "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;

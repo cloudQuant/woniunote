@@ -6,43 +6,49 @@
 [data-theme="claude"] {
   color-scheme: light;
 
-  --wn-color-primary: #cc785c;
-  --wn-color-primary-hover: #d68b71;
-  --wn-color-primary-active: #a9583e;
+  --wn-color-primary: #ae563d;
+  --wn-color-primary-hover: #93432e;
+  --wn-color-primary-active: #7c3423;
   --wn-color-on-primary: #ffffff;
 
-  --wn-color-canvas: #faf9f5;
-  --wn-color-surface: #fffdfa;
-  --wn-color-surface-soft: #f5f0e8;
-  --wn-color-surface-2: #efe9de;
+  --wn-color-canvas: #fcf8f3;
+  --wn-color-surface: #fffdf9;
+  --wn-color-surface-soft: #f6eee7;
+  --wn-color-surface-2: #eee1d7;
 
-  --wn-color-text: #141413;
-  --wn-color-text-secondary: #3d3d3a;
-  --wn-color-text-muted: #6c6a64;
+  --wn-color-text: #1d1815;
+  --wn-color-text-secondary: #493d36;
+  --wn-color-text-muted: #6e5d52;
 
-  --wn-color-border: #e6dfd8;
-  --wn-color-border-strong: #d8cec0;
+  --wn-color-border: #eaded3;
+  --wn-color-border-strong: #d6c2b2;
 
-  --wn-color-link: #cc785c;
-  --wn-color-link-hover: #a9583e;
+  --wn-color-link: #93432e;
+  --wn-color-link-hover: #7c3423;
 
-  --wn-color-success: #5db872;
-  --wn-color-warning: #d4a017;
-  --wn-color-error: #c64545;
-  --wn-color-info: #5db8a6;
+  --wn-color-success: #1e7a46;
+  --wn-color-warning: #8a5200;
+  --wn-color-error: #b42318;
+  --wn-color-info: #2457c5;
+  --wn-color-on-success: #ffffff;
+  --wn-color-on-warning: #ffffff;
+  --wn-color-on-error: #ffffff;
+  --wn-color-on-info: #ffffff;
 
-  --wn-color-nav-bg: #181715;
-  --wn-color-nav-text: #faf9f5;
+  --wn-color-nav-bg: #1d1815;
+  --wn-color-nav-text: #fffdf9;
   --wn-color-nav-hover: rgba(255, 255, 255, 0.12);
-  --wn-color-nav-active: rgba(204, 120, 92, 0.35);
+  --wn-color-nav-active: rgba(174, 86, 61, 0.38);
 
-  --wn-radius-sm: 6px;
-  --wn-radius-md: 8px;
-  --wn-radius-lg: 12px;
+  --wn-radius-sm: 7px;
+  --wn-radius-md: 12px;
+  --wn-radius-lg: 18px;
 
-  --wn-shadow-sm: 0 1px 3px rgba(20, 20, 19, 0.06);
-  --wn-shadow-card: 0 2px 12px rgba(20, 20, 19, 0.07);
-  --wn-shadow-lg: 0 8px 28px rgba(20, 20, 19, 0.14);
+  --wn-shadow-sm: 0 1px 2px rgba(48, 40, 32, 0.05), 0 4px 12px rgba(48, 40, 32, 0.04);
+  --wn-shadow-card: 0 10px 28px rgba(48, 40, 32, 0.08), 0 2px 6px rgba(48, 40, 32, 0.04);
+  --wn-shadow-lg: 0 20px 52px rgba(48, 40, 32, 0.12), 0 4px 12px rgba(48, 40, 32, 0.05);
+
+  --wn-color-focus: #8a3e2a;
 
   --wn-font-display: "Cormorant Garamond", Georgia, "Songti SC", "STSong", serif;
   --wn-font-body: Inter, "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
