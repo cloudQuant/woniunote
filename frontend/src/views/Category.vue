@@ -1,8 +1,8 @@
 <template>
   <div class="category-page">
-    <div class="container">
-      <el-row :gutter="20">
-        <el-col :span="17" :xs="24">
+    <div class="category-container">
+      <el-row :gutter="24" class="category-layout">
+        <el-col :span="17" :xs="24" class="category-main-column">
           <div class="main-content">
             <h2 class="section-title">{{ categoryName }}</h2>
             
@@ -27,7 +27,7 @@
             />
           </div>
         </el-col>
-        <el-col :span="7" :xs="24">
+        <el-col :span="7" :xs="24" class="category-sidebar-column">
           <Sidebar />
         </el-col>
       </el-row>
@@ -105,15 +105,29 @@ onMounted(async () => {
 
 <style scoped>
 .category-page {
-  padding: 20px 0;
+  padding: var(--wn-space-5) 0;
   background: var(--wn-color-canvas);
   min-height: calc(100vh - 200px);
 }
 
-.container {
+.category-container {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 var(--wn-space-5);
+}
+
+.category-layout {
+  align-items: flex-start;
+}
+
+.category-main-column {
+  min-width: 0;
+}
+
+/* 桌面端把检索与热门文章置于左侧；DOM 顺序仍保留文章优先。 */
+.category-sidebar-column {
+  order: -1;
 }
 
 .section-title {
@@ -144,5 +158,21 @@ onMounted(async () => {
 
 .category-tag:hover {
   transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .category-page {
+    padding: var(--wn-space-4) 0;
+  }
+
+  .category-container {
+    padding: 0 var(--wn-space-4);
+  }
+
+  /* 小屏恢复内容优先，避免搜索与热门文章挤占首屏阅读空间。 */
+  .category-sidebar-column {
+    order: initial;
+    margin-top: var(--wn-space-4);
+  }
 }
 </style>

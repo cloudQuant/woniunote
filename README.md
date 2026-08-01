@@ -231,6 +231,48 @@ bash restart_app.sh prod
 
 ---
 
+## 数据库导出与迁移
+
+`scripts/database_transfer.sh` 用于在开发、测试和生产环境间迁移当前 C++ 后端使用的 MySQL 数据库。导出的压缩 SQL 文件包含数据库定义、全部数据表及数据、触发器、存储过程和事件；每次导出还会生成 SHA-256 校验文件和不含密码的元数据文件。
+
+脚本默认优先读取未纳入版本控制的 `backend_cpp/config.local.json`，其次读取 `backend_cpp/config.json`。运行机器需要安装 `mysql`、`mysqldump` 和 `gzip`。
+
+### 常用命令
+
+```bash
+# 1. 导出当前数据库到 ./backups/（该目录已被 Git 忽略）
+bash scripts/database_transfer.sh export
+
+# 2. 使用明确的环境配置导出，例如生产配置
+bash scripts/database_transfer.sh export --config backend_cpp/config.prod.json
+
+# 3. 在目标机器导入到同名且为空的数据库
+bash scripts/database_transfer.sh import backups/woniunote_YYYYMMDDTHHMMSSZ.sql.gz
+
+# 4. 确认需要覆盖时，删除并重建已有目标数据库
+bash scripts/database_transfer.sh import --replace backups/woniunote_YYYYMMDDTHHMMSSZ.sql.gz
+
+# 5. 不落盘密码，临时覆盖目标机器连接参数
+WONIUNOTE_DB_HOST=db.example.com \
+WONIUNOTE_DB_PORT=3306 \
+WONIUNOTE_DB_NAME=woniunote \
+WONIUNOTE_DB_USER=woniunote_user \
+WONIUNOTE_DB_PASSWORD='请替换为目标密码' \
+bash scripts/database_transfer.sh import backups/woniunote_YYYYMMDDTHHMMSSZ.sql.gz
+```
+
+### 导入保护与验证
+
+导入时会自动进行 gzip 完整性、SHA-256 和表数量校验。备份不包含密码；目标环境可配置 `backend_cpp/config.local.json`，也可设置上例中的 `WONIUNOTE_DB_*` 环境变量。为避免误恢复，导入端的数据库名必须与备份中的名称一致；若目标库已有表，脚本会拒绝执行，只有显式添加 `--replace` 才会覆盖。
+
+可通过以下命令运行脚本契约测试；测试使用临时的模拟客户端，不会连接任何真实数据库：
+
+```bash
+bash scripts/tests/test_database_transfer.sh
+```
+
+---
+
 ## 🔧 核心功能
 
 ### 📝 内容管理
