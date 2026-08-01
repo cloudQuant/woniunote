@@ -55,4 +55,5 @@
 
   /* 暗色主题：反色 UEditor 工具栏单色图标以保证可读性 */
   --wn-editor-icon-filter: invert(0.85) hue-rotate(180deg);
+  --wn-logo-filter: invert(1);
 }

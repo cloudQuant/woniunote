@@ -4,7 +4,7 @@
     <div class="top-bar">
       <div class="top-container">
         <router-link to="/" class="logo">
-          <img src="/logo.png" alt="云子量化" class="logo-img" />
+          <img src="/logo-transparent.png" alt="云子量化" class="logo-img" />
         </router-link>
         <div class="slogan-wrapper">
           <span class="slogan">量化投资 · 量化自我 · 量化是一生的修行</span>
@@ -426,6 +426,8 @@ function handleUserCommand(command) {
 .logo-img {
   height: 40px;
   width: auto;
+  filter: var(--wn-logo-filter, none);
+  transition: filter var(--wn-transition-base);
 }
 
 .slogan-wrapper {

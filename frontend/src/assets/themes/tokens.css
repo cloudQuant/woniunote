@@ -70,6 +70,9 @@
   /* 富文本编辑器(UEditor)工具栏图标滤镜：浅色主题不反色 */
   --wn-editor-icon-filter: none;
 
+  /* 站点 Logo：浅色主题保留黑色笔触，暗色主题覆盖为白色笔触 */
+  --wn-logo-filter: none;
+
   /* 间距（4px 基准，语义有限档位；静态默认值防 FOUC） */
   --wn-space-1: 4px;
   --wn-space-2: 8px;

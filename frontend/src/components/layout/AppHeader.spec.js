@@ -198,6 +198,7 @@ describe('AppHeader.vue', () => {
     const wrapper = mount(AppHeader, mountOptions())
     const logo = wrapper.find('img[alt="云子量化"]')
     expect(logo.exists()).toBe(true)
+    expect(logo.attributes('src')).toBe('/logo-transparent.png')
   })
 
   it('login entry is a <button> element (keyboard accessible)', () => {
