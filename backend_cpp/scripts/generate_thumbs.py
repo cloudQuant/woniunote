@@ -1,19 +1,32 @@
 #!/usr/bin/env python3
 """
-Generate content-driven category word-cloud thumbnails for article lists.
+Generate content-driven category thumbnails for article lists.
 
 The frontend uses /api/thumb/<type>.png for article cards. This script keeps
 that contract and makes each type image communicate the article topic at a
-glance: category name in the center, supporting words segmented from the
-category's article headlines/content around it, and a polished high-contrast
-background.
+glance: the category name in large type, a short rule, and a single row of
+keywords drawn from the category's article headlines and content.
+
+Keywords come from article content when the category yields enough usable
+terms (TF-IDF scored, part-of-speech filtered); otherwise the curated
+TYPE_KEYWORDS / ROOT_KEYWORDS lists are used so a thumbnail never ships
+garbage words. See build_keywords().
+
+Usage:
+    python3 generate_thumbs.py                 # generate every category
+    python3 generate_thumbs.py --dry-run       # print keywords, write nothing
+    python3 generate_thumbs.py --only 101,102  # regenerate selected categories
+    python3 generate_thumbs.py --check         # exit 1 if any image is missing
 """
 
+import argparse
 import html
 import json
 import logging
+import math
 import os
 import re
+import sys
 import unicodedata
 import warnings
 from collections import Counter, defaultdict
@@ -24,9 +37,21 @@ from PIL import Image, ImageDraw, ImageFont
 
 WIDTH = 226
 HEIGHT = 136
+SUPERSAMPLE = 3          # render large, downscale with LANCZOS for crisp text
+KEYWORD_COUNT = 4        # keywords shown in the row under the title
+MIN_CONTENT_KEYWORDS = 4 # below this, fall back to curated keywords
+# Below this many articles a category has no trustworthy content profile. Raised
+# from 5 after comparing both paths: with the current database, categories under
+# this line produced mismatched words (区块链与defi -> 期货, 笔记 -> 牛顿), while
+# their curated lists read correctly. Lower it once article categorisation is fixed.
+MIN_ARTICLES_FOR_CONTENT = 20
+VIGNETTE_STRENGTH = 0.28
+DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent.parent / "resource" / "thumb"
 
 
 # Article types with gradient anchors. IDs must stay compatible with article.type.
+# Categories present in the database but absent here are picked up at runtime by
+# build_category_catalog(), so this table only needs the ones with bespoke colors.
 ARTICLE_TYPES = {
     1: ("交易策略", "#7C3AED", "#4C1D95"),
     101: ("CTA策略", "#2563EB", "#1E3A8A"),
@@ -215,20 +240,25 @@ COLOR_FALLBACKS = [
     ("#EA580C", "#7C2D12"),
 ]
 
-WORD_SLOTS = [
-    (0.23, 0.25, -10, 0.82),
-    (0.77, 0.25, 8, 0.78),
-    (0.23, 0.72, 9, 0.70),
-    (0.77, 0.73, -8, 0.70),
-    (0.52, 0.19, 0, 0.62),
-    (0.50, 0.82, 0, 0.60),
-    (0.15, 0.52, -12, 0.56),
-    (0.85, 0.52, 12, 0.56),
-    (0.33, 0.88, -4, 0.52),
-    (0.67, 0.88, 4, 0.52),
-    (0.34, 0.15, 5, 0.50),
-    (0.66, 0.15, -5, 0.50),
+# Part-of-speech tags kept when scoring content keywords. Nouns and verbs carry
+# topic meaning; particles, adverbs and numerals are noise on a 226x136 image.
+ALLOWED_POS = ("n", "vn", "v", "eng", "j", "l", "i")
+
+# (path, regular_face_index, bold_face_index). PingFang ships on macOS but not
+# every install, and the Linux entries cover the Ubuntu server.
+FONT_STACK = [
+    ("/System/Library/Fonts/PingFang.ttc", 2, 4),
+    ("/System/Library/Fonts/Hiragino Sans GB.ttc", 0, 2),
+    ("/System/Library/Fonts/STHeiti Medium.ttc", 1, 1),
+    ("/Library/Fonts/Arial Unicode.ttf", 0, 0),
+    ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 2, 4),
+    ("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc", 0, 0),
+    ("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", 2, 4),
+    ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc", 0, 0),
+    ("/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf", 0, 0),
 ]
+
+_CJK_PROBE = "交易策略"
 
 
 def backend_root():
@@ -251,38 +281,43 @@ def mix(hex_a, hex_b, weight_a):
     return rgb_to_hex(tuple(a[i] * w + b[i] * (1 - w) for i in range(3)))
 
 
-def create_gradient(width, height, color1, color2):
-    img = Image.new("RGB", (width, height))
-    r1, g1, b1 = hex_to_rgb(mix(color1, "#111827", 0.72))
-    r2, g2, b2 = hex_to_rgb(mix(color2, "#020617", 0.76))
-    for y in range(height):
-        ratio = y / max(1, height - 1)
-        for x in range(width):
-            drift = (x / max(1, width - 1)) * 0.16
-            blend = min(1.0, ratio * 0.84 + drift)
-            r = int(r1 + (r2 - r1) * blend)
-            g = int(g1 + (g2 - g1) * blend)
-            b = int(b1 + (b2 - b1) * blend)
-            img.putpixel((x, y), (r, g, b))
-    return img.convert("RGBA")
+# --------------------------------------------------------------------------
+# Fonts
+# --------------------------------------------------------------------------
+
+_FONT_CACHE = {}
 
 
-def get_font(size, bold=False):
-    font_paths = [
-        "/System/Library/Fonts/PingFang.ttc",
-        "/System/Library/Fonts/STHeiti Medium.ttc" if bold else "/System/Library/Fonts/STHeiti Light.ttc",
-        "/System/Library/Fonts/Hiragino Sans GB.ttc",
-        "/Library/Fonts/Arial Unicode.ttf",
-        "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc" if bold else "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-        "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
-    ]
-    for font_path in font_paths:
-        if font_path and os.path.exists(font_path):
+def _renders_cjk(font):
+    try:
+        mask = font.getmask(_CJK_PROBE)
+        return mask.getbbox() is not None
+    except Exception:
+        return False
+
+
+def load_font(size, bold=False):
+    """Return a CJK-capable font, or raise if none of the candidates work."""
+    key = (size, bold)
+    if key in _FONT_CACHE:
+        return _FONT_CACHE[key]
+
+    for path, regular_index, bold_index in FONT_STACK:
+        if not os.path.exists(path):
+            continue
+        for index in ([bold_index, regular_index] if bold else [regular_index, bold_index]):
             try:
-                return ImageFont.truetype(font_path, size)
-            except OSError:
+                font = ImageFont.truetype(path, size, index=index)
+            except (OSError, ValueError):
                 continue
-    return ImageFont.load_default()
+            if _renders_cjk(font):
+                _FONT_CACHE[key] = font
+                return font
+
+    raise RuntimeError(
+        "No CJK-capable font found. Install one of: "
+        + ", ".join(path for path, _, _ in FONT_STACK)
+    )
 
 
 def text_size(draw, text, font):
@@ -293,29 +328,24 @@ def text_size(draw, text, font):
 def font_that_fits(draw, text, target_size, max_width, min_size=10, bold=False):
     size = target_size
     while size > min_size:
-        font = get_font(size, bold=bold)
+        font = load_font(size, bold=bold)
         width, _ = text_size(draw, text, font)
         if width <= max_width:
             return font
         size -= 1
-    return get_font(min_size, bold=bold)
+    return load_font(min_size, bold=bold)
 
 
-def unique_words(words):
-    seen = set()
-    result = []
-    for word in words:
-        normalized = str(word).strip()
-        if not normalized or normalized.lower() in seen:
-            continue
-        seen.add(normalized.lower())
-        result.append(normalized)
-    return result
+def draw_centered(draw, text, font, cx, cy, fill):
+    bbox = draw.textbbox((0, 0), text, font=font)
+    x = cx - (bbox[2] - bbox[0]) / 2 - bbox[0]
+    y = cy - (bbox[3] - bbox[1]) / 2 - bbox[1]
+    draw.text((x, y), text, font=font, fill=fill)
 
 
-def root_type_id(type_id):
-    return type_id if type_id < 100 else type_id // 100
-
+# --------------------------------------------------------------------------
+# Database
+# --------------------------------------------------------------------------
 
 def load_db_config():
     config_paths = [
@@ -352,46 +382,38 @@ def load_db_config():
 
 
 def fetch_database_context():
+    """Return (categories, articles). Raises RuntimeError when the DB is unusable."""
     try:
         import pymysql
     except ImportError as exc:
-        print(f"[WARN] PyMySQL unavailable; using fallback keywords only: {exc}")
-        return {}, []
+        raise RuntimeError(f"PyMySQL unavailable: {exc}") from exc
 
     db_config = load_db_config()
     if not db_config:
-        print("[WARN] MySQL config not found; using fallback keywords only.")
-        return {}, []
+        raise RuntimeError("No MySQL config found (config.local.json / config.json)")
 
-    try:
-        connection = pymysql.connect(
-            host=db_config["host"],
-            port=db_config["port"],
-            user=db_config["user"],
-            password=db_config["password"],
-            database=db_config["database"],
-            charset=db_config["charset"],
-            cursorclass=pymysql.cursors.DictCursor,
-        )
-    except Exception as exc:
-        print(f"[WARN] Cannot connect to MySQL; using fallback keywords only: {exc}")
-        return {}, []
+    connection = pymysql.connect(
+        host=db_config["host"],
+        port=db_config["port"],
+        user=db_config["user"],
+        password=db_config["password"],
+        database=db_config["database"],
+        charset=db_config["charset"],
+        cursorclass=pymysql.cursors.DictCursor,
+    )
 
     categories = {}
     articles = []
     try:
         with connection.cursor() as cursor:
-            try:
-                cursor.execute("SELECT id, parent_id, name FROM article_category")
-                for row in cursor.fetchall():
-                    category_id = int(row["id"])
-                    categories[category_id] = {
-                        "id": category_id,
-                        "name": str(row["name"] or "").strip(),
-                        "parent_id": int(row["parent_id"]) if row.get("parent_id") is not None else None,
-                    }
-            except Exception as exc:
-                print(f"[WARN] article_category unavailable; using legacy category tree: {exc}")
+            cursor.execute("SELECT id, parent_id, name FROM article_category")
+            for row in cursor.fetchall():
+                category_id = int(row["id"])
+                categories[category_id] = {
+                    "id": category_id,
+                    "name": str(row["name"] or "").strip(),
+                    "parent_id": int(row["parent_id"]) if row.get("parent_id") is not None else None,
+                }
 
             cursor.execute(
                 "SELECT type, headline, content FROM article "
@@ -409,9 +431,12 @@ def fetch_database_context():
     finally:
         connection.close()
 
-    print(f"[INFO] Loaded {len(categories)} DB categories and {len(articles)} articles for word clouds.")
     return categories, articles
 
+
+# --------------------------------------------------------------------------
+# Category catalog
+# --------------------------------------------------------------------------
 
 def category_colors(type_id, parent_id=None):
     if type_id in ARTICLE_TYPES:
@@ -425,6 +450,7 @@ def category_colors(type_id, parent_id=None):
 
 
 def build_category_catalog(db_categories):
+    """Merge the hardcoded table with whatever the database actually has."""
     catalog = {}
     for type_id, (name, color1, color2) in ARTICLE_TYPES.items():
         catalog[type_id] = {
@@ -486,6 +512,10 @@ def articles_for_category(type_id, catalog, grouped_articles):
     return selected
 
 
+# --------------------------------------------------------------------------
+# Keyword extraction
+# --------------------------------------------------------------------------
+
 def clean_article_text(text):
     value = html.unescape(str(text or ""))
     value = re.sub(r"(?is)<(script|style|pre|code).*?>.*?</\1>", " ", value)
@@ -512,7 +542,6 @@ def get_segmenter():
 def prepare_segmenter(catalog):
     segmenter = get_segmenter()
     if not segmenter:
-        print("[WARN] jieba unavailable; using regex token fallback.")
         return None
 
     for category in catalog.values():
@@ -527,13 +556,27 @@ def prepare_segmenter(catalog):
 
 def fallback_segment(text):
     tokens = []
-    for match in re.finditer(r"[A-Za-z][A-Za-z0-9+#.-]{1,}|[\u4e00-\u9fff]+", text):
+    for match in re.finditer(r"[A-Za-z][A-Za-z0-9+#.-]{1,}|[一-鿿]+", text):
         value = match.group(0)
-        if re.fullmatch(r"[\u4e00-\u9fff]+", value) and len(value) > 4:
-            tokens.extend(value[i:i + 2] for i in range(0, len(value) - 1, 2))
+        if re.fullmatch(r"[一-鿿]+", value) and len(value) > 4:
+            tokens.extend((value[i:i + 2], "n") for i in range(0, len(value) - 1, 2))
         else:
-            tokens.append(value)
+            tokens.append((value, "eng" if value[0].isascii() else "n"))
     return tokens
+
+
+def tokenize(text, segmenter):
+    """Yield (word, pos) pairs, keeping only content-bearing tokens."""
+    if segmenter is None:
+        for word, pos in fallback_segment(text):
+            yield word, pos
+        return
+
+    import jieba.posseg as pseg
+    for pair in pseg.lcut(text):
+        word, flag = pair.word, pair.flag
+        if flag.startswith(ALLOWED_POS):
+            yield word, flag
 
 
 def normalize_word(token, category_name):
@@ -559,170 +602,350 @@ def normalize_word(token, category_name):
     return normalized, word
 
 
-def extract_content_keywords(category_name, articles, segmenter, limit=14):
-    counter = Counter()
+def collect_category_terms(category_name, articles, segmenter):
+    """Per-category term frequencies plus the set of terms used by this category."""
+    frequencies = Counter()
+    document_counts = Counter()
     display = {}
 
     for article in articles:
-        weighted_parts = [
-            (article.get("headline", ""), 4),
-            (article.get("content", ""), 1),
-        ]
-        for raw_text, weight in weighted_parts:
+        seen_in_article = set()
+        for raw_text, weight in ((article.get("headline", ""), 4), (article.get("content", ""), 1)):
             text = clean_article_text(raw_text)
             if not text:
                 continue
-            tokens = segmenter.lcut(text) if segmenter else fallback_segment(text)
-            for token in tokens:
+            for token, _pos in tokenize(text, segmenter):
                 key, shown = normalize_word(token, category_name)
                 if not key:
                     continue
-                counter[key] += weight
+                frequencies[key] += weight
                 display.setdefault(key, shown)
+                seen_in_article.add(key)
+        for key in seen_in_article:
+            document_counts[key] += 1
 
-    ranked = sorted(counter.items(), key=lambda item: (-item[1], len(display[item[0]]), display[item[0]]))
-    return [display[key] for key, _ in ranked[:limit]]
+    return frequencies, document_counts, display
+
+
+def score_category_terms(frequencies, document_counts, display, article_count):
+    """Rank by within-category frequency, dropping one-off terms.
+
+    TF-IDF was tried here and made things worse, not better: on a corpus where
+    most categories hold a handful of articles, the idf term *rewards* the
+    loneliest words (a term appearing in one category gets the highest weight),
+    which is exactly the noise we want gone. Representative terms beat
+    distinctive ones for a category label.
+    """
+    min_document_count = 2 if article_count >= MIN_ARTICLES_FOR_CONTENT else 1
+    scored = []
+
+    for term, frequency in frequencies.items():
+        if document_counts[term] < min_document_count:
+            continue
+        scored.append((frequency, display[term]))
+
+    scored.sort(key=lambda item: (-item[0], len(item[1]), item[1]))
+    return [shown for _freq, shown in scored]
 
 
 def build_keywords(type_id, name, catalog, articles, segmenter):
-    root_id = root_type_id(type_id)
+    """Return (keywords, source). Content keywords win when they can be trusted."""
+    root_id = type_id if type_id < 100 else type_id // 100
+
+    if len(articles) >= MIN_ARTICLES_FOR_CONTENT:
+        frequencies, document_counts, display = collect_category_terms(name, articles, segmenter)
+        content = score_category_terms(frequencies, document_counts, display, len(articles))
+        if len(content) >= MIN_CONTENT_KEYWORDS:
+            return content[:KEYWORD_COUNT], "content"
+
     parent_id = catalog.get(type_id, {}).get("parent_id") or root_id
     parent_name = catalog.get(parent_id, {}).get("name") or ARTICLE_TYPES.get(root_id, ("文章", "", ""))[0]
-    content_keywords = extract_content_keywords(name, articles, segmenter)
-    raw = (
-        [name]
-        + content_keywords
-        + TYPE_KEYWORDS.get(type_id, [])
+    curated = (
+        TYPE_KEYWORDS.get(type_id, [])
         + ([parent_name] if parent_name != name else [])
         + ROOT_KEYWORDS.get(root_id, [])
     )
-    return unique_words(raw)[:14]
+    keywords = [word for word in unique_words(curated) if word != name][:KEYWORD_COUNT]
+    return keywords, "curated"
 
 
-def draw_background_details(img, accent):
-    overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
-    accent_rgb = hex_to_rgb(mix(accent, "#ffffff", 0.42))
-
-    draw.rounded_rectangle(
-        [8, 8, img.width - 8, img.height - 8],
-        radius=14,
-        outline=(*accent_rgb, 80),
-        width=1,
-    )
-    draw.ellipse([img.width - 70, -35, img.width + 35, 70], fill=(*accent_rgb, 34))
-    draw.ellipse([-38, img.height - 68, 58, img.height + 34], fill=(255, 255, 255, 20))
-
-    for x in range(18, img.width, 26):
-        draw.line([(x, 18), (x + 42, img.height - 18)], fill=(255, 255, 255, 12), width=1)
-    for y in range(24, img.height, 28):
-        draw.line([(14, y), (img.width - 14, y)], fill=(255, 255, 255, 8), width=1)
-
-    return Image.alpha_composite(img, overlay)
+def unique_words(words):
+    seen = set()
+    result = []
+    for word in words:
+        normalized = str(word).strip()
+        if not normalized or normalized.lower() in seen:
+            continue
+        seen.add(normalized.lower())
+        result.append(normalized)
+    return result
 
 
-def draw_rotated_word(base, center, word, font, fill, angle=0, alpha=180):
-    scratch = Image.new("RGBA", (base.width, base.height), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(scratch)
-    width, height = text_size(draw, word, font)
-    x = int(center[0] - width / 2)
-    y = int(center[1] - height / 2)
-    shadow = (0, 0, 0, max(18, alpha // 5))
-    draw.text((x + 1, y + 1), word, font=font, fill=shadow)
-    draw.text((x, y), word, font=font, fill=fill[:3] + (alpha,))
+# --------------------------------------------------------------------------
+# Rendering
+# --------------------------------------------------------------------------
 
-    if angle:
-        rotated = scratch.rotate(angle, resample=Image.Resampling.BICUBIC)
-        base.alpha_composite(rotated)
-    else:
-        base.alpha_composite(scratch)
+def create_gradient(width, height, color1, color2):
+    """Diagonal gradient between the two anchor colors, kept vivid.
+
+    Rendered small and scaled up: a per-pixel loop at full size is slow and the
+    result is identical after BICUBIC upscaling.
+    """
+    small_w = max(8, width // 8)
+    small_h = max(8, height // 8)
+    start = hex_to_rgb(color1)
+    end = hex_to_rgb(color2)
+
+    small = Image.new("RGB", (small_w, small_h))
+    pixels = small.load()
+    for y in range(small_h):
+        for x in range(small_w):
+            t = 0.62 * (y / max(1, small_h - 1)) + 0.38 * (x / max(1, small_w - 1))
+            t = max(0.0, min(1.0, t))
+            pixels[x, y] = tuple(
+                int(start[i] + (end[i] - start[i]) * t) for i in range(3)
+            )
+
+    return small.resize((width, height), Image.BICUBIC).convert("RGBA")
 
 
-def draw_word_cloud(img, name, color1, keywords):
+def apply_vignette(img, strength=VIGNETTE_STRENGTH):
+    """Darken the edges slightly so the centered type reads as the focal point."""
+    width, height = img.size
+    small_w = max(8, width // 16)
+    small_h = max(8, height // 16)
+
+    mask = Image.new("L", (small_w, small_h))
+    pixels = mask.load()
+    for y in range(small_h):
+        for x in range(small_w):
+            nx = (x / max(1, small_w - 1)) * 2 - 1
+            ny = (y / max(1, small_h - 1)) * 2 - 1
+            distance = min(1.0, math.hypot(nx, ny) / 1.4142)
+            pixels[x, y] = int(255 * (1 - strength * distance ** 1.6))
+
+    mask = mask.resize((width, height), Image.BICUBIC)
+    dark = Image.new("RGBA", img.size, (0, 0, 0, 255))
+    return Image.composite(img, dark, mask)
+
+
+def fit_keyword_row(draw, keywords, max_width, scale):
+    """Fit the keyword row inside max_width.
+
+    Long English terms ("Cerebro Strategy Analyzer Broker") overflow the canvas
+    if drawn naively. Prefer the full font size and drop trailing words before
+    shrinking the type, so what remains stays readable.
+
+    Returns (font, words, gap, widths); font is None when nothing fits.
+    """
+    target = int(12.5 * scale)
+    floor = int(10.5 * scale)
+
+    for size in range(target, floor - 1, -1):
+        font = load_font(size)
+        gap = max(6 * scale, int(size * 1.15))
+        for count in range(len(keywords), 0, -1):
+            words = keywords[:count]
+            widths = [text_size(draw, word, font)[0] for word in words]
+            if sum(widths) + gap * (len(words) - 1) <= max_width:
+                return font, words, gap, widths
+    return None, [], 0, []
+
+
+def title_font_size(name):
+    length = len(name)
+    if length <= 3:
+        return 54
+    if length <= 5:
+        return 46
+    if length <= 8:
+        return 33
+    return 26
+
+
+def draw_thumbnail(name, color1, color2, keywords):
+    width = WIDTH * SUPERSAMPLE
+    height = HEIGHT * SUPERSAMPLE
+    scale = SUPERSAMPLE
+
+    img = create_gradient(width, height, color1, color2)
+    img = apply_vignette(img)
     draw = ImageDraw.Draw(img)
-    accent = hex_to_rgb(mix(color1, "#ffffff", 0.32))
-    light = hex_to_rgb("#F8FAFC")
-    cool = hex_to_rgb(mix(color1, "#E0F2FE", 0.22))
-    warm = hex_to_rgb(mix("#FDE68A", color1, 0.2))
-    palette = [light, accent, cool, warm]
 
-    # Ambient words first, so the category name owns the visual hierarchy.
-    for idx, word in enumerate(keywords[1:]):
-        if idx >= len(WORD_SLOTS):
-            break
-        x_ratio, y_ratio, angle, scale = WORD_SLOTS[idx]
-        max_width = 76 if x_ratio in (0.15, 0.85) else 96
-        size = int(17 * scale + (3 if idx < 4 else 0))
-        font = font_that_fits(draw, word, size, max_width, min_size=10)
-        fill = palette[idx % len(palette)]
-        draw_rotated_word(
-            img,
-            (WIDTH * x_ratio, HEIGHT * y_ratio),
-            word,
-            font,
-            fill,
-            angle=angle,
-            alpha=178 if idx < 6 else 142,
-        )
-
-    title_size = 34 if len(name) <= 3 else 29 if len(name) <= 5 else 24 if len(name) <= 8 else 20
-    title_font = font_that_fits(draw, name, title_size, WIDTH - 44, min_size=17, bold=True)
-    title_w, title_h = text_size(draw, name, title_font)
-    title_x = (WIDTH - title_w) // 2
-    title_y = (HEIGHT - title_h) // 2 - 4
-
-    pill_pad_x = 13
-    pill_pad_y = 8
-    draw.rounded_rectangle(
-        [
-            title_x - pill_pad_x,
-            title_y - pill_pad_y,
-            title_x + title_w + pill_pad_x,
-            title_y + title_h + pill_pad_y,
-        ],
-        radius=14,
-        fill=(2, 6, 23, 96),
-        outline=(255, 255, 255, 52),
-        width=1,
+    # Title
+    title_font = font_that_fits(
+        draw, name, title_font_size(name) * scale, width - 30 * scale, min_size=17 * scale, bold=True
     )
-    draw.text((title_x + 1, title_y + 2), name, font=title_font, fill=(0, 0, 0, 120))
-    draw.text((title_x, title_y), name, font=title_font, fill=(255, 255, 255, 245))
+    draw_centered(draw, name, title_font, width / 2, height * 0.36, (255, 255, 255, 252))
+
+    # Short rule under the title
+    rule_y = height * 0.585
+    draw.line(
+        [(width / 2 - 17 * scale, rule_y), (width / 2 + 17 * scale, rule_y)],
+        fill=(255, 255, 255, 92),
+        width=scale,
+    )
+
+    # Keyword row, evenly spaced, never rotated or overlapped
+    if keywords:
+        keyword_font, words, gap, widths = fit_keyword_row(
+            draw, keywords, width - 24 * scale, scale
+        )
+        if keyword_font is not None:
+            total = sum(widths) + gap * (len(words) - 1)
+            x = width / 2 - total / 2
+            for word, word_width in zip(words, widths):
+                bbox = draw.textbbox((0, 0), word, font=keyword_font)
+                draw.text(
+                    (x - bbox[0], height * 0.72 - (bbox[3] - bbox[1]) / 2 - bbox[1]),
+                    word,
+                    font=keyword_font,
+                    fill=(255, 255, 255, 205),
+                )
+                x += word_width + gap
+
+    return img.convert("RGB").resize((WIDTH, HEIGHT), Image.LANCZOS)
 
 
-def create_thumbnail(type_id, name, color1, color2, keywords, output_path):
-    img = create_gradient(WIDTH, HEIGHT, color1, color2)
-    img = draw_background_details(img, color1)
-    draw_word_cloud(img, name, color1, keywords)
-    img.convert("RGB").save(output_path, "PNG", optimize=True)
-    print(f"Generated: {output_path} ({', '.join(keywords[:6])})")
+# --------------------------------------------------------------------------
+# Entry points
+# --------------------------------------------------------------------------
+
+def parse_type_filter(raw):
+    if not raw:
+        return None
+    selected = set()
+    for chunk in raw.split(","):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        if not chunk.isdigit():
+            raise ValueError(f"--only expects comma-separated numeric ids, got: {chunk!r}")
+        selected.add(int(chunk))
+    return selected or None
+
+
+def build_plan(catalog, grouped_articles, segmenter, selected=None):
+    """Compute keywords for every selected category."""
+    targets = sorted(tid for tid in catalog if selected is None or tid in selected)
+
+    plan = []
+    for type_id in targets:
+        category = catalog[type_id]
+        articles = articles_for_category(type_id, catalog, grouped_articles)
+        keywords, source = build_keywords(
+            type_id, category["name"], catalog, articles, segmenter
+        )
+        plan.append({
+            "type_id": type_id,
+            "name": category["name"],
+            "color1": category["color1"],
+            "color2": category["color2"],
+            "keywords": keywords,
+            "source": source,
+            "article_count": len(articles),
+        })
+    return plan
+
+
+def missing_thumbnails(output_dir):
+    """Type ids the database knows about that have no PNG on disk."""
+    try:
+        db_categories, _articles = fetch_database_context()
+    except Exception:
+        return None
+
+    catalog = build_category_catalog(db_categories)
+    return [
+        type_id for type_id in sorted(catalog)
+        if not (output_dir / f"{type_id}.png").exists()
+    ]
 
 
 def main():
-    script_dir = Path(__file__).resolve().parent
-    output_dir = (script_dir / ".." / "resource" / "thumb").resolve()
-    output_dir.mkdir(parents=True, exist_ok=True)
+    parser = argparse.ArgumentParser(
+        description="Generate content-driven category thumbnails",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Examples:\n"
+            "  python3 generate_thumbs.py                 # regenerate every category\n"
+            "  python3 generate_thumbs.py --dry-run       # preview keywords only\n"
+            "  python3 generate_thumbs.py --only 101,102  # selected categories\n"
+            "  python3 generate_thumbs.py --check         # exit 1 if any image is missing\n"
+        ),
+    )
+    parser.add_argument("--only", "-o", metavar="IDS",
+                        help="comma-separated category ids to regenerate")
+    parser.add_argument("--dry-run", "-n", action="store_true",
+                        help="print the keywords that would be used, write no images")
+    parser.add_argument("--output-dir", metavar="DIR", type=Path, default=None,
+                        help=f"output directory (default: {DEFAULT_OUTPUT_DIR})")
+    parser.add_argument("--check", action="store_true",
+                        help="exit 0 when every category has an image, 1 otherwise")
+    args = parser.parse_args()
 
-    db_categories, articles = fetch_database_context()
+    output_dir = (args.output_dir or DEFAULT_OUTPUT_DIR).resolve()
+
+    if args.check:
+        missing = missing_thumbnails(output_dir)
+        if missing is None:
+            # Database unreachable: fall back to "is there anything at all?"
+            have_any = output_dir.is_dir() and any(output_dir.glob("*.png"))
+            print("Cannot reach database; thumbnails present" if have_any
+                  else "Cannot reach database and no thumbnails on disk")
+            return 0 if have_any else 1
+        if missing:
+            print(f"Missing {len(missing)} thumbnails: {', '.join(str(i) for i in missing[:10])}"
+                  + (" ..." if len(missing) > 10 else ""))
+            return 1
+        print("All thumbnails present")
+        return 0
+
+    try:
+        selected = parse_type_filter(args.only)
+    except ValueError as exc:
+        print(f"[ERROR] {exc}", file=sys.stderr)
+        return 2
+
+    try:
+        db_categories, articles = fetch_database_context()
+    except Exception as exc:
+        print(f"[ERROR] Database unavailable: {exc}", file=sys.stderr)
+        print("        Thumbnails were NOT regenerated.", file=sys.stderr)
+        return 1
+
     catalog = build_category_catalog(db_categories)
     grouped_articles = group_articles_by_type(articles)
     segmenter = prepare_segmenter(catalog)
+    if segmenter is None:
+        print("[WARN] jieba unavailable; using regex token fallback.", file=sys.stderr)
 
-    print(f"Generating content-driven word-cloud thumbnails to: {output_dir}")
-    for type_id in sorted(catalog):
-        category = catalog[type_id]
-        selected_articles = articles_for_category(type_id, catalog, grouped_articles)
-        keywords = build_keywords(type_id, category["name"], catalog, selected_articles, segmenter)
-        create_thumbnail(
-            type_id,
-            category["name"],
-            category["color1"],
-            category["color2"],
-            keywords,
-            output_dir / f"{type_id}.png",
-        )
+    plan = build_plan(catalog, grouped_articles, segmenter, selected)
+    if not plan:
+        print("[ERROR] No matching categories to generate.", file=sys.stderr)
+        return 1
 
-    print(f"\nGenerated {len(catalog)} content-driven word-cloud thumbnails successfully.")
+    if args.dry_run:
+        for item in plan:
+            source = "内容" if item["source"] == "content" else "精选"
+            print(f"[{item['type_id']:>3}] {item['name']:<18} {item['article_count']:>3}篇 {source}  "
+                  + " ".join(item["keywords"]))
+        content_count = sum(1 for item in plan if item["source"] == "content")
+        print(f"\n共 {len(plan)} 个分类：内容词 {content_count} 个，精选词 {len(plan) - content_count} 个")
+        return 0
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for item in plan:
+        image = draw_thumbnail(item["name"], item["color1"], item["color2"], item["keywords"])
+        destination = output_dir / f"{item['type_id']}.png"
+        image.save(destination, "PNG", optimize=True)
+        print(f"Generated: {destination} ({', '.join(item['keywords'])})")
+
+    content_count = sum(1 for item in plan if item["source"] == "content")
+    print(f"\nGenerated {len(plan)} thumbnails "
+          f"(content keywords: {content_count}, curated keywords: {len(plan) - content_count}).")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

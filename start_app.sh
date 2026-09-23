@@ -71,18 +71,37 @@ echo "     端口 8888 已清理"
 # 等待端口释放
 sleep 1
 
-# 生成缩略图
-echo "[3/5] 生成文章缩略图..."
-if [ -f "$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py" ]; then
+# 生成缩略图（仅在缺失时）
+# 全量重建请用: bash scripts/update_thumbs.sh
+echo "[3/5] 检查文章缩略图..."
+THUMB_SCRIPT="$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py"
+if [ -f "$THUMB_SCRIPT" ]; then
     CONDA_BIN="${CONDA_EXE:-/Users/yunjinqi/opt/anaconda3/bin/conda}"
-    if [ -x "$CONDA_BIN" ]; then
-        "$CONDA_BIN" run -n base python "$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py" > /dev/null 2>&1
-    elif command -v conda > /dev/null 2>&1; then
-        conda run -n base python "$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py" > /dev/null 2>&1
+
+    run_thumb_generator() {
+        if [ -x "$CONDA_BIN" ]; then
+            "$CONDA_BIN" run -n base python "$THUMB_SCRIPT" "$@"
+        elif command -v conda > /dev/null 2>&1; then
+            conda run -n base python "$THUMB_SCRIPT" "$@"
+        else
+            python3 "$THUMB_SCRIPT" "$@"
+        fi
+    }
+
+    if run_thumb_generator --check > /dev/null 2>&1; then
+        echo "     缩略图已齐备，跳过生成"
+        echo "     手动更新: bash scripts/update_thumbs.sh"
     else
-        python3 "$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py" > /dev/null 2>&1
+        echo "     缩略图缺失，正在生成..."
+        THUMB_LOG="$SCRIPT_DIR/backend_cpp/resource/.thumb_generate.log"
+        if run_thumb_generator > "$THUMB_LOG" 2>&1; then
+            echo "     缩略图生成完成"
+        else
+            echo "     [警告] 缩略图生成失败，缩略图可能仍是旧的"
+            echo "           日志: $THUMB_LOG"
+            tail -5 "$THUMB_LOG" 2>/dev/null | sed 's/^/           /'
+        fi
     fi
-    echo "     缩略图生成完成"
 else
     echo "     跳过缩略图生成（脚本不存在）"
 fi
