@@ -97,9 +97,10 @@ woniunote/
 │
 ├── 📁 scripts/                      # 部署和管理脚本
 │   ├── setup_ubuntu.sh              # Ubuntu 环境配置
-│   ├── start_prod.sh                # 启动生产服务
-│   ├── stop_prod.sh                 # 停止服务
+│   ├── database_transfer.sh         # 数据库导出与迁移
 │   ├── update_nginx_ssl.sh          # 更新 Nginx 配置
+│   ├── renew_ssl.sh                 # SSL 证书申请与续订
+│   ├── update_thumbs.sh             # 手动更新文章缩略图
 │   └── sql/                         # 数据库脚本
 │
 ├── 📁 configs/                      # 配置文件
@@ -270,6 +271,140 @@ bash scripts/database_transfer.sh import backups/woniunote_YYYYMMDDTHHMMSSZ.sql.
 ```bash
 bash scripts/tests/test_database_transfer.sh
 ```
+
+---
+
+## SSL 证书更新
+
+`scripts/renew_ssl.sh` 负责 `yunjinqi.top` / `www.yunjinqi.top` 的 Let's Encrypt 证书申请与续订，采用 HTTP-01 webroot 验证。脚本需要**在生产服务器上以 root 运行**（依赖 `certbot`、`nginx` 与 `/etc/letsencrypt`），本地开发机无需执行。
+
+一次完整的续订流程为：申请/续订证书 → 复制到 `configs/yunjinqi.top_nginx/` → 重载 Nginx → 打印证书有效期。
+
+| 配置项 | 值 |
+|--------|-----|
+| 域名 | `yunjinqi.top`、`www.yunjinqi.top` |
+| 验证方式 | HTTP-01（webroot） |
+| 验证目录 | `/root/woniunote/frontend/dist` |
+| 证书落盘 | `configs/yunjinqi.top_nginx/yunjinqi.top_bundle.pem`、`yunjinqi.top.key` |
+| 续订日志 | `/var/log/certbot-renew.log` |
+
+### 首次安装与开启自动续订
+
+在新服务器上执行一次即可，脚本会安装 `certbot`、签发首张证书，并写入自动续订的 cron 任务：
+
+```bash
+cd /root/woniunote
+sudo bash scripts/renew_ssl.sh install
+```
+
+cron 任务为 `0 3 1 */2 *`，即**每两个月的 1 号凌晨 3:00**（1/3/5/7/9/11 月）执行一次。Let's Encrypt 证书有效期 90 天，60 天一次的频率足以落在到期前 30 天的续订窗口内。
+
+安装完成后可确认任务是否生效：
+
+```bash
+sudo crontab -l | grep renew_ssl
+```
+
+### 手动续订
+
+证书临近到期或需要立即更换时执行：
+
+```bash
+cd /root/woniunote
+sudo bash scripts/renew_ssl.sh renew
+```
+
+`renew` 同时是不带参数时的默认命令。脚本使用 `--keep-until-expiring`，若证书尚未进入续订窗口，certbot 会提示 `Certificate not yet due for renewal` 并跳过签发，此时沿用现有证书，属于正常行为。
+
+### 查看证书状态
+
+```bash
+# 查看 certbot 管理的全部证书及到期时间
+sudo bash scripts/renew_ssl.sh status
+
+# 查看证书文件的生效与到期时间
+openssl x509 -in configs/yunjinqi.top_nginx/yunjinqi.top_bundle.pem -noout -dates
+
+# 从任意机器验证线上实际生效的证书
+echo | openssl s_client -servername yunjinqi.top -connect yunjinqi.top:443 2>/dev/null \
+  | openssl x509 -noout -dates
+```
+
+### 关闭自动续订
+
+```bash
+sudo bash scripts/renew_ssl.sh uninstall
+```
+
+该命令只移除 cron 任务，不会删除已签发的证书。
+
+### 续订失败排查
+
+| 现象 | 排查方向 |
+|------|----------|
+| `Permission denied` | 未使用 `sudo` 运行 |
+| HTTP-01 验证失败 | 确认 80 端口可从公网访问（云服务器安全组需放行），且 Nginx 中 `server_name yunjinqi.top` 的 80 端口配置块存在 `location /.well-known/acme-challenge/` 并指向 `/root/woniunote/frontend/dist` |
+| `too many certificates already issued` | 触发 Let's Encrypt 限流（同域名每周 5 张），停止重试并等待一周 |
+| 浏览器仍显示旧证书 | 确认 `systemctl reload nginx` 成功，且 Nginx 配置中的 `ssl_certificate` 指向 `configs/yunjinqi.top_nginx/` 下的证书 |
+
+排查时先看日志：
+
+```bash
+sudo tail -50 /var/log/certbot-renew.log
+```
+
+---
+
+## 文章缩略图更新
+
+文章列表卡片的缩略图是构建产物：`backend_cpp/scripts/generate_thumbs.py` 为每个文章分类渲染一张 226×136 的 PNG，输出到 `backend_cpp/resource/thumb/<type>.png`（该目录不入库），前端通过 `/api/thumb/<type>.png` 读取。
+
+每张图由「分类名 + 分隔线 + 一行 4 个关键词」构成。关键词有两条来源，走哪条由分类下的文章数量决定：
+
+| 来源 | 触发条件 | 说明 |
+|------|----------|------|
+| **内容词** | 分类下文章 ≥ 20 篇 | 从该分类所有文章的标题与正文抽取，按词频排序，过滤词性和单篇噪声 |
+| **精选词** | 文章不足 20 篇 | 使用脚本内置的 `TYPE_KEYWORDS` / `ROOT_KEYWORDS`，保证不出现无意义的词 |
+
+分界线是脚本顶部的 `MIN_ARTICLES_FOR_CONTENT`。文章归类整理好之后，调低这个值即可让更多分类改用内容词。
+
+### 自动生成
+
+`start_app.sh` 启动时会先跑一次 `--check`：缩略图齐备就跳过，只有缺失才生成。日常重启不会重复渲染。
+
+### 手动更新
+
+文章内容或分类变动后，用下面的脚本主动重建：
+
+```bash
+# 全量重建（约 4 秒）
+bash scripts/update_thumbs.sh
+
+# 只预览关键词、不生成图片——先确认词对不对，再决定要不要出图
+bash scripts/update_thumbs.sh --dry-run
+
+# 只重建指定分类，其余分类的图会保留
+bash scripts/update_thumbs.sh --only 101,102
+```
+
+执行顺序为：环境自检 → 数据库连通性检查 → 生成到临时目录 → 校验尺寸 → 原子替换。**任一步失败都不会改动现有缩略图**；数据库连不上会明确报错，而不是静默退回精选词。
+
+### 直接调用生成器
+
+需要更细的控制时可以直接用 Python 入口，参数含义与上面一致：
+
+```bash
+python3 backend_cpp/scripts/generate_thumbs.py --dry-run
+python3 backend_cpp/scripts/generate_thumbs.py --only 101
+python3 backend_cpp/scripts/generate_thumbs.py --check          # 缺图时退出码为 1
+python3 backend_cpp/scripts/generate_thumbs.py --output-dir /tmp/thumbs
+```
+
+### 依赖
+
+生成需要 Python 的 `Pillow`、`jieba`、`PyMySQL`，以及一款中文字体（macOS 自带 Hiragino Sans GB；Ubuntu 需 `apt-get install fonts-noto-cjk`）。缺任何一项时脚本会在自检阶段报错并给出安装命令。
+
+> 更新后浏览器可能仍显示旧图——前端按 `THUMB_VERSION` 缓存。若未变化，重启后端或强制刷新页面。
 
 ---
 
