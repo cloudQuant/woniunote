@@ -51,18 +51,38 @@
  * 基于 pdf.js 实现，支持翻页、缩放、适应宽度和下载功能。
  */
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
-import * as pdfjsLib from 'pdfjs-dist'
+import { logInfo } from '@/utils/logger'
 import { ArrowLeft, ArrowRight, ZoomIn, ZoomOut, Download, Loading, Warning } from '@element-plus/icons-vue'
 
-// 设置 worker 路径
-// 使用 Vite 的 ?raw 将 worker 内容作为字符串导入，然后创建 Blob URL
-// 这样可以避免跨域和 MIME 类型问题
-import pdfWorkerContent from 'pdfjs-dist/build/pdf.worker.min.mjs?raw'
+// 模块级缓存：pdfjs 库与 worker URL 均只加载/创建一次，多个查看器实例共享
+let pdfjsLibModule = null
+let pdfjsWorkerUrl = null
 
-const workerBlob = new Blob([pdfWorkerContent], { type: 'text/javascript' })
-const workerUrl = URL.createObjectURL(workerBlob)
+/**
+ * 按需加载 pdfjs-dist 并初始化 worker
+ * pdfjs-dist（含 worker 源码字符串）体积较大，只有在真正加载 PDF 时才
+ * 动态 import，避免其进入页面主包；首次加载后走模块级缓存。
+ * worker 使用 Vite 的 ?raw 将内容作为字符串导入，然后创建 Blob URL，
+ * 这样可以避免跨域和 MIME 类型问题。
+ * @returns {Promise<Object>} pdfjs-dist 模块（已设置 GlobalWorkerOptions）
+ */
+async function ensurePdfjsLoaded() {
+  if (pdfjsLibModule) return pdfjsLibModule
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
+  const [lib, workerModule] = await Promise.all([
+    import('pdfjs-dist'),
+    import('pdfjs-dist/build/pdf.worker.min.mjs?raw')
+  ])
+
+  if (!pdfjsWorkerUrl) {
+    const workerBlob = new Blob([workerModule.default], { type: 'text/javascript' })
+    pdfjsWorkerUrl = URL.createObjectURL(workerBlob)
+  }
+
+  lib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl
+  pdfjsLibModule = lib
+  return pdfjsLibModule
+}
 
 const props = defineProps({
   /**
@@ -160,13 +180,16 @@ async function loadPdf() {
     loading.value = true
     error.value = ''
 
+    // 按需加载 pdfjs 库（首次加载后走模块级缓存）
+    const pdfjsLib = await ensurePdfjsLoaded()
+
     // 构建完整URL - 使用当前页面的origin确保正确的域名和端口
     let url = props.pdfUrl
     if (!url.startsWith('http')) {
       url = `${window.location.origin}${url}`
     }
 
-    console.log('Loading PDF from:', url)
+    logInfo('Loading PDF from', { url })
 
     // 使用 ArrayBuffer 方式加载 PDF，更可靠
     try {
@@ -183,7 +206,7 @@ async function loadPdf() {
       }
 
       const arrayBuffer = await response.arrayBuffer()
-      console.log('PDF file size:', arrayBuffer.length, 'bytes')
+      logInfo('PDF file size: ' + arrayBuffer.length + ' bytes')
 
       // 使用 ArrayBuffer 加载 PDF
       const loadingTask = pdfjsLib.getDocument({
@@ -192,7 +215,7 @@ async function loadPdf() {
 
       pdfDoc = await loadingTask.promise
       numPages.value = pdfDoc.numPages
-      console.log('PDF loaded successfully, pages:', numPages.value)
+      logInfo('PDF loaded successfully', { pages: numPages.value })
 
       await renderPage(1)
     } catch (fetchErr) {

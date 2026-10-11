@@ -335,7 +335,6 @@ function convertYuanbaoMarkdownToHtml(markdown) {
     // - 元宝AI特有的代码块格式
     // - 特殊符号处理
     
-    console.log('[元宝AI] 使用元宝专用转换器');
     
     // 当前使用通用转换逻辑，后续可以针对元宝AI的输出特点进行优化
     return convertMarkdownToHtml(markdown);
@@ -351,7 +350,6 @@ function convertDeepseekMarkdownToHtml(markdown) {
     // - 数学公式处理
     // - 代码块语言识别优化
     
-    console.log('[Deepseek] 使用Deepseek专用转换器');
     
     // 当前使用通用转换逻辑，后续可以针对Deepseek的输出特点进行优化
     return convertMarkdownToHtml(markdown);
@@ -367,7 +365,6 @@ function convertChatgptMarkdownToHtml(markdown) {
     // - ChatGPT代码注释优化
     // - 示例代码增强
     
-    console.log('[ChatGPT] 使用ChatGPT专用转换器');
     
     // 当前使用通用转换逻辑，后续可以针对ChatGPT的输出特点进行优化
     return convertMarkdownToHtml(markdown);
@@ -687,7 +684,6 @@ function uploadDocxFile(file) {
                     window.dialog = parent.$EDITORUI[dialogId];
                     window.editor = window.dialog ? window.dialog.editor : null;
                     
-                    console.log('从父窗口获取对话框对象:', window.dialog ? '成功' : '失败');
                 }
                 
                 // 如果还是获取不到，显示错误
@@ -723,7 +719,6 @@ function uploadDocxFile(file) {
                 return true;
             };
             
-            console.log('UEditor对话框初始化成功');
             
         } catch(e) {
             console.error('初始化UEditor对话框时出错:', e);

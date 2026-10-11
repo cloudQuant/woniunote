@@ -92,6 +92,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useArticleStore } from '@/stores/article'
+import { logInfo } from '@/utils/logger'
 import { articleApi, uploadApi } from '@/api'
 import UEditor from '@/components/editor/UEditor.vue'
 
@@ -114,8 +115,8 @@ const editorConfig = {
 }
 
 // 编辑器就绪回调
-function onEditorReady(editor) {
-  console.log('UEditor ready:', editor)
+function onEditorReady() {
+  logInfo('UEditor ready')
 }
 
 const form = reactive({

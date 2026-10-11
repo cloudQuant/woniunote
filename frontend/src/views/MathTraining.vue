@@ -119,60 +119,21 @@
         <!-- 右侧主区域 -->
         <el-col :span="17" :xs="24">
           <div class="main-card">
-            <!-- 训练进行中 -->
-            <template v-if="isRunning && currentQuestion">
-              <div class="question-header">
-                <div class="progress-section">
-                  <el-progress
-                    :percentage="progressPercent"
-                    :stroke-width="12"
-                    :show-text="false"
-                    :color="progressColor"
-                  />
-                  <div class="progress-text">第 {{ currentIndex + 1 }} / 20 题</div>
-                </div>
-                <div class="timer-badge">
-                  <el-icon><Timer /></el-icon>
-                  {{ currentQuestionElapsed }}s
-                </div>
-              </div>
-
-              <div class="question-box">
-                <div class="operation-badge" :class="'op-' + currentQuestion.op">
-                  {{ opMap[currentQuestion.op] }}
-                </div>
-                <div class="question-text">{{ currentQuestion.display }} = ?</div>
-                <div class="answer-section">
-                  <el-input
-                    ref="answerInput"
-                    v-model="answer"
-                    size="large"
-                    placeholder="输入答案后按回车"
-                    @keyup.enter="submitAnswer"
-                    :disabled="answerLocked"
-                    class="answer-input"
-                    type="number"
-                  />
-                  <div class="answer-actions">
-                    <el-button type="primary" size="large" @click="submitAnswer" :disabled="answerLocked">
-                      <el-icon><Check /></el-icon> 提交
-                    </el-button>
-                    <el-button size="large" @click="skipQuestion" :disabled="answerLocked">
-                      <el-icon><Right /></el-icon> 跳过
-                    </el-button>
-                  </div>
-                </div>
-
-                <transition name="fade">
-                  <div v-if="feedback" class="feedback-box" :class="feedback.correct ? 'correct' : 'wrong'">
-                    <el-icon v-if="feedback.correct"><CircleCheckFilled /></el-icon>
-                    <el-icon v-else><CircleCloseFilled /></el-icon>
-                    <span v-if="feedback.correct">正确！用时 {{ feedback.seconds }}s</span>
-                    <span v-else>错误，正确答案是 <strong>{{ feedback.correctAnswer }}</strong></span>
-                  </div>
-                </transition>
-              </div>
-            </template>
+            <!-- 训练进行中：答题区 -->
+            <MathQuestion
+              v-if="isRunning && currentQuestion"
+              ref="mathQuestionRef"
+              :question="currentQuestion"
+              :current-index="currentIndex"
+              :elapsed="currentQuestionElapsed"
+              v-model:answer="answer"
+              :answer-locked="answerLocked"
+              :feedback="feedback"
+              :progress-percent="progressPercent"
+              :progress-color="progressColor"
+              @submit="submitAnswer"
+              @skip="skipQuestion"
+            />
 
             <!-- 未开始状态 -->
             <template v-else>
@@ -190,74 +151,15 @@
             <el-divider />
 
             <!-- 历史记录 -->
-            <div class="history-section">
-              <div class="history-header">
-                <div class="card-header">
-                  <el-icon><Clock /></el-icon>
-                  <span>训练历史</span>
-                </div>
-                <el-button size="small" text type="primary" @click="loadHistory" :loading="historyLoading">
-                  <el-icon><Refresh /></el-icon> 刷新
-                </el-button>
-              </div>
-
-              <el-table 
-                :data="history" 
-                style="width: 100%" 
-                size="small" 
-                v-if="history.length > 0"
-                :row-class-name="tableRowClassName"
-              >
-                <el-table-column prop="created_at" label="时间" width="170">
-                  <template #default="{ row }">
-                    {{ formatTime(row.created_at || row.start_time) }}
-                  </template>
-                </el-table-column>
-                <el-table-column prop="difficulty" label="难度" width="100">
-                  <template #default="{ row }">
-                    <el-tag :type="difficultyTagType(row.difficulty)" size="small">
-                      {{ difficultyMap[row.difficulty] }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="total_questions" label="题量" width="80" />
-                <el-table-column prop="correct_count" label="正确" width="80">
-                  <template #default="{ row }">
-                    <span class="text-success">{{ row.correct_count }}</span>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="wrong_count" label="错误" width="80">
-                  <template #default="{ row }">
-                    <span class="text-danger">{{ row.wrong_count }}</span>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="accuracy" label="正确率" width="100">
-                  <template #default="{ row }">
-                    <span :class="row.accuracy >= 80 ? 'text-success' : row.accuracy >= 60 ? 'text-warning' : 'text-danger'">
-                      {{ row.accuracy.toFixed(1) }}%
-                    </span>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="duration_seconds" label="用时">
-                  <template #default="{ row }">
-                    {{ formatDuration(row.duration_seconds) }}
-                  </template>
-                </el-table-column>
-              </el-table>
-
-              <el-empty v-else-if="!historyLoading" description="暂无训练记录，开始你的第一次训练吧！" />
-              
-              <!-- 分页 -->
-              <div v-if="historyTotal > pageSize" class="pagination-wrapper">
-                <el-pagination
-                  v-model:current-page="historyPage"
-                  :page-size="pageSize"
-                  :total="historyTotal"
-                  layout="prev, pager, next"
-                  @current-change="loadHistory"
-                />
-              </div>
-            </div>
+            <MathHistory
+              v-model:history-page="historyPage"
+              :history="history"
+              :history-loading="historyLoading"
+              :history-total="historyTotal"
+              :page-size="pageSize"
+              @refresh="loadHistory"
+              @page-change="loadHistory"
+            />
           </div>
         </el-col>
       </el-row>
@@ -266,328 +168,54 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+/**
+ * @component MathTraining
+ * @description 数学训练页
+ * 负责页面编排：左侧训练设置与统计、右侧答题区（MathQuestion）与
+ * 历史记录（MathHistory）。会话逻辑与数据加载见 composables/useMathTraining。
+ */
+import { ref } from 'vue'
 import {
   Aim, Setting, TrendCharts, List, CircleCheck, CircleClose, DataAnalysis,
-  Timer, Check, Right, VideoPlay, Close, Clock, Refresh,
-  CircleCheckFilled, CircleCloseFilled
+  VideoPlay, Close
 } from '@element-plus/icons-vue'
-import { mathTrainingApi } from '@/api'
+import MathQuestion from '@/components/math/MathQuestion.vue'
+import MathHistory from '@/components/math/MathHistory.vue'
+import {
+  useMathTraining,
+  formatTime,
+  formatDuration,
+  difficultyTagType,
+  tableRowClassName
+} from '@/composables/useMathTraining'
 
-const opMap = { '+': '+', '-': '-', '*': '×', '/': '÷' }
-const difficultyMap = { 1: '一级', 2: '二级', 3: '三级' }
+// 答题区子组件引用，用于开始训练/切题后聚焦输入框
+const mathQuestionRef = ref(null)
 
-const difficulty = ref(2)
-const answerInput = ref(null)
-
-const isRunning = ref(false)
-const questions = ref([])
-const currentIndex = ref(0)
-const answer = ref('')
-const wrongAnswers = ref([])
-
-const correct = ref(0)
-const wrong = ref(0)
-
-const answerLocked = ref(false)
-const feedback = ref(null)
-
-const sessionStartTime = ref(null)
-const sessionStartMs = ref(0)
-const questionStartMs = ref(0)
-const questionTimer = ref(null)
-const currentQuestionElapsed = ref(0)
-
-const history = ref([])
-const historyLoading = ref(false)
-const historyPage = ref(1)
-const historyTotal = ref(0)
-const pageSize = 10
-
-const summary = ref(null)
-
-const currentQuestion = computed(() => questions.value[currentIndex.value] || null)
-
-const progressPercent = computed(() => {
-  if (!isRunning.value || questions.value.length === 0) return 0
-  return Math.round((currentIndex.value / 20) * 100)
-})
-
-const progressColor = computed(() => {
-  const p = progressPercent.value
-  if (p < 30) return '#409eff'
-  if (p < 70) return '#67c23a'
-  return '#e6a23c'
-})
-
-const accuracyText = computed(() => {
-  const total = correct.value + wrong.value
-  if (total === 0) return '-'
-  return `${Math.round((correct.value / total) * 100)}%`
-})
-
-function randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min
+/**
+ * 聚焦答题输入框（输入框渲染在 MathQuestion 子组件内）
+ */
+function focusAnswer() {
+  mathQuestionRef.value?.focusAnswer()
 }
 
-function getRange(diff) {
-  if (diff === 1) return { min: 1, max: 9 }
-  if (diff === 2) return { min: 10, max: 99 }
-  return { min: 100, max: 999 }
-}
+const {
+  // 状态
+  difficulty, isRunning, questions, currentIndex, answer, wrongAnswers,
+  correct, wrong, answerLocked, feedback, currentQuestionElapsed,
+  history, historyLoading, historyPage, historyTotal, pageSize, summary,
+  // 计算属性
+  currentQuestion, progressPercent, progressColor, accuracyText,
+  // 方法
+  randInt, getRange, generateQuestionForOp, buildQuestions,
+  startSession, endSession, submitAnswer, skipQuestion,
+  loadHistory, loadSummary
+} = useMathTraining({ focusAnswer })
 
-function generateQuestionForOp(op, diff) {
-  const { min, max } = getRange(diff)
-
-  if (op === '/') {
-    const divisor = randInt(Math.max(1, Math.floor(min / 2)), max)
-    const quotient = randInt(1, Math.floor(max / Math.max(1, divisor)) || 9)
-    const dividend = divisor * quotient
-    return {
-      a: dividend,
-      b: divisor,
-      op,
-      answer: quotient,
-      display: `${dividend} ${opMap[op]} ${divisor}`
-    }
-  }
-
-  let a = randInt(min, max)
-  let b = randInt(min, max)
-
-  if (op === '-') {
-    if (b > a) [a, b] = [b, a]
-    return { a, b, op, answer: a - b, display: `${a} ${opMap[op]} ${b}` }
-  }
-
-  if (op === '*') {
-    const mMax = diff === 1 ? 9 : diff === 2 ? 20 : 50
-    a = randInt(2, mMax)
-    b = randInt(2, mMax)
-    return { a, b, op, answer: a * b, display: `${a} ${opMap[op]} ${b}` }
-  }
-
-  return { a, b, op, answer: a + b, display: `${a} ${opMap[op]} ${b}` }
-}
-
-function buildQuestions() {
-  const ops = ['+', '-', '*', '/']
-  const list = []
-  for (const op of ops) {
-    for (let i = 0; i < 5; i++) {
-      list.push(generateQuestionForOp(op, difficulty.value))
-    }
-  }
-  for (let i = list.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[list[i], list[j]] = [list[j], list[i]]
-  }
-  questions.value = list
-}
-
-function resetStats() {
-  correct.value = 0
-  wrong.value = 0
-  currentIndex.value = 0
-  answer.value = ''
-  feedback.value = null
-  answerLocked.value = false
-  wrongAnswers.value = []
-}
-
-function tickQuestionTimer() {
-  currentQuestionElapsed.value = Math.floor((Date.now() - questionStartMs.value) / 1000)
-}
-
-function startQuestionTimer() {
-  stopQuestionTimer()
-  currentQuestionElapsed.value = 0
-  questionStartMs.value = Date.now()
-  questionTimer.value = setInterval(tickQuestionTimer, 250)
-}
-
-function stopQuestionTimer() {
-  if (questionTimer.value) {
-    clearInterval(questionTimer.value)
-    questionTimer.value = null
-  }
-}
-
-function startSession() {
-  resetStats()
-  buildQuestions()
-  isRunning.value = true
-  sessionStartTime.value = new Date()
-  sessionStartMs.value = Date.now()
-  startQuestionTimer()
-  nextTick(() => answerInput.value?.focus())
-}
-
-async function endSession() {
-  if (!isRunning.value) return
-  stopQuestionTimer()
-
-  const endTime = new Date()
-  const totalMs = Date.now() - sessionStartMs.value
-  const total = correct.value + wrong.value
-  const acc = total === 0 ? 0 : (correct.value / total) * 100
-
-  const payload = {
-    difficulty: difficulty.value,
-    total_questions: total,
-    correct_count: correct.value,
-    wrong_count: wrong.value,
-    accuracy: acc,
-    start_time: sessionStartTime.value.toISOString(),
-    end_time: endTime.toISOString(),
-    duration_seconds: Math.round(totalMs / 1000),
-    wrong_answers: wrongAnswers.value
-  }
-
-  isRunning.value = false
-  answerLocked.value = false
-  feedback.value = null
-  answer.value = ''
-
-  try {
-    await mathTrainingApi.createRecord(payload)
-    ElMessage.success('训练记录已保存')
-    loadHistory()
-    loadSummary()
-  } catch {
-    ElMessage.error('保存训练记录失败')
-  }
-}
-
-function recordWrongAnswer(q, userAns) {
-  wrongAnswers.value.push({
-    question: q.display,
-    correct_answer: q.answer,
-    user_answer: userAns,
-    operation: q.op
-  })
-}
-
-function finishCurrent(correctFlag, correctAnswerValue, elapsedSeconds, userAns) {
-  feedback.value = {
-    correct: correctFlag,
-    correctAnswer: correctAnswerValue,
-    seconds: elapsedSeconds
-  }
-
-  if (!correctFlag && currentQuestion.value) {
-    recordWrongAnswer(currentQuestion.value, userAns)
-  }
-
-  answerLocked.value = true
-
-  setTimeout(() => {
-    feedback.value = null
-    answerLocked.value = false
-    answer.value = ''
-
-    if (currentIndex.value >= questions.value.length - 1) {
-      endSession()
-      return
-    }
-
-    currentIndex.value += 1
-    startQuestionTimer()
-    nextTick(() => answerInput.value?.focus())
-  }, 600)
-}
-
-function submitAnswer() {
-  if (!isRunning.value || !currentQuestion.value || answerLocked.value) return
-
-  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - questionStartMs.value) / 1000))
-  const value = Number(answer.value)
-
-  if (!Number.isFinite(value)) {
-    wrong.value += 1
-    finishCurrent(false, currentQuestion.value.answer, elapsedSeconds, null)
-    return
-  }
-
-  if (value === currentQuestion.value.answer) {
-    correct.value += 1
-    finishCurrent(true, currentQuestion.value.answer, elapsedSeconds, value)
-  } else {
-    wrong.value += 1
-    finishCurrent(false, currentQuestion.value.answer, elapsedSeconds, value)
-  }
-}
-
-function skipQuestion() {
-  if (!isRunning.value || !currentQuestion.value || answerLocked.value) return
-  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - questionStartMs.value) / 1000))
-  wrong.value += 1
-  finishCurrent(false, currentQuestion.value.answer, elapsedSeconds, null)
-}
-
-async function loadHistory() {
-  historyLoading.value = true
-  try {
-    const res = await mathTrainingApi.getRecords({ page: historyPage.value, page_size: pageSize })
-    history.value = res.data || []
-    historyTotal.value = res.total || 0
-  } catch {
-    history.value = []
-  } finally {
-    historyLoading.value = false
-  }
-}
-
-async function loadSummary() {
-  try {
-    const res = await mathTrainingApi.getSummary()
-    summary.value = res.data || null
-  } catch {
-    summary.value = null
-  }
-}
-
-function formatTime(iso) {
-  try {
-    return new Date(iso).toLocaleString('zh-CN')
-  } catch {
-    return iso
-  }
-}
-
-function formatDuration(seconds) {
-  if (!seconds) return '0s'
-  if (seconds < 60) return `${seconds}s`
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return s > 0 ? `${m}m${s}s` : `${m}m`
-}
-
-function difficultyTagType(d) {
-  if (d === 1) return 'success'
-  if (d === 2) return 'warning'
-  return 'danger'
-}
-
-function tableRowClassName({ rowIndex }) {
-  return rowIndex % 2 === 0 ? '' : 'stripe-row'
-}
-
-watch(isRunning, (v) => {
-  if (!v) {
-    stopQuestionTimer()
-    currentQuestionElapsed.value = 0
-  }
-})
-
-onMounted(() => {
-  loadHistory()
-  loadSummary()
-})
-
-onBeforeUnmount(() => {
-  stopQuestionTimer()
+// 暴露训练逻辑接口，供单元测试与外部调试使用
+defineExpose({
+  questions, wrongAnswers, randInt, getRange, generateQuestionForOp, buildQuestions,
+  loadSummary, formatTime, formatDuration, difficultyTagType, tableRowClassName
 })
 </script>
 
@@ -761,136 +389,6 @@ onBeforeUnmount(() => {
   color: var(--wn-color-text);
 }
 
-.question-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 24px;
-}
-
-.progress-section {
-  flex: 1;
-}
-
-.progress-text {
-  font-size: 13px;
-  color: var(--wn-color-text-secondary);
-  margin-top: 8px;
-  text-align: center;
-}
-
-.timer-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--wn-color-surface-soft);
-  padding: 10px 16px;
-  border-radius: 20px;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--wn-color-text-secondary);
-}
-
-.question-box {
-  background: var(--wn-color-surface-soft);
-  border: 2px solid var(--wn-color-border);
-  border-radius: 20px;
-  padding: 32px;
-  position: relative;
-}
-
-.operation-badge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: 700;
-  color: #fff;
-}
-
-.op-\+ { background: linear-gradient(135deg, #67c23a, #85ce61); }
-.op-\- { background: linear-gradient(135deg, #409eff, #66b1ff); }
-.op-\* { background: linear-gradient(135deg, #e6a23c, #ebb563); }
-.op-\/ { background: linear-gradient(135deg, #f56c6c, #f78989); }
-
-.question-text {
-  font-size: 48px;
-  font-weight: 800;
-  color: var(--wn-color-text);
-  text-align: center;
-  padding: 24px 0;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
-}
-
-.answer-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.answer-input :deep(.el-input__inner) {
-  font-size: 24px;
-  text-align: center;
-  height: 56px;
-  border-radius: 12px;
-}
-
-.answer-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
-.answer-actions .el-button {
-  flex: 1;
-  height: 44px;
-}
-
-.feedback-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 16px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 500;
-  margin-top: 20px;
-}
-
-.feedback-box.correct {
-  background: color-mix(in srgb, var(--wn-color-success) 18%, var(--wn-color-surface));
-  color: var(--wn-color-success);
-}
-
-.feedback-box.wrong {
-  background: color-mix(in srgb, var(--wn-color-error) 18%, var(--wn-color-surface));
-  color: var(--wn-color-error);
-}
-
-.feedback-box .el-icon {
-  font-size: 22px;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
 .start-prompt {
   text-align: center;
   padding: 60px 20px;
@@ -922,25 +420,6 @@ onBeforeUnmount(() => {
   font-size: 16px;
 }
 
-.history-section { margin-top: 8px; }
-
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.pagination-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 16px;
-}
-
-:deep(.stripe-row) {
-  background: var(--wn-color-surface-soft);
-}
-
 @media (max-width: 992px) {
   .sidebar-card {
     margin-bottom: 20px;
@@ -952,14 +431,6 @@ onBeforeUnmount(() => {
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
-  }
-
-  .question-text {
-    font-size: 32px;
-  }
-
-  .answer-actions {
-    flex-direction: column;
   }
 
   .stats-grid {
