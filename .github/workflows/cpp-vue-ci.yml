@@ -101,8 +101,8 @@ jobs:
             --suppress=missingIncludeSystem \
             --suppress=normalCheckLevelMaxBranches \
             --error-exitcode=1 \
-            -I core -I controllers -I filters -I models \
-            controllers core filters models main.cc
+            -I core -I controllers -I filters -I models -I services \
+            controllers core filters models services main.cc
 
   frontend-vue:
     name: Frontend (build + vitest)
@@ -127,7 +127,7 @@ jobs:
         # Supply-chain gate: fail on high/critical advisories in *runtime*
         # dependencies. Iteration 14 tightens this to moderate now that the
         # PostCSS baseline is fixed in package-lock.
-        run: npm audit --omit=dev --audit-level=moderate
+        run: npm audit --omit=dev --audit-level=moderate --registry=https://registry.npmjs.org
 
       - name: Audit all dependencies (advisory only)
         working-directory: frontend

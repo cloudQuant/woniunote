@@ -496,7 +496,8 @@ npm run build
 npm run test:e2e
 
 # 前端生产依赖安全审计
-npm audit --omit=dev --audit-level=moderate
+# 本机 registry 若指向 npmmirror 等镜像，audit endpoint 不可用，须用下面的脚本走官方 registry
+npm run audit:ci
 ```
 
 ---
