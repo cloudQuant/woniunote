@@ -4,6 +4,29 @@
     <title></title>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
     <script type="text/javascript" src="/ueditor/dialogs/internal.js?aea0c61c"></script>
+    <script type="text/javascript" src="/ueditor/dialogs/contentimport/markdown-import.js"></script>
+    <!-- MathJax 预览渲染：配置与 frontend/index.html 保持一致（$、$$、\(、\[ 定界符） -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        },
+        options: {
+          ignoreHtmlClass: 'tex2jax_ignore',
+          processHtmlClass: 'tex2jax_process'
+        },
+        startup: {
+          ready: function () {
+            MathJax.startup.defaultReady();
+          }
+        }
+      };
+    </script>
+    <!-- 使用国内 CDN 避免超时（与主站一致） -->
+    <script id="MathJax-script" async src="https://cdn.bootcdn.net/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
     <style type="text/css">
         body {
             margin: 0;
@@ -299,154 +322,8 @@ function $(selector) {
 
 // ============================================================================
 // Markdown转换函数 - 通用版本
+// convertMarkdownToHtml 由 markdown-import.js 提供（全局函数，含公式保护逻辑）
 // ============================================================================
-function convertMarkdownToHtml(markdown) {
-    var html = markdown;
-    
-    // 保存代码块
-    var codeBlocks = [];
-    var codeIndex = 0;
-    html = html.replace(/```([\w]*)\n([\s\S]*?)```/g, function(match, lang, code) {
-        var placeholder = '___CODEBLOCK_' + (codeIndex++) + '___';
-        codeBlocks.push({
-            lang: lang || 'plaintext',
-            code: code.trim()
-        });
-        return placeholder;
-    });
-    
-    // 保存行内代码
-    var inlineCodes = [];
-    var inlineIndex = 0;
-    html = html.replace(/`([^`]+)`/g, function(match, code) {
-        var placeholder = '___INLINE_' + (inlineIndex++) + '___';
-        inlineCodes.push(code);
-        return placeholder;
-    });
-    
-    // 转换标题（支持 1~6 级）
-    html = html.replace(/^###### (.*?)$/gm, '<h6>$1</h6>');
-    html = html.replace(/^##### (.*?)$/gm, '<h5>$1</h5>');
-    html = html.replace(/^#### (.*?)$/gm, '<h4>$1</h4>');
-    html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
-    html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
-    html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
-    
-    // 转换粗体和斜体
-    html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
-    
-    // 转换列表
-    html = html.replace(/^\* (.*?)$/gm, '<li>$1</li>');
-    html = html.replace(/^- (.*?)$/gm, '<li>$1</li>');
-    html = html.replace(/^\d+\. (.*?)$/gm, '<li>$1</li>');
-    
-    // 包装列表
-    html = html.replace(/(<li>.*?<\/li>\n?)+/g, function(match) {
-        return '<ul>' + match + '</ul>';
-    });
-
-    // 转换表格（Markdown 表格语法）
-    // 识别连续的以 | 开头并包含 | 的行，其中第二行为分隔行
-    html = html.replace(/((?:^\|.*\|\s*\n)+)/gm, function(match) {
-        var lines = match.trim().split('\n');
-        if (lines.length < 2) return match;
-
-        var headerLine = lines[0].trim();
-        var separatorLine = lines[1].trim();
-
-        // 判断第二行是否是形如 |---|---| 的分隔行
-        var sepNoSpace = separatorLine.replace(/\s/g, '');
-        if (!/^\|[-:]+(?:\|[-:]+)*\|$/.test(sepNoSpace)) {
-            return match;
-        }
-
-        function splitRow(row) {
-            var cells = row.trim();
-            if (cells[0] === '|') cells = cells.substring(1);
-            if (cells[cells.length - 1] === '|') cells = cells.slice(0, -1);
-            return cells.split('|').map(function(cell) { return cell.trim(); });
-        }
-
-        var headerCells = splitRow(headerLine);
-        var bodyLines = lines.slice(2);
-        var bodyRows = bodyLines
-            .map(function(line) { return line.trim(); })
-            .filter(function(line) { return line.length > 0; })
-            .map(splitRow);
-
-        var tableHtml = '<table><thead><tr>' +
-            headerCells.map(function(text) { return '<th>' + text + '</th>'; }).join('') +
-            '</tr></thead>';
-
-        if (bodyRows.length > 0) {
-            tableHtml += '<tbody>';
-            bodyRows.forEach(function(cells) {
-                tableHtml += '<tr>' +
-                    cells.map(function(text) { return '<td>' + text + '</td>'; }).join('') +
-                    '</tr>';
-            });
-            tableHtml += '</tbody>';
-        }
-
-        tableHtml += '</table>';
-        return tableHtml + '\n';
-    });
-    
-    // 转换链接和图片
-    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;" />');
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-    
-    // 转换引用
-    html = html.replace(/^> (.*?)$/gm, '<blockquote style="border-left:4px solid #ddd; margin:0; padding-left:16px; color:#666;">$1</blockquote>');
-    
-    // 转换水平线
-    html = html.replace(/^---$/gm, '<hr style="border:none; border-top:1px solid #ccc; margin:20px 0;">');
-    html = html.replace(/^\*\*\*$/gm, '<hr style="border:none; border-top:1px solid #ccc; margin:20px 0;">');
-
-    // 处理 Markdown 行内换行：两个空格 + 换行 -> <br>
-    // 例如："- 定义：...␣␣\\n- 目标：..." 会在同一条目中换行显示
-    html = html.replace(/ {2}\n/g, '<br>\n');
-
-    // 转换段落
-    html = html.replace(/\n\n/g, '</p><p>');
-    html = '<p>' + html + '</p>';
-    
-    // 清理多余的标签（标题、列表、引用、分割线、表格不被 <p> 包裹）
-    html = html.replace(/<p><\/p>/g, '');
-    html = html.replace(/<p>(<h[1-6]>)/g, '$1');
-    html = html.replace(/(<\/h[1-6]>)<\/p>/g, '$1');
-    html = html.replace(/<p>(<ul>)/g, '$1');
-    html = html.replace(/(<\/ul>)<\/p>/g, '$1');
-    html = html.replace(/<p>(<blockquote)/g, '$1');
-    html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
-    html = html.replace(/<p>(<hr)/g, '$1');
-    html = html.replace(/(<hr[^>]*>)<\/p>/g, '$1');
-    html = html.replace(/<p>(<table>)/g, '$1');
-    html = html.replace(/(<\/table>)<\/p>/g, '$1');
-    
-    // 还原代码块
-    codeBlocks.forEach(function(block, index) {
-        var placeholder = '___CODEBLOCK_' + index + '___';
-        var codeHtml = '<pre style="background:#f5f5f5; padding:10px; border-radius:3px; overflow-x:auto;"><code class="language-' + block.lang + '">' +
-                      block.code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
-                      '</code></pre>';
-        html = html.replace(placeholder, codeHtml);
-    });
-    
-    // 还原行内代码
-    inlineCodes.forEach(function(code, index) {
-        var placeholder = '___INLINE_' + index + '___';
-        var codeHtml = '<code style="background:#f5f5f5; padding:2px 4px; border-radius:3px; font-family:monospace;">' +
-                      code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
-                      '</code>';
-        html = html.replace(placeholder, codeHtml);
-    });
-    
-    return html;
-}
 
 // ============================================================================
 // Markdown转换函数 - 元宝AI专用版本
@@ -508,22 +385,45 @@ function hideMarkdownInput() {
     $('#markdown-input').style.display = 'none';
 }
 
+/**
+ * 对预览区域渲染数学公式。
+ * MathJax 脚本为异步加载：未就绪时挂到 startup.promise，加载失败时
+ * 静默跳过（预览退化为原文显示，不影响插入编辑器与发布后的渲染）。
+ */
+function renderPreviewMath() {
+    var target = $('.file-result');
+    if (!target || !window.MathJax) return;
+    var mathjax = window.MathJax;
+    if (mathjax.startup && mathjax.startup.promise) {
+        mathjax.startup.promise.then(function () {
+            return mathjax.typesetPromise([target]);
+        }).catch(function (e) {
+            console.warn('MathJax预览渲染失败:', e);
+        });
+    } else if (mathjax.typesetPromise) {
+        mathjax.typesetPromise([target]).catch(function (e) {
+            console.warn('MathJax预览渲染失败:', e);
+        });
+    }
+}
+
 function convertMarkdown() {
     var textarea = $('#fileInputContent');
     var markdown = textarea.value;
-    
+
     if (!markdown.trim()) {
         $('.file-tip').innerHTML = '请输入Markdown内容';
         return;
     }
-    
+
     var html = convertMarkdownToHtml(markdown);
     contentImport.data.result = html;
-    
+
     $('.file-result').innerHTML = html;
     $('.file-result').style.display = 'block';
     $('#markdown-input').style.display = 'none';
     $('.file-tip').innerHTML = '转换成功！点击下方"确认"按钮插入内容到编辑器。';
+    renderPreviewMath();
 }
 
 // UI函数 - 元宝
@@ -550,11 +450,12 @@ function convertYuanbao() {
     // 使用元宝AI专用转换器
     var html = convertYuanbaoMarkdownToHtml(markdown);
     contentImport.data.result = html;
-    
+
     $('.file-result').innerHTML = html;
     $('.file-result').style.display = 'block';
     $('#yuanbao-input').style.display = 'none';
     $('.file-tip').innerHTML = '元宝内容转换成功！点击下方"确认"按钮插入内容到编辑器。';
+    renderPreviewMath();
 }
 
 // UI函数 - Deepseek
@@ -581,11 +482,12 @@ function convertDeepseek() {
     // 使用Deepseek专用转换器
     var html = convertDeepseekMarkdownToHtml(markdown);
     contentImport.data.result = html;
-    
+
     $('.file-result').innerHTML = html;
     $('.file-result').style.display = 'block';
     $('#deepseek-input').style.display = 'none';
     $('.file-tip').innerHTML = 'Deepseek内容转换成功！点击下方"确认"按钮插入内容到编辑器。';
+    renderPreviewMath();
 }
 
 // UI函数 - ChatGPT
@@ -612,11 +514,12 @@ function convertChatgpt() {
     // 使用ChatGPT专用转换器
     var html = convertChatgptMarkdownToHtml(markdown);
     contentImport.data.result = html;
-    
+
     $('.file-result').innerHTML = html;
     $('.file-result').style.display = 'block';
     $('#chatgpt-input').style.display = 'none';
     $('.file-tip').innerHTML = 'ChatGPT内容转换成功！点击下方"确认"按钮插入内容到编辑器。';
+    renderPreviewMath();
 }
 
 // 通用函数 - 隐藏所有输入框
