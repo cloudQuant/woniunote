@@ -8,6 +8,8 @@
 #include "test_framework.h"
 #include "core/security.h"
 
+#include <chrono>
+
 using namespace woniunote;
 
 // ---------------------------------------------------------------------------
@@ -91,8 +93,13 @@ TEST_CASE(jwt_refresh_token_has_refresh_type) {
 
 TEST_CASE(jwt_rejects_tampered_token) {
     std::string token = Security::createAccessToken("99", 60);
-    // Corrupt the token signature.
-    token.back() = (token.back() == 'a') ? 'b' : 'a';
+    // Corrupt the FIRST character of the signature segment. Flipping the
+    // token's last base64 char is time-flaky: its low bits can be zero
+    // padding, so the corruption can decode to the identical signature and
+    // still verify (~3% of runs, since the signed payload embeds timestamps).
+    auto sigStart = token.rfind('.');
+    CHECK(sigStart != std::string::npos && sigStart + 1 < token.size());
+    token[sigStart + 1] = (token[sigStart + 1] == 'a') ? 'b' : 'a';
     auto payload = Security::decodeToken(token);
     CHECK(!payload.has_value());
 }
@@ -142,5 +149,30 @@ TEST_CASE(access_token_has_no_jti) {
     CHECK(payload.has_value());
     if (payload.has_value()) {
         CHECK(payload->jti.empty());
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Expiry validation (iteration 16) — jwt-cpp's verifier rejects tokens whose
+// exp claim is in the past; decodeToken must surface that as nullopt so the
+// AuthFilter never accepts a stale token.
+// ---------------------------------------------------------------------------
+
+TEST_CASE(jwt_rejects_expired_access_token) {
+    std::string token = Security::createAccessToken("user-exp", -1);
+    CHECK(!Security::decodeToken(token).has_value());
+}
+
+TEST_CASE(jwt_rejects_expired_refresh_token) {
+    std::string token = Security::createRefreshToken("user-exp", -1, "jti-exp");
+    CHECK(!Security::decodeToken(token).has_value());
+}
+
+TEST_CASE(jwt_decodes_token_with_future_expiry) {
+    std::string token = Security::createAccessToken("user-fut", 60);
+    auto payload = Security::decodeToken(token);
+    CHECK(payload.has_value());
+    if (payload.has_value()) {
+        CHECK(payload->exp > std::chrono::system_clock::now());
     }
 }

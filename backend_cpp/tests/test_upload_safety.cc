@@ -8,6 +8,9 @@
 #include "core/upload_safety.h"
 #include "core/config.h"
 
+#include <algorithm>
+#include <cctype>
+
 using namespace woniunote;
 
 // ---------------------------------------------------------------------------
@@ -24,10 +27,9 @@ TEST_CASE(sanitizeExtension_strips_traversal_and_separators) {
     // The security guarantee: whatever comes out must be purely alphanumeric
     // (no path separators, no dots), so it can never escape the upload dir.
     auto isClean = [](const std::string& s) {
-        for (char c : s) {
-            if (!std::isalnum(static_cast<unsigned char>(c))) return false;
-        }
-        return true;
+        return std::all_of(s.begin(), s.end(), [](char c) {
+            return std::isalnum(static_cast<unsigned char>(c)) != 0;
+        });
     };
     CHECK(isClean(sanitizeExtension("avatar.jpg/../../etc/passwd")));
     CHECK(isClean(sanitizeExtension("x.pn/g")));
