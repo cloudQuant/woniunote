@@ -90,6 +90,11 @@ set(CONTROLLER_SOURCES
     controllers/UEditorController.cc
 )
 
+set(SERVICE_SOURCES
+    services/ArticleCategoryService.cc
+    services/ArticleAuthorService.cc
+)
+
 set(FILTER_SOURCES
     filters/AuthFilter.cc
     filters/RateLimitFilter.cc
@@ -102,6 +107,7 @@ add_executable(${PROJECT_NAME}
     ${CORE_SOURCES}
     ${MODEL_SOURCES}
     ${CONTROLLER_SOURCES}
+    ${SERVICE_SOURCES}
     ${FILTER_SOURCES}
 )
 
