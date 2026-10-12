@@ -176,6 +176,8 @@ frontend/coverage/
 frontend/playwright-report/
 frontend/test-results/
 frontend/.playwright/
+# Playwright output when tests run from the repo root
+test-results/
 
 # C++ build artifacts
 backend_cpp/build/

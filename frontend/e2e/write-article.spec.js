@@ -185,6 +185,13 @@ test.describe('Write article + Markdown import', () => {
     await expect(page.getByPlaceholder('请输入文章标题')).toHaveValue('量化投资入门')
     await expect(page.locator('.el-cascader input')).toHaveValue('交易策略 / 股票策略')
 
+    // Regression guard (iteration 18 / defect #7): the editor iframe must be
+    // backfilled with the article body — this silently failed before the
+    // iteration-17 UEditor ready fix (isReady was never true, so the
+    // modelValue watch and the ready-path setContent were both dead).
+    const editorFrame = page.frameLocator(EDITOR_FRAME)
+    await expect(editorFrame.locator('body')).toContainText('这是一篇关于量化投资的文章正文')
+
     const saveButton = page.getByRole('button', { name: '保存草稿' })
     await waitForStableLayout(saveButton)
 
