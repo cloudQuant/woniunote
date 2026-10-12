@@ -13,7 +13,7 @@ vi.mock('vue-router', () => ({
 }))
 
 const m = vi.hoisted(() => ({
-  msg: { success: vi.fn(), error: vi.fn() },
+  msg: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
   articleApi: {
     create: vi.fn(() => Promise.resolve({ data: { articleid: 11 } })),
     update: vi.fn(() => Promise.resolve({ data: { articleid: 22 } })),

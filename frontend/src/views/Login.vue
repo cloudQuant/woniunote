@@ -60,6 +60,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { notifyError } from '@/utils/errorToast'
 
 const router = useRouter()
 const route = useRoute()
@@ -100,6 +101,7 @@ async function handleLogin() {
     router.push(redirect)
   } catch (error) {
     console.error('登录失败:', error)
+    notifyError(error, '登录失败')
   } finally {
     loading.value = false
   }

@@ -14,6 +14,26 @@ vi.stubGlobal('localStorage', memoryStore)
 // jsdom doesn't implement scrollTo; the router's scrollBehavior calls it.
 vi.stubGlobal('scrollTo', () => {})
 
+// Every lazy view chunk imports Element Plus at module scope. Loading the real
+// library in jsdom costs seconds and made the lazy-route navigation test flake
+// once api/index.js stopped importing it eagerly (Epic 18.1). This spec only
+// exercises the route table and guards, so mock it like the view specs do;
+// toast behaviour is asserted in the view/errorToast specs.
+vi.mock('element-plus', () => {
+  const elMessage = Object.assign(vi.fn(), {
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn()
+  })
+  return {
+    default: {},
+    ElMessage: elMessage,
+    ElMessageBox: { confirm: vi.fn(() => Promise.resolve()) },
+    ElConfigProvider: { name: 'ElConfigProvider', render: () => null }
+  }
+})
+
 import { setActivePinia, createPinia } from 'pinia'
 import router from './index'
 import { useUserStore } from '@/stores/user'

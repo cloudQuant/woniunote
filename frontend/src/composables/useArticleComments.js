@@ -9,6 +9,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { commentApi } from '@/api'
+import { notifyError } from '@/utils/errorToast'
 
 /**
  * 文章评论区逻辑 composable
@@ -47,6 +48,7 @@ export function useArticleComments({ article }) {
       comments.value = res.data
     } catch (error) {
       console.error('获取评论失败:', error)
+      notifyError(error, '获取评论失败')
     }
   }
 
@@ -67,6 +69,7 @@ export function useArticleComments({ article }) {
       ElMessage.success('评论发表成功')
     } catch (error) {
       console.error('发表评论失败:', error)
+      notifyError(error, '发表评论失败')
     } finally {
       submittingComment.value = false
     }
@@ -112,6 +115,7 @@ export function useArticleComments({ article }) {
       ElMessage.success('回复成功')
     } catch (error) {
       console.error('回复失败:', error)
+      notifyError(error, '回复失败')
     } finally {
       submittingReply.value = false
     }
@@ -132,6 +136,7 @@ export function useArticleComments({ article }) {
       comment.agreecount = (comment.agreecount || 0) + 1
     } catch (error) {
       console.error('点赞失败:', error)
+      notifyError(error, '点赞失败')
     }
   }
 
@@ -150,6 +155,7 @@ export function useArticleComments({ article }) {
       comment.opposecount = (comment.opposecount || 0) + 1
     } catch (error) {
       console.error('踩失败:', error)
+      notifyError(error, '踩失败')
     }
   }
 

@@ -7,7 +7,7 @@ installLocalStorage()
 silenceExpectedConsole(['error'])
 
 const m = vi.hoisted(() => ({
-  msg: { success: vi.fn(), error: vi.fn() },
+  msg: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
   push: vi.fn(),
   user: { isLoggedIn: false },
   route: { params: { id: '7' } },

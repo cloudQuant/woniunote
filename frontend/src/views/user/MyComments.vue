@@ -60,6 +60,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { myCommentApi, commentApi } from '@/api'
+import { notifyError } from '@/utils/errorToast'
 
 const comments = ref([])
 const loading = ref(true)
@@ -83,6 +84,7 @@ async function fetchComments() {
     total.value = res.total
   } catch (error) {
     console.error('获取评论列表失败:', error)
+    notifyError(error, '获取评论列表失败')
   } finally {
     loading.value = false
   }
@@ -95,6 +97,7 @@ async function deleteComment(item) {
     await fetchComments()
   } catch (error) {
     console.error('删除评论失败:', error)
+    notifyError(error, '删除评论失败')
   }
 }
 

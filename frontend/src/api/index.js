@@ -5,7 +5,6 @@
  */
 
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 import { logInfo, logError, logWarning, logRequest } from '@/utils/logger'
@@ -110,8 +109,9 @@ api.interceptors.response.use(
 
     const data = response.data
     if (data.code !== 200) {
+      // 契约漂移防御：后端错误恒为 4xx/5xx，此分支理论上不可达。
+      // 只记日志并 reject，用户提示交给调用方的 notifyError（不注入通用兜底）。
       logWarning(`API响应异常: ${method} ${url}`, { code: data.code, message: data.message })
-      ElMessage.error(data.message || '请求失败')
       return Promise.reject(new Error(data.message))
     }
     return data

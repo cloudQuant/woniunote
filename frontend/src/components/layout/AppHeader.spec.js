@@ -13,7 +13,7 @@ vi.mock('vue-router', () => ({
 }))
 
 const m = vi.hoisted(() => ({
-  msg: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() },
+  msg: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() }),
   login: vi.fn(() => Promise.resolve({})),
   logout: vi.fn(),
   fetchArticleTypes: vi.fn(() => Promise.resolve({})),

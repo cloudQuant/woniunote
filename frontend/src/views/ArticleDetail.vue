@@ -111,6 +111,7 @@ import { View, Star, Edit } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useArticleStore } from '@/stores/article'
 import { articleApi, favoriteApi } from '@/api'
+import { notifyError } from '@/utils/errorToast'
 import Sidebar from '@/components/sidebar/Sidebar.vue'
 import ArticleComments from '@/components/article/ArticleComments.vue'
 import ArticleNavigation from '@/components/article/ArticleNavigation.vue'
@@ -216,6 +217,7 @@ async function fetchArticle() {
     renderMathFormulas()
   } catch (error) {
     console.error('获取文章详情失败:', error)
+    notifyError(error, '获取文章详情失败')
   } finally {
     loading.value = false
   }
@@ -243,6 +245,7 @@ async function toggleFavorite() {
     }
   } catch (error) {
     console.error('收藏操作失败:', error)
+    notifyError(error, '收藏操作失败')
   } finally {
     favoriteLoading.value = false
   }

@@ -192,6 +192,7 @@ import { ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { useArticleStore } from '@/stores/article'
+import { notifyError } from '@/utils/errorToast'
 import ThemeSwitcher from '@/components/common/ThemeSwitcher.vue'
 
 const router = useRouter()
@@ -300,6 +301,7 @@ async function refreshCaptcha() {
     }
   } catch (error) {
     console.error('获取验证码失败:', error)
+    notifyError(error, '获取验证码失败')
   }
 }
 

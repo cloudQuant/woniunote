@@ -14,8 +14,14 @@ vi.mock('vue-router', () => ({
 
 const success = vi.fn()
 const error = vi.fn()
+// notifyError calls ElMessage({...}) as a function (Epic 18.1); keep the
+// .success/.error methods working for the existing assertions.
+const toast = vi.fn()
 vi.mock('element-plus', () => ({
-  ElMessage: { success: (...a) => success(...a), error: (...a) => error(...a) }
+  ElMessage: Object.assign((...a) => toast(...a), {
+    success: (...a) => success(...a),
+    error: (...a) => error(...a)
+  })
 }))
 
 const api = vi.hoisted(() => ({
@@ -302,6 +308,34 @@ describe('MyDrafts.vue', () => {
     await wrapper.vm.deleteDraft({ articleid: 3 })
     expect(success).not.toHaveBeenCalled()
   })
+
+  it('shows the scenario fallback toast when fetching drafts fails with an empty message', async () => {
+    api.draftApi.getMyDrafts.mockRejectedValueOnce(
+      Object.assign(new Error(''), { response: { status: 500 } })
+    )
+    const wrapper = mount(MyDrafts, mountOptions())
+    await flushPromises()
+    expect(toast).toHaveBeenCalledWith({
+      message: '获取草稿列表失败',
+      type: 'error',
+      grouping: true
+    })
+    expect(wrapper.vm.loading).toBe(false)
+  })
+
+  it('shows the server message toast when deleting a draft fails with HTTP 500', async () => {
+    const wrapper = mount(MyDrafts, mountOptions())
+    await flushPromises()
+    api.articleApi.delete.mockRejectedValueOnce(
+      Object.assign(new Error('服务器内部错误'), { response: { status: 500 } })
+    )
+    await wrapper.vm.deleteDraft({ articleid: 3 })
+    expect(toast).toHaveBeenCalledWith({
+      message: '服务器内部错误',
+      type: 'error',
+      grouping: true
+    })
+  })
 })
 
 describe('MyFavorites.vue', () => {
@@ -522,6 +556,36 @@ describe('Profile.vue', () => {
     await wrapper.vm.saveProfile()
     expect(success).not.toHaveBeenCalled()
     expect(wrapper.vm.saving).toBe(false)
+  })
+
+  it('saveProfile surfaces the server message on an HTTP 500 rejection', async () => {
+    api.userApi.updateProfile.mockRejectedValueOnce(
+      Object.assign(new Error('服务器内部错误'), { response: { status: 500 } })
+    )
+    const wrapper = mount(Profile, withUser())
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+    await wrapper.vm.saveProfile()
+    expect(toast).toHaveBeenCalledWith({
+      message: '服务器内部错误',
+      type: 'error',
+      grouping: true
+    })
+    expect(wrapper.vm.saving).toBe(false)
+  })
+
+  it('changePassword falls back to the scenario message on an empty rejection message', async () => {
+    api.userApi.updatePassword.mockRejectedValueOnce(new Error(''))
+    const wrapper = mount(Profile, withUser())
+    wrapper.vm.passwordFormRef = {
+      validate: vi.fn(() => Promise.resolve(true)),
+      resetFields: vi.fn()
+    }
+    await wrapper.vm.changePassword()
+    expect(toast).toHaveBeenCalledWith({
+      message: '修改密码失败',
+      type: 'error',
+      grouping: true
+    })
   })
 
   it('changePassword returns early when the form ref is missing', async () => {

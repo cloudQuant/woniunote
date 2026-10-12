@@ -64,6 +64,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { draftApi, articleApi } from '@/api'
+import { notifyError } from '@/utils/errorToast'
 
 const router = useRouter()
 const drafts = ref([])
@@ -102,6 +103,7 @@ async function fetchDrafts() {
     total.value = res.total
   } catch (error) {
     console.error('获取草稿列表失败:', error)
+    notifyError(error, '获取草稿列表失败')
   } finally {
     loading.value = false
   }
@@ -118,6 +120,7 @@ async function deleteDraft(item) {
     await fetchDrafts()
   } catch (error) {
     console.error('删除草稿失败:', error)
+    notifyError(error, '删除草稿失败')
   }
 }
 

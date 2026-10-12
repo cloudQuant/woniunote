@@ -94,6 +94,7 @@ import { Plus } from '@element-plus/icons-vue'
 import { useArticleStore } from '@/stores/article'
 import { logInfo } from '@/utils/logger'
 import { articleApi, uploadApi } from '@/api'
+import { notifyError } from '@/utils/errorToast'
 import UEditor from '@/components/editor/UEditor.vue'
 
 const route = useRoute()
@@ -161,6 +162,7 @@ async function uploadThumbnail({ file }) {
     ElMessage.success('上传成功')
   } catch (error) {
     console.error('上传失败:', error)
+    notifyError(error, '上传失败')
   }
 }
 
@@ -211,6 +213,7 @@ async function saveArticle() {
     }
   } catch (error) {
     console.error('保存失败:', error)
+    notifyError(error, '保存失败')
   } finally {
     saving.value = false
     publishing.value = false

@@ -77,6 +77,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { notifyError } from '@/utils/errorToast'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -131,6 +132,7 @@ async function handleRegister() {
     router.push({ name: 'Login' })
   } catch (error) {
     console.error('注册失败:', error)
+    notifyError(error, '注册失败')
   } finally {
     loading.value = false
   }

@@ -298,6 +298,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useArticleStore } from '@/stores/article'
 import { adminApi, articleApi, systemApi } from '@/api'
+import { notifyError } from '@/utils/errorToast'
 import ArticleCategoryManager from '@/views/admin/ArticleCategoryManager.vue'
 
 const router = useRouter()
@@ -408,6 +409,7 @@ async function fetchArticles() {
     stats.totalArticles = res.total
   } catch (error) {
     console.error('获取文章列表失败:', error)
+    notifyError(error, '获取文章列表失败')
   } finally {
     loading.value = false
   }

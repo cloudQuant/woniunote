@@ -90,6 +90,7 @@ import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useArticleStore } from '@/stores/article'
 import { articleApi } from '@/api'
+import { notifyError } from '@/utils/errorToast'
 import ArticleCategoryCenter from './ArticleCategoryCenter.vue'
 
 const router = useRouter()
@@ -123,6 +124,7 @@ async function fetchArticles() {
     total.value = Number(res?.total ?? list.length)
   } catch (error) {
     console.error('获取文章列表失败:', error)
+    notifyError(error, '获取文章列表失败')
   } finally {
     loading.value = false
   }
@@ -133,6 +135,7 @@ async function loadArticleTypes() {
     await articleStore.fetchArticleTypes()
   } catch (error) {
     console.error('获取文章分类失败:', error)
+    notifyError(error, '获取文章分类失败')
   }
 }
 
@@ -147,6 +150,7 @@ async function deleteArticle(article) {
     await fetchArticles()
   } catch (error) {
     console.error('删除失败:', error)
+    notifyError(error, '删除失败')
   }
 }
 

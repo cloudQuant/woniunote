@@ -138,6 +138,12 @@ jobs:
         # Iteration 14 drives the warning baseline to zero.
         run: npm run lint:ci
 
+      - name: Check for silent catch blocks (blocking)
+        working-directory: frontend
+        # Epic 18.1: every catch block must surface user feedback (notifyError /
+        # ElMessage) or be listed with a justification in the exemption table.
+        run: node scripts/check-silent-catch.mjs
+
       - name: Run unit tests
         working-directory: frontend
         # Enforces coverage thresholds defined in vitest.config.js.

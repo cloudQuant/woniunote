@@ -100,6 +100,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { userApi, uploadApi } from '@/api'
+import { notifyError } from '@/utils/errorToast'
 
 const userStore = useUserStore()
 
@@ -156,6 +157,7 @@ async function uploadAvatar({ file }) {
     ElMessage.success('头像上传成功')
   } catch (error) {
     console.error('上传失败:', error)
+    notifyError(error, '上传失败')
   }
 }
 
@@ -176,6 +178,7 @@ async function saveProfile() {
     ElMessage.success('保存成功')
   } catch (error) {
     console.error('保存失败:', error)
+    notifyError(error, '保存失败')
   } finally {
     saving.value = false
   }
@@ -197,6 +200,7 @@ async function changePassword() {
     passwordFormRef.value.resetFields()
   } catch (error) {
     console.error('修改密码失败:', error)
+    notifyError(error, '修改密码失败')
   } finally {
     changingPassword.value = false
   }

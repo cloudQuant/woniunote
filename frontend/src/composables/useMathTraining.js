@@ -7,6 +7,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { mathTrainingApi } from '@/api'
+import { notifyError } from '@/utils/errorToast'
 
 /** 运算符展示映射（题目区组件同样需要） */
 export const opMap = { '+': '+', '-': '-', '*': '×', '/': '÷' }
@@ -20,11 +21,11 @@ export const difficultyMap = { 1: '一级', 2: '二级', 3: '三级' }
  * @returns {string} 格式化后的时间文本
  */
 export function formatTime(iso) {
-  try {
-    return new Date(iso).toLocaleString('zh-CN')
-  } catch {
-    return iso
-  }
+  // 前置判空：new Date(null/undefined) 不会抛异常（null 是合法 epoch 0，
+  // 会渲染成 1970 年），必须显式拦截，原 try/catch 是死代码。
+  if (!iso) return '-'
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString('zh-CN')
 }
 
 /**
@@ -369,7 +370,8 @@ export function useMathTraining({ focusAnswer = () => {} } = {}) {
       const res = await mathTrainingApi.getRecords({ page: historyPage.value, page_size: pageSize })
       history.value = res.data || []
       historyTotal.value = res.total || 0
-    } catch {
+    } catch (error) {
+      notifyError(error, '获取训练历史失败')
       history.value = []
     } finally {
       historyLoading.value = false
@@ -383,7 +385,8 @@ export function useMathTraining({ focusAnswer = () => {} } = {}) {
     try {
       const res = await mathTrainingApi.getSummary()
       summary.value = res.data || null
-    } catch {
+    } catch (error) {
+      notifyError(error, '获取训练汇总失败')
       summary.value = null
     }
   }

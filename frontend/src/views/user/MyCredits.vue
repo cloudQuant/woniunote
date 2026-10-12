@@ -61,6 +61,7 @@
  */
 import { ref, reactive, onMounted } from 'vue'
 import { creditApi } from '@/api'
+import { notifyError } from '@/utils/errorToast'
 
 const credits = ref([])
 const summary = reactive({
@@ -86,6 +87,7 @@ async function fetchSummary() {
     summary.type_stats = res.data.type_stats || {}
   } catch (error) {
     console.error('获取积分汇总失败:', error)
+    notifyError(error, '获取积分汇总失败')
   } finally {
     summaryLoading.value = false
   }
@@ -102,6 +104,7 @@ async function fetchCredits() {
     total.value = res.total
   } catch (error) {
     console.error('获取积分记录失败:', error)
+    notifyError(error, '获取积分记录失败')
   } finally {
     loading.value = false
   }

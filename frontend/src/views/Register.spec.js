@@ -18,8 +18,14 @@ vi.mock('@/stores/user', () => ({
 
 const success = vi.fn()
 const error = vi.fn()
+// notifyError calls ElMessage({...}) as a function (Epic 18.1); keep the
+// .success/.error methods working for the existing assertions.
+const toast = vi.fn()
 vi.mock('element-plus', () => ({
-  ElMessage: { success: (...a) => success(...a), error: (...a) => error(...a) }
+  ElMessage: Object.assign((...a) => toast(...a), {
+    success: (...a) => success(...a),
+    error: (...a) => error(...a)
+  })
 }))
 
 import Register from './Register.vue'
@@ -84,6 +90,36 @@ describe('Register.vue', () => {
     await wrapper.vm.handleRegister()
     expect(success).not.toHaveBeenCalled()
     expect(wrapper.vm.loading).toBe(false)
+  })
+
+  it('surfaces the server message when registration fails with HTTP 500', async () => {
+    register.mockRejectedValueOnce(
+      Object.assign(new Error('服务器内部错误'), { response: { status: 500 } })
+    )
+    const wrapper = mount(Register, mountOptions())
+    wrapper.vm.form.username = 'dup'
+    wrapper.vm.form.password = 'secret1'
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+    await wrapper.vm.handleRegister()
+    expect(toast).toHaveBeenCalledWith({
+      message: '服务器内部错误',
+      type: 'error',
+      grouping: true
+    })
+  })
+
+  it('falls back to the scenario message when the rejection has an empty message', async () => {
+    register.mockRejectedValueOnce(new Error(''))
+    const wrapper = mount(Register, mountOptions())
+    wrapper.vm.form.username = 'dup'
+    wrapper.vm.form.password = 'secret1'
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+    await wrapper.vm.handleRegister()
+    expect(toast).toHaveBeenCalledWith({
+      message: '注册失败',
+      type: 'error',
+      grouping: true
+    })
   })
 
   it('binds every input through v-model', async () => {

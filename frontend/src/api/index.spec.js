@@ -53,9 +53,12 @@ vi.mock('axios', () => {
   }
 })
 
-const elMessageError = vi.fn()
+// Epic 18.1: the response interceptor must NOT toast HTTP/business errors any
+// more — views own user-facing feedback via notifyError. Keep a callable spy
+// (ElMessage({...}) + ElMessage.error(...)) so the specs can guard the absence.
+const elMessage = vi.fn()
 vi.mock('element-plus', () => ({
-  ElMessage: { error: (...a) => elMessageError(...a) }
+  ElMessage: Object.assign((...a) => elMessage(...a), { error: (...a) => elMessage(...a) })
 }))
 
 const routerPush = vi.fn()
@@ -88,6 +91,7 @@ vi.mock('@/utils/loading', () => ({
 }))
 
 // Import after mocks so interceptors register against the fake instance.
+import { logWarning } from '@/utils/logger'
 import apiDefault, {
   authApi,
   articleApi,
@@ -148,14 +152,25 @@ describe('api interceptors', () => {
       expect(stopLoading).toHaveBeenCalledOnce()
     })
 
-    it('rejects and shows message when business code !== 200', async () => {
+    it('rejects with the server message on a real HTTP 400 response', async () => {
+      const error = {
+        response: { status: 400, data: { message: 'bad' } },
+        config: { method: 'get', url: '/x', metadata: { startTime: Date.now() } }
+      }
+      await expect(handlers.responseRejected(error)).rejects.toThrow('bad')
+      // Feedback is the caller's job now (notifyError); the interceptor stays silent.
+      expect(elMessage).not.toHaveBeenCalled()
+    })
+
+    it('rejects contract-drift payloads (HTTP 200 + non-200 code) without toasting', async () => {
       const resp = {
         data: { code: 400, message: 'bad' },
         status: 200,
         config: { method: 'get', url: '/x', metadata: { startTime: Date.now() } }
       }
       await expect(handlers.responseFulfilled(resp)).rejects.toThrow('bad')
-      expect(elMessageError).toHaveBeenCalledWith('bad')
+      expect(logWarning).toHaveBeenCalled()
+      expect(elMessage).not.toHaveBeenCalled()
     })
   })
 
@@ -272,16 +287,16 @@ describe('api interceptors', () => {
       expect(handlers.responseFulfilled(resp)).toEqual({ code: 200, data: { ok: true } })
     })
 
-    it('falls back to the generic message when the server omits one', async () => {
-      const resp = {
-        data: { code: 500 },
-        status: 200,
+    it('falls back to the generic message when an HTTP error omits the server message', async () => {
+      const error = {
+        response: { status: 500, data: {} },
         config: { method: 'get', url: '/x', metadata: { startTime: Date.now() } }
       }
-      // Note: the surfaced toast falls back to 请求失败 while the rejected Error
-      // keeps the (undefined) server message — assert both behaviours.
-      await expect(handlers.responseFulfilled(resp)).rejects.toBeInstanceOf(Error)
-      expect(elMessageError).toHaveBeenCalledWith('请求失败')
+      // The rejected Error carries the generic 请求失败 message; callers surface it.
+      await expect(handlers.responseRejected(error)).rejects.toMatchObject({
+        message: '请求失败'
+      })
+      expect(elMessage).not.toHaveBeenCalled()
     })
 
     it('maps 429 to the default throttle message when the server omits one', async () => {

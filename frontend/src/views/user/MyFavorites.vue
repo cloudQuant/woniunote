@@ -57,6 +57,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { favoriteApi } from '@/api'
+import { notifyError } from '@/utils/errorToast'
 
 const favorites = ref([])
 const loading = ref(true)
@@ -81,6 +82,7 @@ async function fetchFavorites() {
     total.value = Number(res?.total ?? favorites.value.length)
   } catch (error) {
     console.error('获取收藏列表失败:', error)
+    notifyError(error, '获取收藏列表失败')
   } finally {
     loading.value = false
   }
@@ -99,6 +101,7 @@ async function removeFavorite(item) {
     await fetchFavorites()
   } catch (error) {
     console.error('取消收藏失败:', error)
+    notifyError(error, '取消收藏失败')
   }
 }
 

@@ -35,6 +35,7 @@ import { ref, watch, onMounted, computed } from 'vue'
 import ArticleCard from './ArticleCard.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import { articleApi } from '@/api'
+import { notifyError } from '@/utils/errorToast'
 
 const props = defineProps({
   /**
@@ -117,6 +118,7 @@ async function fetchArticles() {
     emit('loaded', { total: res.total })
   } catch (error) {
     console.error('获取文章列表失败:', error)
+    notifyError(error, '获取文章列表失败')
   } finally {
     loading.value = false
   }
