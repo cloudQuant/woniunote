@@ -77,4 +77,37 @@ describe('Home.vue —— 布局结构（R2.1 / R2.3）', () => {
     const articleList = wrapper.findComponent({ name: 'ArticleList' })
     expect(articleList.props('page')).toBe(1)
   })
+
+  it('currentPage 解析 /page/:page 路由参数', () => {
+    routeState.current = reactive({ params: { page: '4' }, query: {}, path: '/page/4', name: 'HomePage' })
+    const wrapper = mount(Home, mountOptions())
+    expect(wrapper.vm.currentPage).toBe(4)
+    expect(wrapper.findComponent({ name: 'ArticleList' }).props('page')).toBe(4)
+  })
+
+  it('currentPage 对非法页码回退为 1', () => {
+    routeState.current = reactive({ params: { page: 'abc' }, query: {}, path: '/page/abc', name: 'HomePage' })
+    const wrapper = mount(Home, mountOptions())
+    expect(wrapper.vm.currentPage).toBe(1)
+  })
+
+  // 分页：第 1 页回到命名路由 Home，其余页跳 HomePage 并带上页码。
+  it('handlePageChange 第 1 页跳 Home，其余页跳 HomePage', () => {
+    const wrapper = mount(Home, mountOptions())
+    wrapper.vm.handlePageChange(1)
+    expect(push).toHaveBeenCalledWith({ name: 'Home' })
+    wrapper.vm.handlePageChange(7)
+    expect(push).toHaveBeenCalledWith({ name: 'HomePage', params: { page: 7 } })
+  })
+
+  // ArticleList 的 page-change 事件接线到 handlePageChange。
+  it('ArticleList 触发 page-change 时驱动路由跳转', async () => {
+    const wrapper = mount(Home, mountOptions())
+    wrapper.findComponent({ name: 'ArticleList' }).vm.$emit('page-change', 3)
+    await wrapper.vm.$nextTick()
+    expect(push).toHaveBeenCalledWith({ name: 'HomePage', params: { page: 3 } })
+    wrapper.findComponent({ name: 'ArticleList' }).vm.$emit('page-change', 1)
+    await wrapper.vm.$nextTick()
+    expect(push).toHaveBeenCalledWith({ name: 'Home' })
+  })
 })

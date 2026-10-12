@@ -99,4 +99,39 @@ describe('router', () => {
     await router.push('/search')
     expect(router.currentRoute.value.name).toBe('Search')
   })
+
+  it('every lazy route chunk resolves to a component module', async () => {
+    const records = router.getRoutes().filter((record) => record.components?.default)
+    // The table is fully code-split; guard against a silently dropped loader.
+    expect(records.length).toBeGreaterThanOrEqual(19)
+    for (const record of records) {
+      const component = record.components.default
+      if (typeof component === 'function') {
+        await expect(component()).resolves.toBeTruthy()
+      } else {
+        // vue-router caches the resolved module in place once a route has been
+        // visited, so earlier navigations already exercised that loader.
+        expect(component).toBeTruthy()
+      }
+    }
+  })
+
+  it('scrollBehavior restores the saved position, otherwise scrolls to top', () => {
+    const scrollBehavior = router.options.scrollBehavior
+    expect(scrollBehavior({}, {}, { top: 120, left: 0 })).toEqual({ top: 120, left: 0 })
+    expect(scrollBehavior({}, {}, null)).toEqual({ top: 0 })
+  })
+
+  it('falls back to the bare app title for routes without meta.title', async () => {
+    // Guard branch: `to.meta.title` falsy → plain 'cloudQuant'. The shipped
+    // table gives every route a title, so register a title-less route here.
+    router.addRoute({
+      path: '/__untitled',
+      name: '__Untitled',
+      component: { render: () => null }
+    })
+    await router.push('/__untitled')
+    expect(router.currentRoute.value.name).toBe('__Untitled')
+    expect(document.title).toBe('cloudQuant')
+  })
 })

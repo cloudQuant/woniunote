@@ -85,4 +85,35 @@ describe('Register.vue', () => {
     expect(success).not.toHaveBeenCalled()
     expect(wrapper.vm.loading).toBe(false)
   })
+
+  it('binds every input through v-model', async () => {
+    const wrapper = mount(Register, mountOptions())
+    const inputs = wrapper.findAllComponents({ name: 'el-input' })
+    expect(inputs.length).toBe(4)
+
+    inputs[0].vm.$emit('update:modelValue', 'alice')
+    inputs[1].vm.$emit('update:modelValue', 'Alice')
+    inputs[2].vm.$emit('update:modelValue', 'secret1')
+    inputs[3].vm.$emit('update:modelValue', 'secret1')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.vm.form.username).toBe('alice')
+    expect(wrapper.vm.form.nickname).toBe('Alice')
+    expect(wrapper.vm.form.password).toBe('secret1')
+    expect(wrapper.vm.form.confirmPassword).toBe('secret1')
+  })
+
+  it('submits the typed nickname when provided', async () => {
+    const wrapper = mount(Register, mountOptions())
+    wrapper.vm.form.username = 'newuser'
+    wrapper.vm.form.nickname = 'New User'
+    wrapper.vm.form.password = 'secret1'
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+    await wrapper.vm.handleRegister()
+    expect(register).toHaveBeenCalledWith({
+      username: 'newuser',
+      nickname: 'New User',
+      password: 'secret1'
+    })
+  })
 })

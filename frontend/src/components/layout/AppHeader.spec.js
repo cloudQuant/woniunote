@@ -16,29 +16,37 @@ const m = vi.hoisted(() => ({
   msg: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() },
   login: vi.fn(() => Promise.resolve({})),
   logout: vi.fn(),
-  fetchArticleTypes: vi.fn(() => Promise.resolve({}))
+  fetchArticleTypes: vi.fn(() => Promise.resolve({})),
+  user: { login: null, logout: null, user: null, isLoggedIn: false, isAdmin: false },
+  articleTypes: null,
+  articleTypeTree: null
 }))
+m.user.login = m.login
+m.user.logout = m.logout
 const { msg, login, logout } = m
+
+const DEFAULT_TYPES = { 1: '交易策略', 101: '股票策略', 102: '期货策略', 2: '量化框架', 201: 'vnpy' }
+const DEFAULT_TREE = [
+  { id: 1, name: '交易策略', children: [
+    { id: 101, name: '股票策略', children: [] },
+    { id: 102, name: '期货策略', children: [] }
+  ] },
+  { id: 2, name: '量化框架', children: [
+    { id: 201, name: 'vnpy', children: [] }
+  ] }
+]
 
 vi.mock('element-plus', () => ({ ElMessage: m.msg }))
 
 vi.mock('@/stores/user', () => ({
-  useUserStore: () => ({ login: m.login, logout: m.logout, user: null, isLoggedIn: false, isAdmin: false })
+  useUserStore: () => m.user
 }))
 
 vi.mock('@/stores/article', () => ({
   useArticleStore: () => ({
     fetchArticleTypes: m.fetchArticleTypes,
-    articleTypes: { 1: '交易策略', 101: '股票策略', 102: '期货策略', 2: '量化框架', 201: 'vnpy' },
-    articleTypeTree: [
-      { id: 1, name: '交易策略', children: [
-        { id: 101, name: '股票策略', children: [] },
-        { id: 102, name: '期货策略', children: [] }
-      ] },
-      { id: 2, name: '量化框架', children: [
-        { id: 201, name: 'vnpy', children: [] }
-      ] }
-    ]
+    get articleTypes() { return m.articleTypes },
+    get articleTypeTree() { return m.articleTypeTree }
   })
 }))
 
@@ -52,6 +60,9 @@ import AppHeader from './AppHeader.vue'
 describe('AppHeader.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    m.articleTypes = { ...DEFAULT_TYPES }
+    m.articleTypeTree = DEFAULT_TREE
+    Object.assign(m.user, { user: null, isLoggedIn: false, isAdmin: false })
     globalThis.fetch = vi.fn(() => Promise.resolve({
       json: () => Promise.resolve({ code: 200, data: { image: 'img', captcha_id: 'cid' } })
     }))
@@ -159,6 +170,140 @@ describe('AppHeader.vue', () => {
     wrapper.vm.loginFormRef = { validate: (cb) => cb(false) }
     await wrapper.vm.handleLogin()
     expect(login).not.toHaveBeenCalled()
+  })
+
+  it('handleLogin falls back to a generic message when the error has none', async () => {
+    login.mockRejectedValueOnce({})
+    const wrapper = mount(AppHeader, mountOptions())
+    wrapper.vm.loginFormRef = { validate: (cb) => cb(true) }
+    await wrapper.vm.handleLogin()
+    await flushPromises()
+    expect(msg.error).toHaveBeenCalledWith('登录失败')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/captcha/generate')
+  })
+
+  it('builds the tree from the flat type map when the store has no tree', () => {
+    m.articleTypeTree = []
+    m.articleTypes = { 1: '交易策略', 101: '股票策略', 2: '量化框架', 201: 'vnpy', 20101: 'vnpy 子类' }
+    const wrapper = mount(AppHeader, mountOptions())
+    const cats = wrapper.vm.categoriesWithSubs
+    expect(cats.map((c) => c.id)).toEqual([1, 2])
+    expect(cats.find((c) => c.id === 1).subs.map((s) => s.id)).toEqual([101])
+    // Grandchildren are flattened in order and indented by depth.
+    const framework = cats.find((c) => c.id === 2)
+    expect(framework.subs.map((s) => s.id)).toEqual([201, 20101])
+    expect(framework.subs[1].label).toBe('　vnpy 子类')
+  })
+
+  it('yields no categories when neither tree nor type map is available', () => {
+    m.articleTypeTree = []
+    m.articleTypes = null
+    const wrapper = mount(AppHeader, mountOptions())
+    expect(wrapper.vm.categoriesWithSubs).toEqual([])
+  })
+
+  it('falls back to a generic account label when the user object is missing', () => {
+    m.user.isLoggedIn = true
+    m.user.user = null
+    const wrapper = mount(AppHeader, mountOptions())
+    expect(wrapper.get('.user-link').text()).toContain('用户')
+  })
+
+  it('tolerates tree nodes without a children array', () => {
+    m.articleTypeTree = [{ id: 1, name: '无子类' }]
+    const wrapper = mount(AppHeader, mountOptions())
+    expect(wrapper.vm.categoriesWithSubs).toEqual([{ id: 1, name: '无子类', subs: [] }])
+  })
+
+  it('renders a plain button for leaf categories and a dropdown for parents', async () => {
+    m.articleTypeTree = [
+      { id: 1, name: '无子类' },
+      { id: 2, name: '有子类', children: [{ id: 21, name: '子类' }] }
+    ]
+    const wrapper = mount(AppHeader, mountOptions())
+
+    const button = wrapper.get('button.nav-button')
+    expect(button.text()).toBe('无子类')
+    await button.trigger('click')
+    expect(push).toHaveBeenCalledWith({ name: 'Category', params: { type: 1, page: 1 } })
+
+    push.mockClear()
+    const span = wrapper.findAll('.nav-dropdown .nav-item').find((s) => s.text() === '有子类')
+    expect(span).toBeTruthy()
+    await span.trigger('click')
+    expect(push).toHaveBeenCalledWith({ name: 'Category', params: { type: 2, page: 1 } })
+  })
+
+  it('login entry opens the modal and the dialog v-model can close it', async () => {
+    const wrapper = mount(AppHeader, mountOptions())
+    await wrapper.get('button.login-link').trigger('click')
+    expect(wrapper.vm.showLoginModal).toBe(true)
+
+    const dialog = wrapper.findComponent({ name: 'el-dialog' })
+    dialog.vm.$emit('update:modelValue', false)
+    await flushPromises()
+    expect(wrapper.vm.showLoginModal).toBe(false)
+  })
+
+  it('login form inputs and the search box are two-way bound', async () => {
+    const wrapper = mount(AppHeader, mountOptions())
+    const inputs = wrapper.findAllComponents({ name: 'el-input' })
+    expect(inputs).toHaveLength(4) // 3 dialog fields + mobile search bar
+
+    inputs[0].vm.$emit('update:modelValue', 'a@b.com')
+    inputs[1].vm.$emit('update:modelValue', 'secret1')
+    inputs[2].vm.$emit('update:modelValue', '1234')
+    inputs[3].vm.$emit('update:modelValue', 'vue')
+    await flushPromises()
+
+    expect(wrapper.vm.loginForm.username).toBe('a@b.com')
+    expect(wrapper.vm.loginForm.password).toBe('secret1')
+    expect(wrapper.vm.loginForm.captchaCode).toBe('1234')
+    expect(wrapper.vm.searchKeyword).toBe('vue')
+  })
+
+  it('logged-in users get the account dropdown with an admin entry for admins', () => {
+    m.user.isLoggedIn = true
+    m.user.isAdmin = true
+    m.user.user = { nickname: '管理员' }
+    // The harness dropdown stub only renders the default slot; render the
+    // #dropdown slot too so the menu items are inspectable.
+    const dropdownStub = {
+      name: 'el-dropdown',
+      props: ['trigger'],
+      emits: ['command'],
+      render() {
+        const menu = this.$slots.dropdown ? this.$slots.dropdown() : []
+        return h('div', { class: 'el-dropdown' }, [this.$slots.default?.(), menu])
+      }
+    }
+    const wrapper = mount(AppHeader, mountOptions({ stubs: { 'el-dropdown': dropdownStub } }))
+    expect(wrapper.find('.login-link').exists()).toBe(false)
+    expect(wrapper.get('.user-link').text()).toContain('管理员')
+    expect(wrapper.text()).toContain('系统管理')
+    expect(wrapper.text()).toContain('退出登录')
+  })
+
+  it('login dialog tab and close button are wired in the header slot', async () => {
+    const close = vi.fn()
+    const dialogStub = {
+      name: 'el-dialog',
+      props: ['modelValue'],
+      emits: ['update:modelValue'],
+      render() {
+        const header = this.$slots.header ? this.$slots.header({ close }) : []
+        const body = this.$slots.default ? this.$slots.default() : []
+        return h('div', { class: 'el-dialog' }, [header, body])
+      }
+    }
+    const wrapper = mount(AppHeader, mountOptions({ stubs: { 'el-dialog': dialogStub } }))
+
+    wrapper.vm.activeTab = 'other'
+    await wrapper.get('.login-tab').trigger('click')
+    expect(wrapper.vm.activeTab).toBe('login')
+
+    await wrapper.get('.login-close').trigger('click')
+    expect(close).toHaveBeenCalledOnce()
   })
 
   it('handleUserCommand routes each command', () => {

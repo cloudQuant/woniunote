@@ -15,6 +15,8 @@ const m = vi.hoisted(() => ({
 vi.mock('element-plus', () => ({ ElMessage: m.msg }))
 vi.mock('@/api', () => ({ mathTrainingApi: m.api }))
 
+import MathQuestion from '@/components/math/MathQuestion.vue'
+import MathHistory from '@/components/math/MathHistory.vue'
 import MathTraining from './MathTraining.vue'
 
 function mountMT() {
@@ -233,5 +235,65 @@ describe('MathTraining.vue — session flow', () => {
     const w = mountTracked()
     await w.vm.endSession()
     expect(m.api.createRecord).not.toHaveBeenCalled()
+  })
+
+  it('difficulty radio group is two-way bound and disabled while running', async () => {
+    const w = mountTracked()
+    const group = w.findComponent({ name: 'el-radio-group' })
+    expect(group.props('disabled')).toBe(false)
+    group.vm.$emit('update:modelValue', 3)
+    await w.vm.$nextTick()
+    expect(w.vm.difficulty).toBe(3)
+
+    w.vm.startSession()
+    await w.vm.$nextTick()
+    expect(w.findComponent({ name: 'el-radio-group' }).props('disabled')).toBe(true)
+  })
+
+  it('answer v-model from MathQuestion feeds submitAnswer', async () => {
+    const w = mountTracked()
+    w.vm.startSession()
+    await w.vm.$nextTick()
+    const question = w.findComponent(MathQuestion)
+    expect(question.exists()).toBe(true)
+    question.vm.$emit('update:answer', '42')
+    await w.vm.$nextTick()
+    expect(w.vm.answer).toBe('42')
+    // submit/skip events from the child drive the same orchestration.
+    question.vm.$emit('skip')
+    await w.vm.$nextTick()
+    expect(w.vm.wrong).toBe(1)
+  })
+
+  it('history page v-model from MathHistory reloads that page', async () => {
+    const w = mountTracked()
+    await flushPromises()
+    m.api.getRecords.mockClear()
+    const history = w.findComponent(MathHistory)
+    expect(history.exists()).toBe(true)
+    history.vm.$emit('update:historyPage', 3)
+    await w.vm.$nextTick()
+    expect(w.vm.historyPage).toBe(3)
+    // MathHistory re-emits its refresh/page-change events to loadHistory.
+    history.vm.$emit('refresh')
+    await flushPromises()
+    expect(m.api.getRecords).toHaveBeenCalledWith({ page: 3, page_size: 10 })
+  })
+
+  it('start prompt button starts a session and the running header can end it', async () => {
+    const w = mountTracked()
+    await flushPromises()
+    // No session yet → the start prompt renders the primary start button.
+    const start = w.findAllComponents({ name: 'el-button' }).find((b) => b.text().includes('开始训练'))
+    expect(start).toBeTruthy()
+    start.vm.$emit('click')
+    expect(w.vm.isRunning).toBe(true)
+
+    await w.vm.$nextTick()
+    const end = w.findAllComponents({ name: 'el-button' }).find((b) => b.text().includes('结束训练'))
+    expect(end).toBeTruthy()
+    end.vm.$emit('click')
+    await flushPromises()
+    expect(w.vm.isRunning).toBe(false)
   })
 })

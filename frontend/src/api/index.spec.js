@@ -253,6 +253,124 @@ describe('api interceptors', () => {
       await expect(handlers.responseRejected(error)).rejects.toBeTruthy()
       expect(postMock).not.toHaveBeenCalled()
     })
+
+    it('stops loading on the error path when the request had started it', async () => {
+      const error = {
+        response: { status: 500, data: {} },
+        config: { method: 'get', url: '/x', _loadingStarted: true, metadata: { startTime: Date.now() } }
+      }
+      await expect(handlers.responseRejected(error)).rejects.toBeTruthy()
+      expect(stopLoading).toHaveBeenCalledOnce()
+    })
+
+    it('tolerates a config without metadata when computing duration', () => {
+      const resp = {
+        data: { code: 200, data: { ok: true } },
+        status: 200,
+        config: { method: 'get', url: '/x' }
+      }
+      expect(handlers.responseFulfilled(resp)).toEqual({ code: 200, data: { ok: true } })
+    })
+
+    it('falls back to the generic message when the server omits one', async () => {
+      const resp = {
+        data: { code: 500 },
+        status: 200,
+        config: { method: 'get', url: '/x', metadata: { startTime: Date.now() } }
+      }
+      // Note: the surfaced toast falls back to 请求失败 while the rejected Error
+      // keeps the (undefined) server message — assert both behaviours.
+      await expect(handlers.responseFulfilled(resp)).rejects.toBeInstanceOf(Error)
+      expect(elMessageError).toHaveBeenCalledWith('请求失败')
+    })
+
+    it('maps 429 to the default throttle message when the server omits one', async () => {
+      const error = {
+        response: { status: 429, data: {} },
+        config: { method: 'get', url: '/x' }
+      }
+      await expect(handlers.responseRejected(error)).rejects.toMatchObject({
+        message: '请求过于频繁，请稍后再试'
+      })
+    })
+
+    it('treats a non-200 refresh payload as a failed refresh', async () => {
+      userStore.refreshToken = 'r1'
+      postMock.mockResolvedValueOnce({ data: { code: 401, message: 'expired', data: null } })
+      const error = {
+        response: { status: 401, data: {} },
+        config: { method: 'get', url: '/articles/my', headers: {} }
+      }
+      await expect(handlers.responseRejected(error)).rejects.toBeInstanceOf(Error)
+      expect(userStore.setTokens).not.toHaveBeenCalled()
+      expect(userStore.logout).toHaveBeenCalled()
+      expect(routerPush).toHaveBeenCalledWith({ name: 'Login' })
+    })
+
+    it('bails out of the refresh when the store token disappears mid-flight', async () => {
+      // The 401 guard reads refreshToken once; by the time refreshAccessToken
+      // reads it again the value can be gone (concurrent logout). Cover the
+      // `if (!rt) return null` guard with a one-shot getter.
+      let reads = 0
+      Object.defineProperty(userStore, 'refreshToken', {
+        configurable: true,
+        get() { reads += 1; return reads === 1 ? 'r1' : '' }
+      })
+      const error = {
+        response: { status: 401, data: {} },
+        config: { method: 'get', url: '/articles/my', headers: {} }
+      }
+      await expect(handlers.responseRejected(error)).rejects.toBeInstanceOf(Error)
+      expect(postMock).not.toHaveBeenCalled()
+      expect(userStore.logout).toHaveBeenCalled()
+      delete userStore.refreshToken
+      userStore.refreshToken = ''
+    })
+
+    it('queues concurrent 401s behind a single in-flight refresh', async () => {
+      userStore.refreshToken = 'r1'
+      let releaseRefresh
+      postMock.mockImplementationOnce(() => new Promise((resolve) => { releaseRefresh = resolve }))
+
+      const first = handlers.responseRejected({
+        response: { status: 401, data: {} },
+        config: { method: 'get', url: '/articles/my', headers: {} }
+      })
+      // Second 401 arrives while the first refresh is still pending → queued.
+      const second = handlers.responseRejected({
+        response: { status: 401, data: {} },
+        config: { method: 'get', url: '/articles/2', headers: {} }
+      })
+      expect(postMock).toHaveBeenCalledTimes(1)
+
+      releaseRefresh({ data: { code: 200, data: { access_token: 'new-acc', refresh_token: 'new-ref' } } })
+
+      await expect(first).resolves.toEqual({ replayed: true })
+      await expect(second).resolves.toEqual({ replayed: true })
+      expect(postMock).toHaveBeenCalledTimes(1) // only one refresh for both 401s
+      expect(apiInstance).toHaveBeenCalledTimes(2) // both requests replayed
+    })
+
+    it('rejects queued 401s when the shared refresh fails', async () => {
+      userStore.refreshToken = 'r1'
+      let releaseRefresh
+      postMock.mockImplementationOnce(() => new Promise((resolve) => { releaseRefresh = resolve }))
+
+      const first = handlers.responseRejected({
+        response: { status: 401, data: {} },
+        config: { method: 'get', url: '/articles/my', headers: {} }
+      })
+      const second = handlers.responseRejected({
+        response: { status: 401, data: {} },
+        config: { method: 'get', url: '/articles/2', headers: {} }
+      })
+
+      releaseRefresh({ data: { code: 500, data: null } })
+
+      await expect(first).rejects.toBeInstanceOf(Error)
+      await expect(second).rejects.toMatchObject({ message: '登录已过期，请重新登录' })
+      expect(userStore.logout).toHaveBeenCalled()
+    })
   })
 
   describe('api endpoint wrappers', () => {
@@ -330,6 +448,64 @@ describe('api interceptors', () => {
       expect(apiInstance.get).toHaveBeenCalledWith('/admin/stats')
       expect(apiInstance.get).toHaveBeenCalledWith('/system/health')
       expect(apiInstance.get).toHaveBeenCalledWith('/math-training/summary')
+    })
+
+    it('article list/type helpers hit expected paths', () => {
+      articleApi.getMyList({ page: 2 })
+      articleApi.getHot()
+      articleApi.getTypes()
+      articleApi.create({ headline: 'h' })
+      expect(apiInstance.get).toHaveBeenCalledWith('/articles/my', { params: { page: 2 } })
+      expect(apiInstance.get).toHaveBeenCalledWith('/articles/hot')
+      expect(apiInstance.get).toHaveBeenCalledWith('/articles/types')
+      expect(apiInstance.post).toHaveBeenCalledWith('/articles', { headline: 'h' })
+    })
+
+    it('comment list/create/delete helpers hit expected paths', () => {
+      commentApi.getByArticle(5, { page: 1 })
+      commentApi.create({ content: 'c' })
+      commentApi.delete(6)
+      expect(apiInstance.get).toHaveBeenCalledWith('/comments/article/5', { params: { page: 1 } })
+      expect(apiInstance.post).toHaveBeenCalledWith('/comments', { content: 'c' })
+      expect(apiInstance.delete).toHaveBeenCalledWith('/comments/6')
+    })
+
+    it('favorite list and credit history/status helpers hit expected paths', () => {
+      favoriteApi.getList({ page: 1 })
+      creditApi.getList({ page: 3 })
+      creditApi.checkArticle(4)
+      expect(apiInstance.get).toHaveBeenCalledWith('/favorites', { params: { page: 1 } })
+      expect(apiInstance.get).toHaveBeenCalledWith('/credits/history', { params: { page: 3 } })
+      expect(apiInstance.get).toHaveBeenCalledWith('/credits/check-article/4')
+    })
+
+    it('admin user/article moderation helpers hit expected paths', () => {
+      adminApi.getUsers({ page: 1 })
+      adminApi.toggleHide(7)
+      adminApi.toggleCheck(7)
+      adminApi.toggleRecommend(7)
+      expect(apiInstance.get).toHaveBeenCalledWith('/admin/users', { params: { page: 1 } })
+      expect(apiInstance.post).toHaveBeenCalledWith('/articles/7/hide')
+      expect(apiInstance.post).toHaveBeenCalledWith('/articles/7/check')
+      expect(apiInstance.post).toHaveBeenCalledWith('/articles/7/recommend')
+    })
+
+    it('system monitoring helpers hit expected paths', () => {
+      systemApi.getStatus()
+      systemApi.getDatabase()
+      expect(apiInstance.get).toHaveBeenCalledWith('/system/status')
+      expect(apiInstance.get).toHaveBeenCalledWith('/system/db')
+    })
+
+    it('math training helpers hit expected paths', () => {
+      mathTrainingApi.createRecord({ correct_count: 1 })
+      mathTrainingApi.getRecords({ page: 1 })
+      mathTrainingApi.getRecordDetail(8)
+      mathTrainingApi.getWrongAnswers({ page: 2 })
+      expect(apiInstance.post).toHaveBeenCalledWith('/math-training/records', { correct_count: 1 })
+      expect(apiInstance.get).toHaveBeenCalledWith('/math-training/records', { params: { page: 1 } })
+      expect(apiInstance.get).toHaveBeenCalledWith('/math-training/records/8')
+      expect(apiInstance.get).toHaveBeenCalledWith('/math-training/wrong-answers', { params: { page: 2 } })
     })
 
     it('admin category wrappers hit expected paths', () => {

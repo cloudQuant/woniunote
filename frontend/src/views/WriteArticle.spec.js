@@ -21,14 +21,8 @@ const m = vi.hoisted(() => ({
       headline: 'X', type: 102, content: 'c', thumbnail: 't', credit: 0, drafted: 0
     } }))
   },
-  uploadApi: { uploadImage: vi.fn(() => Promise.resolve({ data: { url: '/img.png' } })) }
-}))
-vi.mock('element-plus', () => ({ ElMessage: m.msg }))
-vi.mock('@/api', () => ({ articleApi: m.articleApi, uploadApi: m.uploadApi }))
-vi.mock('@/stores/article', () => ({
-  useArticleStore: () => ({
-    fetchArticleTypes: vi.fn(() => Promise.resolve({})),
-    articleTypes: { 1: '交易策略', 101: '股票策略', 102: '期货策略', 2: '量化框架' },
+  uploadApi: { uploadImage: vi.fn(() => Promise.resolve({ data: { url: '/img.png' } })) },
+  store: {
     categoryOptions: [
       { value: 1, label: '交易策略', children: [
         { value: 101, label: '股票策略' },
@@ -37,10 +31,20 @@ vi.mock('@/stores/article', () => ({
       { value: 2, label: '量化框架' }
     ],
     getTypePath: vi.fn((type) => (type >= 100 ? [Math.floor(type / 100), type] : [type]))
+  }
+}))
+vi.mock('element-plus', () => ({ ElMessage: m.msg }))
+vi.mock('@/api', () => ({ articleApi: m.articleApi, uploadApi: m.uploadApi }))
+vi.mock('@/stores/article', () => ({
+  useArticleStore: () => ({
+    fetchArticleTypes: vi.fn(() => Promise.resolve({})),
+    articleTypes: { 1: '交易策略', 101: '股票策略', 102: '期货策略', 2: '量化框架' },
+    get categoryOptions() { return m.store.categoryOptions },
+    getTypePath: m.store.getTypePath
   })
 }))
 vi.mock('@/components/editor/UEditor.vue', () => ({
-  default: { name: 'UEditor', render: () => null }
+  default: { name: 'UEditor', emits: ['update:modelValue', 'ready'], render: () => null }
 }))
 
 import WriteArticle from './WriteArticle.vue'
@@ -49,6 +53,13 @@ describe('WriteArticle.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     routeState.params = {}
+    m.store.categoryOptions = [
+      { value: 1, label: '交易策略', children: [
+        { value: 101, label: '股票策略' },
+        { value: 102, label: '期货策略' }
+      ] },
+      { value: 2, label: '量化框架' }
+    ]
   })
 
   it('builds categoryOptions with nested children', () => {
@@ -59,6 +70,73 @@ describe('WriteArticle.vue', () => {
     // Category 2 has no children → children key removed.
     const framework = opts.find((o) => o.value === 2)
     expect(framework.children).toBeUndefined()
+  })
+
+  it('falls back to an empty category list when the store has none', () => {
+    m.store.categoryOptions = null
+    const wrapper = mount(WriteArticle, mountOptions())
+    expect(wrapper.vm.categoryOptions).toEqual([])
+  })
+
+  it('two-way binds the editor fields to the form model', async () => {
+    const wrapper = mount(WriteArticle, mountOptions())
+    wrapper.findComponent({ name: 'el-input' }).vm.$emit('update:modelValue', '标题')
+    wrapper.findComponent({ name: 'UEditor' }).vm.$emit('update:modelValue', '<p>正文</p>')
+    wrapper.findComponent({ name: 'el-cascader' }).vm.$emit('update:modelValue', [1, 101])
+    wrapper.findComponent({ name: 'el-input-number' }).vm.$emit('update:modelValue', 30)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.vm.form.headline).toBe('标题')
+    expect(wrapper.vm.form.content).toBe('<p>正文</p>')
+    expect(wrapper.vm.form.typeArray).toEqual([1, 101])
+    expect(wrapper.vm.form.credit).toBe(30)
+  })
+
+  it('UEditor ready callback is wired through the template', async () => {
+    const wrapper = mount(WriteArticle, mountOptions())
+    expect(() => wrapper.findComponent({ name: 'UEditor' }).vm.$emit('ready')).not.toThrow()
+  })
+
+  it('saveArticle aborts when the form ref is missing', async () => {
+    const wrapper = mount(WriteArticle, mountOptions())
+    wrapper.vm.formRef = null
+    await wrapper.vm.saveDraft()
+    expect(m.articleApi.create).not.toHaveBeenCalled()
+    expect(wrapper.vm.saving).toBe(false)
+  })
+
+  it('uploadThumbnail reports failures without throwing', async () => {
+    m.uploadApi.uploadImage.mockRejectedValueOnce(new Error('upload down'))
+    const wrapper = mount(WriteArticle, mountOptions())
+    await expect(wrapper.vm.uploadThumbnail({ file: new Blob(['x']) })).resolves.toBeUndefined()
+    expect(wrapper.vm.form.thumbnail).toBe('')
+    expect(m.msg.success).not.toHaveBeenCalled()
+  })
+
+  it('saveArticle surfaces API failures and clears the loading flag', async () => {
+    m.articleApi.create.mockRejectedValueOnce(new Error('save down'))
+    const wrapper = mount(WriteArticle, mountOptions())
+    wrapper.vm.form.headline = 'Boom'
+    wrapper.vm.form.type = 101
+    wrapper.vm.form.content = 'body'
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+    await wrapper.vm.publish()
+    expect(m.msg.success).not.toHaveBeenCalledWith('发布成功')
+    expect(wrapper.vm.publishing).toBe(false)
+    expect(push).not.toHaveBeenCalled()
+  })
+
+  it('edit mode falls back to the route id when update omits the article id', async () => {
+    routeState.params = { id: '22' }
+    m.articleApi.update.mockResolvedValueOnce({ data: null })
+    const wrapper = mount(WriteArticle, mountOptions())
+    await flushPromises()
+    wrapper.vm.form.headline = 'Edited'
+    wrapper.vm.form.type = 101
+    wrapper.vm.form.content = 'body'
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+    await wrapper.vm.publish()
+    expect(push).toHaveBeenCalledWith({ name: 'ArticleDetail', params: { id: '22' } })
   })
 
   it('onTypeChange picks the last cascader value or null', () => {

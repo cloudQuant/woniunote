@@ -70,6 +70,14 @@ import MyFavorites from './MyFavorites.vue'
 import MyCredits from './MyCredits.vue'
 import Profile from './Profile.vue'
 
+// el-pagination 桩：声明 v-model 事件，避免 Vue 对未声明事件的告警（同 MathHistory.spec）。
+const paginationStub = {
+  name: 'el-pagination',
+  props: ['currentPage', 'pageSize', 'total', 'layout'],
+  emits: ['update:current-page', 'current-change'],
+  template: '<div class="el-pagination" />'
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   localStorage.clear()
@@ -151,6 +159,61 @@ describe('MyComments.vue', () => {
     await wrapper.vm.deleteComment({ commentid: 5 })
     expect(wrapper.vm.loading).toBe(false)
   })
+
+  it('formats dates, tolerating empty input', async () => {
+    const wrapper = mount(MyComments, mountOptions())
+    await flushPromises()
+    expect(wrapper.vm.formatDate('')).toBe('')
+    expect(wrapper.vm.formatDate('2026-01-01')).not.toBe('')
+  })
+
+  it('renders comments without an article link and deletes via popconfirm', async () => {
+    api.myCommentApi.getMyComments.mockResolvedValueOnce({
+      data: [{
+        commentid: 9,
+        content: 'plain comment',
+        article_id: 0,
+        article_headline: '',
+        createtime: '',
+        agreecount: 0,
+        opposecount: 0
+      }],
+      total: 30
+    })
+    const wrapper = mount(MyComments, mountOptions())
+    await flushPromises()
+
+    expect(wrapper.findAll('.router-link')).toHaveLength(0)
+
+    wrapper.findComponent({ name: 'el-popconfirm' }).vm.$emit('confirm')
+    await flushPromises()
+    expect(api.commentApi.delete).toHaveBeenCalledWith(9)
+    expect(success).toHaveBeenCalledWith('评论已删除')
+  })
+
+  it('paginates comments when the total exceeds the page size', async () => {
+    api.myCommentApi.getMyComments.mockResolvedValueOnce({
+      data: [{ commentid: 5, content: 'hi', article_id: 2, article_headline: 'A' }],
+      total: 45
+    })
+    const wrapper = mount(MyComments, mountOptions({ stubs: { 'el-pagination': paginationStub } }))
+    await flushPromises()
+
+    const pagination = wrapper.findComponent({ name: 'el-pagination' })
+    expect(pagination.exists()).toBe(true)
+    pagination.vm.$emit('update:current-page', 3)
+    pagination.vm.$emit('current-change', 3)
+    await flushPromises()
+    expect(wrapper.vm.currentPage).toBe(3)
+    expect(api.myCommentApi.getMyComments).toHaveBeenCalledWith({ page: 3, page_size: 20 })
+  })
+
+  it('shows the empty state when there are no comments', async () => {
+    api.myCommentApi.getMyComments.mockResolvedValueOnce({ data: [], total: 0 })
+    const wrapper = mount(MyComments, mountOptions())
+    await flushPromises()
+    expect(wrapper.find('.el-empty').exists()).toBe(true)
+  })
 })
 
 describe('MyDrafts.vue', () => {
@@ -170,6 +233,74 @@ describe('MyDrafts.vue', () => {
     expect(push).toHaveBeenCalledWith({ name: 'EditArticle', params: { id: 3 } })
     await wrapper.vm.deleteDraft({ articleid: 3 })
     expect(api.articleApi.delete).toHaveBeenCalledWith(3)
+  })
+
+  it('handles date/type edge cases', async () => {
+    const wrapper = mount(MyDrafts, mountOptions())
+    await flushPromises()
+    expect(wrapper.vm.formatDate('')).toBe('')
+    expect(wrapper.vm.formatDate('2026-01-01')).not.toBe('')
+    expect(wrapper.vm.getTypeName(99)).toBe('未分类')
+  })
+
+  it('navigates to the editor when clicking continue editing', async () => {
+    const wrapper = mount(MyDrafts, mountOptions())
+    await flushPromises()
+    push.mockClear()
+
+    wrapper.findAllComponents({ name: 'el-button' })[0].vm.$emit('click')
+    await flushPromises()
+    expect(push).toHaveBeenCalledWith({ name: 'EditArticle', params: { id: 3 } })
+  })
+
+  it('deletes a draft after popconfirm confirmation', async () => {
+    const wrapper = mount(MyDrafts, mountOptions())
+    await flushPromises()
+
+    wrapper.findComponent({ name: 'el-popconfirm' }).vm.$emit('confirm')
+    await flushPromises()
+    expect(api.articleApi.delete).toHaveBeenCalledWith(3)
+    expect(success).toHaveBeenCalledWith('草稿已删除')
+  })
+
+  it('paginates drafts when the total exceeds the page size', async () => {
+    api.draftApi.getMyDrafts.mockResolvedValueOnce({
+      data: [{ articleid: 3, headline: 'D', type: 2, updatetime: '' }],
+      total: 25
+    })
+    const wrapper = mount(MyDrafts, mountOptions({ stubs: { 'el-pagination': paginationStub } }))
+    await flushPromises()
+
+    const pagination = wrapper.findComponent({ name: 'el-pagination' })
+    expect(pagination.exists()).toBe(true)
+    pagination.vm.$emit('update:current-page', 2)
+    pagination.vm.$emit('current-change', 2)
+    await flushPromises()
+    expect(wrapper.vm.currentPage).toBe(2)
+    expect(api.draftApi.getMyDrafts).toHaveBeenCalledWith({ page: 2, page_size: 10 })
+  })
+
+  it('shows the empty state and routes to the editor', async () => {
+    api.draftApi.getMyDrafts.mockResolvedValueOnce({ data: [], total: 0 })
+    const routerPush = vi.fn()
+    const wrapper = mount(MyDrafts, mountOptions({ mocks: { $router: { push: routerPush } } }))
+    await flushPromises()
+
+    expect(wrapper.find('.el-empty').exists()).toBe(true)
+    wrapper.find('.el-empty').findComponent({ name: 'el-button' }).vm.$emit('click')
+    await flushPromises()
+    expect(routerPush).toHaveBeenCalledWith({ name: 'WriteArticle' })
+  })
+
+  it('handles fetch and delete failures', async () => {
+    api.draftApi.getMyDrafts.mockRejectedValueOnce(new Error('fetch fail'))
+    const wrapper = mount(MyDrafts, mountOptions())
+    await flushPromises()
+    expect(wrapper.vm.loading).toBe(false)
+
+    api.articleApi.delete.mockRejectedValueOnce(new Error('delete fail'))
+    await wrapper.vm.deleteDraft({ articleid: 3 })
+    expect(success).not.toHaveBeenCalled()
   })
 })
 
@@ -228,6 +359,64 @@ describe('MyCredits.vue', () => {
     const wrapper = mount(MyCredits, mountOptions())
     await flushPromises()
     expect(wrapper.vm.summaryLoading).toBe(false)
+  })
+
+  it('formats dates and renders negative/zero credit records', async () => {
+    api.creditApi.getSummary.mockResolvedValueOnce({
+      data: {
+        total_credit: -5,
+        type_stats: { 扣减: { total: -3, count: 2 }, 清零: { total: 0, count: 1 } }
+      }
+    })
+    api.creditApi.getList.mockResolvedValueOnce({
+      data: [
+        { creditid: 2, category: '扣减', credit: -3, createtime: '' },
+        { creditid: 3, category: '清零', credit: 0, createtime: '' }
+      ],
+      total: 40
+    })
+    const wrapper = mount(MyCredits, mountOptions())
+    await flushPromises()
+
+    expect(wrapper.vm.formatDate('')).toBe('')
+    expect(wrapper.vm.formatDate('2026-01-01')).not.toBe('')
+    const items = wrapper.findAll('.credit-item')
+    expect(items).toHaveLength(2)
+    expect(items[0].classes()).toContain('negative')
+    expect(items[0].text()).toContain('-3')
+    expect(items[1].classes()).not.toContain('positive')
+  })
+
+  it('falls back to an empty type_stats object', async () => {
+    api.creditApi.getSummary.mockResolvedValueOnce({ data: { total_credit: 0 } })
+    const wrapper = mount(MyCredits, mountOptions())
+    await flushPromises()
+    expect(wrapper.vm.summary.type_stats).toEqual({})
+  })
+
+  it('paginates credit records and refetches on page change', async () => {
+    api.creditApi.getList.mockResolvedValueOnce({
+      data: [{ creditid: 1, category: '登录', credit: 1, createtime: '2026-01-01' }],
+      total: 40
+    })
+    const wrapper = mount(MyCredits, mountOptions({ stubs: { 'el-pagination': paginationStub } }))
+    await flushPromises()
+
+    const pagination = wrapper.findComponent({ name: 'el-pagination' })
+    expect(pagination.exists()).toBe(true)
+    pagination.vm.$emit('update:current-page', 2)
+    pagination.vm.$emit('current-change', 2)
+    await flushPromises()
+    expect(wrapper.vm.currentPage).toBe(2)
+    expect(api.creditApi.getList).toHaveBeenCalledWith({ page: 2, page_size: 20 })
+  })
+
+  it('handles credit list errors and shows the empty state', async () => {
+    api.creditApi.getList.mockRejectedValueOnce(new Error('list fail'))
+    const wrapper = mount(MyCredits, mountOptions())
+    await flushPromises()
+    expect(wrapper.vm.loading).toBe(false)
+    expect(wrapper.find('.el-empty').exists()).toBe(true)
   })
 })
 
@@ -295,5 +484,69 @@ describe('Profile.vue', () => {
     wrapper.vm.passwordFormRef = { validate: vi.fn(() => Promise.resolve(false)) }
     await wrapper.vm.changePassword()
     expect(api.userApi.updatePassword).not.toHaveBeenCalled()
+  })
+
+  it('binds v-model inputs to the profile and password forms', async () => {
+    const wrapper = mount(Profile, withUser())
+    const inputs = wrapper.findAllComponents({ name: 'el-input' })
+    expect(inputs.length).toBe(6)
+
+    inputs.forEach((input, index) => input.vm.$emit('update:modelValue', `v${index}`))
+    await flushPromises()
+    expect(wrapper.vm.form.nickname).toBe('v1')
+    expect(wrapper.vm.form.qq).toBe('v2')
+    expect(wrapper.vm.passwordForm.old_password).toBe('v3')
+    expect(wrapper.vm.passwordForm.new_password).toBe('v4')
+    expect(wrapper.vm.passwordForm.confirm_password).toBe('v5')
+  })
+
+  it('handles avatar upload failure', async () => {
+    api.uploadApi.uploadAvatar.mockRejectedValueOnce(new Error('upload fail'))
+    const wrapper = mount(Profile, withUser())
+    await wrapper.vm.uploadAvatar({ file: new Blob(['x']) })
+    expect(success).not.toHaveBeenCalled()
+    expect(wrapper.vm.form.avatar).toBe('')
+  })
+
+  it('saveProfile returns early when the form ref is missing', async () => {
+    const wrapper = mount(Profile, withUser())
+    wrapper.vm.formRef = null
+    await wrapper.vm.saveProfile()
+    expect(api.userApi.updateProfile).not.toHaveBeenCalled()
+  })
+
+  it('saveProfile handles API failures', async () => {
+    api.userApi.updateProfile.mockRejectedValueOnce(new Error('save fail'))
+    const wrapper = mount(Profile, withUser())
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+    await wrapper.vm.saveProfile()
+    expect(success).not.toHaveBeenCalled()
+    expect(wrapper.vm.saving).toBe(false)
+  })
+
+  it('changePassword returns early when the form ref is missing', async () => {
+    const wrapper = mount(Profile, withUser())
+    wrapper.vm.passwordFormRef = null
+    await wrapper.vm.changePassword()
+    expect(api.userApi.updatePassword).not.toHaveBeenCalled()
+  })
+
+  it('changePassword handles API failures', async () => {
+    api.userApi.updatePassword.mockRejectedValueOnce(new Error('pw fail'))
+    const wrapper = mount(Profile, withUser())
+    wrapper.vm.passwordFormRef = { validate: vi.fn(() => Promise.resolve(true)), resetFields: vi.fn() }
+    await wrapper.vm.changePassword()
+    expect(success).not.toHaveBeenCalled()
+    expect(wrapper.vm.changingPassword).toBe(false)
+  })
+
+  it('falls back to empty profile fields when user values are missing', async () => {
+    localStorage.setItem('user', JSON.stringify({ nickname: '', avatar: '', qq: '' }))
+    localStorage.setItem('token', 'tok')
+    const wrapper = mount(Profile, withUser())
+    await flushPromises()
+    expect(wrapper.vm.form.nickname).toBe('')
+    expect(wrapper.vm.form.avatar).toBe('')
+    expect(wrapper.vm.form.qq).toBe('')
   })
 })

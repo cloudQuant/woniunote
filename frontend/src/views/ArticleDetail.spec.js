@@ -41,6 +41,7 @@ vi.mock('@/api', () => ({ articleApi: m.articleApi, commentApi: m.commentApi, fa
 vi.mock('@/components/sidebar/Sidebar.vue', () => ({ default: { name: 'Sidebar', render: () => null } }))
 vi.mock('@/components/viewer/PdfViewer.vue', () => ({ default: { name: 'PdfViewer', render: () => null } }))
 
+import ArticleComments from '@/components/article/ArticleComments.vue'
 import ArticleDetail from './ArticleDetail.vue'
 
 // Make the user store reactive so component computeds (canEdit) re-evaluate.
@@ -301,6 +302,86 @@ describe('ArticleDetail.vue', () => {
     expect(wrapper.find('.el-skeleton').exists()).toBe(true)
     // The real article container is not rendered yet (no abrupt content).
     expect(wrapper.find('.article-container').exists()).toBe(false)
+    // typeName guards against a null article during the loading window.
+    expect(wrapper.vm.typeName).toBe('')
+  })
+
+  it('renders the author avatar/nickname when present', async () => {
+    m.articleApi.getDetail.mockResolvedValueOnce({
+      data: {
+        articleid: 5,
+        headline: '有作者',
+        type: 101,
+        userid: 1,
+        content: '<p>b</p>',
+        author: { avatar: '/a.png', nickname: '张三' }
+      }
+    })
+    const wrapper = mount(ArticleDetail, mountOptions())
+    await flushPromises()
+    const avatar = wrapper.get('.author .el-avatar')
+    expect(avatar.attributes('src')).toBe('/a.png')
+    expect(wrapper.get('.author').text()).toContain('张')
+    expect(wrapper.get('.author').text()).toContain('张三')
+  })
+
+  it('renders anonymous author fallbacks when the article has no author', async () => {
+    m.articleApi.getDetail.mockResolvedValueOnce({
+      data: { articleid: 5, headline: '无作者', type: 101, userid: 1, content: '<p>b</p>', author: null }
+    })
+    const wrapper = mount(ArticleDetail, mountOptions())
+    await flushPromises()
+    const author = wrapper.get('.author')
+    expect(author.text()).toContain('U') // avatar initial fallback
+    expect(author.text()).toContain('匿名')
+  })
+
+  it('canEdit is false for other users and true for editors', async () => {
+    m.userReactive.isLoggedIn = true
+    m.userReactive.user = { userid: 999 }
+    const wrapper = mount(ArticleDetail, mountOptions())
+    await flushPromises()
+    expect(wrapper.vm.canEdit).toBe(false)
+
+    // user cleared while still logged in → optional chain must not throw
+    m.userReactive.user = null
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.canEdit).toBe(false)
+
+    m.userReactive.isEditor = true
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.canEdit).toBe(true)
+  })
+
+  it('wires the ArticleComments v-models back into the page state', async () => {
+    const wrapper = mount(ArticleDetail, mountOptions())
+    await flushPromises()
+    const comments = wrapper.findComponent(ArticleComments)
+    expect(comments.exists()).toBe(true)
+    comments.vm.$emit('update:newComment', '你好')
+    comments.vm.$emit('update:replyContent', '收到')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.newComment).toBe('你好')
+    expect(wrapper.vm.replyContent).toBe('收到')
+  })
+
+  it('toggleFavorite swallows API failures and resets the loading flag', async () => {
+    m.userReactive.isLoggedIn = true
+    m.favoriteApi.add.mockRejectedValueOnce(new Error('fav down'))
+    const wrapper = mount(ArticleDetail, mountOptions())
+    await flushPromises()
+    await wrapper.vm.toggleFavorite()
+    expect(wrapper.vm.isFavorited).toBe(false)
+    expect(wrapper.vm.favoriteLoading).toBe(false)
+    expect(m.msg.success).not.toHaveBeenCalledWith('收藏成功')
+  })
+
+  it('restores the default document title on unmount', async () => {
+    const wrapper = mount(ArticleDetail, mountOptions())
+    await flushPromises()
+    expect(document.title).toContain('Hello')
+    wrapper.unmount()
+    expect(document.title).toBe('cloudQuant')
   })
 
   it('replaces skeleton with article content once loading completes', async () => {
