@@ -10,6 +10,10 @@ option(USE_SYSTEM_LIBS "使用系统安装的库而不是 vcpkg" OFF)
 # 选项: 启用 AddressSanitizer + UBSan（仅用于本地/CI 测试构建）
 option(ENABLE_SANITIZERS "Enable Address/UB sanitizers for test builds" OFF)
 
+# 选项: 启用代码覆盖率插桩（GCC/Clang 通用的 --coverage）
+# 用法见 scripts/coverage.sh；默认关闭，不影响常规构建。
+option(ENABLE_COVERAGE "Enable code coverage instrumentation (gcov/lcov)" OFF)
+
 # 编译告警门禁: 在非 MSVC 上开启常用告警，暴露潜在质量问题
 if(NOT MSVC)
     add_compile_options(-Wall -Wextra -Wpedantic)
@@ -20,6 +24,18 @@ if(ENABLE_SANITIZERS AND NOT MSVC)
     message(STATUS "Sanitizers enabled: address, undefined")
     add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer -g)
     add_link_options(-fsanitize=address,undefined)
+endif()
+
+# 覆盖率配置（GCC/Clang 通用；macOS 的 Apple clang 同样支持 --coverage）
+# -O0 -g 保证行号信息准确，避免优化导致的分支/行合并。
+if(ENABLE_COVERAGE)
+    if(MSVC)
+        message(WARNING "ENABLE_COVERAGE is not supported with MSVC; ignoring")
+    else()
+        message(STATUS "Coverage enabled: --coverage -O0 -g")
+        add_compile_options(--coverage -O0 -g)
+        add_link_options(--coverage)
+    endif()
 endif()
 
 # MSVC specific: Use UTF-8 for source and execution charset

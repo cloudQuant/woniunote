@@ -26,6 +26,7 @@ set(TEST_MODULES
     test_response
     test_article_category
     test_config
+    test_services
 )
 
 foreach(module IN LISTS TEST_MODULES)

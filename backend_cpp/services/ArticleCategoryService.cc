@@ -4,6 +4,7 @@
  */
 
 #include "ArticleCategoryService.h"
+#include "ArticleServiceLogic.h"
 #include "core/database.h"
 #include "core/logger.h"
 #include "core/response.h"
@@ -21,18 +22,11 @@ using namespace drogon;
 namespace woniunote {
 namespace services {
 
-namespace {
+// Pure helpers (name trimming, parent parsing, SQL/JSON assembly) live in
+// ArticleServiceLogic.h so they can be unit-tested without a live DbClient.
+using namespace logic;
 
-std::string trimCopy(const std::string& value) {
-    auto begin = std::find_if_not(value.begin(), value.end(), [](unsigned char ch) {
-        return std::isspace(ch);
-    });
-    auto end = std::find_if_not(value.rbegin(), value.rend(), [](unsigned char ch) {
-        return std::isspace(ch);
-    }).base();
-    if (begin >= end) return "";
-    return std::string(begin, end);
-}
+namespace {
 
 models::ArticleCategory articleCategoryFromRow(const orm::Row& row) {
     models::ArticleCategory category;
@@ -51,35 +45,6 @@ std::vector<models::ArticleCategory> articleCategoriesFromResult(const orm::Resu
     std::transform(result.begin(), result.end(), std::back_inserter(categories),
                    [](const orm::Row& row) { return articleCategoryFromRow(row); });
     return categories;
-}
-
-Json::Value articleCategoryResponseData(const std::vector<models::ArticleCategory>& categories,
-                                        bool visibleOnly,
-                                        bool includeArticleCount) {
-    Json::Value data;
-    data["types"] = models::articleCategoryTypeMap(categories, visibleOnly);
-    data["flat"] = models::articleCategoryFlatJson(categories, visibleOnly, includeArticleCount);
-    data["tree"] = models::articleCategoryTreeJson(categories, visibleOnly, includeArticleCount);
-    return data;
-}
-
-const models::ArticleCategory* findCategory(const std::vector<models::ArticleCategory>& categories,
-                                            int categoryId) {
-    auto found = std::find_if(categories.begin(), categories.end(), [categoryId](const auto& category) {
-        return category.id == categoryId;
-    });
-    return found == categories.end() ? nullptr : &(*found);
-}
-
-std::optional<int> parseOptionalParent(const Json::Value& json,
-                                       const std::optional<int>& fallback) {
-    if (!json.isMember("parent_id")) {
-        return fallback;
-    }
-    if (json["parent_id"].isNull() || json["parent_id"].asInt() <= 0) {
-        return std::nullopt;
-    }
-    return json["parent_id"].asInt();
 }
 
 void checkDuplicateSibling(const DbClientPtr& dbClient,
@@ -155,49 +120,6 @@ const std::string ARTICLE_CATEGORY_CREATE_SQL =
     "REFERENCES article_category (id) ON DELETE SET NULL"
     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci "
     "COMMENT='Article category/menu tree'";
-
-std::string sqlStringLiteral(const std::string& value) {
-    std::string escaped;
-    escaped.reserve(value.size() + 2);
-    escaped.push_back('\'');
-    for (char ch : value) {
-        if (ch == '\'' || ch == '\\') {
-            escaped.push_back(ch);
-        }
-        escaped.push_back(ch);
-    }
-    escaped.push_back('\'');
-    return escaped;
-}
-
-std::string legacyCategoryInsertSql(bool rootOnly) {
-    std::ostringstream sql;
-    sql << "INSERT IGNORE INTO article_category "
-        << "(id, parent_id, name, sort_order, visible) VALUES ";
-
-    bool first = true;
-    for (const auto& category : models::legacyArticleCategories()) {
-        const bool isRoot = !category.parentId.has_value();
-        if (isRoot != rootOnly) {
-            continue;
-        }
-        if (!first) {
-            sql << ",";
-        }
-        first = false;
-        sql << "(" << category.id << ",";
-        if (category.parentId.has_value()) {
-            sql << *category.parentId;
-        } else {
-            sql << "NULL";
-        }
-        sql << "," << sqlStringLiteral(category.name)
-            << "," << category.sortOrder
-            << "," << (category.visible ? 1 : 0)
-            << ")";
-    }
-    return sql.str();
-}
 
 void bootstrapArticleCategoryTable(const DbClientPtr& dbClient,
                                    std::function<void()> onDone,

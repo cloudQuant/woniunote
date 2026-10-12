@@ -179,6 +179,7 @@ frontend/.playwright/
 
 # C++ build artifacts
 backend_cpp/build/
+backend_cpp/build-coverage/
 backend_cpp/cmake-build-*/
 backend_cpp/CMakeFiles/
 backend_cpp/CMakeCache.txt

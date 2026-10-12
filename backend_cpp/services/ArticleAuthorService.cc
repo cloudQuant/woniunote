@@ -4,6 +4,7 @@
  */
 
 #include "ArticleAuthorService.h"
+#include "ArticleServiceLogic.h"
 #include "core/database.h"
 #include "core/logger.h"
 #include "core/response.h"
@@ -17,16 +18,10 @@ using namespace drogon;
 namespace woniunote {
 namespace services {
 
-namespace {
-
-bool legacyCategoryExists(int type) {
-    const auto categories = models::legacyArticleCategories();
-    return std::any_of(categories.begin(), categories.end(), [type](const auto& category) {
-        return category.id == type && category.visible;
-    });
-}
-
-} // namespace
+// Pure helpers (legacy-category validation, pagination arithmetic, SQL
+// assembly) live in ArticleServiceLogic.h so they can be unit-tested without a
+// live DbClient.
+using namespace logic;
 
 void ArticleAuthorService::listMyArticles(const std::string& userId,
                                           int page,
@@ -34,23 +29,15 @@ void ArticleAuthorService::listMyArticles(const std::string& userId,
                                           int type,
                                           ArticleAuthorService::ResponseCallback callback)
 {
-    int offset = (page - 1) * pageSize;
+    int offset = pageOffset(page, pageSize);
     int64_t ownerId = std::stoll(userId);
 
     auto dbClient = Database::getClient();
 
-    std::string countSql = "SELECT COUNT(*) AS total FROM article a WHERE a.userid = ?";
-    std::string dataSql = "SELECT a.*, u.nickname FROM article a LEFT JOIN users u ON a.userid = u.userid "
-                          "WHERE a.userid = ?";
-    if (type > 0) {
-        countSql += " AND a.type = ?";
-        dataSql += " AND a.type = ?";
-    }
-    dataSql += " ORDER BY a.createtime DESC LIMIT " + std::to_string(pageSize) +
-               " OFFSET " + std::to_string(offset);
+    std::string countSql = buildMyArticlesCountSql(type);
+    std::string dataSql = buildMyArticlesDataSql(type, pageSize, offset);
 
     auto onData = [callback, page, pageSize](const orm::Result& result, int total) {
-        int totalPages = (total + pageSize - 1) / pageSize;
         Json::Value ret;
         ret["code"] = 200;
         ret["message"] = "success";
@@ -58,7 +45,7 @@ void ArticleAuthorService::listMyArticles(const std::string& userId,
         ret["total"] = total;
         ret["page"] = page;
         ret["page_size"] = pageSize;
-        ret["total_pages"] = totalPages;
+        ret["total_pages"] = totalPages(total, pageSize);
 
         Json::Value articles(Json::arrayValue);
         for (const auto& row : result) {
