@@ -53,6 +53,11 @@ const emit = defineEmits([
 ])
 
 let editor = null
+let contentSyncTimer = null
+let editorBodyEl = null
+let onEditorBodyInput = null
+let onEditorBodyBlur = null
+let readyPollTimer = null
 const isReady = ref(false)
 const themeStore = useThemeStore()
 
@@ -112,7 +117,12 @@ const defaultConfig = {
   autoHeightEnabled: true,
   autoFloatEnabled: false,
   zIndex: 1000,
-  UEDITOR_HOME_URL: '/ueditor/'
+  UEDITOR_HOME_URL: '/ueditor/',
+  // simpleupload 插件在 ready 阶段读取该配置（getOpt('imageAllowFiles').join(',')）。
+  // 本仓库的 UEditor 构建已把该默认值裁剪掉，缺省会抛未捕获 TypeError 并
+  // 中断整个 ready 事件分发，导致编辑器初始化回调静默失效（内容同步/主题
+  // 注入全部失效）。这里显式补齐。
+  imageAllowFiles: ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp']
 }
 
 /**
@@ -160,9 +170,17 @@ async function initEditor() {
     
     // 创建编辑器实例
     editor = window.UE.getEditor(props.editorId, config)
-    
-    // 编辑器就绪
-    editor.ready(() => {
+
+    // 编辑器就绪初始化（只执行一次）。
+    // 已知缺陷：UEditor 的 ready 事件分发（fireEvent）没有异常隔离——
+    // 任一插件监听器抛异常都会中断整个分发，本回调（先注册、逆序遍历时
+    // 最后执行）将永远不会被调用。因此除在 defaultConfig 补齐
+    // imageAllowFiles 修复已知异常源外，这里再用 isReady 轮询兜底，
+    // 防御其他插件异常再次让初始化静默失效。
+    let editorInitialized = false
+    const initEditorOnce = () => {
+      if (editorInitialized || !editor || !editor.isReady) return
+      editorInitialized = true
       isReady.value = true
       
       // 设置初始内容
@@ -173,18 +191,66 @@ async function initEditor() {
       // 注入当前主题到编辑区 iframe
       applyEditorTheme()
       
-      // 监听内容变化
-      editor.addListener('contentChange', () => {
-        const content = editor.getContent()
-        emit('update:modelValue', content)
-        // 某些操作（切换源码模式/setContent）可能重建 iframe 文档，
-        // 导致注入的样式丢失；若丢失则补回，保证暗色主题持续生效。
+      // 监听内容变化。
+      // 关键事实（浏览器实测）：此 UEditor 构建只在 setContent/execCommand/
+      // 插件操作时触发 contentchange —— 导入对话框插入会触发，普通打字不触发
+      // （0 次），且 UEditor 的事件代理列表不含原生 input 事件。仅监听
+      // contentChange 会导致手动输入的内容永远同步不进 v-model，保存时静默
+      // 丢失。因此：
+      //   - contentChange：程序性变更（导入/工具栏），立即同步；
+      //   - 原生 input：打字/粘贴等所有用户编辑，300ms 防抖后同步；
+      //   - blur：冲刷防抖队列，保证点击"发布"前的最后一次编辑已同步。
+      function refreshEditorThemeIfNeeded() {
         try {
+          // 某些操作（切换源码模式/setContent）可能重建 iframe 文档，
+          // 导致注入的样式与原生监听丢失；若检测到新 body 则补回。
+          const body = editor.document && editor.document.body
+          if (body && body !== editorBodyEl) {
+            bindEditorBodyListeners(body)
+          }
           if (editor.document && !editor.document.getElementById('wn-editor-theme')) {
             applyEditorTheme()
           }
         } catch { /* 忽略 */ }
+      }
+      function syncFromEditor() {
+        emit('update:modelValue', editor.getContent())
+      }
+      function flushContentSync() {
+        if (contentSyncTimer) {
+          clearTimeout(contentSyncTimer)
+          contentSyncTimer = null
+        }
+        syncFromEditor()
+      }
+      function scheduleContentSync() {
+        if (contentSyncTimer) clearTimeout(contentSyncTimer)
+        contentSyncTimer = setTimeout(() => {
+          contentSyncTimer = null
+          syncFromEditor()
+        }, 300)
+      }
+      function bindEditorBodyListeners(body) {
+        if (editorBodyEl) {
+          editorBodyEl.removeEventListener('input', onEditorBodyInput)
+          editorBodyEl.removeEventListener('blur', onEditorBodyBlur)
+        }
+        editorBodyEl = body
+        onEditorBodyInput = () => {
+          refreshEditorThemeIfNeeded()
+          scheduleContentSync()
+        }
+        onEditorBodyBlur = () => flushContentSync()
+        body.addEventListener('input', onEditorBodyInput)
+        body.addEventListener('blur', onEditorBodyBlur)
+      }
+      editor.addListener('contentChange', () => {
+        refreshEditorThemeIfNeeded()
+        flushContentSync()
       })
+      if (editor.document && editor.document.body) {
+        bindEditorBodyListeners(editor.document.body)
+      }
       
       // 监听UEditor的文件上传成功事件
       // UEditor上传文件成功后，如果后端返回了html字段，会使用该HTML插入编辑器
@@ -213,8 +279,17 @@ async function initEditor() {
       })
       
       emit('ready', editor)
-    })
-    
+    }
+    editor.ready(initEditorOnce)
+    // 兜底轮询：ready 事件被插件异常中断时也能完成初始化。
+    readyPollTimer = setInterval(() => {
+      initEditorOnce()
+      if (editorInitialized && readyPollTimer) {
+        clearInterval(readyPollTimer)
+        readyPollTimer = null
+      }
+    }, 100)
+
   } catch (error) {
     console.error('Failed to initialize UEditor:', error)
   }
@@ -242,6 +317,19 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (readyPollTimer) {
+    clearInterval(readyPollTimer)
+    readyPollTimer = null
+  }
+  if (contentSyncTimer) {
+    clearTimeout(contentSyncTimer)
+    contentSyncTimer = null
+  }
+  if (editorBodyEl) {
+    if (onEditorBodyInput) editorBodyEl.removeEventListener('input', onEditorBodyInput)
+    if (onEditorBodyBlur) editorBodyEl.removeEventListener('blur', onEditorBodyBlur)
+    editorBodyEl = null
+  }
   if (editor) {
     try {
       editor.destroy()
