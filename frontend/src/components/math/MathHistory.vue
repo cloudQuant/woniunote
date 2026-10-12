@@ -42,8 +42,8 @@
       </el-table-column>
       <el-table-column prop="accuracy" label="正确率" width="100">
         <template #default="{ row }">
-          <span :class="row.accuracy >= 80 ? 'text-success' : row.accuracy >= 60 ? 'text-warning' : 'text-danger'">
-            {{ row.accuracy.toFixed(1) }}%
+          <span :class="accuracyClass(row.accuracy)">
+            {{ formatAccuracy(row.accuracy) }}%
           </span>
         </template>
       </el-table-column>
@@ -124,6 +124,30 @@ defineProps({
 })
 
 const emit = defineEmits(['refresh', 'update:historyPage', 'page-change'])
+
+/**
+ * 格式化正确率。后端契约恒为数值（DDL NOT NULL），此处仅作防御：
+ * 缺失/非数值输入回退 '0.0'，避免 toFixed 抛错导致整表渲染失败。
+ * @param {*} value - accuracy 原始值
+ * @returns {string} 一位小数文本
+ */
+function formatAccuracy(value) {
+  const n = Number(value)
+  return Number.isFinite(n) ? n.toFixed(1) : '0.0'
+}
+
+/**
+ * 正确率颜色分级；非法输入按最低档处理。
+ * @param {*} value - accuracy 原始值
+ * @returns {string} 样式类名
+ */
+function accuracyClass(value) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return 'text-danger'
+  if (n >= 80) return 'text-success'
+  if (n >= 60) return 'text-warning'
+  return 'text-danger'
+}
 </script>
 
 <style scoped>

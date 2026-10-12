@@ -41,6 +41,7 @@
         </div>
 
         <el-table
+          ref="tableRef"
           :data="articles"
           v-loading="loading"
           stripe
@@ -137,6 +138,7 @@ const articleStore = useArticleStore()
 const activeTab = ref(props.initialTab)
 const articles = ref([])
 const selectedArticles = ref([])
+const tableRef = ref(null)
 const loading = ref(false)
 const refreshingTypes = ref(false)
 const batchChanging = ref(false)
@@ -275,14 +277,24 @@ async function batchChangeType() {
     const updateArticleType = props.articleScope === 'admin'
       ? (article) => adminApi.updateArticleType(article.articleid, nextType)
       : (article) => articleApi.updateType(article.articleid, nextType)
-    await Promise.all(
+    // allSettled：部分失败时不再误报"全部失败"，并给出准确的成败计数
+    const results = await Promise.allSettled(
       selectedArticles.value.map(updateArticleType)
     )
-    ElMessage.success(`已更新 ${selectedArticles.value.length} 篇文章`)
+    const succeeded = results.filter((r) => r.status === 'fulfilled').length
+    const failed = results.length - succeeded
+    if (failed === 0) {
+      ElMessage.success(`已更新 ${succeeded} 篇文章`)
+    } else if (succeeded > 0) {
+      ElMessage.warning(`已更新 ${succeeded} 篇，${failed} 篇失败`)
+    } else {
+      ElMessage.error('批量修改失败')
+    }
     batchTargetType.value = null
+    // 无论成败都刷新：以服务端状态为准，避免部分成功时前端展示与后端不一致
     await fetchArticles()
-  } catch (error) {
-    ElMessage.error(error.message || '批量修改失败')
+    // 数据已刷新，清空选中态避免对旧行的残留选择
+    tableRef.value?.clearSelection?.()
   } finally {
     batchChanging.value = false
   }

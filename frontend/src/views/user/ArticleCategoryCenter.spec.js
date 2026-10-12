@@ -7,13 +7,15 @@ silenceExpectedConsole(['error'])
 
 const messages = vi.hoisted(() => ({
   success: vi.fn(),
-  error: vi.fn()
+  error: vi.fn(),
+  warning: vi.fn()
 }))
 
 vi.mock('element-plus', () => ({
   ElMessage: {
     success: (...args) => messages.success(...args),
-    error: (...args) => messages.error(...args)
+    error: (...args) => messages.error(...args),
+    warning: (...args) => messages.warning(...args)
   }
 }))
 
@@ -306,6 +308,25 @@ describe('ArticleCategoryCenter.vue', () => {
     await wrapper.vm.batchChangeType()
 
     expect(messages.error).toHaveBeenCalledWith('批量修改失败')
+    expect(wrapper.vm.batchChanging).toBe(false)
+  })
+
+  it('refreshes the list and reports partial success when only some updates fail', async () => {
+    api.articleApi.updateType
+      .mockResolvedValueOnce({ data: {} })
+      .mockRejectedValueOnce(new Error('boom'))
+    const wrapper = mount(ArticleCategoryCenter, mountOptions())
+    await flushPromises()
+
+    api.articleApi.getMyList.mockClear()
+    wrapper.vm.handleSelectionChange([wrapper.vm.articles[0], wrapper.vm.articles[1]])
+    wrapper.vm.batchTargetType = 101
+    await wrapper.vm.batchChangeType()
+
+    // 部分成功：给出准确计数而非误报全部失败
+    expect(messages.warning).toHaveBeenCalledWith('已更新 1 篇，1 篇失败')
+    // 部分失败也必须刷新列表，保持前端展示与后端状态一致
+    expect(api.articleApi.getMyList).toHaveBeenCalledWith({ page: 1, page_size: 10 })
     expect(wrapper.vm.batchChanging).toBe(false)
   })
 })

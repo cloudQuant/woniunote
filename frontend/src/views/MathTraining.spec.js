@@ -5,7 +5,7 @@ import { installLocalStorage, mountOptions } from '@/test/harness'
 installLocalStorage()
 
 const m = vi.hoisted(() => ({
-  msg: { success: vi.fn(), error: vi.fn() },
+  msg: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
   api: {
     createRecord: vi.fn(() => Promise.resolve({})),
     getRecords: vi.fn(() => Promise.resolve({ data: [{ id: 1, difficulty: 2 }], total: 1 })),
@@ -73,6 +73,13 @@ describe('MathTraining.vue — pure helpers', () => {
   it('formatTime renders a localized string and tolerates bad input', () => {
     const w = mountMT()
     expect(w.vm.formatTime('2026-01-01T00:00:00Z').length).toBeGreaterThan(0)
+    // 缺失输入回退占位符——null 尤其关键：new Date(null) 是合法 epoch 0，
+    // 不拦截会渲染成 1970 年
+    expect(w.vm.formatTime(undefined)).toBe('-')
+    expect(w.vm.formatTime(null)).toBe('-')
+    expect(w.vm.formatTime('')).toBe('-')
+    // 非法字符串回退原值，而不是 "Invalid Date"
+    expect(w.vm.formatTime('not-a-date')).toBe('not-a-date')
   })
 
   it('difficultyTagType maps difficulty to tag color', () => {

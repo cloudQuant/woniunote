@@ -10,6 +10,17 @@ import PdfViewer from '@/components/viewer/PdfViewer.vue'
 import { logInfo } from '@/utils/logger'
 
 /**
+ * 判断链接是否指向富文本通道上传的 PDF（/api/uploads/*.pdf）。
+ * 剥离查询串与锚点后再校验扩展名，兼容 doc.pdf?v=2、doc.pdf#page=2。
+ * @param {string} href - 链接地址
+ * @returns {boolean} 是否 PDF 链接
+ */
+function isUploadPdfHref(href) {
+  const path = href.split('?')[0].split('#')[0]
+  return path.includes('/api/uploads/') && path.toLowerCase().endsWith('.pdf')
+}
+
+/**
  * 文章正文渲染 composable
  * @param {import('vue').Ref<HTMLElement|null>} bodyRef - 正文容器 ref
  * @returns {{renderMathFormulas: Function, replacePdfPlaceholders: Function, cleanupPdfViewers: Function}}
@@ -100,11 +111,13 @@ export function useArticleRendering(bodyRef) {
       }
     })
 
-    // 同时检查是否有PDF链接需要转换为查看器
-    const pdfLinks = bodyRef.value.querySelectorAll('a[href$=".pdf"]')
+    // 同时检查是否有PDF链接需要转换为查看器。
+    // 选择器放宽为 /api/uploads/ 前缀 + JS 内校验扩展名——CSS 的
+    // href$=".pdf" 无法匹配带查询串/锚点的链接（如 doc.pdf?v=2）。
+    const pdfLinks = bodyRef.value.querySelectorAll('a[href*="/api/uploads/"]')
     pdfLinks.forEach((link) => {
       const href = link.getAttribute('href')
-      if (href && href.includes('/api/uploads/')) {
+      if (href && isUploadPdfHref(href)) {
         // 检查是否已经有占位符，避免重复
         const existing = link.closest('.pdf-viewer-wrapper')
         if (!existing) {

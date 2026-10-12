@@ -124,6 +124,19 @@ describe('MathHistory.vue', () => {
     expect(third[5].text()).toBe('2m5s')
   })
 
+  it('正确率缺失或非数值时不崩溃（防御性渲染）', () => {
+    const rows = [
+      { created_at: '2026-01-01T10:00:00Z', difficulty: 1, total_questions: 20, correct_count: 0, wrong_count: 0, duration_seconds: 0 },
+      { created_at: '2026-01-02T10:00:00Z', difficulty: 1, total_questions: 20, correct_count: 0, wrong_count: 0, accuracy: 'n/a', duration_seconds: 0 }
+    ]
+    const wrapper = mountHistory({ history: rows, historyTotal: 2, pageSize: 10 })
+    const rendered = wrapper.findAll('.el-table__row')
+    expect(rendered).toHaveLength(2)
+    expect(rendered[0].findAll('.cell')[4].text()).toBe('0.0%')
+    expect(rendered[1].findAll('.cell')[4].text()).toBe('0.0%')
+    expect(rendered[0].findAll('.cell')[4].find('span').classes()).toContain('text-danger')
+  })
+
   it('隔行样式通过 tableRowClassName 生效', () => {
     const wrapper = mountHistory({ history: ROWS, historyTotal: 3 })
     const table = wrapper.findComponent({ name: 'el-table' })

@@ -181,6 +181,31 @@ describe('useArticleRendering —— PDF 占位符替换', () => {
     expect(el.querySelector('.pdf-viewer-wrapper')).not.toBeNull()
   })
 
+  it('带查询串或锚点的 /api/uploads/ PDF 链接同样被转换', () => {
+    const { bodyRef, api } = setup()
+    const el = makeBody(
+      '<p><a href="/api/uploads/doc.pdf?v=2">下载A</a><a href="/api/uploads/other.pdf#page=2">下载B</a></p>'
+    )
+    bodyRef.value = el
+
+    api.replacePdfPlaceholders()
+
+    expect(m.apps).toHaveLength(2)
+    expect(el.querySelectorAll('a')).toHaveLength(0)
+    expect(el.querySelectorAll('.pdf-viewer-wrapper')).toHaveLength(2)
+  })
+
+  it('非 .pdf 结尾的 /api/uploads/ 链接保持原样', () => {
+    const { bodyRef, api } = setup()
+    const el = makeBody('<p><a href="/api/uploads/notes.txt?v=1">文本</a></p>')
+    bodyRef.value = el
+
+    api.replacePdfPlaceholders()
+
+    expect(m.apps).toHaveLength(0)
+    expect(el.querySelector('a')).not.toBeNull()
+  })
+
   it('非 /api/uploads/ 的 .pdf 链接保持原样', () => {
     const { bodyRef, api } = setup()
     const el = makeBody('<p><a href="/static/files/doc.pdf">下载</a></p>')
