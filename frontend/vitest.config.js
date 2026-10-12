@@ -33,11 +33,13 @@ export default defineConfig({
       reporter: ['text', 'text-summary', 'html', 'json-summary'],
       reportsDirectory: './coverage',
       // Lock in the coverage gains; CI fails if coverage regresses below these.
+      // Iteration 17 raised all four metrics to >=95% (actual: statements
+      // 99.21 / branches 95.98 / functions 97.28 / lines 99.21).
       thresholds: {
-        statements: 90,
-        branches: 85,
-        functions: 60,
-        lines: 90
+        statements: 95,
+        branches: 95,
+        functions: 95,
+        lines: 95
       }
     }
   }
