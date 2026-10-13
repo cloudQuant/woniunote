@@ -13,6 +13,7 @@
 #include "models/User.h"
 #include <drogon/HttpResponse.h>
 #include <drogon/drogon.h>
+#include <algorithm>
 #include <atomic>
 #include <memory>
 #include <optional>
@@ -28,8 +29,10 @@ namespace {
 std::optional<int64_t> parseUserId(const std::string& s)
 {
     if (s.empty()) return std::nullopt;
-    for (char c : s) {
-        if (!std::isdigit(static_cast<unsigned char>(c))) return std::nullopt;
+    if (std::any_of(s.begin(), s.end(), [](unsigned char c) {
+            return !std::isdigit(c);
+        })) {
+        return std::nullopt;
     }
     try {
         return std::stoll(s);

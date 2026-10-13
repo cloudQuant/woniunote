@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <cctype>
+#include <iterator>
 
 namespace woniunote {
 
@@ -98,9 +99,9 @@ void Config::init()
 
     if (customConfig.isMember("cors_origins")) {
         const auto& origins = customConfig["cors_origins"];
-        for (const auto& origin : origins) {
-            corsOrigins_.push_back(origin.asString());
-        }
+        std::transform(origins.begin(), origins.end(),
+                       std::back_inserter(corsOrigins_),
+                       [](const Json::Value& origin) { return origin.asString(); });
     }
 
     if (customConfig.isMember("rate_limit_per_minute")) {

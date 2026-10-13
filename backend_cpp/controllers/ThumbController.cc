@@ -8,6 +8,7 @@
 
 #include <drogon/HttpResponse.h>
 
+#include <algorithm>
 #include <filesystem>
 #include <vector>
 
@@ -50,13 +51,15 @@ static fs::path getThumbRoot()
         
         Logger::info("[Thumb] Searching for thumb root, cwd: " + cwd.string());
         
-        for (const auto& candidate : candidates) {
-            if (fs::exists(candidate) && fs::is_directory(candidate)) {
-                cachedPath = fs::canonical(candidate);
-                initialized = true;
-                Logger::info("[Thumb] Root directory found", {{"path", cachedPath.string()}});
-                return cachedPath;
-            }
+        auto found = std::find_if(candidates.begin(), candidates.end(),
+                                  [](const fs::path& candidate) {
+                                      return fs::exists(candidate) && fs::is_directory(candidate);
+                                  });
+        if (found != candidates.end()) {
+            cachedPath = fs::canonical(*found);
+            initialized = true;
+            Logger::info("[Thumb] Root directory found", {{"path", cachedPath.string()}});
+            return cachedPath;
         }
 
         // 如果都不存在，返回第一种路径

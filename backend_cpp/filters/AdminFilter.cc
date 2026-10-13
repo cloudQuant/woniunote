@@ -8,6 +8,7 @@
 #include "core/database.h"
 #include "core/logger.h"
 #include <drogon/HttpResponse.h>
+#include <algorithm>
 #include <cctype>
 
 using namespace drogon;
@@ -60,10 +61,10 @@ void AdminFilter::doFilter(const HttpRequestPtr& req,
     std::string userId = payload->sub;
 
     // Defensive parse: a validly signed token could carry a non-numeric sub.
-    bool numericId = !userId.empty();
-    for (char c : userId) {
-        if (!std::isdigit(static_cast<unsigned char>(c))) { numericId = false; break; }
-    }
+    const bool numericId = !userId.empty() &&
+        std::all_of(userId.begin(), userId.end(), [](unsigned char c) {
+            return std::isdigit(c) != 0;
+        });
     if (!numericId) {
         Json::Value ret;
         ret["code"] = 401;

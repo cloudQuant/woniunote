@@ -46,8 +46,10 @@ std::string isoToMysqlDatetime(const std::string& isoTime) {
 // SQL injection via the `difficulty` query parameter.
 int parseDifficultyFilter(const std::string& raw) {
     if (raw.empty()) return -1;
-    for (char c : raw) {
-        if (!std::isdigit(static_cast<unsigned char>(c))) return -1;
+    if (std::any_of(raw.begin(), raw.end(), [](unsigned char c) {
+            return !std::isdigit(c);
+        })) {
+        return -1;
     }
     try {
         return std::stoi(raw);
@@ -60,10 +62,9 @@ int parseDifficultyFilter(const std::string& raw) {
 // Anything else is rejected, closing the SQL injection vector on `operation`.
 bool isValidOperation(const std::string& op) {
     if (op.empty() || op.size() > 16) return false;
-    for (char c : op) {
-        if (!std::isalpha(static_cast<unsigned char>(c))) return false;
-    }
-    return true;
+    return std::all_of(op.begin(), op.end(), [](unsigned char c) {
+        return std::isalpha(c) != 0;
+    });
 }
 
 }  // namespace

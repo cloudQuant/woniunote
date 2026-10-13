@@ -7,6 +7,7 @@
 #include "core/security.h"
 #include "core/logger.h"
 #include <drogon/HttpResponse.h>
+#include <algorithm>
 #include <cctype>
 
 using namespace drogon;
@@ -76,10 +77,10 @@ void AuthFilter::doFilter(const HttpRequestPtr& req,
     // here at the single choke point to avoid uncaught exceptions crashing the
     // request handler.
     const std::string& sub = payload->sub;
-    bool numericId = !sub.empty();
-    for (char c : sub) {
-        if (!std::isdigit(static_cast<unsigned char>(c))) { numericId = false; break; }
-    }
+    const bool numericId = !sub.empty() &&
+        std::all_of(sub.begin(), sub.end(), [](unsigned char c) {
+            return std::isdigit(c) != 0;
+        });
     if (!numericId) {
         Logger::warning("[AuthFilter] Non-numeric token subject rejected", {{"sub", sub}});
         Json::Value ret;
@@ -122,10 +123,10 @@ void OptionalAuthFilter::doFilter(const HttpRequestPtr& req,
     if (payload.has_value() && payload->type == "access") {
         // Only store a numeric subject; downstream callers std::stoll(user_id).
         const std::string& sub = payload->sub;
-        bool numericId = !sub.empty();
-        for (char c : sub) {
-            if (!std::isdigit(static_cast<unsigned char>(c))) { numericId = false; break; }
-        }
+        const bool numericId = !sub.empty() &&
+            std::all_of(sub.begin(), sub.end(), [](unsigned char c) {
+                return std::isdigit(c) != 0;
+            });
         if (numericId) {
             req->getAttributes()->insert("user_id", payload->sub);
         }

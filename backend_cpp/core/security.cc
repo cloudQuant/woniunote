@@ -197,7 +197,7 @@ bool bcryptVerify(const std::string& password, const std::string& hash) {
     struct crypt_data data;
     memset(&data, 0, sizeof(data));
     
-    char* result = crypt_r(password.c_str(), hash.c_str(), &data);
+    const char* result = crypt_r(password.c_str(), hash.c_str(), &data);
     if (result == nullptr) {
         return false;
     }
@@ -278,12 +278,9 @@ bool Security::isMd5Password(const std::string& hash)
     if (hash.length() != 32) {
         return false;
     }
-    for (char c : hash) {
-        if (!std::isxdigit(c)) {
-            return false;
-        }
-    }
-    return true;
+    return std::all_of(hash.begin(), hash.end(), [](char c) {
+        return std::isxdigit(c) != 0;
+    });
 }
 
 std::string Security::getMd5Hash(const std::string& password)
@@ -305,7 +302,7 @@ std::string Security::getMd5Hash(const std::string& password)
 
 std::string Security::createAccessToken(const std::string& userId, int expireMinutes)
 {
-    auto& config = Config::instance();
+    const auto& config = Config::instance();
     
     if (expireMinutes == 0) {
         expireMinutes = config.getAccessTokenExpireMinutes();
@@ -327,7 +324,7 @@ std::string Security::createAccessToken(const std::string& userId, int expireMin
 std::string Security::createRefreshToken(const std::string& userId, int expireDays,
                                          const std::string& jti)
 {
-    auto& config = Config::instance();
+    const auto& config = Config::instance();
     
     if (expireDays == 0) {
         expireDays = config.getRefreshTokenExpireDays();
@@ -367,7 +364,7 @@ std::string Security::generateJti()
 
 std::optional<TokenPayload> Security::decodeToken(const std::string& token)
 {
-    auto& config = Config::instance();
+    const auto& config = Config::instance();
 
     try {
         auto decoded = jwt::decode(token);

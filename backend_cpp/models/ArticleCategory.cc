@@ -6,6 +6,7 @@
 #include "ArticleCategory.h"
 
 #include <algorithm>
+#include <iterator>
 #include <map>
 #include <set>
 
@@ -113,11 +114,11 @@ bool shouldInclude(const ArticleCategory& category, bool visibleOnly) {
 std::vector<ArticleCategory> sortedCategories(const std::vector<ArticleCategory>& categories,
                                               bool visibleOnly) {
     std::vector<ArticleCategory> filtered;
-    for (const auto& category : categories) {
-        if (shouldInclude(category, visibleOnly)) {
-            filtered.push_back(category);
-        }
-    }
+    std::copy_if(categories.begin(), categories.end(),
+                 std::back_inserter(filtered),
+                 [visibleOnly](const ArticleCategory& category) {
+                     return shouldInclude(category, visibleOnly);
+                 });
     std::sort(filtered.begin(), filtered.end(), [](const auto& a, const auto& b) {
         const int aParent = a.parentId.value_or(0);
         const int bParent = b.parentId.value_or(0);

@@ -48,13 +48,15 @@ std::string UEditorController::getUploadDir()
         "/Users/yunjinqi/Documents/woniunote/backend/uploads"
     };
 
-    for (const auto& candidate : candidates) {
-        if (fs::exists(candidate) && fs::is_directory(candidate)) {
-            cachedPath = fs::canonical(candidate).string();
-            initialized = true;
-            Logger::info("[UEditor] Upload dir found: " + cachedPath);
-            return cachedPath;
-        }
+    auto found = std::find_if(candidates.begin(), candidates.end(),
+                              [](const fs::path& candidate) {
+                                  return fs::exists(candidate) && fs::is_directory(candidate);
+                              });
+    if (found != candidates.end()) {
+        cachedPath = fs::canonical(*found).string();
+        initialized = true;
+        Logger::info("[UEditor] Upload dir found: " + cachedPath);
+        return cachedPath;
     }
 
     // Create default uploads directory
@@ -245,9 +247,9 @@ void UEditorController::handleUploadImage(const HttpRequestPtr& req,
 
     std::string newFilename = generateFilename("", suffix);
     std::string uploadDir = getUploadDir();
-    std::string savePath = uploadDir + "/" + newFilename;
 
     try {
+        std::string savePath = uploadDir + "/" + newFilename;
         file.saveAs(savePath);
         Logger::info("[UEditor] Image uploaded: " + newFilename);
 
@@ -336,9 +338,9 @@ void UEditorController::handleUploadVideo(const HttpRequestPtr& req,
 
     std::string newFilename = generateFilename("video_", suffix);
     std::string uploadDir = getUploadDir();
-    std::string savePath = uploadDir + "/" + newFilename;
 
     try {
+        std::string savePath = uploadDir + "/" + newFilename;
         file.saveAs(savePath);
         Logger::info("[UEditor] Video uploaded: " + newFilename);
 
@@ -392,9 +394,9 @@ void UEditorController::handleUploadFile(const HttpRequestPtr& req,
 
     std::string newFilename = generateFilename("file_", suffix);
     std::string uploadDir = getUploadDir();
-    std::string savePath = uploadDir + "/" + newFilename;
 
     try {
+        std::string savePath = uploadDir + "/" + newFilename;
         file.saveAs(savePath);
         Logger::info("[UEditor] File uploaded: " + newFilename);
 
