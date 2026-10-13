@@ -5,7 +5,6 @@
  * 动态挂载的 PdfViewer 组件实例（含应用实例的清理）。
  */
 import { createApp } from 'vue'
-import ElementPlus from 'element-plus'
 import PdfViewer from '@/components/viewer/PdfViewer.vue'
 import { logInfo } from '@/utils/logger'
 
@@ -62,9 +61,10 @@ export function useArticleRendering(bodyRef) {
    * @param {string} pdfUrl - PDF 文件地址
    */
   function mountPdfViewer(container, pdfUrl) {
-    // 创建Vue应用实例并挂载PDF查看器组件，注入ElementPlus
+    // 创建独立Vue应用实例并挂载PDF查看器组件。PdfViewer 模板里的
+    // el-button / el-button-group / el-icon 由构建期 resolver 按需注入
+    // （见 vite.config.js），因此这里无需再全量 app.use(ElementPlus)。
     const app = createApp(PdfViewer, { pdfUrl })
-    app.use(ElementPlus)
     app.mount(container)
     pdfViewerApps.push(app)
   }

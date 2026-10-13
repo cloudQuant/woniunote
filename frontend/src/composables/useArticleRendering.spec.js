@@ -19,7 +19,6 @@ vi.mock('vue', async (importOriginal) => {
     })
   }
 })
-vi.mock('element-plus', () => ({ default: { install: vi.fn() } }))
 vi.mock('@/components/viewer/PdfViewer.vue', () => ({
   default: { name: 'PdfViewer', render: () => null }
 }))
@@ -146,7 +145,8 @@ describe('useArticleRendering —— PDF 占位符替换', () => {
     api.replacePdfPlaceholders()
 
     expect(m.apps).toHaveLength(1)
-    expect(m.apps[0].use).toHaveBeenCalledTimes(1) // 注入 ElementPlus
+    // 不再全量 app.use(ElementPlus)：PdfViewer 用到的 EP 组件由构建期 resolver 按需注入
+    expect(m.apps[0].use).not.toHaveBeenCalled()
     expect(m.apps[0].mount).toHaveBeenCalledTimes(1)
     expect(el.querySelector('.pdf-viewer-placeholder')).toBeNull()
     const wrapperEl = el.querySelector('.pdf-viewer-wrapper')
