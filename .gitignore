@@ -255,3 +255,6 @@ GEMINI.md
 .roo/
 .cline/
 # Note: _bmad-output/ is intentionally NOT ignored (kept in repo)
+
+# Sphinx 生成产物（docs/documents 的 make html 输出，迭代19 移出跟踪）
+docs/documents/_build/

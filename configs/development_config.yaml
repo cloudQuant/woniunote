@@ -1,7 +1,7 @@
 # 开发环境配置
 database:
   # 使用SQLite作为开发数据库，避免MySQL连接问题
-  SQLALCHEMY_DATABASE_URI: mysql://woniunote_user:Woniunote_password1!@127.0.0.1:3306/woniunote?charset=utf8&autocommit=true
+  SQLALCHEMY_DATABASE_URI: mysql://woniunote_user:${DB_PASS}@127.0.0.1:3306/woniunote?charset=utf8&autocommit=true
   SQLALCHEMY_TRACK_MODIFICATIONS: false
   SQLALCHEMY_POOL_SIZE: 5
   SQLALCHEMY_POOL_TIMEOUT: 20

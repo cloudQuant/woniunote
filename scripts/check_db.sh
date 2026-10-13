@@ -32,7 +32,10 @@ fi
 # 如果未从配置文件获取，使用默认值
 DB_NAME="${DB_NAME:-woniunote}"
 DB_USER="${DB_USER:-woniunote_user}"
-DB_PASS="${DB_PASS:-Woniunote_password1!}"
+if [ -z "${DB_PASS:-}" ]; then
+    echo "错误：未提供数据库密码。请通过环境变量 DB_PASS 或 configs/user_password_config.yaml 配置（迭代19 起不再内置默认密码）。" >&2
+    exit 1
+fi
 DB_HOST="${DB_HOST:-127.0.0.1}"
 
 echo "========================================"

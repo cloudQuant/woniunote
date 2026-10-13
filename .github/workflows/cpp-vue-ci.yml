@@ -24,8 +24,8 @@ jobs:
               git ls-files '*.key' '*.pem' '*.crt' '*.csr'
               git ls-files backups
               git ls-files coverage.json coverage.xml
-              git ls-files tests/test_db
-              git ls-files configs/mysql_test_config.yaml tests/configs/user_password_config.yaml
+              git ls-files docs/archive/legacy-flask-tests/test_db
+              git ls-files configs/mysql_test_config.yaml docs/archive/legacy-flask-tests/configs/user_password_config.yaml
             } | sort -u
           )"
           if [ -n "$tracked" ]; then
@@ -35,6 +35,22 @@ jobs:
           fi
           if git grep -n -I -E 'BEGIN ((RSA|EC|OPENSSH) )?PRIVATE KEY' -- . ':!frontend/package-lock.json'; then
             echo "Potential private key material found in tracked files." >&2
+            exit 1
+          fi
+          # 已知泄露凭据的回归防线（迭代19：公开仓库凭据事件）。
+          # [x] 写法避免模式在门禁文件自身中被自匹配。
+          if git grep -n -I -iE 'woniunote_[p]assword|woniunote[1]23' -- . ':!frontend/package-lock.json'; then
+            echo "Known leaked credential literals found in tracked files." >&2
+            exit 1
+          fi
+          # 明文 SQL 口令（如 ALTER USER ... IDENTIFIED BY '...'）
+          if git grep -n -I -E "IDENTIFIED (WITH [a-z_]+ )?BY '[^']{6,}'" -- '*.sql'; then
+            echo "Plaintext credentials in tracked SQL files." >&2
+            exit 1
+          fi
+          # 脚本中 DB_PASS 的字面量默认值（应改为必填环境变量）
+          if git grep -n -I -E 'DB_PASS=(\$\{DB_PASS:-)?["'"'"'][A-Za-z0-9!@#$%^&*_-]{6,}["'"'"']' -- '*.sh'; then
+            echo "Hardcoded DB_PASS default found in tracked scripts." >&2
             exit 1
           fi
 
@@ -96,7 +112,8 @@ jobs:
       - name: Run cppcheck (blocking)
         working-directory: backend_cpp
         run: |
-          cppcheck --enable=warning,performance,portability \
+          # style 于迭代19 清零后纳入门禁（此前仅 warning/performance/portability）
+          cppcheck --enable=warning,style,performance,portability \
             --std=c++17 --language=c++ --inline-suppr \
             --suppress=missingIncludeSystem \
             --suppress=normalCheckLevelMaxBranches \

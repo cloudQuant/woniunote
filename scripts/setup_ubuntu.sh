@@ -467,7 +467,11 @@ echo "========================================"
 init_database() {
     local DB_NAME="woniunote"
     local DB_USER="woniunote"
-    local DB_PASS="woniunote_password"  # 默认密码，生产环境应修改
+    # 数据库密码必须由环境变量提供（迭代19：移除内置默认密码）
+    if [ -z "${DB_PASS:-}" ]; then
+        log_error "未提供数据库密码：请以 DB_PASS=<密码> 方式运行本脚本（迭代19 起不再内置默认密码）"
+        return 1
+    fi
     local SQL_DIR="$PROJECT_DIR/scripts/sql"
     
     log_info "检查 MySQL 服务状态..."
@@ -508,7 +512,11 @@ init_database() {
 verify_database_schema() {
     local DB_NAME="woniunote"
     local DB_USER="woniunote"
-    local DB_PASS="woniunote_password"
+    # 数据库密码必须由环境变量提供（迭代19：移除内置默认密码）
+    if [ -z "${DB_PASS:-}" ]; then
+        log_error "未提供数据库密码：请以 DB_PASS=<密码> 方式运行本脚本（迭代19 起不再内置默认密码）"
+        return 1
+    fi
     local LOG_DIR="$PROJECT_DIR/logs"
     local LOG_FILE="$LOG_DIR/db_schema_verify_$(date +%Y%m%d_%H%M%S).log"
     
