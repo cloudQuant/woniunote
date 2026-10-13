@@ -152,17 +152,17 @@ def parse_db_uri(uri):
                 print("无法解析URI，使用默认值")
                 return {
                     'user': 'woniunote_user',
-                    'password': 'Woniunote_password1!',
+                    'password': os.environ.get('DB_PASS', ''),
                     'host': '127.0.0.1',
                     'port': 3306,
                     'database': 'woniunote'
                 }
         except Exception as e2:
             print(f"备用解析也失败: {e2}")
-            print("使用硬编码默认值")
+            print("使用环境变量默认值（DB_PASS）")
             return {
                 'user': 'woniunote_user',
-                'password': 'Woniunote_password1!',
+                'password': os.environ.get('DB_PASS', ''),
                 'host': '127.0.0.1',
                 'port': 3306,
                 'database': 'woniunote'

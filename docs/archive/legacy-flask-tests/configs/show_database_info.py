@@ -63,7 +63,7 @@ def parse_db_uri(uri):
         print(f"解析URI时出错: {e}")
         return {
             'user': 'woniunote_user',
-            'password': 'Woniunote_password1!',
+            'password': os.environ.get('DB_PASS', ''),
             'host': '127.0.0.1',
             'port': 3306,
             'database': 'woniunote'

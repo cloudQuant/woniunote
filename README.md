@@ -107,7 +107,7 @@ woniunote/
 │   ├── woniunote_nginx_prod.conf    # Nginx 生产配置
 │   └── yunjinqi.top_nginx/          # 本地/服务器 SSL 证书目录（不入库）
 │
-├── 📁 tests/                        # 旧 Flask 测试归档（非当前主线门禁）
+├── 📁 docs/archive/legacy-flask-tests/  # 旧 Flask 测试归档（迭代19 迁入，非当前主线门禁）
 ├── 📁 docs/                         # 项目文档
 ├── start_app.sh                     # 一键启动脚本
 ├── stop_app.sh                      # 停止脚本
@@ -477,7 +477,7 @@ python3 backend_cpp/scripts/generate_thumbs.py --output-dir /tmp/thumbs
 
 ## 🧪 测试
 
-当前发布门禁以 C++ Drogon 后端与 Vue 前端为准。根目录 `tests/` 是旧 Flask 栈测试归档，不再作为当前主线覆盖率来源。
+当前发布门禁以 C++ Drogon 后端与 Vue 前端为准。`docs/archive/legacy-flask-tests/`（原根目录 `tests/`，迭代19 迁入）是旧 Flask 栈测试归档，不再作为当前主线覆盖率来源。
 
 ```bash
 # 后端 C++ 单元测试

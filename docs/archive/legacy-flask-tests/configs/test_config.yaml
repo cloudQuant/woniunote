@@ -32,7 +32,7 @@ user:
 # 数据库配置
 database:
   # 使用本地MySQL数据库进行测试
-  SQLALCHEMY_DATABASE_URI: 'mysql+pymysql://woniunote_user:Woniunote_password1!@127.0.0.1:3306/woniunote?charset=utf8mb4'
+  SQLALCHEMY_DATABASE_URI: 'mysql+pymysql://woniunote_user:${DB_PASS}@127.0.0.1:3306/woniunote?charset=utf8mb4'
   SQLALCHEMY_TRACK_MODIFICATIONS: false
   SQLALCHEMY_ECHO: false
   
