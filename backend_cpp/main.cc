@@ -6,6 +6,7 @@
  */
 
 #include <drogon/drogon.h>
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include "core/config.h"
@@ -47,10 +48,10 @@ int main(int argc, char* argv[])
     const auto corsOrigins = woniunote::Config::instance().getCorsOrigins();
     auto isAllowedOrigin = [corsOrigins](const std::string& origin) -> bool {
         if (origin.empty()) return false;
-        for (const auto& allowed : corsOrigins) {
-            if (allowed == origin) return true;
-        }
-        return false;
+        return std::any_of(corsOrigins.begin(), corsOrigins.end(),
+                           [&origin](const std::string& allowed) {
+                               return allowed == origin;
+                           });
     };
 
     // CORS configuration - only reflect Origin when it is whitelisted.
