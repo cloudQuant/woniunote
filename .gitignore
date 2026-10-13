@@ -229,7 +229,7 @@ backend_cpp/config.local.json
 backend_cpp/config.integration.json
 backend_cpp/.env
 .env.local
-tests/test_db/
+docs/archive/legacy-flask-tests/test_db/
 *.sqlite
 *.sqlite3
 
