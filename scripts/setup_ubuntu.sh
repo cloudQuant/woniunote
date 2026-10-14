@@ -238,7 +238,10 @@ NEED_DROGON_INSTALL=false
 if [ ! -f "/usr/local/lib/cmake/Drogon/DrogonConfig.cmake" ]; then
     NEED_DROGON_INSTALL=true
     log_info "Drogon 未安装"
-elif ! grep -q "mysql" /usr/local/lib/cmake/Drogon/DrogonTargets.cmake 2>/dev/null; then
+# 大小写不敏感：DrogonTargets.cmake 里写的是 "MySQL"，此前用 "mysql" 匹配永远失败，
+# 于是每次部署都误判“缺少 MySQL 支持”并重编译 Drogon（约 10-20 分钟）
+# （迭代20 隔离环境演练发现）。
+elif ! grep -qi "mysql" /usr/local/lib/cmake/Drogon/DrogonTargets.cmake 2>/dev/null; then
     NEED_DROGON_INSTALL=true
     log_warn "Drogon 已安装但缺少 MySQL 支持，将重新编译"
 fi
