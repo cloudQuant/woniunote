@@ -180,7 +180,11 @@ frontend/.playwright/
 test-results/
 
 # C++ build artifacts
+# build-*/ covers the iteration-20 verification dirs (build-iter20-check,
+# build-release-check, ...). They contain a COPYONLY copy of the gitignored
+# config.local.json (real local JWT secret), so they must never be added.
 backend_cpp/build/
+backend_cpp/build-*/
 backend_cpp/build-coverage/
 backend_cpp/cmake-build-*/
 backend_cpp/CMakeFiles/
