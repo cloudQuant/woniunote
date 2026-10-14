@@ -119,7 +119,16 @@ cd build
 if [ ! -f "Makefile" ] && [ ! -f "build.ninja" ]; then
     cmake .. -DCMAKE_TOOLCHAIN_FILE="$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release
 fi
-cmake --build . --config Release -j8 2>&1 | tail -5
+# 构建输出写入独立日志并检查退出码。此前用 `| tail -5` 管道：管道退出码是
+# tail 的退出码，构建失败会被吞掉，脚本会继续用上一次的旧二进制启动
+# （迭代20 / Epic 20.3A）。
+BUILD_LOG="$SCRIPT_DIR/backend-build.log"
+if ! cmake --build . --config Release -j8 > "$BUILD_LOG" 2>&1; then
+    echo "[错误] C++ 后端编译失败，不会启动旧构建产物"
+    echo "       日志: $BUILD_LOG"
+    tail -20 "$BUILD_LOG" | sed 's/^/       /'
+    exit 1
+fi
 cd "$SCRIPT_DIR"
 
 # 查找可执行文件
@@ -158,13 +167,20 @@ if [ ! -f "package.json" ]; then
     exit 1
 fi
 
+# Node 版本门禁：不满足 package.json engines 时直接失败（迭代20 / Epic 20.3A）
+if ! node scripts/check-node-version.mjs; then
+    exit 1
+fi
+
 # 检查前端依赖是否已安装
 if [ ! -d "node_modules" ] || [ ! -f "node_modules/vite/dist/node/cli.js" ]; then
     echo "     前端依赖未安装或不完整，正在安装..."
-    rm -rf node_modules package-lock.json 2>/dev/null
-    npm cache clean --force 2>/dev/null || true
-    npm install --no-package-lock 2>&1 | tail -5
-    npm install 2>&1 | tail -3
+    # 使用 npm ci：严格按 package-lock.json 安装，不删除锁文件、失败不回退到
+    # npm install（迭代20 / Epic 20.3A：旧流程删除锁文件并重新解析依赖图）。
+    if ! npm ci; then
+        echo "[错误] npm ci 失败，请检查 Node 版本与网络"
+        exit 1
+    fi
     echo "     前端依赖安装完成"
 fi
 
@@ -178,8 +194,12 @@ if [ "$MODE" = "prod" ]; then
     rm -rf dist
     rm -rf node_modules/.vite
 
-    # 执行构建
-    npm run build >> ../frontend.log 2>&1
+    # 执行构建（检查退出码，避免失败后继续走后续步骤）
+    if ! npm run build >> ../frontend.log 2>&1; then
+        echo "[错误] 前端构建失败"
+        echo "       请查看 frontend.log 了解详情"
+        exit 1
+    fi
 
     if [ ! -d "dist" ]; then
         echo "[错误] 前端构建失败，dist 目录不存在"

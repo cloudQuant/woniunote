@@ -112,20 +112,23 @@ fi
 systemctl enable nginx
 
 echo "[7/10] 安装 Node.js 22.x (LTS)..."
-if command -v node &> /dev/null; then
-    NODE_VERSION=$(node -v 2>/dev/null | sed 's/v//' | cut -d. -f1)
-    if [ "$NODE_VERSION" -ge 18 ]; then
-        log_info "Node.js 已安装 ($(node -v))，跳过安装"
-    else
-        log_info "Node.js 版本过低，升级中..."
-        curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-        apt-get install -y nodejs
-    fi
+# 版本门禁复用前端脚本：锁文件要求 Node >= 20.19.0（unplugin-* 的 engines）。
+# 只判断主版本 >= 18 会放过不满足要求的解释器（迭代20 / Epic 20.3A）。
+NODE_CHECK="$PROJECT_DIR/frontend/scripts/check-node-version.mjs"
+node_satisfies_engines() {
+    command -v node &> /dev/null && node "$NODE_CHECK" >/dev/null 2>&1
+}
+if node_satisfies_engines; then
+    log_info "Node.js 已安装且满足前端要求 ($(node -v))，跳过安装"
 else
+    log_info "Node.js 未安装或版本不满足前端要求，安装/升级到 22.x..."
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
     apt-get install -y nodejs
 fi
 log_info "Node.js 版本: $(node -v)"
+if ! node_satisfies_engines; then
+    log_warn "Node.js 版本仍不满足前端 engines 要求，前端安装/构建将失败"
+fi
 log_info "npm 版本: $(npm -v)"
 
 echo "[8/10] 安装 Drogon 框架及 C++ 依赖 (从源码编译)..."
@@ -330,9 +333,9 @@ mkdir -p "$DEPLOY_DIR/logs"
 # 复制项目文件 (仅当部署目录与源码目录不同时)
 if [ "$DEPLOY_DIR" != "$PROJECT_DIR" ]; then
     log_info "复制项目文件到 $DEPLOY_DIR..."
+    # package-lock.json 必须随源码部署：npm ci 依赖它做可复现安装。
     rsync -av --exclude='.git' \
               --exclude='node_modules' \
-              --exclude='package-lock.json' \
               --exclude='__pycache__' \
               --exclude='*.pyc' \
               "$PROJECT_DIR/" "$DEPLOY_DIR/"
@@ -344,40 +347,28 @@ fi
 log_info "安装前端依赖..."
 cd "$DEPLOY_DIR/frontend"
 if [ -f "package.json" ]; then
-    # 强制清理 node_modules 和 package-lock.json
-    log_info "清理旧的 node_modules 和 package-lock.json..."
-    rm -rf node_modules package-lock.json 2>/dev/null || true
-    
-    # 清理 npm 缓存
-    npm cache clean --force 2>/dev/null || true
-    
-    # 安装依赖 (不使用 lock 文件，允许重新解析依赖)
-    log_info "执行 npm install..."
-    if npm install --no-package-lock 2>&1; then
-        # 安装成功后再生成 package-lock.json
-        npm install 2>&1 | tail -5
+    # 严格按 package-lock.json 安装（迭代20 / Epic 20.3A）：
+    # 不再删除锁文件、不使用 --no-package-lock、失败不回退到 npm install，
+    # 避免每次部署重新解析依赖图导致不可复现。
+    if ! node scripts/check-node-version.mjs; then
+        log_warn "Node.js 版本不满足前端 engines 要求，跳过前端安装与构建"
+    elif ! npm ci; then
+        log_warn "npm ci 失败（锁文件缺失或与 package.json 不一致），跳过前端构建"
+    else
         log_info "前端依赖安装完成"
-        
-        # 验证 vite 是否正确安装
-        if [ -f "node_modules/vite/dist/node/cli.js" ]; then
-            log_info "vite 模块验证成功"
-        else
-            log_warn "vite 模块不完整，重新安装..."
-            npm install vite --save-dev
-        fi
-        
-        # 生产环境构建前端
+
+        # 生产环境构建前端（检查退出码，管道 | tail 会掩盖失败）
         log_info "构建前端生产版本..."
-        if npm run build 2>&1 | tail -10; then
+        FRONTEND_BUILD_LOG="$DEPLOY_DIR/frontend/build.log"
+        if npm run build > "$FRONTEND_BUILD_LOG" 2>&1; then
             log_info "前端构建完成"
             if [ -d "dist" ]; then
                 log_info "前端静态文件已生成到 $DEPLOY_DIR/frontend/dist"
             fi
         else
-            log_warn "前端构建失败，请手动检查"
+            log_warn "前端构建失败，详见 $FRONTEND_BUILD_LOG"
+            tail -10 "$FRONTEND_BUILD_LOG"
         fi
-    else
-        log_warn "前端依赖安装失败，请手动检查"
     fi
 else
     log_warn "未找到 package.json，跳过前端依赖安装"
