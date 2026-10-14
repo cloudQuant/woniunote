@@ -188,7 +188,7 @@ void ArticleAuthorService::updateArticle(const std::string& userId,
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
-        "SELECT userid FROM article WHERE articleid = ?",
+        "SELECT userid, drafted FROM article WHERE articleid = ?",
         [callback, id, userId, json, dbClient](const orm::Result& result) {
             if (result.size() == 0) {
                 callback(Response::notFound("文章不存在"));
@@ -204,9 +204,17 @@ void ArticleAuthorService::updateArticle(const std::string& userId,
             std::string headline = json.get("headline", "").asString();
             std::string content = json.get("content", "").asString();
             int type = json.get("type", 0).asInt();
+            // drafted carries the draft/publish transition: the author UI sends
+            // drafted=0 when publishing an existing draft. Leaving it out of the
+            // UPDATE kept every edited article a draft, so "save draft, edit
+            // again, publish" never actually published. An absent field keeps
+            // the stored value instead of silently resetting it.
+            int drafted = json.isMember("drafted")
+                              ? json["drafted"].asInt()
+                              : result[0]["drafted"].as<int>();
 
             dbClient->execSqlAsync(
-                "UPDATE article SET headline = ?, content = ?, type = ?, updatetime = NOW() WHERE articleid = ?",
+                "UPDATE article SET headline = ?, content = ?, type = ?, drafted = ?, updatetime = NOW() WHERE articleid = ?",
                 [callback](const orm::Result&) {
                     callback(Response::ok("更新成功"));
                 },
@@ -214,7 +222,7 @@ void ArticleAuthorService::updateArticle(const std::string& userId,
                     Logger::error("Update error: " + std::string(e.base().what()));
                     callback(Response::serverError("更新失败"));
                 },
-                headline, content, type, id
+                headline, content, type, drafted, id
             );
         },
         [callback](const orm::DrogonDbException& e) {

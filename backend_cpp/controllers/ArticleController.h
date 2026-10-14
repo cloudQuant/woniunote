@@ -35,7 +35,10 @@ public:
     ADD_METHOD_TO(ArticleController::toggleHide, "/api/articles/{id}/hide", drogon::Post, "woniunote::AdminFilter");
     ADD_METHOD_TO(ArticleController::toggleCheck, "/api/articles/{id}/check", drogon::Post, "woniunote::AdminFilter");
 
-    ADD_METHOD_TO(ArticleController::get, "/api/articles/{id}", drogon::Get);
+    // OptionalAuthFilter: anonymous readers are allowed, but an owner presenting
+    // a token may also read their own draft/hidden article (the handler enforces
+    // that distinction).
+    ADD_METHOD_TO(ArticleController::get, "/api/articles/{id}", drogon::Get, "woniunote::OptionalAuthFilter");
     METHOD_LIST_END
 
     void list(const drogon::HttpRequestPtr& req,

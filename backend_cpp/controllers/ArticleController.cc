@@ -297,9 +297,18 @@ void ArticleController::get(const HttpRequestPtr& req,
     Logger::debug("[Article] Get request", {{"articleid", std::to_string(id)}});
     auto dbClient = Database::getClient();
 
+    // OptionalAuthFilter stores user_id only for a valid access token; anonymous
+    // callers have no attribute. Drafts and hidden articles must not be readable
+    // by anyone else — the navigation query below already excludes both, so
+    // serving the body to anonymous callers leaked exactly what navigation hid.
+    auto viewerAttrs = req->getAttributes();
+    const std::string viewerId = viewerAttrs->find("user_id")
+        ? viewerAttrs->get<std::string>("user_id")
+        : std::string();
+
     dbClient->execSqlAsync(
         "SELECT a.*, u.nickname FROM article a LEFT JOIN users u ON a.userid = u.userid WHERE a.articleid = ?",
-        [callback, id, dbClient](const orm::Result& result) {
+        [callback, id, dbClient, viewerId](const orm::Result& result) {
             if (result.size() == 0) {
                 Logger::debug("[Article] Not found", {{"articleid", std::to_string(id)}});
                 callback(Response::notFound("文章不存在"));
@@ -307,6 +316,18 @@ void ArticleController::get(const HttpRequestPtr& req,
             }
 
             models::Article article(result[0]);
+
+            const bool isOwner = !viewerId.empty() &&
+                std::to_string(article.getUserid()) == viewerId;
+            if ((article.getHidden() != 0 || article.getDrafted() != 0) && !isOwner) {
+                // Answer exactly as for a missing row so the response does not
+                // confirm that a draft or hidden article exists.
+                Logger::debug("[Article] Withheld from non-owner",
+                              {{"articleid", std::to_string(id)}});
+                callback(Response::notFound("文章不存在"));
+                return;
+            }
+
             Logger::debug("[Article] Found", {{"articleid", std::to_string(id)}, {"headline", article.getHeadline()}});
 
             Json::Value articleData = article.toJson();
