@@ -1,3 +1,10 @@
+"""历史遗留：Flask 时代 Python 包的打包入口（非当前发行版本）。
+
+`version` 是旧 Python 包 (`woniunote/`) 的版本号，与产品发行号无关。当前活跃实现是
+C++ Drogon 后端 + Vue 3 前端，其发布版本以 `backend_cpp/CMakeLists.txt` 的
+`project(... VERSION)` 为唯一来源，由 `scripts/check_release_version.sh` 校验
+（迭代20 / Epic 20.5）。详见 README.md。
+"""
 from setuptools import setup, find_packages
 
 # 定义扩展模块
@@ -7,7 +14,7 @@ extensions = [
 
 setup(
     name='woniunote',  # 项目的名称
-    version='0.1.5',  # 版本号
+    version='0.1.5',  # 旧 Python 包版本，非产品发行版本（见文件头说明）
     packages=find_packages(include=['woniunote', 'woniunote.*']),
     include_package_data=True,
     package_data={

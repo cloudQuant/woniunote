@@ -1,339 +1,170 @@
-# Woniunote - Modern Personal Blog System
+# WoniuNote - Quantitative Blog System
 
-> **Legacy note:** this English document describes the historical Python/Flask implementation. The active `dev_cpp` branch uses a C++ Drogon backend with a Vue 3 frontend. Use `README.md`, `REFACTORING_GUIDE.md`, `backend_cpp/`, `frontend/`, and `.github/workflows/cpp-vue-ci.yml` for current development and release gates.
+<div align="center">
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
+[![C++](https://img.shields.io/badge/C++-17+-00599C.svg)](https://isocpp.org/)
+[![Drogon](https://img.shields.io/badge/Drogon-1.9+-blue.svg)](https://github.com/drogonframework/drogon)
+[![Vue](https://img.shields.io/badge/Vue-3.4+-4FC08D.svg)](https://vuejs.org/)
+[![Element Plus](https://img.shields.io/badge/Element%20Plus-2.5+-409EFF.svg)](https://element-plus.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.1.4-orange.svg)](setup.py)
 
-> A modern, high-performance personal blog system built with Python Flask framework, featuring rich functional modules and optimization features.
+**A high-performance blog system with a separated frontend and backend, built on C++ Drogon + Vue 3 + Element Plus**
 
-## 🌟 Features
+🌐 **Live demo**: [https://www.yunjinqi.top](https://www.yunjinqi.top)
 
-- **Modern Architecture**: MVC design pattern, modular architecture, easy to maintain and extend
-- **High Performance**: Integrated caching system, database optimization, asynchronous task processing
-- **Security Protection**: Complete permission management, CSRF protection, input validation, secure sessions
-- **User Experience**: Responsive design, intelligent caching, performance monitoring, user behavior analysis
-- **Developer Friendly**: Complete testing framework, code quality checks, automated deployment support
+[中文](README.md) | [English](#overview)
 
-## 🏗️ Architecture
+</div>
+
+---
+
+## Overview
+
+WoniuNote is a blog system using a **separated frontend/backend architecture** with a
+high-performance C++ backend, covering articles, user management, comments, favorites and
+math training.
+
+> Badges above name the stable product series only. Exact tool and dependency versions come
+> from `frontend/package-lock.json` and `backend_cpp/vcpkg.json` — not from the badge text.
+
+### Architecture
 
 ```
-woniunote/
-├── 📁 woniunote/                 # Core application package
-│   ├── 📁 controller/            # Controller layer (C in MVC)
-│   ├── 📁 models/                # Data model layer (M in MVC)
-│   ├── 📁 common/                # Common modules
-│   ├── 📁 services/              # Business service layer
-│   ├── 📁 template/              # Template files (V in MVC)
-│   ├── 📁 resource/              # Static resources
-│   ├── app.py                    # Main application file
-│   ├── app_factory.py            # Application factory
-│   └── __init__.py               # Package initialization
-├── 📁 configs/                   # Configuration files
-├── 📁 tests/                     # Test files
-├── 📁 docs/                      # Documentation
-├── requirements.txt               # Python dependencies
-├── setup.py                      # Installation configuration
-└── README.md                     # Project description
+[Frontend: Vue 3 + Vite + Element Plus]
+           ↓ (API calls)
+[Nginx] → Reverse proxy / static file serving
+           ↓ (/api/*)
+[C++ Backend: Drogon framework]
+           ↓
+[MySQL 8.0 + Redis]
 ```
 
-## 🚀 Core Features
+## 🌿 Branches and versions
 
-### 📝 Content Management
-- **Article System**: Support for original, reprinted, translated content
-- **Rich Text Editor**: Integrated UEditor with image upload support
-- **Categories & Tags**: Flexible article classification and tagging system
-- **Draft Function**: Article draft saving and editing
+| Item | Value |
+|---|---|
+| Active development branch | `dev_cpp` (also the current **default branch** on GitHub) |
+| Historical mainline | `master` (Flask era; no active development) |
+| Current release | `2.0.0` (source release: C++ Drogon backend + Vue 3 frontend) |
+| Single source of truth | `project(... VERSION)` in `backend_cpp/CMakeLists.txt` |
 
-### 👥 User System
-- **User Registration**: Secure user registration and verification
-- **Permission Management**: Multi-role access control (user, admin)
-- **Personal Center**: User information management, avatar upload
-- **Credit System**: User activity credit mechanism
+The version must match in `backend_cpp/CMakeLists.txt`, `frontend/package.json` and
+`backend_cpp/vcpkg.json`; `bash scripts/check_release_version.sh` verifies this (run by the
+`repo-hygiene` CI job). The legacy `setup.py` (0.1.5), the Sphinx documentation site (1.0.0)
+and the archived Python/Flask implementation are **historical** and do not describe this
+release.
 
-### 💬 Interactive Features
-- **Comment System**: Article comments and replies
-- **Favorites**: User favorite management
-- **Like System**: Content likes and recommendations
+The `/api/...` route prefix is independent of the product release number.
 
-### 📊 Management Features
-- **Content Review**: Article review and publication control
-- **User Management**: User information viewing and management
-- **System Monitoring**: Performance monitoring and log management
-- **Data Statistics**: Access statistics and user behavior analysis
-
-### 🎯 Special Features
-- **Todo Items**: Personal task management
-- **Card Center**: Information card display
-- **Math Training**: Mathematics practice tools
-- **File Upload**: Secure file upload and management
-
-## 🛠️ Technology Stack
-
-### Backend
-- **Python 3.8+**: Core programming language
-- **Flask 2.0+**: Web framework
-- **SQLAlchemy**: ORM database operations
-- **PyMySQL**: MySQL database driver
-- **Redis**: Caching and session storage
-- **Jinja2**: Template engine
-
-### Frontend
-- **HTML5/CSS3**: Page structure and styling
-- **JavaScript**: Interactive functionality
-- **Bootstrap**: Responsive UI framework
-- **Vue.js**: Frontend framework
-- **jQuery**: DOM manipulation and AJAX
-
-### Database
-- **MySQL**: Primary database
-- **SQLite**: Development environment database
-- **Redis**: Cache database
-
-### Deployment & Operations
-- **Gunicorn**: WSGI server
-- **Nginx**: Reverse proxy
-- **Docker**: Containerized deployment
-- **Git**: Version control
-
-## 📦 Installation & Deployment
+## 🚀 Quick start
 
 ### Requirements
-- Python 3.8+
-- MySQL 5.7+ or SQLite 3
-- Redis 4.0+ (optional)
-- Modern browser support
 
-### Quick Start
+| Component | Requirement |
+|---|---|
+| C++ compiler | GCC 10+ / Clang 13+ / MSVC 2019+ |
+| CMake | 3.20+ |
+| vcpkg | pinned baseline `e7b524242c8a5d718a7afa26794c3c19bb8b0c71` (see `backend_cpp/vcpkg.json`) |
+| Node.js | >= 20.19.0 (CI and deployment acceptance version: 22.13.0) |
+| npm | >= 10 |
+| MySQL | 8.0+ |
+| Redis | 6.0+ (optional but recommended; required for rate limiting) |
 
-#### 1. Clone Project
+Frontend dependencies are pinned by `frontend/package-lock.json`: install with `npm ci`
+(never delete the lockfile or fall back to `npm install`). `npm run check:node` validates the
+Node version against `engines` before installing or building.
+
+### One-command start (recommended)
+
 ```bash
-# Domestic users
-git clone https://gitee.com/yunjinqi/woniunote.git
-
-# International users
+# Clone
 git clone https://github.com/cloudQuant/woniunote.git
-
 cd woniunote
+
+# Development mode (frontend hot-reload)
+bash start_app.sh dev
+
+# Production mode (frontend built + served by Nginx)
+bash start_app.sh prod
+
+# Frontend: http://localhost:8888 (dev) | Backend API: http://localhost:5173
 ```
 
-#### 2. Install Dependencies
+Stop and restart with `bash stop_app.sh` / `bash restart_app.sh [prod|dev]`.
+
+### Manual start
+
 ```bash
-# Install Python dependencies
-pip install -r requirements.txt
+# Backend (C++)
+cd backend_cpp
+./build.sh                       # wraps CMake + vcpkg
+cd build && ./woniunote_backend  # listens on 5173
 
-# Or use conda
-conda install --file requirements.txt
+# Frontend (Vue 3)
+cd frontend
+npm run check:node               # Node >= 20.19.0
+npm ci                           # lockfile-exact install
+npm run dev                      # dev server on 8888
+npm run build                    # production build into dist/
 ```
 
-#### 3. Configure Database
+System-library builds (without vcpkg) are also supported:
+
 ```bash
-# Copy configuration file
-cp configs/user_password_config.yaml.example configs/user_password_config.yaml
-
-# Edit configuration file
-nano configs/user_password_config.yaml
+mkdir build && cd build
+cmake .. -DUSE_SYSTEM_LIBS=ON
+cmake --build . --config Release
 ```
 
-Configuration example:
-```yaml
-# Database configuration
-database:
-  SQLALCHEMY_DATABASE_URI: mysql://username:password@localhost:3306/woniunote
-  SQLALCHEMY_TRACK_MODIFICATIONS: false
+### Production deployment (Ubuntu 22.04 + HTTPS)
 
-# Security configuration
-SECRET_KEY: 'your-secret-key-here'
-WTF_CSRF_SECRET_KEY: 'your-csrf-key-here'
-```
-
-#### 4. Initialize Database
 ```bash
-cd woniunote/woniunote
-python common/create_database.py
+sudo bash scripts/setup_ubuntu.sh
 ```
 
-#### 5. Start Application
+The script installs system dependencies, MySQL 8.0, Redis, Node.js 22.x (upgrading an
+existing Node that does not satisfy the frontend `engines`), vcpkg and the C++ dependencies,
+then compiles the backend. It fails loudly instead of continuing when the Node version or
+`npm ci` does not satisfy the requirements.
+
+## 🧪 Tests and quality gates
+
 ```bash
-# Development environment
-python app.py
+# Backend C++ (BUILD_TESTING is OFF by default; turn it on explicitly)
+cd backend_cpp/build
+ctest --output-on-failure --no-tests=error
 
-# Production environment
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
+# Backend HTTP integration tests (needs an isolated test MySQL + Redis)
+bash backend_cpp/tests/integration/run_integration.sh
+
+# Frontend gates
+cd frontend
+npm run lint:ci
+npm run test:coverage    # thresholds: 95% on all four metrics
+npm run build
+PW_BROWSERS=all npm run test:e2e   # chromium + firefox + webkit + mobile-chrome
+npm run audit:ci
 ```
 
-### Development Environment Configuration
+`docs/archive/legacy-flask-tests/` is an archive of the old Flask test suite; it is **not** a
+quality gate for the active `dev_cpp` stack.
 
-#### Using SQLite (Recommended for development)
-```yaml
-database:
-  SQLALCHEMY_DATABASE_URI: sqlite:///woniunote_dev.db
-```
+## 📡 API endpoints
 
-#### Using MySQL (Production environment)
-```yaml
-database:
-  SQLALCHEMY_DATABASE_URI: mysql://user:pass@localhost:3306/woniunote
-```
-
-## 🧪 Testing
-
-### Run Tests
-```bash
-# Install test dependencies
-pip install -r requirements.txt
-
-# Install Playwright browser
-playwright install
-
-# Run functional tests
-pytest . -v --cov=woniunote --cov-report=html
-
-# Run performance tests
-locust -f tests/test_performance.py --host=http://localhost:5000
-```
-
-### Test Coverage
-- Unit Tests: Core functional modules
-- Integration Tests: API interfaces and database operations
-- Performance Tests: Load and stress testing
-- Security Tests: Permission and input validation
-
-## 🔧 Configuration
-
-### Environment Variables
-```bash
-export FLASK_ENV=development
-export FLASK_DEBUG=1
-export DATABASE_URL=sqlite:///woniunote_dev.db
-export SECRET_KEY=your-secret-key
-```
-
-### Configuration File Structure
-- **configs/config.py**: Python configuration classes
-- **configs/user_password_config.yaml**: Main configuration file
-- **configs/development_config.yaml**: Development environment configuration
-
-## 🚀 Performance Optimization
-
-### Caching Strategy
-- **Redis Cache**: Hot data caching
-- **Memory Cache**: Fast access caching
-- **Smart Cache**: Access pattern-based caching strategy
-
-### Database Optimization
-- **Connection Pool**: Database connection reuse
-- **Query Optimization**: N+1 query problem solution
-- **Index Optimization**: Database performance improvement
-
-### Frontend Optimization
-- **Static Resources**: CDN acceleration and compression
-- **Lazy Loading**: Image and content lazy loading
-- **Code Splitting**: JavaScript modularization
-
-## 🔒 Security Features
-
-### Authentication & Authorization
-- **JWT Tokens**: Secure identity authentication
-- **Permission Control**: Role-based access control
-- **Session Management**: Secure session handling
-
-### Data Protection
-- **CSRF Protection**: Cross-site request forgery protection
-- **XSS Protection**: Cross-site scripting attack protection
-- **SQL Injection Protection**: Parameterized queries
-
-### Input Validation
-- **Data Sanitization**: Secure input data processing
-- **File Upload**: Secure file upload validation
-- **API Rate Limiting**: Prevent API abuse
-
-## 📊 Monitoring & Logging
-
-### System Monitoring
-- **Performance Monitoring**: Response time and throughput
-- **Resource Monitoring**: CPU, memory, disk usage
-- **Error Monitoring**: Exception and error statistics
-
-### Logging System
-- **Structured Logging**: JSON format log output
-- **Log Levels**: Configurable log levels
-- **Log Rotation**: Automatic log file management
-
-## 🌐 Deployment Guide
-
-### Docker Deployment
-```bash
-# Build image
-docker build -t woniunote .
-
-# Run container
-docker run -d -p 5000:5000 woniunote
-```
-
-### Production Environment Deployment
-```bash
-# Using Gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 --timeout 120 app:app
-
-# Using Nginx reverse proxy
-# Configure nginx.conf file
-```
-
-### Environment Configuration
-- **Development**: Debug mode, SQLite database
-- **Testing**: Test data, MySQL database
-- **Production**: Production configuration, MySQL database
-
-## 🤝 Contributing
-
-### Development Process
-1. Fork the project
-2. Create a feature branch
-3. Commit your code
-4. Create a Pull Request
-
-### Code Standards
-- Follow PEP 8 Python code standards
-- Add appropriate comments and documentation
-- Write unit tests
-- Ensure code quality
-
-### Issue Reporting
-- Use GitHub Issues to report problems
-- Provide detailed error information and reproduction steps
-- Label issue type and priority
-
-## 📚 Documentation
-
-- [API Documentation](docs/api.md)
-- [Deployment Guide](docs/deployment.md)
-- [Development Guide](docs/development.md)
-- [Troubleshooting](TROUBLESHOOTING.md)
+| Module | Endpoints | Description |
+|--------|-----------|-------------|
+| Auth | `/api/auth/*` | Login, Register, Logout, Refresh |
+| Articles | `/api/article/*` | CRUD, Search, Categories, Navigation |
+| Comments | `/api/comment/*` | Comment, Reply, Vote |
+| Favorites | `/api/favorite/*` | Bookmark management |
+| Users | `/api/user/*` | User profile |
+| Math | `/api/math/*` | Math training |
+| Admin | `/api/admin/*` | Admin dashboard |
+| System | `/api/health`, `/api/status` | Health and version responses |
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
-
-## 👨‍💻 Author
-
-- **Author**: cloudQuant (云金杞)
-- **Email**: yunjinqi@gmail.com
-- **Website**: https://www.yunjinqi.top
-- **GitHub**: https://github.com/cloudQuant
-
-## 🙏 Acknowledgments
-
-Thanks to all developers and users who have contributed to this project.
-
-## 📞 Contact
-
-- **Project Homepage**: https://github.com/cloudQuant/woniunote
-- **Online Demo**: https://www.yunjinqi.top
-- **Issue Reporting**: https://github.com/cloudQuant/woniunote/issues
-- **Technical Discussion**: Welcome to submit Issues and Pull Requests
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 

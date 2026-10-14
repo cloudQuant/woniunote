@@ -17,6 +17,9 @@ project = 'WoniuNote'
 copyright = '2025, WoniuNote Team'
 author = 'WoniuNote Team'
 
+# 这两个字段是 Sphinx 文档站自身的版本，**不是**产品发行版本。
+# 产品发行版本以 backend_cpp/CMakeLists.txt 的 project(... VERSION) 为唯一来源
+# （迭代20 / Epic 20.5，见 scripts/check_release_version.sh）。
 version = '1.0'
 release = '1.0.0'
 

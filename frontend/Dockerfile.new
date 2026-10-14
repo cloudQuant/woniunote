@@ -1,3 +1,12 @@
+# ⚠️ 已废弃 / NOT A SUPPORTED RELEASE ENTRY (迭代20 / Epic 20.3A)
+#
+# 此文件没有被任何脚本、文档或 CI 引用，也不是发布入口：
+#   - 使用 `npm install`（会重新解析依赖图），而不是锁文件精确的 `npm ci`；
+#   - 基础镜像 Node 20 未与 frontend/package.json 的 engines (>=20.19.0) 对齐核验。
+# 当前支持的前端发布路径是仓库根目录的 start_app.sh prod / scripts/setup_ubuntu.sh
+# （Nginx 直接服务 frontend/dist）。如需恢复容器化发布，请先按上述路径重建并纳入
+# CI 核验，否则不要使用本文件。
+
 # 构建阶段
 FROM node:20-alpine as build
 

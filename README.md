@@ -116,6 +116,24 @@ woniunote/
 
 ---
 
+## 🌿 分支与版本
+
+| 项 | 值 |
+|---|---|
+| 活跃开发分支 | `dev_cpp`（同时是 GitHub 仓库当前的**默认分支**） |
+| 历史主线分支 | `master`（Flask 时代主线；当前不接收活跃开发） |
+| 当前发行版本 | `2.0.0`（源码发行：C++ Drogon 后端 + Vue 3 前端） |
+| 版本唯一来源 | `backend_cpp/CMakeLists.txt` 的 `project(... VERSION)` |
+
+版本号在 `backend_cpp/CMakeLists.txt`、`frontend/package.json` 与 `backend_cpp/vcpkg.json`
+三处必须一致，由 `bash scripts/check_release_version.sh` 校验（CI 的 `repo-hygiene` job 会执行）。
+注意区分：旧 `setup.py`（0.1.5）、英文 README 的 0.1.4 徽章和 Sphinx 文档站的 1.0.0
+都是**历史口径**，不代表本次 C++/Vue 发行版本。
+
+API 路由前缀 `/api/...` 与产品发行号无关，两者独立演进。
+
+---
+
 ## 🚀 快速开始
 
 ### 环境要求
@@ -124,10 +142,13 @@ woniunote/
 |------|------|------|
 | C++ 编译器 | GCC 10+ / Clang 13+ / MSVC 2019+ | ✅ |
 | CMake | 3.20+ | ✅ |
-| vcpkg | 最新版 | ✅ |
-| Node.js | 18+ | ✅ |
+| vcpkg | 固定基线 `e7b524242c8a5d718a7afa26794c3c19bb8b0c71`（见 `backend_cpp/vcpkg.json`） | ✅ |
+| Node.js | >= 20.19.0（CI 与部署验收版本：22.13.0） | ✅ |
 | MySQL | 8.0+ | ✅ |
 | Redis | 6.0+ | ❌ (可选，推荐) |
+
+> 前端依赖以 `frontend/package-lock.json` 为准：安装必须使用 `npm ci`（不要删除锁文件或改用 `npm install`）。
+> `frontend/package.json` 的 `engines` 声明最低 Node 版本，`npm run check:node` 可在安装/构建前校验。
 
 ### 方式一：一键启动（推荐）
 
@@ -200,9 +221,12 @@ sudo bash scripts/setup_ubuntu.sh
 此脚本会自动安装:
 - 系统依赖 (build-essential, cmake, nginx 等)
 - MySQL 8.0 和 Redis
-- Node.js 18.x
+- Node.js 22.x（若已安装的 Node 低于前端 `engines` 要求则自动升级）
 - vcpkg 和 C++ 依赖包
 - 编译 C++ 后端
+
+前端依赖使用 `npm ci` 按锁文件安装；Node 版本不满足 `frontend/package.json` 的
+`engines`（>= 20.19.0）时脚本会明确报错，而不是继续构建。
 
 #### 2. 配置数据库
 
