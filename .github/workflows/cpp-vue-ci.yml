@@ -9,12 +9,24 @@ on:
   pull_request:
     branches: [ dev_cpp, master, main ]
 
+env:
+  # Pinned vcpkg tool checkout. Must match "builtin-baseline" in
+  # backend_cpp/vcpkg.json; the cache key and the checkout step both use it so
+  # builds are reproducible instead of "whatever vcpkg HEAD is today".
+  VCPKG_BASELINE: e7b524242c8a5d718a7afa26794c3c19bb8b0c71
+  # Node acceptance version (see frontend/package.json engines: >=20.19.0).
+  NODE_VERSION: "22.13.0"
+
 jobs:
   repo-hygiene:
     name: Repo hygiene (tracked secrets + generated artifacts)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check release version consistency
+        # Single source of truth: backend_cpp/CMakeLists.txt project VERSION.
+        run: bash scripts/check_release_version.sh
 
       - name: Block tracked secrets and generated artifacts
         run: |
@@ -71,14 +83,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/vcpkg
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('backend_cpp/vcpkg.json') }}
+          # Key covers the pinned tool revision, the manifest, and the overlay
+          # port (whose patch changes the drogon ABI hash).
+          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_BASELINE }}-${{ hashFiles('backend_cpp/vcpkg.json', 'backend_cpp/vcpkg-configuration.json', 'backend_cpp/vcpkg-overlay-ports/**') }}
 
-      - name: Bootstrap vcpkg
+      - name: Checkout pinned vcpkg
         run: |
-          if [ ! -d "$HOME/vcpkg" ]; then
+          if [ ! -d "$HOME/vcpkg/.git" ]; then
             git clone https://github.com/microsoft/vcpkg.git "$HOME/vcpkg"
           fi
-          "$HOME/vcpkg/bootstrap-vcpkg.sh"
+          git -C "$HOME/vcpkg" fetch --depth 1 origin "$VCPKG_BASELINE"
+          git -C "$HOME/vcpkg" checkout --detach "$VCPKG_BASELINE"
+          "$HOME/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+          echo "vcpkg at $(git -C "$HOME/vcpkg" rev-parse HEAD)"
 
       - name: Configure
         working-directory: backend_cpp
@@ -92,7 +109,9 @@ jobs:
 
       - name: Run unit tests
         working-directory: backend_cpp/build
-        run: ctest --output-on-failure
+        # --no-tests=error: a build that silently drops the test suite must not
+        # be reported as a pass.
+        run: ctest --output-on-failure --no-tests=error
 
   backend-static-analysis:
     name: Backend (cppcheck static analysis)
@@ -108,18 +127,11 @@ jobs:
 
       # Static analysis as a real gate. The baseline is clean (iteration 13),
       # so any newly-introduced warning/perf/portability issue fails the build.
-      # Informational branch-limit notes are suppressed (not real findings).
+      # The script is shared with local runs so CI cannot drift from what a
+      # developer runs; it also supplies the WONIUNOTE_VERSION define that CMake
+      # injects (without it every use is an `unknownMacro` finding).
       - name: Run cppcheck (blocking)
-        working-directory: backend_cpp
-        run: |
-          # style 于迭代19 清零后纳入门禁（此前仅 warning/performance/portability）
-          cppcheck --enable=warning,style,performance,portability \
-            --std=c++17 --language=c++ --inline-suppr \
-            --suppress=missingIncludeSystem \
-            --suppress=normalCheckLevelMaxBranches \
-            --error-exitcode=1 \
-            -I core -I controllers -I filters -I models -I services \
-            controllers core filters models services main.cc
+        run: bash backend_cpp/scripts/run_cppcheck.sh
 
   frontend-vue:
     name: Frontend (build + vitest)
@@ -131,13 +143,19 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: Verify Node version
         working-directory: frontend
-        run: npm ci || npm install
+        run: npm run check:node
+
+      - name: Install dependencies (lockfile-exact)
+        working-directory: frontend
+        # npm ci only: a lockfile/manifest mismatch must fail the job instead of
+        # being papered over by a fresh resolve (iteration 20 / Epic 20.3A).
+        run: npm ci
 
       - name: Audit production dependencies (blocking)
         working-directory: frontend
@@ -180,13 +198,17 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: Verify Node version
         working-directory: frontend
-        run: npm ci || npm install
+        run: npm run check:node
+
+      - name: Install dependencies (lockfile-exact)
+        working-directory: frontend
+        run: npm ci
 
       - name: Install Playwright browsers
         working-directory: frontend
@@ -248,14 +270,17 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/vcpkg
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('backend_cpp/vcpkg.json') }}
+          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_BASELINE }}-${{ hashFiles('backend_cpp/vcpkg.json', 'backend_cpp/vcpkg-configuration.json', 'backend_cpp/vcpkg-overlay-ports/**') }}
 
-      - name: Bootstrap vcpkg
+      - name: Checkout pinned vcpkg
         run: |
-          if [ ! -d "$HOME/vcpkg" ]; then
+          if [ ! -d "$HOME/vcpkg/.git" ]; then
             git clone https://github.com/microsoft/vcpkg.git "$HOME/vcpkg"
           fi
-          "$HOME/vcpkg/bootstrap-vcpkg.sh"
+          git -C "$HOME/vcpkg" fetch --depth 1 origin "$VCPKG_BASELINE"
+          git -C "$HOME/vcpkg" checkout --detach "$VCPKG_BASELINE"
+          "$HOME/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+          echo "vcpkg at $(git -C "$HOME/vcpkg" rev-parse HEAD)"
 
       - name: Build backend
         working-directory: backend_cpp
@@ -279,4 +304,7 @@ jobs:
           WONIUNOTE_TEST_REDIS_PORT: "6379"
           WONIUNOTE_TEST_PORT: "5273"
           WONIUNOTE_TEST_RATE_LIMIT: "30"
+          # Release gate: the rate-limit case must observe a real 429 instead
+          # of skipping when Redis is unavailable.
+          WONIUNOTE_TEST_STRICT: "1"
           PYTEST_CMD: "python -m pytest -p no:cacheprovider -o addopts=''"
