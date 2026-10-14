@@ -79,8 +79,13 @@ test.describe('Theme switching', () => {
     await expect(panel).toBeVisible()
     const box = await panel.boundingBox()
 
+    // Sub-pixel tolerance: centering/transforms yield fractional box
+    // coordinates (mobile-chrome reported x = -0.17px), which is below one
+    // device pixel and not a visible overflow. Anything past half a CSS pixel
+    // still fails the test.
+    const SUBPIXEL = 0.5
     expect(box).not.toBeNull()
-    expect(box.x).toBeGreaterThanOrEqual(0)
-    expect(box.x + box.width).toBeLessThanOrEqual(390)
+    expect(box.x).toBeGreaterThanOrEqual(-SUBPIXEL)
+    expect(box.x + box.width).toBeLessThanOrEqual(390 + SUBPIXEL)
   })
 })

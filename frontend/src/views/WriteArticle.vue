@@ -21,6 +21,7 @@
         <el-form-item label="内容" prop="content">
           <div class="editor-wrapper">
             <UEditor
+              ref="editorRef"
               v-model="form.content"
               :config="editorConfig"
               @ready="onEditorReady"
@@ -102,6 +103,7 @@ const router = useRouter()
 const articleStore = useArticleStore()
 
 const formRef = ref(null)
+const editorRef = ref(null)
 const saving = ref(false)
 const publishing = ref(false)
 
@@ -178,7 +180,13 @@ async function publish() {
 
 async function saveArticle() {
   if (!formRef.value) return
-  
+
+  // 提交前冲刷编辑器待同步内容：编辑器输入走 300ms 防抖，用户“输入后立即点击
+  // 保存/发布”时防抖可能尚未触发；且 Firefox 在点击 iframe 外部按钮时不一定
+  // 派发编辑区 body 的 blur（flush 依赖的另一个入口），校验会读到空的旧值并报
+  // “请输入内容”（迭代20 / Epic 20.2：E2E 在 firefox 下偶发复现）。
+  editorRef.value?.flushContent?.()
+
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
   

@@ -125,6 +125,32 @@ const defaultConfig = {
   imageAllowFiles: ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp']
 }
 
+// 内容同步：编辑区变更 -> v-model。
+// 提升到组件作用域，使提交方（如 WriteArticle）能在校验/提交前调用
+// flushContent() 冲刷 300ms 防抖，避免"输入后立即发布"读到旧值。
+function syncFromEditor() {
+  if (!editor) return
+  emit('update:modelValue', editor.getContent())
+}
+
+/** 立即同步，取消防抖中的待执行同步。 */
+function flushContentSync() {
+  if (contentSyncTimer) {
+    clearTimeout(contentSyncTimer)
+    contentSyncTimer = null
+  }
+  syncFromEditor()
+}
+
+/** 防抖同步（打字/粘贴等高频编辑）。 */
+function scheduleContentSync() {
+  if (contentSyncTimer) clearTimeout(contentSyncTimer)
+  contentSyncTimer = setTimeout(() => {
+    contentSyncTimer = null
+    syncFromEditor()
+  }, 300)
+}
+
 /**
  * 动态加载脚本
  * @param {string} src - 脚本 URL
@@ -212,23 +238,6 @@ async function initEditor() {
             applyEditorTheme()
           }
         } catch { /* 忽略 */ }
-      }
-      function syncFromEditor() {
-        emit('update:modelValue', editor.getContent())
-      }
-      function flushContentSync() {
-        if (contentSyncTimer) {
-          clearTimeout(contentSyncTimer)
-          contentSyncTimer = null
-        }
-        syncFromEditor()
-      }
-      function scheduleContentSync() {
-        if (contentSyncTimer) clearTimeout(contentSyncTimer)
-        contentSyncTimer = setTimeout(() => {
-          contentSyncTimer = null
-          syncFromEditor()
-        }, 300)
       }
       function bindEditorBodyListeners(body) {
         if (editorBodyEl) {
@@ -351,7 +360,9 @@ defineExpose({
   /** 插入 HTML */
   insertHtml: (html) => editor?.execCommand('insertHtml', html),
   /** 聚焦编辑器 */
-  focus: () => editor?.focus()
+  focus: () => editor?.focus(),
+  /** 立即把编辑器内容同步到 v-model（取消防抖），供提交前调用 */
+  flushContent: () => flushContentSync()
 })
 </script>
 

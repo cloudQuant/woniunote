@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test'
 import { mockApi, loginAs } from './support/mockApi'
+import {
+  editorBodyHtml,
+  expectEditorHtmlToContain,
+  expectEditorHtmlNotToContain,
+  expectEditorTextToContain,
+  typeInEditor
+} from './support/editor'
 
 /**
  * E2E coverage for the "写文章 + Markdown 导入" flow (迭代 17 / Epic 17.5).
@@ -23,7 +30,6 @@ import { mockApi, loginAs } from './support/mockApi'
 
 const IMPORT_BUTTON = '.edui-for-contentimport .edui-button-body'
 const DIALOG_IFRAME = 'iframe[src*="contentimport"]'
-const EDITOR_FRAME = '.edui-editor-iframeholder iframe'
 
 /** Sample Markdown mixing a heading, inline math and a multi-line display block. */
 const SAMPLE_MARKDOWN = [
@@ -144,10 +150,9 @@ test.describe('Write article + Markdown import', () => {
     await page.locator('.edui-okbutton').click()
     await expect(page.locator('.edui-dialog:visible')).toHaveCount(0)
 
-    const editor = page.frameLocator(EDITOR_FRAME)
-    const body = editor.locator('body')
-    await expect(body.locator('h1')).toHaveText('标题')
-    const editorHtml = await body.innerHTML()
+    await expectEditorHtmlToContain(page, '标题')
+    const editorHtml = await editorBodyHtml(page)
+    expect(editorHtml).toMatch(/<h1[^>]*>标题<\/h1>/)
     expect(editorHtml).toContain('$c^*$')
     expect(editorHtml).toContain('$n^*$')
     expect(editorHtml).toContain('\\frac{a}{b} = c')
@@ -168,13 +173,10 @@ test.describe('Write article + Markdown import', () => {
     await expect(page.locator('.edui-dialog:visible')).toHaveCount(0)
 
     // Nothing was inserted, and the editing surface still accepts input.
-    const editor = page.frameLocator(EDITOR_FRAME)
-    const body = editor.locator('body')
-    await expect(body).not.toContainText('标题')
+    await expectEditorHtmlNotToContain(page, '标题')
 
-    await body.click()
-    await page.keyboard.type('手动输入的内容')
-    await expect(body).toContainText('手动输入的内容')
+    await typeInEditor(page, '手动输入的内容')
+    await expectEditorTextToContain(page, '手动输入的内容')
   })
 
   test('saving a draft in edit mode posts the article body with drafted=1', async ({ page }) => {
@@ -189,8 +191,7 @@ test.describe('Write article + Markdown import', () => {
     // backfilled with the article body — this silently failed before the
     // iteration-17 UEditor ready fix (isReady was never true, so the
     // modelValue watch and the ready-path setContent were both dead).
-    const editorFrame = page.frameLocator(EDITOR_FRAME)
-    await expect(editorFrame.locator('body')).toContainText('这是一篇关于量化投资的文章正文')
+    await expectEditorTextToContain(page, '这是一篇关于量化投资的文章正文')
 
     const saveButton = page.getByRole('button', { name: '保存草稿' })
     await waitForStableLayout(saveButton)
@@ -228,9 +229,7 @@ test.describe('Write article + Markdown import', () => {
     await page.locator('.el-cascader-panel .el-cascader-node').filter({ hasText: '股票策略' }).first().click()
     await page.keyboard.press('Escape')
 
-    const editor = page.frameLocator(EDITOR_FRAME)
-    await editor.locator('body').click()
-    await page.keyboard.type('这是通过编辑器输入的正文。')
+    await typeInEditor(page, '这是通过编辑器输入的正文。')
 
     const publishButton = page.getByRole('button', { name: '发布' })
     await waitForStableLayout(publishButton)
