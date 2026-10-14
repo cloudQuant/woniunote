@@ -3,10 +3,15 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "check:node": "node scripts/check-node-version.mjs",
     "lint": "eslint \"src/**/*.{js,vue}\"",
     "lint:ci": "eslint \"src/**/*.{js,vue}\" \"e2e/**/*.js\" --max-warnings=0",
     "test": "vitest run --config vitest.config.js",
