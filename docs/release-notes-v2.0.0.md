@@ -1,7 +1,8 @@
 # WoniuNote v2.0.0 — 发布说明草稿（迭代 20）
 
-> 状态：**草稿**。冻结发布候选 SHA 后，实际验收 run / 报告链接写入独立验收记录与最终
-> Release body；本文件不声称尚未执行的验证结果。
+> 状态：**已发布**（`v2.0.0` @ `f2aaec6`，2026-10-14）。实际验收 run 链接、演练结果与
+> 发布后回读见迭代 20 验收记录第八节及 GitHub Release：
+> https://github.com/cloudQuant/woniunote/releases/tag/v2.0.0
 > 上一可用部署基点：`dev_cpp` @ `8eab0a06cbf2af4edfc38d6baeaeb48bd839e040`
 > （仓库此前没有 tag / Release；回滚基点见"回滚"一节）。
 
