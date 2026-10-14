@@ -307,4 +307,10 @@ jobs:
           # Release gate: the rate-limit case must observe a real 429 instead
           # of skipping when Redis is unavailable.
           WONIUNOTE_TEST_STRICT: "1"
-          PYTEST_CMD: "python -m pytest -p no:cacheprovider -o addopts=''"
+          # Plain command only. Quoting tricks in this value (e.g. addopts='')
+          # survive environment expansion as literal quotes; pytest then reads
+          # the empty value as a path argument for the current directory and
+          # collects the whole repository instead of the integration suite.
+          # The suite's own pytest.ini (passed by the runner with -c) supplies
+          # -v and -p no:cacheprovider.
+          PYTEST_CMD: "python -m pytest"

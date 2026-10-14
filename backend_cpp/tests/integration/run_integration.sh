@@ -77,7 +77,7 @@ if [ -n "$EXTERNAL_BASE_URL" ]; then
   export WONIUNOTE_TEST_STRICT="$STRICT"
   PYTEST_CMD="${PYTEST_CMD:-$PYTHON_CMD -m pytest}"
   # shellcheck disable=SC2086
-  $PYTEST_CMD "$SCRIPT_DIR/test_api_integration.py" -v
+  $PYTEST_CMD -c "$SCRIPT_DIR/pytest.ini" "$SCRIPT_DIR/test_api_integration.py"
   exit $?
 fi
 
@@ -278,10 +278,16 @@ export WONIUNOTE_TEST_RATE_LIMIT="$RATE_LIMIT"
 export WONIUNOTE_TEST_STRICT="$STRICT"
 
 # PYTEST_CMD may contain args (e.g. "python3 -m pytest"); default to module form
-# with the configured interpreter.
+# with the configured interpreter. Keep it a plain command: `-o addopts=''` and
+# similar shell-quoting tricks survive environment expansion as literal quotes,
+# and pytest then turns the empty value into a path argument for the current
+# directory, collecting the whole repository instead of this suite.
 PYTEST_CMD="${PYTEST_CMD:-$PYTHON_CMD -m pytest}"
+# `-c` pins rootdir and collection to this suite's own config. Without it pytest
+# loads the Flask-era repository-root pytest.ini, whose testpaths points at a
+# directory that no longer exists and whose addopts need plugins CI lacks.
 # shellcheck disable=SC2086
-$PYTEST_CMD "$SCRIPT_DIR/test_api_integration.py" -v
+$PYTEST_CMD -c "$SCRIPT_DIR/pytest.ini" "$SCRIPT_DIR/test_api_integration.py"
 RESULT=$?
 
 exit $RESULT

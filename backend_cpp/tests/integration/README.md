@@ -64,6 +64,15 @@ starts the backend on a test port with a strong `WONIUNOTE_JWT_SECRET`, waits
 for `/health`, runs pytest, then tears the server down (also on Ctrl-C/failure;
 the per-run server log is named with the runner's PID).
 
+The runner passes this directory's `pytest.ini` with `-c`, so collection is
+governed by that file rather than by the repository-root `pytest.ini` (Flask
+era: its `testpaths` pointed at a directory that no longer exists and its
+addopts need plugins CI does not install). Keep `PYTEST_CMD`, if you set it, a
+plain command — quoting tricks such as `-o addopts=''` survive environment
+expansion as literal quotes, and pytest then reads the empty value as a path
+argument for the current directory and collects the whole repository instead of
+this suite.
+
 ### Strict mode (release / CI acceptance)
 
 ```bash
