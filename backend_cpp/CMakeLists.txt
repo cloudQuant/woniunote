@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
-project(woniunote_backend CXX)
+# Release version — single source of truth for the backend's version strings.
+# main.cc / SystemController.cc use the WONIUNOTE_VERSION macro; the release
+# check (scripts/check_release_version.sh) verifies this matches
+# frontend/package.json and backend_cpp/vcpkg.json.
+project(woniunote_backend VERSION 2.0.0 LANGUAGES CXX)
+add_compile_definitions(WONIUNOTE_VERSION="${PROJECT_VERSION}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,6 +48,11 @@ if(MSVC)
     add_compile_options(/utf-8)
     add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
 endif()
+
+# bcrypt (core/security.cc) uses crypt_r() on Linux, which lives in libcrypt
+# (libxcrypt). macOS has no separate libcrypt (crypt_r comes from libSystem and
+# the code uses its PBKDF2 fallback), so the library is linked only when found.
+find_library(CRYPT_LIBRARY crypt)
 
 # Find Drogon package
 if(USE_SYSTEM_LIBS)
@@ -153,6 +163,10 @@ else()
         JsonCpp::JsonCpp
         spdlog::spdlog_header_only
     )
+    # Linux: bcrypt needs crypt_r() from libcrypt (see find_library above).
+    if(CRYPT_LIBRARY)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${CRYPT_LIBRARY})
+    endif()
 endif()
 
 # Include directories

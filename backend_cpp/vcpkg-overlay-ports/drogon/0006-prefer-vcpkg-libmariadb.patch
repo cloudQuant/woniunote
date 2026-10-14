@@ -1,0 +1,47 @@
+diff --git a/cmake_modules/FindMySQL.cmake b/cmake_modules/FindMySQL.cmake
+index c94e636..7453960 100644
+--- a/cmake_modules/FindMySQL.cmake
++++ b/cmake_modules/FindMySQL.cmake
+@@ -26,6 +26,33 @@
+ 
+ # ##############################################################################
+ 
++# -----------------------------------------------------------------------------
++# Prefer the MariaDB Connector/C provided by vcpkg (unofficial-libmariadb).
++#
++# Drogon's MySQL ORM relies on the client non-blocking API (MYSQL_OPT_NONBLOCK,
++# mysql_real_connect_start(), mysql_get_socket(), MYSQL_WAIT_*). Oracle's MySQL
++# 8.0 client removed that API, so a system MySQL installation must not shadow
++# the vcpkg-provided MariaDB client: selecting the headers from
++# unofficial::libmariadb keeps the client ABI identical to the one libdrogon is
++# built against and keeps builds working on machines that ship MySQL 8.0 dev
++# headers (e.g. GitHub's ubuntu-latest runner images).
++find_package(unofficial-libmariadb CONFIG QUIET)
++if(unofficial-libmariadb_FOUND AND TARGET unofficial::libmariadb)
++  get_target_property(_drogon_libmariadb_include_dir unofficial::libmariadb
++                      INTERFACE_INCLUDE_DIRECTORIES)
++  if(_drogon_libmariadb_include_dir
++     AND EXISTS "${_drogon_libmariadb_include_dir}/mysql.h")
++    set(MYSQL_INCLUDE_DIRS
++        "${_drogon_libmariadb_include_dir}"
++        CACHE PATH "MariaDB Connector/C include directory (vcpkg)" FORCE)
++    set(MYSQL_LIBRARIES
++        unofficial::libmariadb
++        CACHE STRING "MariaDB Connector/C library target (vcpkg)" FORCE)
++  endif()
++  unset(_drogon_libmariadb_include_dir)
++endif()
++# -----------------------------------------------------------------------------
++
+ # -------------- FIND MYSQL_INCLUDE_DIRS ------------------
+ find_path(MARIADB_INCLUDE_DIRS
+           NAMES mysql.h
+@@ -67,7 +94,7 @@ find_path(MYSQL_INCLUDE_DIRS
+                 $ENV{ProgramFiles}/MySQL/*/include
+                 $ENV{SystemDrive}/MySQL/*/include)
+ 
+-if(EXISTS "${MARIADB_INCLUDE_DIRS}/mysql.h")
++if(NOT MYSQL_INCLUDE_DIRS AND EXISTS "${MARIADB_INCLUDE_DIRS}/mysql.h")
+   set(MYSQL_INCLUDE_DIRS ${MARIADB_INCLUDE_DIRS})
+ elseif(EXISTS "${MYSQL_INCLUDE_DIRS}/mysql.h")
+ 

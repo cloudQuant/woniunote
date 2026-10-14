@@ -62,6 +62,10 @@ foreach(module IN LISTS TEST_MODULES)
             JsonCpp::JsonCpp
             spdlog::spdlog_header_only
         )
+        # Linux: bcrypt needs crypt_r() from libcrypt (see top-level CMakeLists).
+        if(CRYPT_LIBRARY)
+            target_link_libraries(${module} PRIVATE ${CRYPT_LIBRARY})
+        endif()
     endif()
 
     add_test(NAME ${module} COMMAND ${module})
