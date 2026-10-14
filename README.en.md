@@ -160,7 +160,8 @@ quality gate for the active `dev_cpp` stack.
 | Users | `/api/user/*` | User profile |
 | Math | `/api/math/*` | Math training |
 | Admin | `/api/admin/*` | Admin dashboard |
-| System | `/api/health`, `/api/status` | Health and version responses |
+| System | `/health`, `/api/system/health` | Health and version responses (unauthenticated) |
+| System | `/api/system/status`, `/api/system/db` | Version and database status (admin only) |
 
 ## 📄 License
 
