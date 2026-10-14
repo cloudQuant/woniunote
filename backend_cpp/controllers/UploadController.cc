@@ -149,7 +149,11 @@ void UploadController::uploadImage(const HttpRequestPtr& req,
 
     file.saveAs(fullPath.string());
 
-    std::string url = "/static/" + relativePath + "/" + filename;
+    // The file lives under getUploadPath(), which Drogon serves relative to
+    // document_root; nginx proxies /uploads to this backend. The URL must
+    // therefore be /uploads/<path under getUploadPath()> — it used to say
+    // /static/..., a prefix nothing serves, so every uploaded image 404'd.
+    std::string url = "/uploads/" + relativePath + "/" + filename;
     Logger::info("[Upload] Image uploaded", {{"filename", filename}, {"size", std::to_string(file.fileLength())}});
 
     Json::Value data;
@@ -210,7 +214,8 @@ void UploadController::uploadFile(const HttpRequestPtr& req,
 
     file.saveAs(fullPath.string());
 
-    std::string url = "/static/" + relativePath + "/" + filename;
+    // See uploadImage: the served prefix is /uploads, not /static.
+    std::string url = "/uploads/" + relativePath + "/" + filename;
     Logger::info("[Upload] File uploaded", {{"filename", filename}, {"size", std::to_string(file.fileLength())}});
 
     Json::Value data;
@@ -273,7 +278,10 @@ void UploadController::uploadAvatar(const HttpRequestPtr& req,
 
     file.saveAs(fullPath.string());
 
-    std::string url = "/static/uploads/avatars/" + filename;
+    // See uploadImage: the served prefix is /uploads, not /static. The avatar
+    // directory is getUploadPath() + "/uploads/avatars", hence the doubled
+    // segment — it mirrors the stored layout rather than a pretty URL.
+    std::string url = "/uploads/uploads/avatars/" + filename;
     Logger::info("[Upload] Avatar uploaded", {{"userid", userId}, {"filename", filename}});
 
     Json::Value data;
