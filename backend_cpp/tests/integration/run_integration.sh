@@ -28,13 +28,58 @@ REDIS_PORT="${WONIUNOTE_TEST_REDIS_PORT:-6379}"
 TEST_PORT="${WONIUNOTE_TEST_PORT:-5273}"
 RATE_LIMIT="${WONIUNOTE_TEST_RATE_LIMIT:-60}"
 BACKEND_BIN="${WONIUNOTE_BACKEND_BIN:-$BACKEND_DIR/build/woniunote_backend}"
+# Interpreter used for the runner's own Python helpers (Redis preflight,
+# config rendering). PYTEST_CMD only covers the pytest invocation itself.
+PYTHON_CMD="${WONIUNOTE_TEST_PYTHON:-python3}"
+# Strict mode (release/CI): no skips — a rate-limit case that cannot observe a
+# real 429 must fail the run instead of being silently skipped.
+STRICT="${WONIUNOTE_TEST_STRICT:-0}"
 
-BASE_URL="http://127.0.0.1:${TEST_PORT}"
+# Optional: run the suite against an already-running test instance. When set,
+# the runner does not create/seed the schema and does not start a backend.
+EXTERNAL_BASE_URL="${WONIUNOTE_TEST_BASE_URL:-}"
+BASE_URL="${EXTERNAL_BASE_URL:-http://127.0.0.1:${TEST_PORT}}"
 
 echo "==> WoniuNote backend integration tests"
 echo "    DB:    ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 echo "    Redis: ${REDIS_HOST}:${REDIS_PORT} (db 1)"
 echo "    URL:   ${BASE_URL}"
+echo "    Mode:  $([ "$STRICT" = "1" ] && echo strict || echo local)"
+[ -n "$EXTERNAL_BASE_URL" ] && echo "    Using external instance: no DB setup, no server start"
+
+# --- Isolation guard -------------------------------------------------------
+# The suite creates rows and hammers the rate limiter; it must never point at a
+# development or production schema. Test database names must look like test
+# schemas (e.g. woniunote_test), and the API port must not be the dev port.
+case "$DB_NAME" in
+  *_test | *_test_* | test_* | *Test) ;;
+  *)
+    echo "ERROR: refusing to run against non-test database '${DB_NAME}'." >&2
+    echo "       Use a dedicated test schema (default: woniunote_test)." >&2
+    exit 1
+    ;;
+esac
+
+if [ -z "$EXTERNAL_BASE_URL" ] && [ "$TEST_PORT" = "5173" ]; then
+  echo "ERROR: WONIUNOTE_TEST_PORT=5173 is the development backend port." >&2
+  echo "       Pick a dedicated test port (default: 5273)." >&2
+  exit 1
+fi
+
+# --- External-instance mode ------------------------------------------------
+# WONIUNOTE_TEST_BASE_URL points the suite at an already-running test backend.
+# This mode deliberately skips schema setup and server management: the caller
+# owns the instance, its schema and its lifecycle (README documents this).
+if [ -n "$EXTERNAL_BASE_URL" ]; then
+  echo "==> Running against external instance ${BASE_URL} (no DB setup, no server start)"
+  export WONIUNOTE_TEST_BASE_URL="$BASE_URL"
+  export WONIUNOTE_TEST_RATE_LIMIT="$RATE_LIMIT"
+  export WONIUNOTE_TEST_STRICT="$STRICT"
+  PYTEST_CMD="${PYTEST_CMD:-$PYTHON_CMD -m pytest}"
+  # shellcheck disable=SC2086
+  $PYTEST_CMD "$SCRIPT_DIR/test_api_integration.py" -v
+  exit $?
+fi
 
 print_preflight_help() {
   cat >&2 <<EOF
@@ -65,9 +110,10 @@ if [ ! -x "$BACKEND_BIN" ]; then
   exit 1
 fi
 
-for required_cmd in mysql curl python3; do
+for required_cmd in mysql curl "$PYTHON_CMD"; do
   if ! command -v "$required_cmd" >/dev/null 2>&1; then
     echo "ERROR: required command not found: $required_cmd" >&2
+    echo "       Override the Python interpreter with WONIUNOTE_TEST_PYTHON." >&2
     print_preflight_help
     exit 1
   fi
@@ -91,17 +137,23 @@ if ! mysql_cmd -e "SELECT 1" >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! python3 - "$REDIS_HOST" "$REDIS_PORT" <<'PY' >/dev/null 2>&1
+# Redis preflight: speak the protocol (PING/PONG), not just TCP connect. A
+# listening-but-broken Redis would otherwise let the rate-limit case skip
+# silently while looking healthy.
+if ! "$PYTHON_CMD" - "$REDIS_HOST" "$REDIS_PORT" <<'PY' >/dev/null 2>&1
 import socket
 import sys
 
 host = sys.argv[1]
 port = int(sys.argv[2])
-with socket.create_connection((host, port), timeout=2):
-    pass
+with socket.create_connection((host, port), timeout=2) as sock:
+    sock.settimeout(2)
+    sock.sendall(b"PING\r\n")
+    if not sock.recv(64).startswith(b"+PONG"):
+        raise SystemExit("unexpected Redis reply to PING")
 PY
 then
-  echo "ERROR: cannot reach Redis at ${REDIS_HOST}:${REDIS_PORT}." >&2
+  echo "ERROR: Redis at ${REDIS_HOST}:${REDIS_PORT} did not answer PING." >&2
   echo "       Start Redis or override WONIUNOTE_TEST_REDIS_HOST/PORT." >&2
   print_preflight_help
   exit 1
@@ -149,7 +201,7 @@ SQL
 # --- 2. Render integration config -----------------------------------------
 CONFIG_OUT="$BACKEND_DIR/config.integration.json"
 echo "==> Writing $CONFIG_OUT"
-python3 - "$SCRIPT_DIR/config.integration.template.json" "$CONFIG_OUT" \
+"$PYTHON_CMD" - "$SCRIPT_DIR/config.integration.template.json" "$CONFIG_OUT" \
   "$TEST_PORT" "$DB_HOST" "$DB_PORT" "$DB_NAME" "$DB_USER" "$DB_PASSWORD" \
   "$REDIS_HOST" "$REDIS_PORT" "$RATE_LIMIT" <<'PY'
 import sys
@@ -179,6 +231,8 @@ export WONIUNOTE_ENV="test"
 export WONIUNOTE_JWT_SECRET="integration-test-$(date +%s)-$RANDOM-strongsecret"
 
 SERVER_PID=""
+# Per-run log name so concurrent runs do not overwrite each other's evidence.
+SERVER_LOG="${TMPDIR:-/tmp}/woniunote_itest_server.$$.log"
 cleanup() {
   if [ -n "$SERVER_PID" ] && kill -0 "$SERVER_PID" 2>/dev/null; then
     echo "==> Stopping backend (pid $SERVER_PID)"
@@ -187,12 +241,14 @@ cleanup() {
   fi
   rm -f "$CONFIG_OUT"
 }
-trap cleanup EXIT
+# EXIT covers normal termination and failures; INT/TERM cover Ctrl-C and
+# signals from CI cancellation, so no orphaned backend or temp config remains.
+trap cleanup EXIT INT TERM
 
 echo "==> Starting backend on port ${TEST_PORT}"
 (
   cd "$BACKEND_DIR"
-  exec "$BACKEND_BIN" "$CONFIG_OUT" >/tmp/woniunote_itest_server.log 2>&1
+  exec "$BACKEND_BIN" "$CONFIG_OUT" >"$SERVER_LOG" 2>&1
 ) &
 SERVER_PID=$!
 
@@ -203,12 +259,12 @@ until curl -sf "${BASE_URL}/health" >/dev/null 2>&1; do
   ATTEMPTS=$((ATTEMPTS + 1))
   if ! kill -0 "$SERVER_PID" 2>/dev/null; then
     echo "ERROR: backend process exited early. Server log:" >&2
-    cat /tmp/woniunote_itest_server.log >&2 || true
+    cat "$SERVER_LOG" >&2 || true
     exit 1
   fi
   if [ "$ATTEMPTS" -ge 60 ]; then
     echo "ERROR: backend did not become healthy in time. Server log:" >&2
-    cat /tmp/woniunote_itest_server.log >&2 || true
+    cat "$SERVER_LOG" >&2 || true
     exit 1
   fi
   sleep 0.5
@@ -219,9 +275,11 @@ echo "    backend healthy after ${ATTEMPTS} checks"
 echo "==> Running integration tests"
 export WONIUNOTE_TEST_BASE_URL="$BASE_URL"
 export WONIUNOTE_TEST_RATE_LIMIT="$RATE_LIMIT"
+export WONIUNOTE_TEST_STRICT="$STRICT"
 
-# PYTEST_CMD may contain args (e.g. "python3 -m pytest"); default to module form.
-PYTEST_CMD="${PYTEST_CMD:-python3 -m pytest}"
+# PYTEST_CMD may contain args (e.g. "python3 -m pytest"); default to module form
+# with the configured interpreter.
+PYTEST_CMD="${PYTEST_CMD:-$PYTHON_CMD -m pytest}"
 # shellcheck disable=SC2086
 $PYTEST_CMD "$SCRIPT_DIR/test_api_integration.py" -v
 RESULT=$?

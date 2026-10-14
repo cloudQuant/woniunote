@@ -26,9 +26,26 @@ captcha (random, in-memory) that a black-box client cannot solve. Registration
 ## Prerequisites
 
 - The backend built at `backend_cpp/build/woniunote_backend`
+  (override with `WONIUNOTE_BACKEND_BIN`)
 - MySQL reachable (default `127.0.0.1:3306`)
-- Redis reachable (default `127.0.0.1:6379`)
-- Python deps: `pip install requests pymysql pytest`
+- Redis reachable **and answering PING** (default `127.0.0.1:6379`); the
+  preflight speaks the Redis protocol, not just TCP
+- Python deps: `pip install requests pytest`
+- A Python interpreter with those deps: `WONIUNOTE_TEST_PYTHON` selects it
+  (default `python3`; on this machine use
+  `/Users/yunjinqi/opt/anaconda3/bin/conda run -n base python`). The same
+  interpreter is used for the runner's own helpers and for pytest unless
+  `PYTEST_CMD` overrides the latter.
+
+## Isolation guard
+
+The suite writes rows and hammers the rate limiter, so the runner refuses to
+start unless the target looks like a test environment:
+
+- `WONIUNOTE_TEST_DB_NAME` must match a test-schema pattern
+  (`*_test`, `test_*`, …); pointing it at `woniunote` / a production name
+  aborts before anything is created or modified.
+- `WONIUNOTE_TEST_PORT` must not be the development backend port (5173).
 
 ## Run
 
@@ -44,7 +61,30 @@ bash backend_cpp/tests/integration/run_integration.sh
 
 The runner: creates+seeds `woniunote_test`, writes `config.integration.json`,
 starts the backend on a test port with a strong `WONIUNOTE_JWT_SECRET`, waits
-for `/health`, runs pytest, then tears the server down.
+for `/health`, runs pytest, then tears the server down (also on Ctrl-C/failure;
+the per-run server log is named with the runner's PID).
+
+### Strict mode (release / CI acceptance)
+
+```bash
+WONIUNOTE_TEST_STRICT=1 bash backend_cpp/tests/integration/run_integration.sh
+```
+
+In strict mode the rate-limit case **must** observe a real `429` with a
+`Retry-After` header; if it cannot (Redis down, limiter disabled), the run
+fails instead of skipping. Without strict mode it skips, which is only
+acceptable for local debugging — a skipped rate-limit case is not release
+evidence.
+
+### External instance mode
+
+```bash
+WONIUNOTE_TEST_BASE_URL=http://127.0.0.1:5273 bash backend_cpp/tests/integration/run_integration.sh
+```
+
+When `WONIUNOTE_TEST_BASE_URL` is set the runner does **not** create/seed the
+schema and does **not** start or stop a backend: it runs pytest against that
+URL. The caller owns the instance, its schema and its lifecycle.
 
 ## Environment variables
 
@@ -54,8 +94,15 @@ for `/health`, runs pytest, then tears the server down.
 | `WONIUNOTE_TEST_DB_PORT` | `3306` | MySQL port |
 | `WONIUNOTE_TEST_DB_USER` | `root` | MySQL admin user (to create test DB) |
 | `WONIUNOTE_TEST_DB_PASSWORD` | (empty) | MySQL password |
-| `WONIUNOTE_TEST_DB_NAME` | `woniunote_test` | Test database name |
+| `WONIUNOTE_TEST_DB_NAME` | `woniunote_test` | Test database name (must look like a test schema) |
 | `WONIUNOTE_TEST_REDIS_HOST` | `127.0.0.1` | Redis host |
 | `WONIUNOTE_TEST_REDIS_PORT` | `6379` | Redis port |
 | `WONIUNOTE_TEST_PORT` | `5273` | Backend test listen port |
-| `WONIUNOTE_TEST_BASE_URL` | (unset) | If set, skip starting a server and test this URL |
+| `WONIUNOTE_TEST_RATE_LIMIT` | `60` | Per-minute limit the suite expects |
+| `WONIUNOTE_TEST_STRICT` | `0` | `1` = no skips; missing 429 fails the run |
+| `WONIUNOTE_TEST_BASE_URL` | (unset) | If set, skip DB setup/server start and test this URL |
+| `WONIUNOTE_TEST_SKIP_DB_SETUP` | `0` | `1` = reuse an existing prepared schema |
+| `WONIUNOTE_TEST_SKIP_RATELIMIT` | `0` | `1` = disable the rate-limit case (local debug only) |
+| `WONIUNOTE_TEST_PYTHON` | `python3` | Interpreter for the runner's helpers |
+| `WONIUNOTE_BACKEND_BIN` | `backend_cpp/build/woniunote_backend` | Backend binary under test |
+| `PYTEST_CMD` | `$WONIUNOTE_TEST_PYTHON -m pytest` | Full pytest invocation (may contain args) |

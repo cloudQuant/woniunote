@@ -18,6 +18,9 @@ import requests
 
 BASE_URL = os.environ.get("WONIUNOTE_TEST_BASE_URL", "http://127.0.0.1:5273").rstrip("/")
 TIMEOUT = 10
+# Strict mode (release/CI): a case that cannot observe the real behaviour must
+# fail instead of skipping. Local debug runs may leave it off.
+STRICT = os.environ.get("WONIUNOTE_TEST_STRICT") == "1"
 
 
 def url(path: str) -> str:
@@ -171,11 +174,15 @@ def test_article_detail_navigation_returns_null_at_type_boundaries(
     reason="rate-limit test explicitly disabled",
 )
 def test_rate_limit_eventually_returns_429():
-    """Hammer a rate-limited endpoint until a 429 appears.
+    """Hammer a rate-limited endpoint until a real 429 appears.
 
     The limit is configured low (see config.integration.json) so this stays
-    fast. If Redis is unavailable the backend fails open and we never see a
-    429 — in that case we skip rather than fail.
+    fast. Redis must be reachable: without it the backend fails open and no
+    429 is ever produced.
+
+    Strict mode (WONIUNOTE_TEST_STRICT=1, used by CI/release acceptance) fails
+    the run in that case — a release gate must not pass because the rate
+    limiter silently did not engage. Local debug runs may skip instead.
     """
     limit = int(os.environ.get("WONIUNOTE_TEST_RATE_LIMIT", "60"))
     saw_429 = False
@@ -188,7 +195,15 @@ def test_rate_limit_eventually_returns_429():
         )
         if r.status_code == 429:
             saw_429 = True
-            assert r.headers.get("Retry-After") is not None
+            assert r.headers.get("Retry-After") is not None, (
+                "429 response must carry Retry-After"
+            )
             break
     if not saw_429:
-        pytest.skip("No 429 observed (Redis likely fail-open/unavailable)")
+        message = (
+            "No 429 observed after "
+            f"{limit + 20} requests (Redis unavailable or rate limiting disabled)"
+        )
+        if STRICT:
+            pytest.fail(f"Strict mode: {message}")
+        pytest.skip(message)
