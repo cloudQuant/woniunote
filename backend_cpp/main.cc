@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     // Initialize logger
     woniunote::Logger::init("logs");
     woniunote::Logger::info("=== WoniuNote C++ Backend Starting ===");
-    woniunote::Logger::info("Version: 2.0.0-cpp");
+    woniunote::Logger::info("Version: " WONIUNOTE_VERSION "-cpp");
 
     // Load Drogon configuration. Precedence:
     //   1. An explicit path passed as argv[1] (used by integration tests).
@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
 
     // Register lifecycle callbacks
     app().registerBeginningAdvice([]() {
-        woniunote::Logger::info("WoniuNote API v2.0.0 (C++) started successfully");
+        woniunote::Logger::info("WoniuNote API v" WONIUNOTE_VERSION " (C++) started successfully");
         woniunote::Logger::info("Server listening on configured ports");
     });
 
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
            std::function<void(const HttpResponsePtr&)>&& callback) {
             Json::Value ret;
             ret["status"] = "healthy";
-            ret["version"] = "2.0.0-cpp";
+            ret["version"] = WONIUNOTE_VERSION "-cpp";
             auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);
         },
@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
         [](const HttpRequestPtr& req,
            std::function<void(const HttpResponsePtr&)>&& callback) {
             Json::Value ret;
-            ret["message"] = "WoniuNote API v2.0.0 (C++)";
+            ret["message"] = "WoniuNote API v" WONIUNOTE_VERSION " (C++)";
             ret["status"] = "running";
             auto resp = HttpResponse::newHttpJsonResponse(ret);
             callback(resp);

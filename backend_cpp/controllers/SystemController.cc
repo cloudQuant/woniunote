@@ -20,7 +20,7 @@ void SystemController::health(const HttpRequestPtr& req,
     Logger::debug("[System] Health check");
     Json::Value data;
     data["status"] = "healthy";
-    data["version"] = "2.0.0-cpp";
+    data["version"] = WONIUNOTE_VERSION "-cpp";
     callback(Response::success(data));
 }
 
@@ -30,7 +30,7 @@ void SystemController::status(const HttpRequestPtr& req,
     Logger::debug("[System] Status check");
     Json::Value data;
     data["status"] = "running";
-    data["version"] = "2.0.0-cpp";
+    data["version"] = WONIUNOTE_VERSION "-cpp";
     data["framework"] = "Drogon";
     data["threads"] = static_cast<int>(app().getThreadNum());
     callback(Response::success(data));
