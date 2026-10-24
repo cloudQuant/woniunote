@@ -1,0 +1,17 @@
+{
+  "exit": 1,
+  "command": [
+    "npm",
+    "run",
+    "test:e2e",
+    "--",
+    "--workers=1",
+    "--retries=0"
+  ],
+  "node_version": "v22.13.0",
+  "projects": "all",
+  "egress_log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source27-mock-all-egress.json",
+  "seconds": 5.86,
+  "log_sha256": "801f952dce6718a92e9f7f52e84bfa6812ddc7bc063519c1602b5a5cc05e2467",
+  "source_manifest_sha256": "921be4aa48c7c3502840ded5b81c4dbe2d77845cd26633365a7e3a3d1c8152da"
+}

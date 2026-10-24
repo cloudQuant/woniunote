@@ -1,0 +1,10 @@
+{
+  "status": "PASS_STATIC_REVIEW_ONLY",
+  "script_sha256": "14ca55249e9fded3b49c84d45aa4d9fa00649ce329d76260178190e3c5618a66",
+  "primary_review": "Full 499-line initial helper inspected before execution; missing guest registry, asset-union prefix, generated-tree inclusion and unused substitution defects corrected by worker, final edited lines reread",
+  "syntax": "host and extracted guest bash-n pass",
+  "protected_identity": "VM name/SSH/hostname; current4 complete SHA/release/backend PID/binary and config hashes; Nginx master PID/baseline; clean candidate5 pin",
+  "behavior": "prepare builds frontend only in new private VM tree; switch changes static roots preserving API backend4; restore restores exact Nginx baseline; failed probe restores baseline",
+  "unchanged_components": "backend and schema git trees, frontend API/store/session files and package lock compared to4",
+  "boundary": "No runtime PASS inferred from static review; prepare, switch, actual UI and restore evidence are separate"
+}

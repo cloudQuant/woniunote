@@ -22,6 +22,7 @@
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
 const FRONTEND_ROOT = fileURLToPath(new URL('..', import.meta.url))
@@ -89,9 +90,124 @@ const EXEMPTIONS = [
     reason: 'localStorage/matchMedia 不可用降级（3 处）'
   },
   {
+    file: 'api/index.js',
+    match: 'config._retried || config._sessionSnapshot || config.headers.Authorization',
+    reason: 'syncSession 的 failClosed 已 notifyError；认证请求传播错误，匿名公开请求仅清除凭据后继续。api/index.spec.js 覆盖 IDB 失败的匿名请求与认证重放拒绝'
+  },
+  {
+    file: 'api/index.js',
+    match: 'error.config ||= config',
+    reason: '仅补回 Axios config 后 rethrow；后续 rejection handler 按 config 清 loading 并传播错误。api/index.spec.js 覆盖 stale retry 拒绝时 loading 只结束一次'
+  },
+  {
+    file: 'api/index.js',
+    match: '401处理时无法确认登录会话，已阻止刷新和重放',
+    reason: 'syncSession 的 failClosed 已 notifyError；此处阻止 refresh/replay 并拒绝请求。api/index.spec.js 覆盖权威存储不可用时拒绝认证重放'
+  },
+  {
+    file: 'router/index.js',
+    match: 'The store already fails closed and reports the storage error.',
+    reason: 'syncSession 已由 store 清凭据并 notifyError；守卫只把受保护路由视为未登录，公开路由继续。router/index.spec.js 覆盖公开访问与硬刷新守卫，api/index.spec.js 覆盖 IDB 失败的匿名公开请求'
+  },
+  {
     file: 'stores/user.js',
-    match: 'logout()',
-    reason: 'getMe 失败即登出，路由跳转本身即用户反馈'
+    match: 'failClosed(error)',
+    reason: 'failClosed 清内存凭据并调用 notifyError，两个调用点随后 rethrow；authSessionStorage.spec.js 覆盖 IDB fail-closed，api/index.spec.js 覆盖匿名公开请求和认证重放拒绝'
+  },
+  {
+    file: 'stores/user.js',
+    match: 'IndexedDB already committed; legacy mirrors only notify other tabs and',
+    reason: '镜像失败发生在 IDB 事务完成后且只写兼容通知；API/路由每次同步仍读取权威记录。authSessionStorage.spec.js 覆盖事务提交，stores/user.spec.js 覆盖跨标签同步'
+  },
+  {
+    file: 'stores/user.js',
+    match: 'localClearError = error',
+    reason: '本地撤销失败被带入 revoked:false 结果；AppHeader 对未确认撤销显示 warning。AppHeader.spec.js 覆盖该 warning，stores/user.spec.js 覆盖 logout 未确认结果'
+  },
+  {
+    file: 'stores/user.js',
+    match: 'return { revoked: false, error }',
+    reason: '本地无凭据且会话存储不可用时返回未确认；AppHeader 对 revoked:false 显示 warning。AppHeader.spec.js 覆盖该反馈'
+  },
+  {
+    file: 'stores/user.js',
+    match: 'return { revoked: false, error: localClearError || error }',
+    reason: 'logout API/本地清理失败均返回未确认；AppHeader 对 revoked:false 显示 warning。stores/user.spec.js 覆盖 API 失败结果，AppHeader.spec.js 覆盖 warning'
+  },
+  {
+    file: 'test/authSessionStorageMock.js',
+    match: 'Invalid test legacy mirrors are ignored like the production seeding path.',
+    reason: '仅测试适配器解析初始化夹具中的损坏旧镜像；stores/user.spec.js 覆盖兼容种子路径'
+  },
+  {
+    file: 'test/authSessionStorageMock.js',
+    match: 'The legacy user mirror is optional test fixture data.',
+    reason: '仅测试夹具中 user 镜像的可选 JSON 解析；authSessionStorage.spec.js 覆盖首次 legacy 种子初始化'
+  },
+  {
+    file: 'utils/authSessionStorage.js',
+    match: 'A malformed legacy mirror is ignored only while seeding the new authority.',
+    reason: '仅在首次事务播种时容忍旧 user JSON 损坏，后续权威记录严格校验；authSessionStorage.spec.js 覆盖只首次读取 legacy 种子'
+  },
+  {
+    file: 'utils/authSessionStorage.js',
+    match: 'An invalid legacy canonical record falls back to the older key mirrors.',
+    reason: '仅首次播种时让无效旧 canonical 回退兼容键，不用于权威 IDB 读取；authSessionStorage.spec.js 覆盖首次播种及后续不重读'
+  },
+  {
+    file: 'utils/authSessionStorage.js',
+    match: 'failTransaction(error)',
+    reason: 'catch 调用 failTransaction 中止 IDB 写事务，onabort 拒绝 promise 并由 store failClosed/notifyError 后传播；authSessionStorage.spec.js 覆盖原子 compare-and-update 与 fail-closed'
+  },
+  {
+    file: 'utils/authSessionStorage.js',
+    match: 'failure = error\n              transaction.abort()',
+    reason: '权威读取解析失败时中止只读事务，onabort 拒绝 promise 并由 store failClosed/notifyError；authSessionStorage.spec.js 覆盖无效记录 fail-closed'
+  },
+  {
+    file: 'views/user/Profile.vue',
+    match: 'The store reports the storage failure and clears in-memory credentials.',
+    reason: 'mount 的 syncSession 已由 store failClosed/notifyError；页面不继续使用旧资料。user-views.spec.js 覆盖资料页旧账号响应隔离，api/index.spec.js 覆盖 IDB 失败反馈路径'
+  },
+  {
+    file: 'views/WriteArticle.vue',
+    match: '编辑器会话初始化失败，store 已提示并清除内存登录状态',
+    reason: '编辑器初始化遇到会话存储错误时 store 的 failClosed 已通知用户，页面记录原因并禁止继续加载/提交；WriteArticle.spec.js 覆盖初始化后身份隔离，stores/user.spec.js 覆盖 failClosed 反馈'
+  },
+  {
+    file: 'views/WriteArticle.vue',
+    match: "logWarning('无法显示编辑恢复失败提示'",
+    reason: '仅在 ElMessage.warning 反馈组件本身抛错后记录兜底日志；WriteArticle.spec.js 覆盖 warning 抛错时仍保留已恢复内容'
+  },
+  {
+    file: 'views/WriteArticle.vue',
+    match: '本地编辑恢复稿无法读取，已加载服务器内容；请检查浏览器存储设置',
+    reason: '恢复稿读取失败通过 warnEditorRecovery 调用 ElMessage.warning，告知用户服务器内容已加载；WriteArticle.spec.js 覆盖该用户反馈'
+  },
+  {
+    file: 'views/WriteArticle.vue',
+    match: "warnEditorRecovery('已恢复未保存内容，但无法清理本地恢复副本', error)",
+    reason: '恢复稿清理失败通过 warnEditorRecovery 调用 ElMessage.warning，同时保留已恢复内容；WriteArticle.spec.js 覆盖该用户反馈'
+  },
+  {
+    file: 'utils/authNavigation.js',
+    match: 'return null',
+    reason: 'router.resolve 解析失败时拒绝 redirect；authNavigation.spec.js 覆盖抛错路径'
+  },
+  {
+    file: 'utils/editorRecovery.js',
+    match: 'return null',
+    reason: '损坏的本地编辑快照按不可恢复处理；editorRecovery.spec.js 覆盖 malformed JSON'
+  },
+  {
+    file: 'utils/editorRecovery.js',
+    match: 'reportPageExitError(registration, error)',
+    reason: '页面退出保存失败交给编辑器的 onPageExitError 用户反馈 wrapper；editorRecovery.spec.js 覆盖页面退出错误回调'
+  },
+  {
+    file: 'utils/editorRecovery.js',
+    match: "logWarning('无法报告页面离开时的编辑恢复失败'",
+    reason: '仅在 onPageExitError 用户反馈 wrapper 自身抛错时记录兜底日志；editorRecovery.spec.js 覆盖反馈回调抛错'
   },
   {
     file: 'utils/logger.js',

@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "source_digest": "8fa23d6f6a1d374abd260ab602da94d485fdd4c08312b4244ff736d42fdd5548",
+  "binary_sha256": "df379f9b65c4cf81d66e5f2ec39c33bff7d1b54c58eaad4d6e88b8c399a4d57a",
+  "scope": "formal macOS no database/redis; route absence with default/injected flags and matching test header; no business writes",
+  "cases": [
+    {
+      "injected_env": false,
+      "health": 200,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "method": "POST",
+      "process_exit": 0,
+      "port_closed": true
+    },
+    {
+      "injected_env": true,
+      "health": 200,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "method": "POST",
+      "process_exit": 0,
+      "port_closed": true
+    }
+  ]
+}

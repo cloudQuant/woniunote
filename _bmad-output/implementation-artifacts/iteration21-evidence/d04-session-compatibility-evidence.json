@@ -1,0 +1,121 @@
+{
+  "scope": "D04 bidirectional compatibility admission only; not complete deployment acceptance",
+  "result": "PASS",
+  "reviewed_at": "2026-10-24T04:06:58.591097+00:00",
+  "candidate2": "9c597548fc18d3250f68cba8e55bfaa171edacfb",
+  "candidate3": "7fb178838c6ae4511c748a77e67d258ca576d5e9",
+  "dimensions": {
+    "API": "PASS",
+    "SESSION": "PASS",
+    "SCHEMA": "PASS",
+    "OLD_FRONTEND_NEW_BACKEND": "PASS",
+    "NEW_FRONTEND_OLD_BACKEND": "PASS"
+  },
+  "session": {
+    "primary-readback.json": {
+      "status": "PREPARED_NOT_ACCEPTED",
+      "config": {
+        "candidate2": {
+          "sha256": "570c2e18aad100a633304e6bc7b519d9a74f6e26eca60102bd0e8877b0f98815",
+          "access_ttl_minutes": 1,
+          "remaining_fields_equal_to_main": true,
+          "pid": 78002
+        },
+        "candidate3": {
+          "sha256": "a03265f9f9bf86e151e5e4a01817696d4c1f64565796bc31cdf3840048371784",
+          "access_ttl_minutes": 1,
+          "remaining_fields_equal_to_main": true,
+          "pid": 78104
+        }
+      },
+      "nginx_sha256": "1f96c319ec59c4411939f6031840561d18342978f1881505d7557954f8d1d63b",
+      "upstream": "127.0.0.1:5176",
+      "log_fields": [
+        "time",
+        "method",
+        "path_without_query",
+        "status",
+        "upstream_addr",
+        "upstream_status"
+      ],
+      "main_config_unchanged": true
+    },
+    "session-login.json": {
+      "captured_at": "2026-10-24T04:03:52.638018+00:00",
+      "phase": "candidate3_human_login",
+      "session_slot_sha256": "03e97fe3f6aab2db208120ca55fb505fcae1a2bc5727a42f6daf7740e09145f8",
+      "http_lines": [
+        "2026-10-24T12:02:27+08:00 POST /api/auth/login 200 127.0.0.1:5176 200"
+      ],
+      "raw_value_retained": false
+    },
+    "session-hop1.json": {
+      "phase": "candidate3_to_candidate2_refresh",
+      "captured_at": "2026-10-24T04:04:58.044242+00:00",
+      "session_slot_sha256": "0507c08f0287f893a6d360d1647d6218eac90941168554559e1949547300f1d3",
+      "http_lines": [
+        "2026-10-24T12:04:01+08:00 GET /api/articles/types 200 127.0.0.1:5175 200",
+        "2026-10-24T12:04:32+08:00 GET /api/admin/article-categories 401 127.0.0.1:5175 401",
+        "2026-10-24T12:04:32+08:00 GET /api/articles/my 401 127.0.0.1:5175 401",
+        "2026-10-24T12:04:32+08:00 GET /api/articles/my 401 127.0.0.1:5175 401",
+        "2026-10-24T12:04:32+08:00 GET /api/articles/types 200 127.0.0.1:5175 200",
+        "2026-10-24T12:04:32+08:00 POST /api/auth/refresh 200 127.0.0.1:5175 200",
+        "2026-10-24T12:04:32+08:00 GET /api/admin/article-categories 200 127.0.0.1:5175 200",
+        "2026-10-24T12:04:32+08:00 GET /api/articles/my 200 127.0.0.1:5175 200",
+        "2026-10-24T12:04:32+08:00 GET /api/articles/my 200 127.0.0.1:5175 200"
+      ],
+      "raw_value_retained": false,
+      "primary_note": "Profile page alone read cached user; actual protected trigger was My Articles. Earlier /api/auth/me verifier assumption failed before proxy change and was corrected to observed route."
+    },
+    "session-hop2.json": {
+      "phase": "candidate2_to_candidate3_refresh",
+      "captured_at": "2026-10-24T04:05:53.636872+00:00",
+      "session_slot_sha256": "9c63e2d59ec80048d7a195f2acaa41533474c646c34da3907b5764616f2c1d4f",
+      "http_lines": [
+        "2026-10-24T12:05:36+08:00 GET /api/articles/my 401 127.0.0.1:5176 401",
+        "2026-10-24T12:05:36+08:00 GET /api/admin/article-categories 401 127.0.0.1:5176 401",
+        "2026-10-24T12:05:36+08:00 GET /api/articles/my 401 127.0.0.1:5176 401",
+        "2026-10-24T12:05:36+08:00 GET /api/articles/types 200 127.0.0.1:5176 200",
+        "2026-10-24T12:05:36+08:00 POST /api/auth/refresh 200 127.0.0.1:5176 200",
+        "2026-10-24T12:05:36+08:00 GET /api/articles/types 200 127.0.0.1:5176 200",
+        "2026-10-24T12:05:36+08:00 GET /api/articles/types 200 127.0.0.1:5176 200",
+        "2026-10-24T12:05:36+08:00 GET /api/articles/my 200 127.0.0.1:5176 200",
+        "2026-10-24T12:05:36+08:00 GET /api/admin/article-categories 200 127.0.0.1:5176 200",
+        "2026-10-24T12:05:36+08:00 GET /api/articles/my 200 127.0.0.1:5176 200"
+      ],
+      "raw_value_retained": false
+    }
+  },
+  "mixed_frontend_business": {
+    "frontend_files": 315,
+    "bytes_equal": true,
+    "old_front_new_backend_comment_id": 2,
+    "new_front_old_backend_comment_id": 3,
+    "comments_hashes": [
+      "2193e7248b91b6209399c712527d57d0b2c077f373a6ca88e87bfc48cd01548d",
+      "64404e0db58983c79a78572570a7a6ae02327ea407147da3afcacf4e89ce24ff"
+    ],
+    "protected_api": true,
+    "profile_page_alone_not_api_proof": true
+  },
+  "schema": {
+    "answer": "DOUBLE NULL",
+    "thumbnail": "VARCHAR(512) NULL",
+    "live_decimal": 1.25,
+    "live_skipped": null,
+    "same_database_and_persistent_uploads": true,
+    "migration_between_compatible_candidates": "none",
+    "first_maintenance_migration_evidence_sha256": "fb931d363feca1238e8fc74221be0a8e3e285b18128605f5caa3fc041904afc2"
+  },
+  "source_review": {
+    "jwt_lua_redis_format": "unchanged between candidate commits",
+    "auth_difference": "Dedicated derived Redis client with 1.5s timeout, completion instrumentation in test build, bounded deadline. No contract fallback.",
+    "model_schema_readers": "No changes between compatible candidate commits"
+  },
+  "limits": [
+    "Original v2 is not compatible rollback target",
+    "One real email-format account/session used for this preflight; account-type/entry matrices remain bound to source23 suite",
+    "Both frontend dist trees are identical; changed-hash retention proved separately in r4",
+    "Manual formal final logout and manager upgrade/rollback/redeploy remain outstanding"
+  ]
+}

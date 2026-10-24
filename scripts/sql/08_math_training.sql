@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS math_training_wrong_answers (
     user_id INT NOT NULL COMMENT '用户ID',
     question VARCHAR(100) NOT NULL COMMENT '题目内容',
     correct_answer INT NOT NULL COMMENT '正确答案',
-    user_answer INT NOT NULL COMMENT '用户答案',
+    user_answer DOUBLE NULL COMMENT '用户答案；NULL 表示跳过',
     operation VARCHAR(10) NOT NULL COMMENT '运算类型: +, -, *, /',
     difficulty INT NOT NULL DEFAULT 1 COMMENT '难度等级',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

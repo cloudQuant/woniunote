@@ -1,0 +1,1181 @@
+{
+  "status": "INCOMPLETE",
+  "scope": "Sanitized evidence summaries and source hashes only. No raw logs, trace, runtime config or credentials. Historical failures are retained; see acceptance document for latest status.",
+  "files": [
+    {
+      "file": "backend-build-input-current-check.json",
+      "source": "/tmp/woniunote-iter21-evidence/candidate-3-build-input-current-check.json",
+      "sha256": "a1756ada7575e70e2146d15c93b14b4123497ec0b93a1ff0b2e32cd71dd186c8"
+    },
+    {
+      "file": "linux-functional8-primary-summary.json",
+      "source": "/tmp/woniunote-iter21-evidence/linux-functional8-primary-summary.json",
+      "sha256": "8bb7b3169915affaf35321a2e6b2685b01252b4f25acd2037cc3a82cef0e4682"
+    },
+    {
+      "file": "formal-negative-macos3.json",
+      "source": "/tmp/woniunote-iter21-evidence/formal-negative-macos-3/result.json",
+      "sha256": "cf2c6b96733994affb7a441ed0c2f467b4a643e6382349e05c9b4ff268f9c3f5"
+    },
+    {
+      "file": "formal-negative-linux3.json",
+      "source": "/tmp/woniunote-iter21-evidence/formal-negative-linux-3/result.json",
+      "sha256": "f34f87a497614f454df2b73c7972bb05e0518a358c94d314a1aeff1b86749822"
+    },
+    {
+      "file": "runner-term-upload-r5.json",
+      "source": "/tmp/woniunote-iter21-preflight/root-term-only-20261024-r5/report.json",
+      "sha256": "c62d94fc1541988ba09dad4b7e298729ab0375df0ede765e9b2921f6cfd501e0"
+    },
+    {
+      "file": "g1-negative-supplement.json",
+      "source": "/tmp/woniunote-iter21-evidence/g1-closeout-20261023T183212Z-17180/supplemental-evidence.json",
+      "sha256": "72afc89c68e777c416dcff59768ba1041802522b41e275267aca09bc3dbc7628"
+    },
+    {
+      "file": "g1-final-incremental-index.json",
+      "source": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/final-incremental-index.json",
+      "sha256": "baa4a55c46bd4f30596d41ef3f470420376a5457d3be6645385a51689566f042"
+    },
+    {
+      "file": "frontend-final12-source-manifest.json",
+      "source": "/tmp/woniunote-iter21-evidence/frontend-final-12-source-manifest.json",
+      "sha256": "42e444af8317d31d75456e8675f82707c2f5b40116ff13127969c5c36b1283f5"
+    },
+    {
+      "file": "functional12-source-manifest.json",
+      "source": "/tmp/woniunote-iter21-evidence/functional-12-source-manifest.json",
+      "sha256": "0d091a1c230c7486c0df734f178e371fda41e9228db12fb0dab7ef8191b36719"
+    },
+    {
+      "file": "frontend-final12-root-checks.json",
+      "source": "/tmp/woniunote-iter21-evidence/frontend-final12-root-checks.json",
+      "sha256": "8d0390d307ce5a09d57a92bec1bb3d7a304990c18c1f3c6dcac9fd6c02174df1"
+    },
+    {
+      "file": "frontend-final12-real-root.json",
+      "source": "/tmp/woniunote-iter21-evidence/frontend-final12-real-root.json",
+      "sha256": "330712c9810c47f1b036791dc6611392992f554257affd2c0528e9342f149da9"
+    },
+    {
+      "file": "frontend-final12-mock-root.json",
+      "source": "/tmp/woniunote-iter21-evidence/frontend-final12-mock-root.json",
+      "sha256": "02e371ccdcb34a848ddc0dc3ce21f766c29ff3b418d7b760461f3441ba77204c"
+    },
+    {
+      "file": "frontend-final-13-source-manifest.json",
+      "source": "/tmp/woniunote-iter21-evidence/frontend-final-13-source-manifest.json",
+      "sha256": "4d9b8e4bb398a98fd9efb137171fae7abaa0fb176b5494fe90ee28d852906915"
+    },
+    {
+      "file": "frontend-final12-to13-delta.json",
+      "source": "/tmp/woniunote-iter21-evidence/frontend-final12-to13-delta.json",
+      "sha256": "36eac23ced31f1a3468a8b2f889e7f9d47fbcfef0d72480dae231a83b622cb13"
+    },
+    {
+      "file": "frontend-final13-root-checks.json",
+      "source": "/tmp/woniunote-iter21-evidence/frontend-final13-root-checks.json",
+      "sha256": "16e199ee72722b53cb05c3fd4eba8044dba0bfdefc10087c3412f9f0eb18fb33"
+    },
+    {
+      "file": "repo-hygiene-final13.json",
+      "source": "/tmp/woniunote-iter21-evidence/repo-hygiene-final13.json",
+      "sha256": "31d340e4ddddf88214c1745e971d7650961538254054e642a6913e3884d949fd"
+    },
+    {
+      "file": "frontend-final13-mock-root.json",
+      "source": "/tmp/woniunote-iter21-evidence/frontend-final13-mock-root.json",
+      "sha256": "a9c67b6c1551e901856a90893f0e41ab84c83591a1d107f502000ec23eefd886"
+    },
+    {
+      "file": "frontend-final-14-source-manifest.json",
+      "source": "/tmp/woniunote-iter21-evidence/frontend-final-14-source-manifest.json",
+      "sha256": "da69d1650708c1582d47d3c6b186ad3bb4fbadad75dd4abb34d6a4ebc52afe7f"
+    },
+    {
+      "file": "frontend-final13-to14-delta.json",
+      "source": "/tmp/woniunote-iter21-evidence/frontend-final13-to14-delta.json",
+      "sha256": "39e3ac784bc96c289c23e1b2ad76a9595d387137a2a62e8bf6184b1b9eeaa98a"
+    },
+    {
+      "file": "frontend-final14-root-checks.json",
+      "source": "/tmp/woniunote-iter21-evidence/frontend-final14-root-checks.json",
+      "sha256": "c296104c53b6b2023108aa90c88215cd5b4d1384c92291523f949d36fd43f935"
+    },
+    {
+      "file": "frontend-final14-mock-root.json",
+      "source": "/tmp/woniunote-iter21-evidence/frontend-final14-mock-root.json",
+      "sha256": "67ecd5612d4a27e83b6282f71e66be6a066eeef3b89c38b09c6e8e4de067b3f1"
+    },
+    {
+      "file": "functional-13-source-manifest.json",
+      "source": "/tmp/woniunote-iter21-evidence/functional-13-source-manifest.json",
+      "sha256": "0b656f8122a665b477f29f5efa4723ddb62d36a89d0ef863e6c25a12d6c002f8"
+    },
+    {
+      "file": "functional13-real-root.json",
+      "source": "/tmp/woniunote-iter21-evidence/functional13-real-root.json",
+      "sha256": "6a2eaf1dac15005cfff0adae86bbba4e202bccb9200131cf74e1c8bbe98d5fe4"
+    },
+    {
+      "file": "source-16-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-16-manifest.json",
+      "sha256": "d4b118769d931598c407089c4c25dbd78772de57969b1c5b98e37f229ac41e60"
+    },
+    {
+      "file": "functional13-to16-delta.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/functional13-to16-delta.json",
+      "sha256": "b98f9bc93f9be02550810b55e7af3f6212516aa53ca5507ae801a455530c88cf"
+    },
+    {
+      "file": "source16-root-checks.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source16-root-checks.json",
+      "sha256": "cde019f0f3b6d60756516a2fd81d5dc22bf89a9df7ed94a30fdd8b0c81af2bcf"
+    },
+    {
+      "file": "frontend16-root-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/frontend16-root-summary.json",
+      "sha256": "4f1a93e6b50f65a14d3258b864bdad168979580a8ea73912125e989700da717e"
+    },
+    {
+      "file": "functional16-root-failure.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/functional16-root-failure.json",
+      "sha256": "b052202491bd8c848bde267f837957e986a5351646de271ddd1ca223dfb35e15"
+    },
+    {
+      "file": "environment-recovery.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/environment-recovery.json",
+      "sha256": "3db20751edf1b768746703cf7d38dfec7e505dbab2de1f6efea080d318f573f7"
+    },
+    {
+      "file": "backend4-mac-checks.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend4-mac-checks.json",
+      "sha256": "cc4c2c921567a3f856dac1e179b871ba709b04c6a125b0b65c045664c9a4945a"
+    },
+    {
+      "file": "formal-negative-macos4.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/formal-negative-macos4.json",
+      "sha256": "5ca968e8f38ff687e8bd23a8fa37984ebd7a0b443201c93b26d22bac499834ed"
+    },
+    {
+      "file": "backend-source4-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend-source4-manifest.json",
+      "sha256": "feb496a1568f25416293ba534010df0d45fb6a713e1b34b00c0c55ccb00ef086"
+    },
+    {
+      "file": "source-17-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-17-manifest.json",
+      "sha256": "4836555c78b2ea27a075303bc614d2997234a101190dbcd5c5b7c964935fefe9"
+    },
+    {
+      "file": "functional17-root-failure.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source17-mac-real-result.json",
+      "sha256": "9baecbac194eac22c166e578ee71d89ac9a3ab279b53d759df71d3ac37278461"
+    },
+    {
+      "file": "backend-source5-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend-source5-manifest.json",
+      "sha256": "7a71a8c145c1de1133de958a73ca8678c89c2c01a5ebc3f6679f5070f8fb6b5b"
+    },
+    {
+      "file": "backend5-mac-checks.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend5-mac-checks.json",
+      "sha256": "e9e1c02d21e9d0e78dc4645510697cdda6d9729065ab5fce3ee8830b096f4d28"
+    },
+    {
+      "file": "backend5-linux-checks.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend5-linux-checks.json",
+      "sha256": "5cabed4ec10189436ad403eaa49ba269af848778e50e8d6491584bbc5c1636e3"
+    },
+    {
+      "file": "backend5-cppcheck-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend5-cppcheck-root.json",
+      "sha256": "da999c98b0a01bc5d3981c62b695523de261427526742665836e12c29b8befaa"
+    },
+    {
+      "file": "thumbnail-setup-precheck-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/thumbnail-setup-precheck-root.json",
+      "sha256": "a848550080d85bad6960e7af72b4a2cbbd3827a42035b6c7fee2a8be229f9a81"
+    },
+    {
+      "file": "source-18-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-18-manifest.json",
+      "sha256": "a7a2546cf9b1f056e63a50776671661fc808e5b47512c3ac960711bec23d5488"
+    },
+    {
+      "file": "frontend18-root-checks.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/frontend18-root-checks.json",
+      "sha256": "d40f978f26a29b88b3ffaf07f4a8a83a51f6d6bf45ae705f7d2efdf0e3847a15"
+    },
+    {
+      "file": "frontend18-mock-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/frontend18-mock-root.json",
+      "sha256": "50945357c5deb6ed105ead10e0ba6cf2420944c653bfb1f77018c6512dd90bd8"
+    },
+    {
+      "file": "frontend18-mock-failure-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/frontend18-mock-failure-summary.json",
+      "sha256": "32a451606bc0fa7c54e31138c1895ade61d53e21dedf9f9e56aad90f8feed4e4"
+    },
+    {
+      "file": "source18-mac-real-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source18-mac-real-root.json",
+      "sha256": "0ad66b9c84dccc82641129461d839324a868d6f323f8836c9c685b855148e4b3"
+    },
+    {
+      "file": "source-19-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-19-manifest.json",
+      "sha256": "cdec1ee82d7746bde149f4a84f8760481984edd741e6f861581f1fee98d5bb23"
+    },
+    {
+      "file": "source18-to19-delta.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source18-to19-delta.json",
+      "sha256": "b3189cff61fe23101accdca27af567053689ceab684c946c5167bccc1516728e"
+    },
+    {
+      "file": "source19-real-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-real-root.json",
+      "sha256": "6e6af72c89c890bf2f9e136353fb9f8510619b524922596ffe714fd2a4f557d9"
+    },
+    {
+      "file": "source19-real-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-real-summary.json",
+      "sha256": "f359dd5e7406ac55bb87b3399d559898bd07c6e5b829cdcb61bcf1aa317683d8"
+    },
+    {
+      "file": "source19-real-e2e-lint-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-real-e2e-lint-root.json",
+      "sha256": "aeca098f6884a09ed8dea7aef84dca11b347f14d386222b8e03614c3f2e483b7"
+    },
+    {
+      "file": "source19-lifecycle-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-lifecycle-root.json",
+      "sha256": "52e088bb201914d538623fd577292cf4ba0b6b29dfabdd592b5978c0e1cb1f99"
+    },
+    {
+      "file": "source19-linux5-system-libs-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-root.json",
+      "sha256": "5dc0ee55d82b0cff4cadc2b0c49b26f1b1dac3fbef32d38386294c172717918f"
+    },
+    {
+      "file": "source19-linux5-vcpkg-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-vcpkg-root.json",
+      "sha256": "5b24bf6721d8026de185e30b60d38fad8062e9ecbb28313c2a5ae6e498cea2c4"
+    },
+    {
+      "file": "source19-linux5-primary-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-primary-summary.json",
+      "sha256": "90737988daa24fb365dc720f82a4475a0b6a7c6eb6aa2a9544a0a47e450de233"
+    },
+    {
+      "file": "source-20-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-20-manifest.json",
+      "sha256": "829ea7394c3b13929de63b465f840e968b1e758baf236ed7dd66185b2e30cf8c"
+    },
+    {
+      "file": "source19-to20-delta.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-to20-delta.json",
+      "sha256": "57614e5a468bc2996356223e49cf4d66b4d44c2ba368db195bd4a013f77bd69a"
+    },
+    {
+      "file": "source20-lint-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-lint-root.json",
+      "sha256": "d9ee4e9945165c8b899fd506c9f8a178a922c7b3c4a70509ba12f6f5ec2816da"
+    },
+    {
+      "file": "source20-npm-ci-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-npm-ci-root.json",
+      "sha256": "4c91e28b8378257a51224b0e90839aaa839d6426939748df77ea1d2bb3e854fc"
+    },
+    {
+      "file": "source20-mock-target-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-mock-target-root.json",
+      "sha256": "3e8216752b99590e6587f6b3e6357acf83b2d982d4e6719f82451002a5dfead0"
+    },
+    {
+      "file": "source20-mock-full-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-mock-full-root.json",
+      "sha256": "015e8fd6ebab710072cc78a6447dd0d84b869166cbb33989635d5feb684aa4e5"
+    },
+    {
+      "file": "source20-mock-full-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-mock-full-summary.json",
+      "sha256": "5512e1edec502a27588a7707cd24333227be5579dd044a65a1cf3f53af57235c"
+    },
+    {
+      "file": "source20-primary-evidence-verification.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-primary-evidence-verification.json",
+      "sha256": "c1d8c37cd2ad71892954b2dd813e49ea8ff5a00be198c070cef1732b48b11f6b"
+    },
+    {
+      "file": "formal-negative-macos5.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/formal-negative-mac5/result.json",
+      "sha256": "c342a5b1540ef8f6e60ca24ed606bc2bab369d8cd9fbb170fd5bd51d976d22ba"
+    },
+    {
+      "file": "formal-negative-linux5.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/formal-negative-linux5/result.json",
+      "sha256": "721f3e0e598c0a8a691c969ec52878d9d1d694ed85284404d96f48b3ba941954"
+    },
+    {
+      "file": "runner-term-upload-source19.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/lifecycle19/safe/summary.json",
+      "sha256": "7f9262dcc3a7809d5114ccf6eb5de1044c7064a0044419b1d8146bf71473abee"
+    },
+    {
+      "file": "linux5-system-libs-test-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-results/20261024T004108Z-dc513aafdf45/test-summary.json",
+      "sha256": "d9560d330805409cd7dcebaaac600c3fd8b2a2a90b3592dd5cc9e746785a0542"
+    },
+    {
+      "file": "linux5-system-libs-backend-runtime-primary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-results/20261024T004108Z-dc513aafdf45/backend-runtime-primary.json",
+      "sha256": "346144400f03b5e9caf02fbbed68494d0b86d487e3d790254fe43a69c6d8fdcb"
+    },
+    {
+      "file": "linux5-system-libs-math-training-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-results/20261024T004108Z-dc513aafdf45/math-training-migration-summary.json",
+      "sha256": "f784b5a312a3e4458ce956feddab4ff850cd42158bc4cf3c87f19e71b151d2a1"
+    },
+    {
+      "file": "linux5-system-libs-comment-vote-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-results/20261024T004108Z-dc513aafdf45/comment-vote-migration-summary.json",
+      "sha256": "0c438a71415977d99961a1267d483cfbda02f334900c1520073ad8802184730f"
+    },
+    {
+      "file": "linux5-system-libs-comment-vote-migration-live-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-results/20261024T004108Z-dc513aafdf45/comment-vote-migration-live-summary.json",
+      "sha256": "1967ca83fbf0eec29dbff3011f754b9ed7f34a5c28a54b1525066380f392d23d"
+    },
+    {
+      "file": "linux5-system-libs-article-thumbnail-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-results/20261024T004108Z-dc513aafdf45/article-thumbnail-migration-summary.json",
+      "sha256": "b663e6a7fdc6a57203ea18e15af30c84f16d17273f4188e61b24a6ca55252103"
+    },
+    {
+      "file": "linux5-system-libs-iter21-transport-mysql-commit-ack-drop-4fa92f3abb21.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-results/20261024T004108Z-dc513aafdf45/iter21-transport-mysql-commit-ack-drop-4fa92f3abb21.json",
+      "sha256": "a251539ff0b378edc60691007f44fb0f953177a208ff6c53c5aacf387650cd44"
+    },
+    {
+      "file": "linux5-system-libs-iter21-transport-mysql-training-commit-ack-drop-b888aeb303a5.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-results/20261024T004108Z-dc513aafdf45/iter21-transport-mysql-training-commit-ack-drop-b888aeb303a5.json",
+      "sha256": "c831a3a14d5827bac0371d576d1dd97d042c12d5c1b195ab7a972ddc8f1810d3"
+    },
+    {
+      "file": "linux5-system-libs-iter21-transport-mysql-vote-commit-ack-drop-4758bfce1982.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-results/20261024T004108Z-dc513aafdf45/iter21-transport-mysql-vote-commit-ack-drop-4758bfce1982.json",
+      "sha256": "106100683a976daf846ba24c90396885b4102935a6e80044a56f477a06f9ef69"
+    },
+    {
+      "file": "linux5-system-libs-iter21-transport-redis-login-set-drop-818dcae6f1f9.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-results/20261024T004108Z-dc513aafdf45/iter21-transport-redis-login-set-drop-818dcae6f1f9.json",
+      "sha256": "857f3a0270f9d810b9037ad21d389842caa1c153af11c45dbacb58b850ac3edf"
+    },
+    {
+      "file": "linux5-system-libs-iter21-transport-redis-refresh-eval-delay-87cbe812dd82.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-results/20261024T004108Z-dc513aafdf45/iter21-transport-redis-refresh-eval-delay-87cbe812dd82.json",
+      "sha256": "5ae7189042da31e073757c38830cb2cd0f167fff1f2cb9c96fb0182d05f8a275"
+    },
+    {
+      "file": "linux5-vcpkg-test-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-vcpkg-results/20261024T004412Z-db7edf88e3ce/test-summary.json",
+      "sha256": "d9560d330805409cd7dcebaaac600c3fd8b2a2a90b3592dd5cc9e746785a0542"
+    },
+    {
+      "file": "linux5-vcpkg-backend-runtime-primary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-vcpkg-results/20261024T004412Z-db7edf88e3ce/backend-runtime-primary.json",
+      "sha256": "59af90fdd9520dd39f20a9d935135f92e4071b598619f908aa1822abb5807636"
+    },
+    {
+      "file": "linux5-vcpkg-math-training-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-vcpkg-results/20261024T004412Z-db7edf88e3ce/math-training-migration-summary.json",
+      "sha256": "dfefab35ff6477db4e81d9b7dc0e1b0822a606e502ad100bbd25df4186c7d861"
+    },
+    {
+      "file": "linux5-vcpkg-comment-vote-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-vcpkg-results/20261024T004412Z-db7edf88e3ce/comment-vote-migration-summary.json",
+      "sha256": "5349a1fbc9c4c2c2e8eaac98f100e778aea4273142de1d0a5a2aa67830b692fa"
+    },
+    {
+      "file": "linux5-vcpkg-comment-vote-migration-live-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-vcpkg-results/20261024T004412Z-db7edf88e3ce/comment-vote-migration-live-summary.json",
+      "sha256": "3ce7250fa93998784544be7418c1c04965fe3c33fa1ef54d620f4dace3f57f90"
+    },
+    {
+      "file": "linux5-vcpkg-article-thumbnail-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-vcpkg-results/20261024T004412Z-db7edf88e3ce/article-thumbnail-migration-summary.json",
+      "sha256": "1060e9deed9625d7deaf199658459fa6d7d1b4260f192f434475b065fb1ae0db"
+    },
+    {
+      "file": "linux5-vcpkg-iter21-transport-mysql-commit-ack-drop-44919adb75d7.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-vcpkg-results/20261024T004412Z-db7edf88e3ce/iter21-transport-mysql-commit-ack-drop-44919adb75d7.json",
+      "sha256": "4766751e5956c7c7ecf321cf8d3fc63858bfa0657f35fc3b5e44cafd18b2f18b"
+    },
+    {
+      "file": "linux5-vcpkg-iter21-transport-mysql-training-commit-ack-drop-dfa9791b25cc.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-vcpkg-results/20261024T004412Z-db7edf88e3ce/iter21-transport-mysql-training-commit-ack-drop-dfa9791b25cc.json",
+      "sha256": "e17c3cc0c9b6723a53f51d8fc08ccbd2f50a0ca9f50864de356dac8e932ed8c1"
+    },
+    {
+      "file": "linux5-vcpkg-iter21-transport-mysql-vote-commit-ack-drop-9353bee67e21.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-vcpkg-results/20261024T004412Z-db7edf88e3ce/iter21-transport-mysql-vote-commit-ack-drop-9353bee67e21.json",
+      "sha256": "d6e19ac0aa4f59ccfd7b461c5a1fd08b05927d9c3baf5ee8ecbe8b25c542c615"
+    },
+    {
+      "file": "linux5-vcpkg-iter21-transport-redis-login-set-drop-1ffff7d15961.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-vcpkg-results/20261024T004412Z-db7edf88e3ce/iter21-transport-redis-login-set-drop-1ffff7d15961.json",
+      "sha256": "97a48faf06258aab84850ae93e473a5be17dabeee47a951eb2303e83b14ea252"
+    },
+    {
+      "file": "linux5-vcpkg-iter21-transport-redis-refresh-eval-delay-70dd2b773e8d.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-vcpkg-results/20261024T004412Z-db7edf88e3ce/iter21-transport-redis-refresh-eval-delay-70dd2b773e8d.json",
+      "sha256": "d782e1f4aed502c2407886f1ba03b6a6abcc654066796822734344e5ce6f4b01"
+    },
+    {
+      "file": "source20-preflight-negatives.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-preflight-negatives.json",
+      "sha256": "91dbfb95375e8fb2ac06d9db892771b42ac15b7bacb068a34ee38bb7c64823b2"
+    },
+    {
+      "file": "source20-static-root-checks.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-static-root-checks.json",
+      "sha256": "33b9962dc5594671cd184f8dda4bbd16ded210b5186dd0c4f60a41fafe37d062"
+    },
+    {
+      "file": "source20-preflight-static-primary-verification.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-preflight-static-primary-verification.json",
+      "sha256": "074ec72c2eef1e44efa39023d4422c294f8d9862ce3b88ca260fa9ec640735d2"
+    },
+    {
+      "file": "source20-service-negatives-and-rate-limit.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/preflight20-services-b6b19697deac/evidence/source20-service-negatives-and-rate-limit.json",
+      "sha256": "2672efb9f7b288dfe58d0386e3db2cc37be46f8073e0555cc5243c849cbd4eb2"
+    },
+    {
+      "file": "source20-default-rate-limit.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/preflight20-rate-default-55s0e1re/evidence/source20-default-rate-limit.json",
+      "sha256": "dc06f8a23d751f8d4298d0255cfdf67a4db8d5044ec9edf7b3af091c45e93f0a"
+    },
+    {
+      "file": "source20-formal-confirmation.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/preflight20-formal-confirmation-ua5dywsu/evidence/source20-formal-confirmation.json",
+      "sha256": "354f1bc3001cdb5bfc70d5be1d102f3995ce7bc00b863ba08a89ada00e7393cb"
+    },
+    {
+      "file": "source21-g1-projection-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source21-g1-projection-readback.json",
+      "sha256": "f0aecbf85b9783715fb4726311410b1bc4b8972b2543c2e90b8455f81789e12d"
+    },
+    {
+      "file": "d04-original-handoff-and-upload-failure.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-original-handoff-and-upload-failure.json",
+      "sha256": "468e480973a6e15c224a862b3b973268455dcb5475748b833cf791595ecd3bf3"
+    },
+    {
+      "file": "backend6-auth-primary-source-review.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend6-auth-primary-source-review.json",
+      "sha256": "5e877b9aa6d01a26b90dd41e8a7b63890349ae112bbb5eeeaa7115d9380b8227"
+    },
+    {
+      "file": "d04-original-upload-repair-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-original-upload-repair-readback.json",
+      "sha256": "f9917099852c1d70d1f10b6da165881914b2648cbe8b6a553aeef90ea124a6eb"
+    },
+    {
+      "file": "source-22-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-22-manifest.json",
+      "sha256": "8f3264629b5ae66dc6e9af66329f003fc60a8b93f5269c676836dc6eeb0cb5df"
+    },
+    {
+      "file": "source-22-delta.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-22-delta.json",
+      "sha256": "39d1bb76fb3278dcca2bd4764c0cbda52b11433d5b0c9ec7d2c348eb04dedb9d"
+    },
+    {
+      "file": "source22-mac6-primary-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source22-mac6-primary-summary.json",
+      "sha256": "22d34df5738c6e4ba592617393c2035ca72c181385d67c6240822be7d4a62dcb"
+    },
+    {
+      "file": "backend-source6-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend-source6-manifest.json",
+      "sha256": "830dbb1cf145da1af1d4306c5fa3e6a4d0527a68b30413ba31500eaefe39d18d"
+    },
+    {
+      "file": "backend-source6-build-results.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend-source6-build-results.json",
+      "sha256": "f9dd9d01e716505e249d964dc66403c92c974a3deeb085911c9d5bc528b00553"
+    },
+    {
+      "file": "backend6-primary-build-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend6-primary-build-readback.json",
+      "sha256": "304e8f8dadd9242b604dcd1099502ac88fa9310d6583cf40da696839895cb932"
+    },
+    {
+      "file": "formal-negative-macos6.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/formal-negative-macos6.json",
+      "sha256": "a5782d6a559fa5efe11bdadb2cf8ebcb8f2a0eac26178551a103367ce7ba1259"
+    },
+    {
+      "file": "formal-negative-linux6-system-libs.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/formal-negative-linux6-system-libs.json",
+      "sha256": "aab9259a5fccc4983b2a30cc029838372601480993ba9b93ed06582c4b268ae2"
+    },
+    {
+      "file": "formal-negative-linux6-vcpkg.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/formal-negative-linux6-vcpkg.json",
+      "sha256": "65a54370d46ac185c1ad3ef11de19408ca15753a36027f16ba7d682dc3908ebe"
+    },
+    {
+      "file": "source-23-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-23-manifest.json",
+      "sha256": "610340df59a9bf04ddda747320ccd858e2b5f5b6cbc4eb1f50d3bbe18c04670c"
+    },
+    {
+      "file": "source-23-delta.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-23-delta.json",
+      "sha256": "51cd4fca57ce8272b83932d7e3be2de9a61ebec08e87d4930614c1609ea188bb"
+    },
+    {
+      "file": "source23-primary-runtime-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source23-primary-runtime-readback.json",
+      "sha256": "2203c20b87a9c0566398e75b2bd589119d2c694aa6352dc70fb44d8baad6144c"
+    },
+    {
+      "file": "d04-frozen-candidates.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-frozen-candidates.json",
+      "sha256": "2a63e3a185e21ee457e7a2d2e83270831204dd94701d7e672d8c94ed0adc4a2b"
+    },
+    {
+      "file": "d04-frozen-candidates.pre-asset.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-frozen-candidates.pre-asset.json",
+      "sha256": "f490d40227a58b6603a2e693c14cdc696c6fb523322f70c0764664724db7ae55"
+    },
+    {
+      "file": "d04-frozen-candidates.pre-exec-mode.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-frozen-candidates.pre-exec-mode.json",
+      "sha256": "7573000d0c3deaec429c49b7360698e2c7368f98defa45c809f430c1d8fe7335"
+    },
+    {
+      "file": "d04-executable-mode-primary-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-executable-mode-primary-readback.json",
+      "sha256": "9a201bdc3e4c1a4babd3c3c78f4add3ba9d19202d0726104c307a6472fb5e6a6"
+    },
+    {
+      "file": "d04-stage-candidate-2.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-stage-candidate-2.json",
+      "sha256": "d28065393f89780cc4ad0e590b4f4d417b27fb201bc38a36d71bec43fa7348ac"
+    },
+    {
+      "file": "d04-stage-candidate-2-executable.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-stage-candidate-2-executable.json",
+      "sha256": "68fb2e8142f162bfd378833a7c2c6649f2dfbbbed353da1a8b690375ce35a74a"
+    },
+    {
+      "file": "d04-stage-candidate-3-executable.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-stage-candidate-3-executable.json",
+      "sha256": "e4481c705772ce65f9130ab6983ba64e8704bf51908afd91d56eb67d1e07dbea"
+    },
+    {
+      "file": "d04-prebuild-primary-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-prebuild-primary-readback.json",
+      "sha256": "fc65ba86ae463e59533bbe953af1fcc7fd2616cde78fa67dc16169482a36bc47"
+    },
+    {
+      "file": "d04-maintenance-config-preparation.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-maintenance-config-preparation.json",
+      "sha256": "2d6761db68c4e2d64a7ade7f0f7e30558bd372ce5c86117649c726f872ac5d1e"
+    },
+    {
+      "file": "d04-maintenance-config-absolute-upload.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-maintenance-config-absolute-upload.json",
+      "sha256": "6437d30c7139c197ab16394d003818600ddad830e58cf674746af8efd912366b"
+    },
+    {
+      "file": "d04-first-maintenance-stop-and-backup.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-maintenance-stop-and-backup.json",
+      "sha256": "4662f0251814d059b35c7cf370b70b8695ff98a2f4f7811a4cfe31df3d2bf278"
+    },
+    {
+      "file": "d04-first-maintenance-backup-business-config.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-maintenance-backup-business-config.json",
+      "sha256": "185004912f9ab3f1afe140d49ec781ebb86442a4f29f830a2f1242e48673018c"
+    },
+    {
+      "file": "d04-first-maintenance-backup-dump-config.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-maintenance-backup-dump-config.json",
+      "sha256": "b87266c6ac25d78d2a76101f9ff9a165806f745db66365f833bd7c1ec0795b38"
+    },
+    {
+      "file": "d04-first-maintenance-backup-timeout-fixed.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-maintenance-backup-timeout-fixed.json",
+      "sha256": "46f3f73dc3fb03d7202419cd201073cdd331d5a2f6573f8c10a84adf572bdd95"
+    },
+    {
+      "file": "d04-first-maintenance-backup-apparmor-path.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-maintenance-backup-apparmor-path.json",
+      "sha256": "9866c0cacdc920b247baee150b9f27af442f3a27efca4b2cbca1a23d962ba051"
+    },
+    {
+      "file": "d04-backup-restore-primary-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-backup-restore-primary-readback.json",
+      "sha256": "68d6870cba1a5515453932760bf9cef8fe1f7e200997a59cb2c491e43d648f96"
+    },
+    {
+      "file": "d04-first-maintenance-migrations-primary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-maintenance-migrations-primary.json",
+      "sha256": "fb931d363feca1238e8fc74221be0a8e3e285b18128605f5caa3fc041904afc2"
+    },
+    {
+      "file": "d04-maintenance-failure-analysis.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-maintenance-failure-analysis.json",
+      "sha256": "8a86de025743eb90d56c930774a46e6db25807df985d785c62567c4a34a322e8"
+    },
+    {
+      "file": "d04-first-install-candidate2.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-install-candidate2.json",
+      "sha256": "0ffbd441be5db04d1f02dc7e3ef7fed2128082365019610dc14f4872700389a8"
+    },
+    {
+      "file": "d04-first-install-primary-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-install-primary-readback.json",
+      "sha256": "2f1aa4e5a55d23e57b4929949a2dbf5f33f5435c269f36f4898d1dd0af7cc649"
+    },
+    {
+      "file": "d04-installed-candidate2-formal-routes.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-installed-candidate2-formal-routes.json",
+      "sha256": "7b12742d1857c7f645ab7f2765af5f8d30f705f3826ed9b758e347a429ff0f98"
+    },
+    {
+      "file": "d04-data-candidate2-baseline.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-data-candidate2-baseline.json",
+      "sha256": "bfabf320191981213cb059a5bd31e1d570ae49462e30882d991af3e412a7285f"
+    },
+    {
+      "file": "d04-cross-candidate-progress.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-cross-candidate-progress.json",
+      "sha256": "9758607ebd99516e3c2bd0bf19a6b88349b44ad50b24590a783282fc8eb5230f"
+    },
+    {
+      "file": "d04-business-before-short-session.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T035730Z-98819-before-short-session.json",
+      "sha256": "3c9383865dce7843167789bf1283ab55bc651c78457db3d61612cc0c7730223b"
+    },
+    {
+      "file": "d04-session-compatibility-evidence.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-session-compatibility-evidence.json",
+      "sha256": "3c7198a5d1a78d1850705a71eebdc5ea743ed719ede3d9ebe565527c43b4b5d3"
+    },
+    {
+      "file": "d04-data-after-upgrade3.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T041421Z-12330-after-upgrade.json",
+      "sha256": "fe723805eb3617c4d0aeb25116d8b3007cf60e71576998caff912f43fb224ca9"
+    },
+    {
+      "file": "d04-data-candidate3-new-writes.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T041833Z-17154-candidate3-new-writes.json",
+      "sha256": "d79f1fd8faf3cac410886e4fe40682ecfa4750f47ba1750f0cd4ea43a77cd639"
+    },
+    {
+      "file": "d04-data-after-rollback2.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T042003Z-18462-after-rollback.json",
+      "sha256": "1a381220247ea3d1fbe9fa1cb293d5d666bf5b25fd6bc561be3e0d3acf7df791"
+    },
+    {
+      "file": "final-review-round1-findings.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/final-review-round1-findings.json",
+      "sha256": "f8da060e1b7be33880b1c5b88eb7c4d6ca18ef0e02c00a8f0eba21b2d567b19d"
+    },
+    {
+      "file": "backend-source10-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend-source10-manifest.json",
+      "sha256": "57403577d32d85da2216569588b759721552b8a559a3a3a5c137722962c4d50d"
+    },
+    {
+      "file": "backend-source10-provenance.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend-source10-provenance.json",
+      "sha256": "8ba23d716a8cb3e2074e4f967e2e108db26db6f46d4f057b76fc1f08d5716890"
+    },
+    {
+      "file": "backend-source10-working-tree-inventory.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend-source10-working-tree-inventory.json",
+      "sha256": "ca0e311ad99d08a278a2a9249d692b90398226fb49a3666b61453a59ece9de86"
+    },
+    {
+      "file": "backend-source8-interrupted.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend-source8-interrupted.json",
+      "sha256": "1f1b6b4e34b0cdd52a7696370601f2aac95877acb6d5a0fe635b5ac01fabfd1b"
+    },
+    {
+      "file": "backend-source10-build-execution.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend-source10-build-execution.json",
+      "sha256": "14182e9029c5ea1275b6099671c327fa4109d2a1310139c58c284f44e93b1517"
+    },
+    {
+      "file": "source-24-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-24-manifest.json",
+      "sha256": "cd50f3b121093b2243b6a0c1ee9f92314520bbd908b1f4839407316358779840"
+    },
+    {
+      "file": "source-25-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-25-manifest.json",
+      "sha256": "0bfd0eaa2848e7b5d1c7eab2a2d7c1a5d5241d1f123242ddaca52bdf28af7e0b"
+    },
+    {
+      "file": "source24-frontend-root-checks.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-frontend-root-checks.json",
+      "sha256": "5e1b25661a3ea20ea9aa2cf838eb29adc3ff428c2d4113929987e014ad3f4890"
+    },
+    {
+      "file": "source24-frontend-root-supplement.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-frontend-root-supplement.json",
+      "sha256": "be8e9fdba86893de0f1e7aab63e78598dfa406885b71bffebc1c85c98af87f81"
+    },
+    {
+      "file": "source24-frontend-quality-binding.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-frontend-quality-binding.json",
+      "sha256": "b1ad256ca3c460bf77e264edf4697319955a42e7200fe90a27a896137da2c02d"
+    },
+    {
+      "file": "source24-mock-other3-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mock-other3-root.json",
+      "sha256": "2636d84038122b8c01c5b03ee37ffc73fbd70c25257214f9e49211a6b1b8b77f"
+    },
+    {
+      "file": "source24-mock-other3-interruption.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mock-other3-interruption.json",
+      "sha256": "1d68b7f9f17a05687ea57571c07968096f464aa619413a9c50d989fb4078286b"
+    },
+    {
+      "file": "source25-mock-all-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source25-mock-all-root.json",
+      "sha256": "367f469609c3565757d23a70a0b0622ffc845040531ce9d37f409f1261801696"
+    },
+    {
+      "file": "source25-mock-failure-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source25-mock-failure-summary.json",
+      "sha256": "4285d9980f0ea9b0e47fccabe092437f7a897b7ea9deaa03821bb4653a3c4d7b"
+    },
+    {
+      "file": "source24-mac10-real-browser-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mac10-real-browser-root.json",
+      "sha256": "05439888379a5399c43ceef140ba1290362284f986a2d1f99c2f91820c072710"
+    },
+    {
+      "file": "source24-linux10-system-libs-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-system-libs-root.json",
+      "sha256": "e5cd75e215f03566ca6fc3ead6be13588b4595c7450afaebf8a3c147609f1bba"
+    },
+    {
+      "file": "source24-formal10-runner-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-formal10-runner-root.json",
+      "sha256": "cf06c09516b24c70c46c992143ab7d3f2b6aaa115f733d1b36ad1602839b6549"
+    },
+    {
+      "file": "formal-negative-macos10.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/formal-negative-macos10.json",
+      "sha256": "99519e27cc8dbf1fda65f890c99f03807c2762eb8ce71adcd4288bc7105407fc"
+    },
+    {
+      "file": "formal-negative-linux10-system-libs-first.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/formal-negative-linux10-system-libs-first.json",
+      "sha256": "d63a9bbf56afb12d4269b2579ded62fa5650c29591f87344a4feb472edafb74d"
+    },
+    {
+      "file": "formal-negative-linux10-system-libs.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/formal-negative-linux10-system-libs.json",
+      "sha256": "361598d7704e942873fb6a5b2736c4013e39a6e9f0194b4a4b50eb302ac29fa5"
+    },
+    {
+      "file": "source24-final-resource-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-final-resource-readback.json",
+      "sha256": "6b2e5532faa5fce98f995fb59d3df4f46685a40d4f46f7a66649215517b27163"
+    },
+    {
+      "file": "d04-frozen-candidate4.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-frozen-candidate4.json",
+      "sha256": "b56dc7b8480ded207fa3a74df5b67afc0ef48d4eae1a3f7faba37491e70dd4fc"
+    },
+    {
+      "file": "d04-final4-compatibility-evidence.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-final4-compatibility-evidence.json",
+      "sha256": "e072e2ccd896f573b647ea1483bd8c7c314266f89777d342eae6e278e8e1b8e2"
+    },
+    {
+      "file": "d04-final4-cycle-primary-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-final4-cycle-primary-readback.json",
+      "sha256": "aee086cbb6c2e5ee4a68010f1902fbd970e05f3ed3699850e2c9117bcd040f88"
+    },
+    {
+      "file": "final-review-current-local-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/final-review-current-local-summary.json",
+      "sha256": "dfc352fff0d70d4fba908e730bff9d93c8310607f50a93626c471b558b095855"
+    },
+    {
+      "file": "docs-final-shell-syntax.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/docs-final-shell-syntax.json",
+      "sha256": "a670f78408efa21aeefc7c7d18b6eb058a45497894bc42af9100bffa1b23f6fc"
+    },
+    {
+      "file": "d04-readback-final4-preflight-cross.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T045336Z-99724-final4-preflight-cross.json",
+      "sha256": "0d3285baea05a60769f123e50bccc2fdaa72cbecbb7131e61bd57cd23d52589f"
+    },
+    {
+      "file": "d04-readback-final4-after-deploy.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T045821Z-3372-final4-after-deploy.json",
+      "sha256": "2ed3abadf7c3f5812941e8e0b54ba75c1f14c2d070b1e553597d85dcb95547e9"
+    },
+    {
+      "file": "d04-readback-final4-new-write.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T050249Z-9157-final4-new-write.json",
+      "sha256": "8d34447d7b75e932fa495c158dd924995fc78e2bf4d02db16db40e706c100eec"
+    },
+    {
+      "file": "d04-readback-final4-rollback-to3.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T050439Z-11151-final4-rollback-to3.json",
+      "sha256": "a238e9c0869223bca7713ff8ef3d561934efad4f400d38c1f3349997d0b2766e"
+    },
+    {
+      "file": "d04-readback-final4-restored.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T050642Z-12883-final4-restored.json",
+      "sha256": "806a9107f34d88f6d9762c091cb34a86794ba5a915e0b749683d91e478f8a385"
+    },
+    {
+      "file": "d04-readback-final4-logout.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T050749Z-13682-final4-logout.json",
+      "sha256": "5ce11801b52892067adfaf597f88189b6b0a4204ebb67e285ecfc3ce87da3cf0"
+    },
+    {
+      "file": "d04-readback-after-redeploy3.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T042736Z-45558-after-redeploy3.json",
+      "sha256": "8a40e2142dd414cdfeb0a3c49405e79de6ac6cc1e215f4391850b0b3737dffc2"
+    },
+    {
+      "file": "backend-source10-linux-build-execution.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend-source10-linux-build-execution.json",
+      "sha256": "2170fd3422030111443f2dfbeb91b4469c915e0f8b72705b984910194168b38b"
+    },
+    {
+      "file": "backend10-primary-build-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend10-primary-build-readback.json",
+      "sha256": "b7a74d07d7ffd2292225bdaf08f6edcacf757fcf918e7afb44ba3e5020d3826c"
+    },
+    {
+      "file": "source24-linux10-vcpkg-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-vcpkg-root.json",
+      "sha256": "4ac11e7c033fa5afdec7ab409a573817c97beaab6cf2546e0828dc874f4e807c"
+    },
+    {
+      "file": "formal-negative-linux10-vcpkg.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/formal-negative-linux10-vcpkg.json",
+      "sha256": "40708e4fecccfd5177fb81d2aa05adba71f884b4d6b76828ab5ef32a9d73f0fa"
+    },
+    {
+      "file": "source24-vcpkg-final-resource-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-vcpkg-final-resource-readback.json",
+      "sha256": "d19ca517b57434bcd1e6bfa6875db3ff4101f189c7c420db22f9dbdfbb55c30c"
+    },
+    {
+      "file": "source24-mac10-real-browser-test-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mac10-real-browser-results/20261024T044736Z-eb3d20de3a02/test-summary.json",
+      "sha256": "fb7dcab621f2757119888ae001642b90f8406d343691ebad0d63fecb4a6499f6"
+    },
+    {
+      "file": "source24-mac10-real-browser-run.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mac10-real-browser-results/20261024T044736Z-eb3d20de3a02/run.json",
+      "sha256": "e00dbd5bebdd6bba15029e324e7eeb4d5fdd99ae1d7bf3825ae68bad1f25b8d7"
+    },
+    {
+      "file": "source24-mac10-real-browser-math-training-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mac10-real-browser-results/20261024T044736Z-eb3d20de3a02/math-training-migration-summary.json",
+      "sha256": "76de788318a83634275130937f609fce3ef69e54f1d185cbb244d515b8fa3a52"
+    },
+    {
+      "file": "source24-mac10-real-browser-comment-vote-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mac10-real-browser-results/20261024T044736Z-eb3d20de3a02/comment-vote-migration-summary.json",
+      "sha256": "2d9ca6e820a9e0ce1515c81563761b7d1dbded50e08060bf2d9b4b0ecbcac692"
+    },
+    {
+      "file": "source24-mac10-real-browser-comment-vote-migration-live-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mac10-real-browser-results/20261024T044736Z-eb3d20de3a02/comment-vote-migration-live-summary.json",
+      "sha256": "2a4f6a46772711238c5bd715e0d553f632ccd40f9d7229eea26827637beadc91"
+    },
+    {
+      "file": "source24-mac10-real-browser-article-thumbnail-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mac10-real-browser-results/20261024T044736Z-eb3d20de3a02/article-thumbnail-migration-summary.json",
+      "sha256": "94f16d952be151b8cdfd6804f7be682fccc4bcab27a231359345e11dde2b4432"
+    },
+    {
+      "file": "source24-linux10-system-libs-test-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-system-libs-results/20261024T045847Z-34866da15f22/test-summary.json",
+      "sha256": "fb7dcab621f2757119888ae001642b90f8406d343691ebad0d63fecb4a6499f6"
+    },
+    {
+      "file": "source24-linux10-system-libs-run.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-system-libs-results/20261024T045847Z-34866da15f22/run.json",
+      "sha256": "5712a401c5495f0a9fdde949ed4bfffd49865e3d1f0db5d93ff67d4eddb73af4"
+    },
+    {
+      "file": "source24-linux10-system-libs-math-training-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-system-libs-results/20261024T045847Z-34866da15f22/math-training-migration-summary.json",
+      "sha256": "b032661047755ea5afd6b58d0e15aeca038d47e3e7142ee5bd80da906e88ee90"
+    },
+    {
+      "file": "source24-linux10-system-libs-comment-vote-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-system-libs-results/20261024T045847Z-34866da15f22/comment-vote-migration-summary.json",
+      "sha256": "b64e382472544f9e3c207b594cfa3f62d86acc3afbac152b6d50195f2afd129d"
+    },
+    {
+      "file": "source24-linux10-system-libs-comment-vote-migration-live-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-system-libs-results/20261024T045847Z-34866da15f22/comment-vote-migration-live-summary.json",
+      "sha256": "89eb2797eec12fb0c150dbbd01dac70b269f738b479cdd2629cf865af0b408c7"
+    },
+    {
+      "file": "source24-linux10-system-libs-article-thumbnail-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-system-libs-results/20261024T045847Z-34866da15f22/article-thumbnail-migration-summary.json",
+      "sha256": "d936006f2f2ce074805064efa2150069e747852186127e77acd3f315bc50571b"
+    },
+    {
+      "file": "source24-linux10-vcpkg-test-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-vcpkg-results/20261024T050629Z-9695ff052fdc/test-summary.json",
+      "sha256": "fb7dcab621f2757119888ae001642b90f8406d343691ebad0d63fecb4a6499f6"
+    },
+    {
+      "file": "source24-linux10-vcpkg-run.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-vcpkg-results/20261024T050629Z-9695ff052fdc/run.json",
+      "sha256": "e2104162a3ef17bac13fa958bd1dc672b8b1cd838fa85dea347fe79089f0b07d"
+    },
+    {
+      "file": "source24-linux10-vcpkg-math-training-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-vcpkg-results/20261024T050629Z-9695ff052fdc/math-training-migration-summary.json",
+      "sha256": "be9e4e75712e51fb0d58d3a29c3cdfd6234538bcfb93c85562efd1cf6e77407a"
+    },
+    {
+      "file": "source24-linux10-vcpkg-comment-vote-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-vcpkg-results/20261024T050629Z-9695ff052fdc/comment-vote-migration-summary.json",
+      "sha256": "b769874092057bef6d15b555ef3d4303f30668810bb6a9c256a628bbb3096eca"
+    },
+    {
+      "file": "source24-linux10-vcpkg-comment-vote-migration-live-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-vcpkg-results/20261024T050629Z-9695ff052fdc/comment-vote-migration-live-summary.json",
+      "sha256": "de3b1705ffba79542582a76133bc33677b215d860ccc4b1cf4ed9a0a2b4d4075"
+    },
+    {
+      "file": "source24-linux10-vcpkg-article-thumbnail-migration-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-vcpkg-results/20261024T050629Z-9695ff052fdc/article-thumbnail-migration-summary.json",
+      "sha256": "6b3e4ddd13119b443fa0e521a97630f59ae53c758e4bd79badbb2463708ddbed"
+    },
+    {
+      "file": "source24-final-runtime-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-final-runtime-summary.json",
+      "sha256": "731dbb16dfb8a042af0fc0325726ceb219f53bebfa6c2f002ba8029739af1c3c"
+    },
+    {
+      "file": "source-26-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-26-manifest.json",
+      "sha256": "a702a6956d350fa5ad3050697056160b6e01b00bc1fd63895bc2a19fd56bb4d5"
+    },
+    {
+      "file": "final-local-hygiene-first.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/final-local-hygiene-first.json",
+      "sha256": "010bf0b9efdf5d644af8bd3665e79be4b4450b865d4c3c54636c20f0ce3616b1"
+    },
+    {
+      "file": "final-silent-catch-primary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/final-silent-catch-primary.json",
+      "sha256": "68a2c9561cb8bc9799741d2a76e231c7c94a51b98f021c35d4804a279904f080"
+    },
+    {
+      "file": "final-frontend-quality-binding.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/final-frontend-quality-binding.json",
+      "sha256": "0777aed984efb551d72ab64bf4d205abe0cf6b866a163cc58ec707f0b5f5c7e1"
+    },
+    {
+      "file": "final-independent-review-closure.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/final-independent-review-closure.json",
+      "sha256": "1c2c13a04d7a208853ba3821fa76f617d7028be25111b8169dc967875e4c5c0d"
+    },
+    {
+      "file": "source-27-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-27-manifest.json",
+      "sha256": "921be4aa48c7c3502840ded5b81c4dbe2d77845cd26633365a7e3a3d1c8152da"
+    },
+    {
+      "file": "source27-mock-all-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source27-mock-all-root.json",
+      "sha256": "e658920db4b810fbc69d5f9e9691e9e9dbe69b9b811f8f7b90d196976312ffbf"
+    },
+    {
+      "file": "source27-dependency-isolation.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source27-dependency-isolation.json",
+      "sha256": "6d6c348cb8aac75e0b19b78dc98bcd3334bb5f9706bc0b0bbaef3caa9965c638"
+    },
+    {
+      "file": "source27-mock-r2-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source27-mock-r2-root.json",
+      "sha256": "e77f16d1b5f91863c2c508a5715f677c20c9eae7e860568894a6751a0d6500b7"
+    },
+    {
+      "file": "source27-mock-failure-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source27-mock-failure-summary.json",
+      "sha256": "df3eb7186c7ba4b286f8878c4cb9721fe9c8e5e58e0b58f37c7fccd1f36adf48"
+    },
+    {
+      "file": "source-28-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-28-manifest.json",
+      "sha256": "48b35a289eb05791a30c0b5c2c1fa5f89ac5a4c1a6eb80aa5c1443e1d5591a65"
+    },
+    {
+      "file": "source28-dependency-install.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source28-dependency-install.json",
+      "sha256": "c63864b1bfe900a61b3ef40050d0742e812ed6743bb72c4cbe585cb14592b224"
+    },
+    {
+      "file": "source28-lint-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source28-lint-root.json",
+      "sha256": "e610d570dffe2086ad72fdb429e1e7d507884d8bcea4c93a290fddb9c9e09099"
+    },
+    {
+      "file": "source28-mac10-real-browser-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source28-mac10-real-browser-root.json",
+      "sha256": "7e7b6f44a3997edc350c5463aa97f7915069778fceac79523263fd0048067a1e"
+    },
+    {
+      "file": "source28-real-resource-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source28-real-resource-readback.json",
+      "sha256": "63c7001f0d5d9d5094b800f9ccb4e4b39745900b3de5be5e016137742fc1ebdf"
+    },
+    {
+      "file": "source28-frontend-quality-binding.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source28-frontend-quality-binding.json",
+      "sha256": "8c13197834cb3f75f22fdfafd4fade44d46ef16fd4436c69a32556894d48073e"
+    },
+    {
+      "file": "ueditor-ready-final4-safe-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/ueditor-ready-final4-safe-summary.json",
+      "sha256": "1c18a38a092dbfa18736c16138c0d9969f07a9b3dcc0c690a6a49d616822f5a2"
+    },
+    {
+      "file": "ueditor-ready-primary-review.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/ueditor-ready-primary-review.json",
+      "sha256": "f92cd9c18cc52e75186b3c9c47ded91c985649fb424841e7d8715e47870c300e"
+    },
+    {
+      "file": "d04-candidate5-routing-primary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-candidate5-routing-primary.json",
+      "sha256": "a8273ab0d5e3c5e25bf3dd934751061ea754ad387e8d1d050644d11c5af1545c"
+    },
+    {
+      "file": "d04-before5-preservation.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-before5-preservation.json",
+      "sha256": "d4f2dc2dea4b7c0f13b80f891ec67ab8a3f5dcac8f790d00d3eb937ba63e549a"
+    },
+    {
+      "file": "d04-candidate5-frozen.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-candidate5-frozen.json",
+      "sha256": "14159201970d6d60643d315b28f1f715c7914104fa9bec6525498c52b851484a"
+    },
+    {
+      "file": "source28-mock-all-root.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source28-mock-all-root.json",
+      "sha256": "f344c91846703a905ab9a95016fe891aa0e5e125050024a3a4603cc37d3f5808"
+    },
+    {
+      "file": "source28-mock-full-primary-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source28-mock-full-primary-summary.json",
+      "sha256": "362d00a58c4d21dfee1ba1791ea7165116b93c2584863769c1106a50076db3c9"
+    },
+    {
+      "file": "source28-real-increment-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source28-real-increment-summary.json",
+      "sha256": "ab997056272fe9dcb3b865591a8b78332e7dff22c6603135239581751eefdc95"
+    },
+    {
+      "file": "d04-candidate5-login-metadata.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-candidate5-login-metadata.json",
+      "sha256": "88b146092272602a1dab41a6a7e5b9dbbde96291ed415fa206ffc61b76e22f03"
+    },
+    {
+      "file": "d04-final5-preflight-primary-review.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-final5-preflight-primary-review.json",
+      "sha256": "cc05102d4bb62437d1961594aa36998bad09924ccfc5c22682f54d4247fc09c2"
+    },
+    {
+      "file": "d04-final5-vendor-http.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-final5-vendor-http.json",
+      "sha256": "b2c77cb7ced9d3c073d886597f8e866a96d86b7f83d5dfd760bdd8ceaf9210b7"
+    },
+    {
+      "file": "d04-final5-compatibility-evidence.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-final5-compatibility-evidence.json",
+      "sha256": "72109e8bf2da47b926de34790eedb8df3ac0aa5b2babc4b52f8564bed83e110c"
+    },
+    {
+      "file": "20261024T061109Z-56507-final5-preflight-new-write.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T061109Z-56507-final5-preflight-new-write.json",
+      "sha256": "1d4caa1b38af7e3692506e61eb7c02ab938a2ef58fe50f6e577c88a481ad6a28"
+    },
+    {
+      "file": "d04-final5-cycle-primary-readback.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-final5-cycle-primary-readback.json",
+      "sha256": "95c6f21fd39729f20d69721ff8a01e9d054d5abd0688fea2012466eaf9b03251"
+    },
+    {
+      "file": "final-local-acceptance-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/final-local-acceptance-summary.json",
+      "sha256": "619157b934a0fb49b815f6ec3819c0998dcaa25df4ec712a6b3313879e16584b"
+    },
+    {
+      "file": "20261024T064746Z-76988-final5-restored.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T064746Z-76988-final5-restored.json",
+      "sha256": "545189ade55f4eef9137303a267578eb4169722627622cc90c09c9fa99748c62"
+    },
+    {
+      "file": "20261024T064901Z-77640-final5-logout.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T064901Z-77640-final5-logout.json",
+      "sha256": "c6ae74f2cbee8f97932daf14951a0d191ae074548dc491ad55fd29d1653cfde6"
+    },
+    {
+      "file": "20261024T064643Z-75289-final5-rollback-to4.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T064643Z-75289-final5-rollback-to4.json",
+      "sha256": "4ec738d1df45e90cc404a276aa538441cea02a8adb0de22882fa2f0e491bc5c7"
+    },
+    {
+      "file": "20261024T064550Z-74694-final5-old-page-new-write.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T064550Z-74694-final5-old-page-new-write.json",
+      "sha256": "7b1fb1712d41e1efac60ac80deaa10c20c68955f43768a2374f722c0a898ec59"
+    },
+    {
+      "file": "20261024T064504Z-73483-final5-after-deploy.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T064504Z-73483-final5-after-deploy.json",
+      "sha256": "987da7c94648edaf43c36484446c70dfa780aaca85b6172cf6c245a44a477b0d"
+    },
+    {
+      "file": "20261024T054006Z-38962-final4-before5.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T054006Z-38962-final4-before5.json",
+      "sha256": "4b6c15a710166ad26326c4bb84ae00caebae0c02978dba8ebf8216c2e5a1e455"
+    },
+    {
+      "file": "source-29-manifest.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-29-manifest.json",
+      "sha256": "130ba115f043e75a1bcedc48e43b6700e5f902bcde294069fddc2764e9187087"
+    },
+    {
+      "file": "source29-whitespace-artifact-binding.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source29-whitespace-artifact-binding.json",
+      "sha256": "d488ffef7d5258dadaf65c2f0a9acb6263ec8a608b6b0912156ce87056e688d2"
+    },
+    {
+      "file": "final-private-index-hygiene.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/final-private-index-hygiene.json",
+      "sha256": "c7db3c75c1df499c82df9c790c0f9248b96fd3aeccc379326a041d88eb0dc5b5"
+    },
+    {
+      "file": "remote-ci-readonly-preflight.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/remote-ci-readonly-preflight.json",
+      "sha256": "6994fe573658f3bc6cf8dd9faaa76584948384b838eac087bf613e782dbccb72"
+    }
+  ]
+}

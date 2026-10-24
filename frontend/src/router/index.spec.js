@@ -14,6 +14,12 @@ vi.stubGlobal('localStorage', memoryStore)
 // jsdom doesn't implement scrollTo; the router's scrollBehavior calls it.
 vi.stubGlobal('scrollTo', () => {})
 
+vi.mock('@/utils/authSessionStorage', async () => {
+  const { authSessionStorageMock } = await import('@/test/authSessionStorageMock')
+  return { authSessionStorage: authSessionStorageMock }
+})
+import { authSessionStorageMock } from '@/test/authSessionStorageMock'
+
 // Every lazy view chunk imports Element Plus at module scope. Loading the real
 // library in jsdom costs seconds and made the lazy-route navigation test flake
 // once api/index.js stopped importing it eagerly (Epic 18.1). This spec only
@@ -46,7 +52,19 @@ describe('router', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     localStorage.clear()
+    authSessionStorageMock.reset()
   })
+
+  function seedSession(user = null) {
+    authSessionStorageMock.setCurrent({
+      epoch: 'router-test-epoch',
+      version: 'router-test-version',
+      revision: 0,
+      token: user ? 'tok' : '',
+      refreshToken: user ? 'refresh' : '',
+      user
+    })
+  }
 
   it('defines the expected named routes', () => {
     const names = router.getRoutes().map((r) => r.name)
@@ -73,25 +91,19 @@ describe('router', () => {
   })
 
   it('redirects non-admins away from admin routes to Home', async () => {
-    const store = useUserStore()
-    store.token = 'tok'
-    store.user = { userid: 1, role: 'user' }
+    seedSession({ userid: 1, role: 'user' })
     await router.push('/admin')
     expect(router.currentRoute.value.name).toBe('Home')
   })
 
   it('allows admins into admin routes', async () => {
-    const store = useUserStore()
-    store.token = 'tok'
-    store.user = { userid: 1, role: 'admin' }
+    seedSession({ userid: 1, role: 'admin' })
     await router.push('/admin')
     expect(router.currentRoute.value.name).toBe('AdminDashboard')
   })
 
   it('allows regular users into personal-center article category management', async () => {
-    const store = useUserStore()
-    store.token = 'tok'
-    store.user = { userid: 1, role: 'user' }
+    seedSession({ userid: 1, role: 'user' })
     await router.push('/user/categories')
     expect(router.currentRoute.value.name).toBe('UserArticleCategories')
   })
@@ -102,9 +114,7 @@ describe('router', () => {
   })
 
   it('redirects logged-in users away from guest-only pages', async () => {
-    const store = useUserStore()
-    store.token = 'tok'
-    store.user = { userid: 1, role: 'user' }
+    seedSession({ userid: 1, role: 'user' })
     await router.push('/login')
     expect(router.currentRoute.value.name).toBe('Home')
   })
@@ -118,6 +128,22 @@ describe('router', () => {
   it('allows anonymous access to public pages', async () => {
     await router.push('/search')
     expect(router.currentRoute.value.name).toBe('Search')
+  })
+
+  it('waits for the authoritative session read before guarding a hard-refresh route', async () => {
+    seedSession({ userid: 1, role: 'user' })
+    const read = authSessionStorageMock.deferNextRead()
+    let navigationSettled = false
+    const navigation = router.push('/user/categories').finally(() => {
+      navigationSettled = true
+    })
+    await read.started
+
+    expect(navigationSettled).toBe(false)
+    read.release()
+    await navigation
+    expect(router.currentRoute.value.name).toBe('UserArticleCategories')
+    expect(useUserStore().isLoggedIn).toBe(true)
   })
 
   it('every lazy route chunk resolves to a component module', async () => {

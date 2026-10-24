@@ -34,6 +34,16 @@ fi
 # 获取脚本所在目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+SETUP_SCRIPT="$SCRIPT_DIR/$(basename "${BASH_SOURCE[0]}")"
+if [ "${WONIUNOTE_SETUP_LOCKED:-}" = yes ]; then
+    bash "$PROJECT_DIR/scripts/deploy_release.sh" assert-locked
+else
+    DEPLOY_MANAGER="$PROJECT_DIR/scripts/deploy_release.sh"
+    if [ -n "${DEPLOY_DIR:-}" ] && [ -f "$DEPLOY_DIR/scripts/deploy_release.sh" ]; then
+        DEPLOY_MANAGER="$DEPLOY_DIR/scripts/deploy_release.sh"
+    fi
+    exec env WONIUNOTE_SETUP_SCRIPT="$SETUP_SCRIPT" bash "$DEPLOY_MANAGER" setup
+fi
 
 echo "[1/10] 更新系统包..."
 apt-get update -y
@@ -56,6 +66,8 @@ apt-get install -y \
     libtool \
     rsync \
     lsof \
+    util-linux \
+    coreutils \
     python3 \
     python3-pip \
     python3-venv
@@ -109,7 +121,8 @@ else
     apt-get install -y nginx
     log_info "Nginx 安装完成"
 fi
-systemctl enable nginx
+# Serialize the service configuration change with deploy/start/stop/rollback.
+bash "$PROJECT_DIR/scripts/deploy_release.sh" run-locked timeout 5s systemctl enable nginx
 
 echo "[7/10] 安装 Node.js 22.x (LTS)..."
 # 版本门禁复用前端脚本：锁文件要求 Node >= 20.19.0（unplugin-* 的 engines）。
@@ -314,20 +327,9 @@ else
     log_info "Drogon 已安装且包含 MySQL 支持"
 fi
 
-echo "[9/10] 编译 WoniuNote C++ 后端..."
-cd "$PROJECT_DIR/backend_cpp"
+echo "[9/10] 部署构建由受保护的候选发布事务完成..."
 
-mkdir -p build
-cd build
-
-# 使用系统库编译 (不使用 vcpkg)
-cmake .. \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DUSE_SYSTEM_LIBS=ON
-
-cmake --build . --config Release -j$(nproc)
-
-echo "[10/10] 安装 systemd 服务并部署..."
+echo "[10/10] 准备服务环境并交接到统一发布事务..."
 # 部署目录 (可通过环境变量覆盖，默认使用源码目录)
 DEPLOY_DIR="${DEPLOY_DIR:-$PROJECT_DIR}"
 mkdir -p "$DEPLOY_DIR"
@@ -339,6 +341,11 @@ if [ "$DEPLOY_DIR" != "$PROJECT_DIR" ]; then
     # package-lock.json 必须随源码部署：npm ci 依赖它做可复现安装。
     rsync -av --exclude='.git' \
               --exclude='node_modules' \
+              --exclude='config.local.json' \
+              --exclude='frontend/dist/' \
+              --exclude='backend_cpp/build/' \
+              --exclude='backend_cpp/uploads/' \
+              --exclude='backend_cpp/resource/thumb/' \
               --exclude='__pycache__' \
               --exclude='*.pyc' \
               "$PROJECT_DIR/" "$DEPLOY_DIR/"
@@ -346,42 +353,7 @@ else
     log_info "部署目录与源码目录相同，跳过复制"
 fi
 
-# 安装前端依赖
-log_info "安装前端依赖..."
-cd "$DEPLOY_DIR/frontend"
-if [ -f "package.json" ]; then
-    # 严格按 package-lock.json 安装（迭代20 / Epic 20.3A）：
-    # 不再删除锁文件、不使用 --no-package-lock、失败不回退到 npm install，
-    # 避免每次部署重新解析依赖图导致不可复现。
-    if ! node scripts/check-node-version.mjs; then
-        log_warn "Node.js 版本不满足前端 engines 要求，跳过前端安装与构建"
-    elif ! npm ci; then
-        log_warn "npm ci 失败（锁文件缺失或与 package.json 不一致），跳过前端构建"
-    else
-        log_info "前端依赖安装完成"
-
-        # 生产环境构建前端（检查退出码，管道 | tail 会掩盖失败）
-        log_info "构建前端生产版本..."
-        FRONTEND_BUILD_LOG="$DEPLOY_DIR/frontend/build.log"
-        if npm run build > "$FRONTEND_BUILD_LOG" 2>&1; then
-            log_info "前端构建完成"
-            if [ -d "dist" ]; then
-                log_info "前端静态文件已生成到 $DEPLOY_DIR/frontend/dist"
-            fi
-        else
-            log_warn "前端构建失败，详见 $FRONTEND_BUILD_LOG"
-            tail -10 "$FRONTEND_BUILD_LOG"
-        fi
-    fi
-else
-    log_warn "未找到 package.json，跳过前端依赖安装"
-fi
-cd "$PROJECT_DIR"
-
-# 安装 systemd 服务
-bash "$PROJECT_DIR/scripts/install_service.sh" << EOF
-n
-EOF
+# 生产二进制、静态文件和 systemd unit 只由 deploy_release.sh 创建与切换。
 
 echo "配置防火墙 (ufw)..."
 if command -v ufw &> /dev/null; then
@@ -416,41 +388,48 @@ if [ -d "$PROJECT_DIR/configs/yunjinqi.top_nginx" ]; then
     log_info "SSL 证书已安装到 $SSL_CERT_DIR"
     USE_SSL=true
 else
-    log_warn "未找到 SSL 证书，将使用 HTTP-only 配置"
-    USE_SSL=false
+    log_error "未找到生产 HTTPS 证书，发布事务无法通过 Nginx 配置校验"
+    exit 1
 fi
 
-echo "配置 Nginx..."
-# 删除默认站点
-rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
-
-if [ "$USE_SSL" = true ]; then
-    log_info "使用 HTTPS 配置..."
-    cp "$PROJECT_DIR/configs/woniunote_nginx_prod.conf" /etc/nginx/sites-available/woniunote
-    # 更新证书路径
-    sed -i "s|/etc/letsencrypt/live/yunjinqi.top/fullchain.pem|$SSL_CERT_DIR/fullchain.pem|g" /etc/nginx/sites-available/woniunote
-    sed -i "s|/etc/letsencrypt/live/yunjinqi.top/privkey.pem|$SSL_CERT_DIR/privkey.pem|g" /etc/nginx/sites-available/woniunote
-else
-    log_info "使用 HTTP-only 配置..."
-    if [ -f "$PROJECT_DIR/configs/woniunote_nginx_initial.conf" ]; then
-        cp "$PROJECT_DIR/configs/woniunote_nginx_initial.conf" /etc/nginx/sites-available/woniunote
-    else
-        cp "$PROJECT_DIR/configs/woniunote_nginx_prod.conf" /etc/nginx/sites-available/woniunote
-    fi
+WONIUNOTE_STATE_DIR="$WONIUNOTE_STATE_DIR"
+if [ -z "$WONIUNOTE_STATE_DIR" ]; then WONIUNOTE_STATE_DIR=/var/lib/woniunote; fi
+WONIUNOTE_DATA_DIR="$DEPLOY_DIR/backend_cpp"
+WONIUNOTE_RUNTIME_CONFIG="$WONIUNOTE_RUNTIME_CONFIG"
+if [ -z "$WONIUNOTE_RUNTIME_CONFIG" ]; then
+    if [ -f "$DEPLOY_DIR/backend_cpp/config.local.json" ]; then WONIUNOTE_RUNTIME_CONFIG="$DEPLOY_DIR/backend_cpp/config.local.json"
+    elif [ -f "$PROJECT_DIR/backend_cpp/config.local.json" ]; then WONIUNOTE_RUNTIME_CONFIG="$PROJECT_DIR/backend_cpp/config.local.json"
+    elif [ -f /etc/woniunote/config.json ]; then WONIUNOTE_RUNTIME_CONFIG=/etc/woniunote/config.json
+    else WONIUNOTE_RUNTIME_CONFIG="$PROJECT_DIR/backend_cpp/config.prod.json"; fi
+fi
+if [ "$DEPLOY_DIR" != "$PROJECT_DIR" ]; then
+    printf '%s\n' "$PROJECT_DIR" > "$DEPLOY_DIR/.woniunote-source-repo"
+fi
+DEPLOY_ENV="$DEPLOY_DIR/.woniunote-deploy.env"
+if [ ! -f "$DEPLOY_ENV" ]; then
+    cat > "$DEPLOY_ENV" <<EOF
+WONIUNOTE_PROJECT_DIR=$PROJECT_DIR
+WONIUNOTE_STATE_DIR=$WONIUNOTE_STATE_DIR
+WONIUNOTE_DATA_DIR=$WONIUNOTE_DATA_DIR
+WONIUNOTE_RUNTIME_CONFIG=$WONIUNOTE_RUNTIME_CONFIG
+WONIUNOTE_NGINX_CONFIG=/etc/nginx/nginx.conf
+WONIUNOTE_SSL_CERT=$SSL_CERT_DIR/fullchain.pem
+WONIUNOTE_SSL_KEY=$SSL_CERT_DIR/privkey.pem
+WONIUNOTE_SMOKE_HOST=$WONIUNOTE_SMOKE_HOST
+WONIUNOTE_SMOKE_SCHEME=$WONIUNOTE_SMOKE_SCHEME
+WONIUNOTE_SMOKE_PORT=$WONIUNOTE_SMOKE_PORT
+WONIUNOTE_SMOKE_READONLY_API=$WONIUNOTE_SMOKE_READONLY_API
+WONIUNOTE_SMOKE_THUMB_PATH=$WONIUNOTE_SMOKE_THUMB_PATH
+WONIUNOTE_SMOKE_UPLOAD_PATH=$WONIUNOTE_SMOKE_UPLOAD_PATH
+WONIUNOTE_SMOKE_UPLOAD_FILE=$WONIUNOTE_SMOKE_UPLOAD_FILE
+WONIUNOTE_SMOKE_UPLOAD_SHA256=$WONIUNOTE_SMOKE_UPLOAD_SHA256
+WONIUNOTE_COMPATIBILITY_RECORD=$WONIUNOTE_COMPATIBILITY_RECORD
+WONIUNOTE_ROLLBACK_COMPATIBILITY_RECORD=$WONIUNOTE_ROLLBACK_COMPATIBILITY_RECORD
+EOF
+    chmod 0600 "$DEPLOY_ENV"
 fi
 
-# 更新 Nginx 配置中的路径为实际部署目录
-log_info "更新 Nginx 配置路径: $DEPLOY_DIR"
-sed -i "s|/var/www/woniunote|$DEPLOY_DIR|g" /etc/nginx/sites-available/woniunote
-
-ln -sf /etc/nginx/sites-available/woniunote /etc/nginx/sites-enabled/
-if nginx -t 2>/dev/null; then
-    systemctl reload nginx
-    log_info "Nginx 配置完成"
-else
-    log_warn "Nginx 配置测试失败，请手动检查"
-    nginx -t
-fi
+log_info "Nginx 生产配置将在候选通过独立 nginx -t 后由发布事务原子切换"
 
 echo ""
 echo "========================================"
@@ -599,8 +578,48 @@ verify_database_schema() {
     return $TOTAL_ISSUES
 }
 
+# Fail closed before setup hands off to the release transaction. Unlike the
+# general compatibility report below, this one field is a hard prerequisite
+# because the backend persists complete public upload URLs in it.
+check_article_thumbnail_schema() {
+    local DB_NAME="woniunote"
+    local DB_USER="woniunote"
+    local MIGRATION="$PROJECT_DIR/scripts/sql/migrations/2026-10-24_article_thumbnail.sql"
+    local query="SELECT CONCAT(DATA_TYPE, '|', CHARACTER_MAXIMUM_LENGTH, '|', IS_NULLABLE) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$DB_NAME' AND TABLE_NAME='article' AND COLUMN_NAME='thumbnail';"
+    local actual=""
+
+    if [ -z "${DB_PASS:-}" ]; then
+        log_error "无法验证 article.thumbnail：未提供数据库密码。"
+        log_error "请先备份数据库并按迁移说明处理：$MIGRATION"
+        return 1
+    fi
+
+    if ! actual="$(mysql -u"$DB_USER" -p"$DB_PASS" --database="$DB_NAME" \
+        --batch --raw --skip-column-names --execute="$query" 2>/dev/null)"; then
+        if ! actual="$(sudo mysql --database="$DB_NAME" --batch --raw \
+            --skip-column-names --execute="$query" 2>/dev/null)"; then
+            log_error "无法查询 article.thumbnail；停止安装/升级，未切换服务。"
+            log_error "请先备份数据库并按迁移说明处理：$MIGRATION"
+            return 1
+        fi
+    fi
+
+    if [ "$actual" != "varchar|512|YES" ]; then
+        log_error "article.thumbnail 不兼容 (实际: ${actual:-missing})；停止安装/升级，未切换服务。"
+        log_error "请先备份数据库并按迁移说明处理：$MIGRATION"
+        return 1
+    fi
+    log_info "article.thumbnail schema 已满足 varchar(512) NULL。"
+}
+
 # 执行数据库初始化
 init_database
+
+# This read-only thumbnail precheck runs before the advisory full-schema report;
+# it does not apply the migration or modify the existing thumbnail column.
+if ! check_article_thumbnail_schema; then
+    exit 1
+fi
 
 # 执行表结构核对
 echo ""
@@ -615,14 +634,31 @@ echo "========================================"
 echo "  启动服务..."
 echo "========================================"
 
-# 启动后端服务
-log_info "启动后端服务..."
-systemctl start woniunote || log_warn "后端服务启动失败"
-sleep 2
-
-# 启动 Nginx
-log_info "启动 Nginx..."
-systemctl start nginx || log_warn "Nginx 启动失败"
+# Nginx start/reload and the first release switch run under deploy_release.sh's
+# lock after the candidate has been built and its config has passed nginx -t.
+# setup 的升级/首次部署路径与 start/restart 共用候选构建、部署锁和恢复流程。
+CANDIDATE_SHA="$(git -C "$PROJECT_DIR" rev-parse HEAD)"
+WONIUNOTE_PROJECT_DIR="$PROJECT_DIR" \
+WONIUNOTE_STATE_DIR="$WONIUNOTE_STATE_DIR" \
+WONIUNOTE_DATA_DIR="$WONIUNOTE_DATA_DIR" \
+WONIUNOTE_RUNTIME_CONFIG="$WONIUNOTE_RUNTIME_CONFIG" \
+WONIUNOTE_NGINX_CONFIG=/etc/nginx/nginx.conf \
+WONIUNOTE_SSL_CERT="$SSL_CERT_DIR/fullchain.pem" \
+WONIUNOTE_SSL_KEY="$SSL_CERT_DIR/privkey.pem" \
+WONIUNOTE_COMPATIBILITY_RECORD="$WONIUNOTE_COMPATIBILITY_RECORD" \
+WONIUNOTE_ROLLBACK_COMPATIBILITY_RECORD="$WONIUNOTE_ROLLBACK_COMPATIBILITY_RECORD" \
+WONIUNOTE_SMOKE_HOST="$WONIUNOTE_SMOKE_HOST" \
+WONIUNOTE_SMOKE_SCHEME="$WONIUNOTE_SMOKE_SCHEME" \
+WONIUNOTE_SMOKE_PORT="$WONIUNOTE_SMOKE_PORT" \
+WONIUNOTE_SMOKE_READONLY_API="$WONIUNOTE_SMOKE_READONLY_API" \
+WONIUNOTE_SMOKE_THUMB_PATH="$WONIUNOTE_SMOKE_THUMB_PATH" \
+WONIUNOTE_SMOKE_UPLOAD_PATH="$WONIUNOTE_SMOKE_UPLOAD_PATH" \
+WONIUNOTE_SMOKE_UPLOAD_FILE="$WONIUNOTE_SMOKE_UPLOAD_FILE" \
+WONIUNOTE_SMOKE_UPLOAD_SHA256="$WONIUNOTE_SMOKE_UPLOAD_SHA256" \
+    bash "$DEPLOY_DIR/scripts/deploy_release.sh" deploy --sha "$CANDIDATE_SHA"
+WONIUNOTE_PROJECT_DIR="$PROJECT_DIR" \
+WONIUNOTE_STATE_DIR="$WONIUNOTE_STATE_DIR" \
+    bash "$DEPLOY_DIR/scripts/deploy_release.sh" run-locked timeout 5s systemctl enable woniunote
 
 # 检查服务状态
 echo ""

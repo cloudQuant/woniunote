@@ -1,0 +1,16 @@
+{
+  "exit": 130,
+  "command": [
+    "npm",
+    "run",
+    "test:e2e",
+    "--",
+    "--workers=1",
+    "--retries=0"
+  ],
+  "projects": "firefox,webkit,mobile-chrome",
+  "egress_log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mock-other3-egress.json",
+  "seconds": 207.02,
+  "log_sha256": "3f2858fbd10c050b5ca80e2ccd0512acd86215bd3341d05bba9526a48220ea3d",
+  "source_manifest_sha256": "cd50f3b121093b2243b6a0c1ee9f92314520bbd908b1f4839407316358779840"
+}

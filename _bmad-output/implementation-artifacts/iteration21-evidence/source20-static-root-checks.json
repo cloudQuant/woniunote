@@ -1,0 +1,76 @@
+{
+  "status": "PASS",
+  "scope": "local static gates; not remote CI",
+  "results": [
+    {
+      "name": "source20-release-version",
+      "command": [
+        "/Users/yunjinqi/opt/anaconda3/bin/conda",
+        "run",
+        "--no-capture-output",
+        "-n",
+        "base",
+        "bash",
+        "scripts/check_release_version.sh"
+      ],
+      "exit": 0,
+      "log_sha256": "b7c964532fb32bbbaf0ee71989502319b14af31d2f261b366d00ca796310aa0a"
+    },
+    {
+      "name": "source20-hygiene-tracked",
+      "command": [
+        "bash",
+        "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-hygiene-ci-exact.sh"
+      ],
+      "exit": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "source20-hygiene-including-untracked",
+      "files": 935,
+      "prohibited_paths": [],
+      "findings_without_values": [],
+      "exit": 0
+    },
+    {
+      "name": "owned-shell-syntax",
+      "files": [
+        "backend_cpp/tests/integration/run_integration.sh",
+        "restart_app.sh",
+        "scripts/deploy_release.sh",
+        "scripts/iter21-linux/bootstrap.sh",
+        "scripts/release_run_backend.sh",
+        "scripts/setup_ubuntu.sh",
+        "scripts/tests/iter21-business-runtime/guest.sh",
+        "scripts/tests/iter21-business-runtime/run.sh",
+        "scripts/tests/iter21-deploy-runtime/container/prepare_fixture.sh",
+        "scripts/tests/iter21-deploy-runtime/container/run_runtime.sh",
+        "scripts/tests/iter21-deploy-runtime/container/systemctl-adapter.sh",
+        "scripts/tests/iter21-deploy-runtime/container/systemctl-pause-wrapper.sh",
+        "scripts/tests/iter21-deploy-runtime/run.sh",
+        "scripts/tests/iter21-linux-runtime/build-runtime-image.sh",
+        "scripts/tests/iter21-linux-runtime/container-entrypoint.sh",
+        "scripts/tests/test_article_thumbnail_migration.sh",
+        "scripts/tests/test_deploy_release.sh",
+        "scripts/tests/test_math_training_migration.sh",
+        "scripts/verify_db_schema.sh",
+        "start_app.sh",
+        "stop_app.sh"
+      ],
+      "errors": [],
+      "exit": 0
+    },
+    {
+      "name": "actionlint",
+      "status": "NOT_RUN",
+      "reason": "not installed; not a required existing CI gate"
+    },
+    {
+      "name": "d04-usage-only-diff",
+      "exit": 0,
+      "changed_lines": 2,
+      "execution_branches_unchanged": true
+    }
+  ],
+  "workflow_sha256": "490bbffbcec46510a30af5936a0f2d89df6a2b6ab04e0e42f95f9ce3d8b42b18"
+}

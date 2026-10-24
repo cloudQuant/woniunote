@@ -1,0 +1,75 @@
+{
+  "scope": "Local final review increments; D04 final candidate and Linux final builds still running; remote CI NOT_RUN",
+  "frontend": {
+    "test_files": 43,
+    "tests_passed": 648,
+    "coverage": {
+      "statements": 98.91,
+      "branches": 95.03,
+      "functions": 96.15,
+      "lines": 98.91
+    },
+    "existing_thresholds_unchanged": true,
+    "lint": 0,
+    "build": 0,
+    "audit_mirror_attempt": {
+      "exit": 1,
+      "reason": "mirror does not implement audit endpoint"
+    },
+    "audit_official": {
+      "exit": 0,
+      "registry": "https://registry.npmjs.org"
+    }
+  },
+  "cppcheck": {
+    "exit": 0,
+    "snapshot": "backend-source10"
+  },
+  "deploy_runtime": {
+    "exit": 0,
+    "systemd_mode": "adapter",
+    "nginx": "real",
+    "backend_and_build": "FIXTURE_ONLY",
+    "new_guards": [
+      "first install record",
+      "missing entry CSS pre-switch rejection",
+      "HTTP200 wrong CSS body hash failure and recovery"
+    ],
+    "D04_business": "NOT_PROVEN_BY_FIXTURE"
+  },
+  "logs": [
+    {
+      "file": "final-review-frontend-coverage-primary-final.log",
+      "sha256": "c7b5ad7cfbcc8b736c3a5c78b845aaf4e4edf585969db994f5372f6776484c51"
+    },
+    {
+      "file": "source24-frontend-lint.log",
+      "sha256": "19d979f2fa04bb57796c816a754dd4abf6c5952b1ae8176b90410a40fc1c36d3"
+    },
+    {
+      "file": "source24-frontend-build.log",
+      "sha256": "fb35d49f87ce81766e7c916567ed11f1a62189bef619a19e50893936cc4c7974"
+    },
+    {
+      "file": "source24-frontend-audit.log",
+      "sha256": "8ca4acda36591d0012838ad2bff5d2b8ee402fc27da85a5fdde894aeab2c7351"
+    },
+    {
+      "file": "source24-frontend-audit-official.log",
+      "sha256": "6d8c5c8f3d7684adb070417bd608d01ae90aa3dc26a65af03ffda4955f38d9a3"
+    },
+    {
+      "file": "backend10-cppcheck-final.log",
+      "sha256": "49e9a5dff6ea1701ac4716b55328dbb450967333c2edefdd076f32b31ccc3742"
+    },
+    {
+      "file": "final-review-deploy-runtime.log",
+      "sha256": "7160425e3900bfd637a67ed24a690d546fc73562cb7ed3e7f8582251587caad3"
+    },
+    {
+      "file": "docs-final-shell-syntax.json",
+      "sha256": "a670f78408efa21aeefc7c7d18b6eb058a45497894bc42af9100bffa1b23f6fc"
+    }
+  ],
+  "vscode_unchanged": true
+}

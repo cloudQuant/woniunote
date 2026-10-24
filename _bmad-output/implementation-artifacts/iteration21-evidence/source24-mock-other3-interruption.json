@@ -1,0 +1,7 @@
+{
+  "status": "FAILED_THEN_INTERRUPTED",
+  "pid": 93723,
+  "first_failure": "Firefox article-detail first goto waited for load >30s; business DOM already rendered",
+  "reason": "Stop remaining superseded test harness work; fix readiness contract then rerun all four projects with same frozen product",
+  "other_project_processes_touched": false
+}

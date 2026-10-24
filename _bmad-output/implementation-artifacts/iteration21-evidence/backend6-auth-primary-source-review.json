@@ -1,0 +1,30 @@
+{
+  "scope": "primary source inspection of candidate6 authentication deadline change",
+  "recorded_at_utc": "2026-10-24T02:18:06.448743+00:00",
+  "files": {
+    "backend_cpp/main.cc": "7b18c88cde1da52e48626977322998f31c2e3133debeff93aa948e995dd19695",
+    "backend_cpp/core/auth_redis_config.h": "cf02362e0511ff35b5160de4bba9fa2af90d58462df5e389c45b1ca09ab361a9",
+    "backend_cpp/controllers/AuthController.cc": "b104b42438c71aa4c5cf9cc160e3a7a26664ebace758ff2d172b440c11752795",
+    "backend_cpp/tests/test_auth_sessions.cc": "cfec92a99413f67ff6617c909b7fe34f3432da1b88c410be606c816ade4a3ba8",
+    "backend_cpp/tests/integration/test_iter21_transport_faults.py": "568615cf4c028492a25b08328a30811741d2df4c2048165046180771d7a107eb"
+  },
+  "checks": {
+    "implementation_diff_reviewed_against_source5": true,
+    "current_non_config_source6_manifest_matches_workspace": true,
+    "default_and_unrelated_redis_clients_preserved": true,
+    "dedicated_auth_client_config_timeout_seconds": 1.5,
+    "HTTP_budget_seconds": 3,
+    "local_completion_budget_seconds": 2,
+    "late_ACK_remote_effect_and_duplicate_response_checks_present": true,
+    "process_log_separate_from_rotating_logger_sink": true,
+    "fixed_Drogon_1_9_11_loadConfigJson_and_redis_timeout_path_reviewed": true,
+    "formal_instrumentation_compile_guard_present": true,
+    "build_and_runtime_acceptance": "NOT_RUN",
+    "remote_cancellation_or_all_resource_release_proven": false
+  },
+  "limitations": [
+    "JSON configuration is the supported project path; no YAML compatibility claim",
+    "Code review does not replace six builds, CTest, formal-hook negatives and real timing tests",
+    "HTTP or local callback completion does not prove remote write cancellation"
+  ]
+}

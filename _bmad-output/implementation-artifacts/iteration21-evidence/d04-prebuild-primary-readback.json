@@ -1,0 +1,76 @@
+{
+  "result": "PASS",
+  "run": "20261024T030245Z-52958",
+  "driver_sha256": "91b072e8b8f9f43a81b98ee7b52a2122aa9dfb63778d3a0e6e4a17c22e98f15c",
+  "host_result": "host_exit_status=0",
+  "guest_result": "result=PASS\nexit_status=0\nrun_id=20261024T030245Z-52958\nguest_hostname=lima-woniunote-iter21-systemd-20261024t0028z\ncandidate2_commit=9c597548fc18d3250f68cba8e55bfaa171edacfb\ncandidate3_commit=7fb178838c6ae4511c748a77e67d258ca576d5e9",
+  "builds": {
+    "candidate2": {
+      "candidate_commit": "9c597548fc18d3250f68cba8e55bfaa171edacfb",
+      "backend_binary_sha256": "31bb1f953cb482b7a1bf431b845702eb0f60e1a9e6ce70b66d75de8617f64c59",
+      "backend_binary_size": "5969552",
+      "frontend_tree_sha256_manifest": "eebd734c4dcc404fa90b572434dc2befb68c4b9057b379496e612bc2afda3900",
+      "frontend_file_count": "315",
+      "cmake_flags": [
+        "BUILD_TESTING:BOOL=OFF",
+        "CMAKE_BUILD_TYPE:STRING=Release",
+        "ENABLE_COVERAGE:BOOL=OFF",
+        "ENABLE_SANITIZERS:BOOL=OFF",
+        "USE_SYSTEM_LIBS:BOOL=ON",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS:BOOL=OFF",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE:BOOL=OFF"
+      ],
+      "tool_versions": [
+        "node=v22.13.0",
+        "npm=10.9.2",
+        "cmake=cmake version 3.22.1",
+        "compiler=c++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0",
+        "pkg_config=0.29.2"
+      ],
+      "logs": {
+        "backend-cmake-configure.log": "4ba9d3d01aac9581bedc5c8d538a97be448e1029581d22195adb80ebbe7e7c7d",
+        "backend-build.log": "8eeaa0e6565b5ef89b1e52d70a773111c24510aa702560a200132e4476cd8ff1",
+        "npm-ci.log": "da4788649e302e9ead33ee113018d08fc6e0d7a129734033e38f329df827ac28",
+        "node-version-check.log": "4ce2e2f6a1db56c63d7298095ed10c217ccadab679b8c4511516efd60d4b1903",
+        "frontend-build.log": "23c4bb0d2719ea23f759d96ff0a61d1517e2cd67c75306f5d823ee4d3ea4cd92"
+      }
+    },
+    "candidate3": {
+      "candidate_commit": "7fb178838c6ae4511c748a77e67d258ca576d5e9",
+      "backend_binary_sha256": "c6bd04e727069cf246b5344225917d5f216df134810c6d36d5d612898a641a7f",
+      "backend_binary_size": "5995376",
+      "frontend_tree_sha256_manifest": "eebd734c4dcc404fa90b572434dc2befb68c4b9057b379496e612bc2afda3900",
+      "frontend_file_count": "315",
+      "cmake_flags": [
+        "BUILD_TESTING:BOOL=OFF",
+        "CMAKE_BUILD_TYPE:STRING=Release",
+        "ENABLE_COVERAGE:BOOL=OFF",
+        "ENABLE_SANITIZERS:BOOL=OFF",
+        "USE_SYSTEM_LIBS:BOOL=ON",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS:BOOL=OFF",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE:BOOL=OFF"
+      ],
+      "tool_versions": [
+        "node=v22.13.0",
+        "npm=10.9.2",
+        "cmake=cmake version 3.22.1",
+        "compiler=c++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0",
+        "pkg_config=0.29.2"
+      ],
+      "logs": {
+        "backend-cmake-configure.log": "3ceac58dcb3de9d099dcf8f4b3ddb230442dc0fdf45c2a6616c5d6d08df604a6",
+        "backend-build.log": "715ca0aefe5e121f6b4d044567a21aabfd6a3d745b47aa9ddabaf66bb38a68f8",
+        "npm-ci.log": "5178051cb0524476971566fcd545b667e1bc1a4704ee309f78f2d2afe351d8bc",
+        "node-version-check.log": "4ce2e2f6a1db56c63d7298095ed10c217ccadab679b8c4511516efd60d4b1903",
+        "frontend-build.log": "328fb03628d52d35032c5d15b563ea9f1f3ba3d28fa5b5fdf41ab4430aefb880"
+      }
+    }
+  },
+  "actual_dist_byte_identical": true,
+  "prior_host_failure": {
+    "run": "d04-prebuild-20261024T030152Z-51968",
+    "exit_status": "host_exit_status=2",
+    "log_sha256": "743658e19e202e3870d0ac464bd3d277dbdaaa08f77aeb5da056c61fc799994c",
+    "cause": "BSD awk archive exclusion regex syntax; failed before guest. Fixed component-based predicate; no candidate source changed."
+  }
+}

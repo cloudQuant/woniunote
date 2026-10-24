@@ -1,0 +1,22 @@
+{
+  "status": "FINISHED",
+  "command": [
+    "bash",
+    "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-24/backend_cpp/tests/integration/run_integration.sh"
+  ],
+  "environment": {
+    "TMPDIR": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/private-source24-mac10-real-browser",
+    "WONIUNOTE_BACKEND_BIN": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build10/test/woniunote_backend",
+    "WONIUNOTE_TEST_SCENARIO": "functional",
+    "WONIUNOTE_TEST_KEEP_SERVICES": "0",
+    "WONIUNOTE_TEST_REAL_E2E": "1",
+    "WONIUNOTE_TEST_ARTIFACT_ROOT": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mac10-real-browser-results",
+    "PYTEST_CMD": "/Users/yunjinqi/opt/anaconda3/bin/conda run --no-capture-output -n base python -m pytest"
+  },
+  "exit": 0,
+  "seconds": 173.19,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mac10-real-browser-root.log",
+  "log_sha256": "80d59fd20ce5bf6736781418b59e491a11bb9d9cdd19ab4cb102aa44be2b8050",
+  "source_manifest_sha256": "cd50f3b121093b2243b6a0c1ee9f92314520bbd908b1f4839407316358779840",
+  "backend_sha256": "70aff8fa6c8095c4614bb5bf5a2ff019e714b2e8915345dbda07e3583f6e2466"
+}

@@ -1,0 +1,23 @@
+{
+  "backend_sha256": "c8dd7830924c5994371463c9ae73faff891995176668b1e3f7d5731014370954",
+  "business_tests_not_run": true,
+  "case": "formal_binary_rejected",
+  "challenge_test_hook_rejected": true,
+  "cleanup": {
+    "containers_removed": true,
+    "volumes_removed": true
+  },
+  "elapsed_seconds": 308.465,
+  "exit_code": 2,
+  "formal_binary_manifest_binding_verified": true,
+  "formal_rejection_stage": "challenge-test-hook",
+  "health_preflight_passed": true,
+  "manifest_binding_verified": true,
+  "reason_for_targeted_repeat": "Original verifier stopped before persisting the child exit code; this run records the actual rejection exit code without repeating passing cases.",
+  "run_id": "20261024T015741Z-405fa1c8ee18",
+  "runner_log_sha256": "45492c50299af60821f2db871e1b241e320867e8ce93fafcd42bd07b1991023c",
+  "runner_sha256": "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249",
+  "schema_setup_reached": true,
+  "status": "PASS",
+  "timed_out": false
+}

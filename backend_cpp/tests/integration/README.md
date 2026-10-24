@@ -1,117 +1,137 @@
-# Backend integration tests (HTTP black-box)
+# Iteration 21 real-backend integration suite
 
-These tests exercise the **real** C++ Drogon backend over HTTP against a
-**dedicated test database** (`woniunote_test`) and a live Redis. They cover the
-parts pure unit tests cannot reach: routing, filters (auth + rate limit),
-the unified response envelope with correct HTTP status codes, and DB writes.
+This harness starts the compiled Drogon backend against a fresh MySQL container
+and a fresh Redis container for every invocation. It imports the repository SQL
+schema into a run-specific database, writes a run-specific JSON config, and
+binds all services to loopback on dynamically selected ports. MySQL and Redis
+ports are selected and checked before container creation, explicitly published
+on those ports, and read back to verify the mapping. MySQL uses a uniquely named,
+run-labeled data volume so stop/start keeps the schema; Redis uses a disposable
+`/data` tmpfs. Tests call the real HTTP API and inspect only the test-owned
+database and Redis instances.
+There is no external target mode, mock business API, localStorage login seed, or
+reuse of an unknown backend process.
 
-They never touch the production/dev database — the runner creates and seeds an
-isolated `woniunote_test` schema and points the backend at it via a generated
-`config.integration.json`.
+The run-owned MySQL server disables TLS only so the byte-level transport-fault
+proxy can observe COMMIT and its acknowledgement. The runner checks
+`@@GLOBAL.have_ssl` is `DISABLED` before schema setup and records that readback
+in the private manifest. This setting applies only to the disposable test
+container; it does not change product configuration or formal-runtime TLS.
+Because the vcpkg MariaDB Connector/C build requires verified TLS by default,
+the runner also sets `MARIADB_TLS_DISABLE_PEER_VERIFICATION=1` only for the
+owned backend and test subprocess tree. With the server readback proving TLS is
+disabled and the database endpoint bound to this run's loopback port, this lets
+the client fall back to plaintext for that disposable test service. It is never
+set for a user shell, an external endpoint, or a formal runtime.
 
-## What is covered
+## Build and run
 
-- `GET /health` liveness
-- Missing / malformed / non-bearer `Authorization` → 401 (AuthFilter)
-- `GET /api/auth/me` without token → 401
-- Register a fresh user → 200 with `{code,message,data}` envelope
-- Register a duplicate username → 400 (and HTTP 400, not 200)
-- Response envelope shape + HTTP status alignment
-- Rate limiting → 429 once the per-minute limit is exceeded (needs Redis)
-
-Login is not asserted end-to-end because it requires a server-generated
-captcha (random, in-memory) that a black-box client cannot solve. Registration
-+ auth-filter paths give us the meaningful DB + filter coverage instead.
-
-## Prerequisites
-
-- The backend built at `backend_cpp/build/woniunote_backend`
-  (override with `WONIUNOTE_BACKEND_BIN`)
-- MySQL reachable (default `127.0.0.1:3306`)
-- Redis reachable **and answering PING** (default `127.0.0.1:6379`); the
-  preflight speaks the Redis protocol, not just TCP
-- Python deps: `pip install requests pytest`
-- A Python interpreter with those deps: `WONIUNOTE_TEST_PYTHON` selects it
-  (default `python3`; on this machine use
-  `/Users/yunjinqi/opt/anaconda3/bin/conda run -n base python`). The same
-  interpreter is used for the runner's own helpers and for pytest unless
-  `PYTEST_CMD` overrides the latter.
-
-## Isolation guard
-
-The suite writes rows and hammers the rate limiter, so the runner refuses to
-start unless the target looks like a test environment:
-
-- `WONIUNOTE_TEST_DB_NAME` must match a test-schema pattern
-  (`*_test`, `test_*`, …); pointing it at `woniunote` / a production name
-  aborts before anything is created or modified.
-- `WONIUNOTE_TEST_PORT` must not be the development backend port (5173).
-
-## Run
+The C++ binary used by the HTTP suite must be a test-only build because both
+the real captcha cache hook and auth transaction probe are compiled out of
+normal artifacts. Configure the backend with:
 
 ```bash
-# From repo root. Override DB creds via env as needed.
-export WONIUNOTE_TEST_DB_HOST=127.0.0.1
-export WONIUNOTE_TEST_DB_PORT=3306
-export WONIUNOTE_TEST_DB_USER=root
-export WONIUNOTE_TEST_DB_PASSWORD=yourpassword
+cmake -S backend_cpp -B backend_cpp/build \
+  -DBUILD_TESTING=ON \
+  -DWONIUNOTE_ENABLE_TEST_CHALLENGE=ON \
+  -DWONIUNOTE_ENABLE_TEST_AUTH_FAULTS=ON
+cmake --build backend_cpp/build -j8
+```
 
+Python dependencies in the selected environment are `pytest`, `requests`,
+`pymysql`, and `redis`. On this workstation, the runner selects Anaconda base
+through `conda run -n base python` automatically. Docker Desktop must be
+running; a pre-existing host MySQL, Redis, or backend is not used.
+
+Run the main correctness scenario, which configures a high but active rate
+limit so the 100-user and business cases do not consume the limiter's separate
+acceptance budget:
+
+```bash
 bash backend_cpp/tests/integration/run_integration.sh
 ```
 
-The runner: creates+seeds `woniunote_test`, writes `config.integration.json`,
-starts the backend on a test port with a strong `WONIUNOTE_JWT_SECRET`, waits
-for `/health`, runs pytest, then tears the server down (also on Ctrl-C/failure;
-the per-run server log is named with the runner's PID).
-
-The runner passes this directory's `pytest.ini` with `-c`, so collection is
-governed by that file rather than by the repository-root `pytest.ini` (Flask
-era: its `testpaths` pointed at a directory that no longer exists and its
-addopts need plugins CI does not install). Keep `PYTEST_CMD`, if you set it, a
-plain command — quoting tricks such as `-o addopts=''` survive environment
-expansion as literal quotes, and pytest then reads the empty value as a path
-argument for the current directory and collects the whole repository instead of
-this suite.
-
-### Strict mode (release / CI acceptance)
+The default scenario uses a separate fresh DB/Redis pair and the product
+default of 60 requests/minute to verify a real HTTP 429 and `Retry-After`:
 
 ```bash
-WONIUNOTE_TEST_STRICT=1 bash backend_cpp/tests/integration/run_integration.sh
+WONIUNOTE_TEST_SCENARIO=rate-limit \
+  bash backend_cpp/tests/integration/run_integration.sh
 ```
 
-In strict mode the rate-limit case **must** observe a real `429` with a
-`Retry-After` header; if it cannot (Redis down, limiter disabled), the run
-fails instead of skipping. Without strict mode it skips, which is only
-acceptable for local debugging — a skipped rate-limit case is not release
-evidence.
+The functional scenario also runs the math answer-column migration checks
+against scratch schemas inside its verified run-owned MySQL container, then
+runs the comment-vote migration's pure Python unit suite and its live migration
+checks against uniquely named scratch schemas in the same label-verified,
+run-owned MySQL container. The separate rate-limit scenario remains focused
+on the real Redis-backed HTTP limiter.
 
-### External instance mode
+For the real Chromium UI flow, install the lockfile-exact frontend packages
+and Chromium, then run the functional scenario with Node 22.13.0 on `PATH`:
 
 ```bash
-WONIUNOTE_TEST_BASE_URL=http://127.0.0.1:5273 bash backend_cpp/tests/integration/run_integration.sh
+cd frontend
+npm ci
+npx playwright install chromium
+cd ..
+WONIUNOTE_TEST_REAL_E2E=1 \
+  bash backend_cpp/tests/integration/run_integration.sh
 ```
 
-When `WONIUNOTE_TEST_BASE_URL` is set the runner does **not** create/seed the
-schema and does **not** start or stop a backend: it runs pytest against that
-URL. The caller owns the instance, its schema and its lifecycle.
+The real Chromium suite exercises both the standalone login page and the
+header modal with ordinary and email-style usernames, carries a protected-page
+redirect through registration, and verifies real refresh/logout responses.
+For browser captcha input it observes the challenge ID from the UI's real
+`GET /api/captcha/generate` request, then uses the guarded test-only route to
+peek at that existing cache entry. The route does not consume the challenge;
+login still validates and consumes it through the production path. API tests
+also use the hook's expired-challenge mode. The hook requires the run-specific
+header and a loopback peer and is absent from ordinary builds.
 
-## Environment variables
+## Isolation and retained evidence
 
-| Var | Default | Meaning |
-|-----|---------|---------|
-| `WONIUNOTE_TEST_DB_HOST` | `127.0.0.1` | MySQL host |
-| `WONIUNOTE_TEST_DB_PORT` | `3306` | MySQL port |
-| `WONIUNOTE_TEST_DB_USER` | `root` | MySQL admin user (to create test DB) |
-| `WONIUNOTE_TEST_DB_PASSWORD` | (empty) | MySQL password |
-| `WONIUNOTE_TEST_DB_NAME` | `woniunote_test` | Test database name (must look like a test schema) |
-| `WONIUNOTE_TEST_REDIS_HOST` | `127.0.0.1` | Redis host |
-| `WONIUNOTE_TEST_REDIS_PORT` | `6379` | Redis port |
-| `WONIUNOTE_TEST_PORT` | `5273` | Backend test listen port |
-| `WONIUNOTE_TEST_RATE_LIMIT` | `60` | Per-minute limit the suite expects |
-| `WONIUNOTE_TEST_STRICT` | `0` | `1` = no skips; missing 429 fails the run |
-| `WONIUNOTE_TEST_BASE_URL` | (unset) | If set, skip DB setup/server start and test this URL |
-| `WONIUNOTE_TEST_SKIP_DB_SETUP` | `0` | `1` = reuse an existing prepared schema |
-| `WONIUNOTE_TEST_SKIP_RATELIMIT` | `0` | `1` = disable the rate-limit case (local debug only) |
-| `WONIUNOTE_TEST_PYTHON` | `python3` | Interpreter for the runner's helpers |
-| `WONIUNOTE_BACKEND_BIN` | `backend_cpp/build/woniunote_backend` | Backend binary under test |
-| `PYTEST_CMD` | `$WONIUNOTE_TEST_PYTHON -m pytest` | Full pytest invocation (may contain args) |
+The runner refuses externally supplied backend, DB, or Redis targets and
+refuses standard/development ports. It writes unique config, uploads, logs, and
+reports under a mode-700 per-run directory. Config files and uploads are
+removed during cleanup; normal successful runs retain only a redacted manifest,
+sanitized test names/statuses, migration outcome summaries, content-free
+transport counters, allowlisted Linux backend runtime metadata, and a backend
+log metadata index under
+`/tmp/woniunote-iter21/results/<run-id>` (or the directory selected by
+`WONIUNOTE_TEST_ARTIFACT_ROOT`). Raw JUnit details, Playwright HTML reports,
+screenshots, traces, service logs, and backend logs are not copied to this
+summary directory. Failed runs clean up only containers and the MySQL volume
+whose exact run-id and service labels match this invocation; the manifest
+records the MySQL volume name, driver, labels, and cleanup status. The runner
+does not prune or guess at other Docker resources. Raw logs and browser
+diagnostics remain inside the mode-700 runtime directory.
+For upload-path parity with the application, `document_root` is
+`<RUN_DIR>/uploads` and `upload_path` is its `uploads` child; both remain inside
+the run-owned uploads tree that cleanup removes. Logs and generated config stay
+outside that static document root.
+Native backend processes run from the private `<RUN_DIR>/backend-runtime`
+directory, so UEditor’s legacy `../uploads` probe resolves to this run’s
+`<RUN_DIR>/uploads`. The Linux container launcher must use the same workdir
+while binding `<RUN_DIR>` at the same path to preserve that isolation.
+Linux backend metadata preserves only the instance, run ID, full backend
+container ID, backend binary SHA-256, runtime/base image names and image IDs,
+runtime-spec SHA-256, HTTP port, and `credentials_included: false`. The runner
+validates these fields against the run and copies only that allowlist; it never
+copies backend config or logs into the sanitized artifact directory.
+
+Set `WONIUNOTE_TEST_KEEP_SERVICES=1` to keep a successful run's owned backend
+and Docker services alive for the main thread's subsequent formal-binary
+verification. The private run directory also retains `config.integration.json`
+with mode 600 so that the formal binary can reuse the exact isolated DB/Redis
+configuration. It is not copied to the sanitized artifact directory. The
+manifest contains the run ID, dynamic loopback ports, container IDs, backend
+PID, and scenario but no credentials. This retention only reports completion
+of the requested runner phases; it does not count as a pass for later
+formal-binary checks. After verification, stop the retained backend and remove
+only the exact run-labeled containers and MySQL volume, verifying their names,
+IDs, and labels first. Do not point tools at these ports after cleanup.
+
+The harness accepts `WONIUNOTE_BACKEND_BIN` to select a different built
+executable and `WONIUNOTE_TEST_ARTIFACT_ROOT` for a private evidence location.
+It does not accept user-provided DB/Redis/backend URLs, skip-setup switches, or
+port overrides that collide with 5173, 8888, 3306, or 6379.

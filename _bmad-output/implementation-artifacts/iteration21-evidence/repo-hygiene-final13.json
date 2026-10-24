@@ -1,0 +1,6 @@
+{
+  "scope": "CI hygiene patterns over tracked plus nonignored untracked files; git grep -I excludes binary files; unrelated vscode omitted",
+  "files": 842,
+  "findings": [],
+  "status": "PASS"
+}

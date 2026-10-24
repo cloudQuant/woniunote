@@ -1,0 +1,17 @@
+{
+  "result": "PASS",
+  "checks": [
+    {
+      "path": "/api/captcha/test/challenge",
+      "method": "POST",
+      "status": 404
+    },
+    {
+      "path": "/api/auth/test/empty-transaction",
+      "method": "POST",
+      "status": 404
+    }
+  ],
+  "runtime": "managed candidate2, formal binary 31bb1f953cb482b7a1bf431b845702eb0f60e1a9e6ce70b66d75de8617f64c59",
+  "scope": "Actual registered test-route paths, no injected service environment in this readback. Injected-environment negative proof remains in prior candidate5 formal build evidence."
+}

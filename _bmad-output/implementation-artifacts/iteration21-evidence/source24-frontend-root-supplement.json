@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "source_manifest_sha256": "cd50f3b121093b2243b6a0c1ee9f92314520bbd908b1f4839407316358779840",
+  "checks": [
+    {
+      "name": "audit-official",
+      "command": [
+        "npm",
+        "audit",
+        "--omit=dev",
+        "--audit-level=moderate",
+        "--registry=https://registry.npmjs.org"
+      ],
+      "exit": 0,
+      "seconds": 1.2,
+      "log": "source24-frontend-audit-official.log",
+      "sha256": "6d8c5c8f3d7684adb070417bd608d01ae90aa3dc26a65af03ffda4955f38d9a3"
+    },
+    {
+      "name": "mock-e2e",
+      "command": [
+        "npm",
+        "run",
+        "test:e2e"
+      ],
+      "exit": 0,
+      "seconds": 128.19,
+      "log": "source24-frontend-mock-e2e.log",
+      "sha256": "93be2177f99ad615a96cb166490813da3af6817faf8f19fb23513a8e5126d288"
+    }
+  ],
+  "supersedes": "Only unavailable mirror audit; earlier failure retained"
+}

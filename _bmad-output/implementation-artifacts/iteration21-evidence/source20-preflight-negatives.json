@@ -1,0 +1,146 @@
+{
+  "status": "PASS",
+  "scope": "current source20 runner pre-service negative checks; no business writes",
+  "source_manifest_sha256": "829ea7394c3b13929de63b465f840e968b1e758baf236ed7dd66185b2e30cf8c",
+  "runner_sha256": "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249",
+  "cases": [
+    {
+      "case": "external_backend",
+      "exit": 2,
+      "seconds": 0.011,
+      "status": "PASS",
+      "expected_diagnostic": "external backend targets are disabled",
+      "services_started": false,
+      "business_tests_started": false,
+      "log_sha256": "d68f480a54157541634ff8cf31e1da3ae7be3f0a1ad2b3bae5661190963b0c1c",
+      "run_ids": []
+    },
+    {
+      "case": "woniunote_test_db_host",
+      "exit": 2,
+      "seconds": 0.012,
+      "status": "PASS",
+      "expected_diagnostic": "is not accepted",
+      "services_started": false,
+      "business_tests_started": false,
+      "log_sha256": "0bde398f55851d6c49a655fea2b6042c4f4d8b31d8992da7239943b49f04510b",
+      "run_ids": []
+    },
+    {
+      "case": "woniunote_test_db_port",
+      "exit": 2,
+      "seconds": 0.013,
+      "status": "PASS",
+      "expected_diagnostic": "is not accepted",
+      "services_started": false,
+      "business_tests_started": false,
+      "log_sha256": "b860a71774104963401e0558a201c0c8c50006545ec51e1b379a571c0651133b",
+      "run_ids": []
+    },
+    {
+      "case": "woniunote_test_db_name",
+      "exit": 2,
+      "seconds": 0.015,
+      "status": "PASS",
+      "expected_diagnostic": "is not accepted",
+      "services_started": false,
+      "business_tests_started": false,
+      "log_sha256": "f36d1260adf66c435b5d0cb4946dd22467b1523897cf2fa2acfc7e8a1ce31565",
+      "run_ids": []
+    },
+    {
+      "case": "woniunote_test_redis_host",
+      "exit": 2,
+      "seconds": 0.017,
+      "status": "PASS",
+      "expected_diagnostic": "is not accepted",
+      "services_started": false,
+      "business_tests_started": false,
+      "log_sha256": "55f6aa1ba9f4cb6caefb3103ff699b3edefa18645dc26f55440f1f6c9a101eca",
+      "run_ids": []
+    },
+    {
+      "case": "woniunote_test_redis_port",
+      "exit": 2,
+      "seconds": 0.02,
+      "status": "PASS",
+      "expected_diagnostic": "is not accepted",
+      "services_started": false,
+      "business_tests_started": false,
+      "log_sha256": "fa5f63cef8ab57213b819c389f26be642e7519272831705c5512886e1cca8f23",
+      "run_ids": []
+    },
+    {
+      "case": "woniunote_test_skip_db_setup",
+      "exit": 2,
+      "seconds": 0.022,
+      "status": "PASS",
+      "expected_diagnostic": "is not accepted",
+      "services_started": false,
+      "business_tests_started": false,
+      "log_sha256": "1ae952a15cfb1eb0dd17ee0dfaad3dada31b87d0855a280f21fbcb746c41bb3f",
+      "run_ids": []
+    },
+    {
+      "case": "missing_python",
+      "exit": 2,
+      "seconds": 0.021,
+      "status": "PASS",
+      "expected_diagnostic": "must be one executable path",
+      "services_started": false,
+      "business_tests_started": false,
+      "log_sha256": "82334077ae38be4dc49c1c12570b9770ec3fac390cefec408cf7f15e750451e9",
+      "run_ids": []
+    },
+    {
+      "case": "missing_docker",
+      "exit": 2,
+      "seconds": 2.633,
+      "status": "PASS",
+      "expected_diagnostic": "Docker daemon unavailable",
+      "services_started": false,
+      "business_tests_started": false,
+      "log_sha256": "ba37cba0965b54562f2f139d2e2e096ef77799169a45438cc67a684f932b9653",
+      "run_ids": []
+    },
+    {
+      "case": "reserved_backend_port",
+      "exit": 2,
+      "seconds": 4.33,
+      "status": "PASS",
+      "expected_diagnostic": "conflicts with a development",
+      "services_started": false,
+      "business_tests_started": false,
+      "log_sha256": "b830571b98cfc0ba098138b31a17ff94144ebe7dff95516b61cf8165d2d78fd3",
+      "run_ids": [
+        "20261024T011018Z-058337e7c504"
+      ]
+    },
+    {
+      "case": "wrong_real_proxy",
+      "exit": 2,
+      "seconds": 9.34,
+      "status": "PASS",
+      "expected_diagnostic": "refuses the development backend proxy",
+      "services_started": false,
+      "business_tests_started": false,
+      "log_sha256": "03518937d79e61234475d40ba819e017db7f7bc1b03a1c62fb3662eb61f2db57",
+      "run_ids": [
+        "20261024T011023Z-f630835f7d0e"
+      ]
+    },
+    {
+      "case": "occupied_backend_port",
+      "exit": 2,
+      "seconds": 5.096,
+      "status": "PASS",
+      "expected_diagnostic": "is occupied",
+      "services_started": false,
+      "business_tests_started": false,
+      "log_sha256": "0051bbec2402dc0fe299798da7ad2acc3210e4e542194da7b35e3cf759bb050f",
+      "run_ids": [
+        "20261024T011032Z-10032c5c613f"
+      ]
+    }
+  ]
+}

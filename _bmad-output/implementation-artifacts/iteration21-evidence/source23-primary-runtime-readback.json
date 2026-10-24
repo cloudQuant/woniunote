@@ -1,0 +1,522 @@
+{
+  "source_manifest_sha256": "610340df59a9bf04ddda747320ccd858e2b5f5b6cbc4eb1f50d3bbe18c04670c",
+  "backend_source_manifest_sha256": "830dbb1cf145da1af1d4306c5fa3e6a4d0527a68b30413ba31500eaefe39d18d",
+  "scope": "Actual root runs; real browser uses test challenge, not formal visual CAPTCHA. Callback completion is local only.",
+  "runs": [
+    {
+      "label": "source23-mac6-projection",
+      "run_id": "20261024T024219Z-4bb72c95b10b",
+      "driver": {
+        "status": "FINISHED",
+        "command": [
+          "bash",
+          "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-23/backend_cpp/tests/integration/run_integration.sh"
+        ],
+        "environment": {
+          "TMPDIR": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/private-source23-mac6-projection",
+          "WONIUNOTE_BACKEND_BIN": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/test/woniunote_backend",
+          "WONIUNOTE_TEST_SCENARIO": "functional",
+          "WONIUNOTE_TEST_KEEP_SERVICES": "0",
+          "WONIUNOTE_TEST_REAL_E2E": "0",
+          "WONIUNOTE_TEST_ARTIFACT_ROOT": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source23-mac6-projection-results",
+          "PYTEST_CMD": "/Users/yunjinqi/opt/anaconda3/bin/conda run --no-capture-output -n base python -m pytest -k public_profiles_and_authenticated_projection"
+        },
+        "source_manifest_sha256": "610340df59a9bf04ddda747320ccd858e2b5f5b6cbc4eb1f50d3bbe18c04670c",
+        "backend_sha256": "ec454ec733784494bc0c5a44ed6aa2cd69e67d3de40a3c54c69f766fdf98eea5",
+        "exit": 0,
+        "seconds": 55.593,
+        "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source23-mac6-projection-root.log",
+        "log_sha256": "a827d14236fcf8666bd1f5332bb311dff9cebebf9307588c910dbe5a7708bf56"
+      },
+      "result_files": {
+        "article-thumbnail-migration-summary.json": "b9a066ac243bc1ddd99ea5f74e562c7271bc78afddbc3c3032272be263244f0d",
+        "comment-vote-migration-live-summary.json": "c9a8ece7269f32f7d8be9ae137e9b5304044d2e4bd85b857b002891ccd8248e2",
+        "comment-vote-migration-summary.json": "821867c49cf0ecc0f8629e1c01e03912e714e22e6e6d7ebeb8983bc231a9422a",
+        "math-training-migration-summary.json": "5c38d68733a15fddd3704f3c9f4054590584f87aee35027cf21143d5845fa605",
+        "run.json": "165516f553d032449090310adaadbad8b5969344960a8c623245b825b11b8d54",
+        "test-summary.json": "2a559ca34266fa858dcebe239ba539ee21bd8c46a871cc982f6a0075b5802c93"
+      },
+      "cleanup": {
+        "containers": 0,
+        "volumes": 0,
+        "closed_ports": [
+          57304,
+          57316,
+          57328
+        ]
+      },
+      "http": {
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "migrations": [
+        "comment-vote-migration-unit",
+        "article-thumbnail-migration",
+        "math-answer-column-migration",
+        "comment-vote-migration-live"
+      ],
+      "redis_faults": []
+    },
+    {
+      "label": "source23-linux6-system-libs",
+      "run_id": "20261024T024314Z-8e5d0de70abb",
+      "driver": {
+        "status": "FINISHED",
+        "command": [
+          "bash",
+          "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-23/backend_cpp/tests/integration/run_integration.sh"
+        ],
+        "environment": {
+          "TMPDIR": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/private-source23-linux6-system-libs",
+          "WONIUNOTE_BACKEND_BIN": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-23/scripts/tests/iter21-linux-runtime/launcher",
+          "WONIUNOTE_TEST_SCENARIO": "functional",
+          "WONIUNOTE_TEST_KEEP_SERVICES": "0",
+          "WONIUNOTE_TEST_REAL_E2E": "0",
+          "WONIUNOTE_TEST_ARTIFACT_ROOT": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source23-linux6-system-libs-results",
+          "WONIUNOTE_LINUX_BACKEND_BINARY": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/test/cmake-build/woniunote_backend",
+          "WONIUNOTE_LINUX_RUNTIME_IMAGE": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee"
+        },
+        "source_manifest_sha256": "610340df59a9bf04ddda747320ccd858e2b5f5b6cbc4eb1f50d3bbe18c04670c",
+        "backend_sha256": "90cd75545a599767d34053abb4000b46380891381983c63fb0f77e47b51dfab5",
+        "exit": 0,
+        "seconds": 199.63,
+        "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source23-linux6-system-libs-root.log",
+        "log_sha256": "6ed5f88b76be55f7218f77651eb41d0a2d937a89fce10e4d4b781d22fbda53dd"
+      },
+      "result_files": {
+        "article-thumbnail-migration-summary.json": "3bb5eb222d9697bd623717b97cb353af376b9717e4cf286fd749007122c43a0f",
+        "backend-runtime-primary.json": "f2aa0c43907aabdfaf242c6df0a5a54aeee8c1ca28780ea2a71baa271e9b758b",
+        "backend-runtime-secondary-67562878e374.json": "5d17a0038cc8840e214a4ee1dbf0dd5ad619b62abc6000bd869bd2970705780c",
+        "backend-runtime-secondary-6afec493ca4d.json": "70c0223bc10d3f66aebff9beaaef6bd2956d7e571429a70acb1b3b2386cad1bf",
+        "backend-runtime-secondary-74b9c289ba72.json": "f07c02ead33fe0965a31c885026aac75382aed429b5ddfce135c9e67be8d2d5b",
+        "backend-runtime-secondary-7fd8ddb868a3.json": "82c9a1a7b493d8d294edf7c32eb2b45fa7397ed03f9af658aa8a6d144bde459c",
+        "backend-runtime-secondary-9c83d2df3266.json": "53d0dc4274df1ad8c783b0da27426c626fa7fbc412e2a938d81c8c8a42cd58df",
+        "backend-runtime-secondary-a959fb0c69dc.json": "67bdbac99ba01582749a76386f636eb4d8cd3cab0909705d3cade3eb950b37ab",
+        "backend-runtime-secondary-c3b927c1ee01.json": "fbfab827723de474da2c8c8e8066aabf00e8cec54614f2f6d18bd7a18f2781c6",
+        "backend-runtime-secondary-c75a3f1f917d.json": "900acf71c39d1f2f5295df5d284dd0f84813d2d2cced1a948e102c93ab6bf833",
+        "backend-runtime-secondary-e029ddfc51f5.json": "32c2d48b6f389d2f17590215c02f8cdf8786ae96ca554c27894349cbd87c40ec",
+        "comment-vote-migration-live-summary.json": "59720a88c42ea4b23365f3814e31ce27a4d979949d84eb33cd0fccc9c61a540a",
+        "comment-vote-migration-summary.json": "22fc9ee74c3f9e0879cc13d350184965cb10f538210b5e1c4412120c4c7b3644",
+        "iter21-transport-mysql-commit-ack-drop-b4771e884ae2.json": "b5c7c04a221b076cfbce94e772cd244c1ee4c79ffd6f48b1c016526d0a29cc7a",
+        "iter21-transport-mysql-training-commit-ack-drop-51b6a0f56004.json": "5c32a5fac66ec38544098a86e3c8def1a8bd36a8722c2c46b3c08a27c34ecf9b",
+        "iter21-transport-mysql-vote-commit-ack-drop-5bf2c6e34543.json": "333a974feb5db4a4bdf76560e7da7056be03a1eba08a7006c420175d7cb51c7e",
+        "iter21-transport-redis-login-set-delay-f27dcc742260.json": "4883371397e7775a9103516ea49f9997628cd422a196e9df4d7b326b80f198e7",
+        "iter21-transport-redis-login-set-drop-1f2aa637b65b.json": "b889e992804b8543f8d58e2ec66e449f9943dac5707f79f8b6ddbbf697d82866",
+        "iter21-transport-redis-logout-eval-delay-4a03764d0b2c.json": "987646150ebe4b4541848a2c3d8e6d4bec8197b6a6d57911e5e910e1f9ec3406",
+        "iter21-transport-redis-refresh-eval-delay-64bab7db9c58.json": "b636a0906134bf5ba7083d633dd8450fa6cea15398a963b8c4734896e86ad5fb",
+        "iter21-transport-runtime-1f2aa637b65b.json": "49f30c8315cced596620bf81999b0080da7fb8a68b5cddf712ea35e38e45dc31",
+        "iter21-transport-runtime-3b5b75960ab5.json": "0beb82b9f88b6d6f2db67eff75eac3331b586eafb3db59870551bc6d6fcfdc3f",
+        "iter21-transport-runtime-4a03764d0b2c.json": "2ee1041fa0bbdf724c8c62236d548aca02a18d82d00089e1ab0cfd54c1a7221e",
+        "iter21-transport-runtime-51b6a0f56004.json": "da2dce534766e97a276c6639d9ba7fb2c79d8739a76a208ad8054f4564633f23",
+        "iter21-transport-runtime-5bf2c6e34543.json": "b591a82c335f9eb552c1170af12fdd8da6965c979f0c0764eda626a2e8a06973",
+        "iter21-transport-runtime-64bab7db9c58.json": "42fc6154ea83d99cfa3a885e7cecb98a6c3dfede7a5e0ddf80156e1b31f0b1b0",
+        "iter21-transport-runtime-9dcff60d8419.json": "30629e8563b1a7a2195425153970df743ac33d5cc72d3ce3375725111fd894f6",
+        "iter21-transport-runtime-b4771e884ae2.json": "24615dcb3485c3870c0dc3123177741816fdf2b2b6a8a27494a95a7b94c928d8",
+        "iter21-transport-runtime-f27dcc742260.json": "d7e85d8091cb03541f1542a7e60e03f0d123cc1f2fba193b44b39a08b2d12f7a",
+        "math-training-migration-summary.json": "61d9b81171e44d88019bd2013dbef12ad0561b5f4b2550079d1fb76b1454de26",
+        "run.json": "c4a50fc534d22d9a436b9c429314e031949c0b238444f7da9d6d47bf67d45321",
+        "test-summary.json": "8cf4c43071a59ec38d7d49dd9d9be311df21d49e0d678674f2e1e23c63b0af11"
+      },
+      "cleanup": {
+        "containers": 0,
+        "volumes": 0,
+        "closed_ports": [
+          57611,
+          57627,
+          57639
+        ]
+      },
+      "http": {
+        "tests": 67,
+        "passed": 67,
+        "failed": 0,
+        "skipped": 0
+      },
+      "migrations": [
+        "comment-vote-migration-unit",
+        "article-thumbnail-migration",
+        "math-answer-column-migration",
+        "comment-vote-migration-live"
+      ],
+      "redis_faults": [
+        {
+          "case": "redis-login-set-delay",
+          "completion_events": [
+            {
+              "id": "1",
+              "operation": "login",
+              "elapsed_ms": 1502.015,
+              "outcome": "exception"
+            }
+          ],
+          "transport": {
+            "matched": 1,
+            "replies_dropped": 0,
+            "replies_delayed": 1,
+            "delayed_replies_forwarded": 1
+          }
+        },
+        {
+          "case": "redis-login-set-drop",
+          "completion_events": [
+            {
+              "id": "1",
+              "operation": "login",
+              "elapsed_ms": 1.169,
+              "outcome": "exception"
+            }
+          ],
+          "transport": {
+            "matched": 1,
+            "replies_dropped": 1,
+            "replies_delayed": 0,
+            "delayed_replies_forwarded": 0
+          }
+        },
+        {
+          "case": "redis-logout-eval-delay",
+          "completion_events": [
+            {
+              "id": "2",
+              "operation": "logout",
+              "elapsed_ms": 1500.429,
+              "outcome": "exception"
+            },
+            {
+              "id": "3",
+              "operation": "refresh",
+              "elapsed_ms": 1.415,
+              "outcome": "success"
+            }
+          ],
+          "transport": {
+            "matched": 1,
+            "replies_dropped": 0,
+            "replies_delayed": 1,
+            "delayed_replies_forwarded": 1
+          }
+        },
+        {
+          "case": "redis-refresh-eval-delay",
+          "completion_events": [
+            {
+              "id": "2",
+              "operation": "refresh",
+              "elapsed_ms": 1501.693,
+              "outcome": "exception"
+            },
+            {
+              "id": "3",
+              "operation": "refresh",
+              "elapsed_ms": 0.584,
+              "outcome": "success"
+            }
+          ],
+          "transport": {
+            "matched": 1,
+            "replies_dropped": 0,
+            "replies_delayed": 1,
+            "delayed_replies_forwarded": 1
+          }
+        }
+      ],
+      "linux_runtime": {
+        "run_id": "20261024T024314Z-8e5d0de70abb",
+        "instance": "primary",
+        "backend_container_id": "df14cf1f117b0731afffb841171215ce52dc9516d2123175664b21cdaee5ca0f",
+        "binary_sha256": "90cd75545a599767d34053abb4000b46380891381983c63fb0f77e47b51dfab5",
+        "runtime_image": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee",
+        "runtime_image_id": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee",
+        "base_image": "woniunote.iter21/system-libs:ubuntu22.04",
+        "base_image_id": "sha256:1ab30b868e397d3575e7f7d491e530e25bdadad33bd7d5bdcdc0e20dc4de7685",
+        "runtime_spec_sha256": "1a9d3db90020ccfe075a208a114c4bcf2c72552c3dd2a305d613481b0a8c2a3c",
+        "http_port": 57611,
+        "credentials_included": false
+      }
+    },
+    {
+      "label": "source23-linux6-vcpkg",
+      "run_id": "20261024T024727Z-c9daa0c24cad",
+      "driver": {
+        "status": "FINISHED",
+        "command": [
+          "bash",
+          "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-23/backend_cpp/tests/integration/run_integration.sh"
+        ],
+        "environment": {
+          "TMPDIR": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/private-source23-linux6-vcpkg",
+          "WONIUNOTE_BACKEND_BIN": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-23/scripts/tests/iter21-linux-runtime/launcher",
+          "WONIUNOTE_TEST_SCENARIO": "functional",
+          "WONIUNOTE_TEST_KEEP_SERVICES": "0",
+          "WONIUNOTE_TEST_REAL_E2E": "0",
+          "WONIUNOTE_TEST_ARTIFACT_ROOT": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source23-linux6-vcpkg-results",
+          "WONIUNOTE_LINUX_BACKEND_BINARY": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/test/cmake-build/woniunote_backend",
+          "WONIUNOTE_LINUX_RUNTIME_IMAGE": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee"
+        },
+        "source_manifest_sha256": "610340df59a9bf04ddda747320ccd858e2b5f5b6cbc4eb1f50d3bbe18c04670c",
+        "backend_sha256": "575b4e1fc29d6c3957aa5c5e2f89e65a5765049811bf3a91798ef25268aa4919",
+        "expected_exit": 0,
+        "exit": 0,
+        "seconds": 205.905,
+        "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source23-linux6-vcpkg-root.log",
+        "log_sha256": "e2128397a752e3d77fc831d5ab8461f90efa906727bf16f5d9a54be147192059"
+      },
+      "result_files": {
+        "article-thumbnail-migration-summary.json": "d8cb4f8c0f5203197f72982ce632495d257bf514df5dfcdfbf61141d213f1831",
+        "backend-runtime-primary.json": "42a10020ba8a8c88e6bebcdaa0e1d53c41fc8ab18e6786aec1882e478bc50d15",
+        "backend-runtime-secondary-06a850118c50.json": "2f3489c8ff1fdaea7e6f0a900bf6f82d8e60ad3c7cffd0f1a485efe80baff2e9",
+        "backend-runtime-secondary-3f5d71b81b7f.json": "61eac2a6451db4cb13fce83dd291554ead0ebd019e561ec38d5301a50bf36f2c",
+        "backend-runtime-secondary-540e9a8031b5.json": "9d7b5165d13e7bf7e9836ecab521347a510d7ece5043a9e017ed89299dde81a6",
+        "backend-runtime-secondary-6afb9e6d9697.json": "fdcceb0d915ab10a55cbb643e0d8aa5b685c12367c5ed15635bd7f123795f8b0",
+        "backend-runtime-secondary-8e9be5783b67.json": "01e9616016ccc70e457f2a476a7f84ba6d79f59e85ecf9e8053f2f1898b30d6e",
+        "backend-runtime-secondary-ae090c0f144f.json": "845545ca6ee359d6014af0ab0f3cc5005ebf320213fd3567e772b1645a136cb6",
+        "backend-runtime-secondary-c2846809d258.json": "4a3e4c59e9a64b5123598d7e315fb1fd25c03b3c1f74ef9b480badcdd1e530c9",
+        "backend-runtime-secondary-d0226e76201c.json": "c77af9298489a5d69e4a216085acaf4ff167667444a95a7fb34ec93819b696dc",
+        "backend-runtime-secondary-d2612f67d342.json": "dd6a6487fdf45aebdc8fd8f031d3e68dd5a87cc27ddaa120cf61f0bfafcb650a",
+        "comment-vote-migration-live-summary.json": "f309a354d9bb18a1a4513514eb34867c5a69cf02358a4dadcdb5f0aca6940fdc",
+        "comment-vote-migration-summary.json": "867870537540840606d0f95fc70de7c41a508917df0f27ce620cf0e96316596b",
+        "iter21-transport-mysql-commit-ack-drop-fcdfe8e933d0.json": "7173acae522b1018653cc1060750c02ec56dc47faae2d29f289041eb82cf5457",
+        "iter21-transport-mysql-training-commit-ack-drop-626fbbd6bb13.json": "c374cd4632b5674b7f04e99a4fd059964a16ce3fa309743efffec64737765167",
+        "iter21-transport-mysql-vote-commit-ack-drop-1c8a0c8f3cd8.json": "c7d590dad278126c26e2230761368cd20f0a01151613b7971e926d990e87966f",
+        "iter21-transport-redis-login-set-delay-364d942e715b.json": "6bb91b08935a6bcd6f51a976b188f094d70fb71c285fe825866854be9deee495",
+        "iter21-transport-redis-login-set-drop-21213a110ab9.json": "23dc942479f216f967b1b5ffd0c006e608faf39d77c6fb49a76c9ece8e2d2c40",
+        "iter21-transport-redis-logout-eval-delay-d0a6550dbcd8.json": "80795dc7f243f3039f259f0dc458d532917c91bd705f9c4fef9a8ccbc34b53b9",
+        "iter21-transport-redis-refresh-eval-delay-7662929f9554.json": "64322753bc2cef46f13f1b734ca1e2680da1b07e7723315575bd34a47774c83f",
+        "iter21-transport-runtime-1c8a0c8f3cd8.json": "5398a2d326984e761cfea87007e6b90965c00c1231fabd3d80c895291c35fb86",
+        "iter21-transport-runtime-21213a110ab9.json": "856126e2ffd01d8551684ae563cf951c7b038e8f2799289761273caa5a1de11b",
+        "iter21-transport-runtime-364d942e715b.json": "67258f5b673a3672ff0c05f8578a46b1943906259c19993e4b96ef93fe75e41c",
+        "iter21-transport-runtime-4c30a4be02de.json": "42f0402c57e245da4002382986e5557d729b77bc6f3ca4acbef0c77888715d3a",
+        "iter21-transport-runtime-626fbbd6bb13.json": "bccdf14f9360ba701ee57fecf40c3d5fe8335e57acb32d9294eafe6044baf37d",
+        "iter21-transport-runtime-7662929f9554.json": "bf0c4fca2c64721302d3dd836243cc360adaaee56eb46d178008212194ef5ef5",
+        "iter21-transport-runtime-87425fb270d7.json": "690a7322e11864ff2ee21abbeb78e4dde84836d9bc4966f65a121e440c86cf99",
+        "iter21-transport-runtime-d0a6550dbcd8.json": "638e9b8f6f06eeec59fe69c24733a93a434847dd8002c39434d515e60b797805",
+        "iter21-transport-runtime-fcdfe8e933d0.json": "ec274000136abf0bd25fb8612a2df3eab60eb447555afac12b7a77c5e930fd1a",
+        "math-training-migration-summary.json": "2367d443ef484bdebd046cea4c59540415df0d65c14ede9d363814aa1caa1865",
+        "run.json": "e2000baa05dcb6a4b626dc407440cb889bac5c35f1487250c9e6d4d3e8dd211b",
+        "test-summary.json": "8cf4c43071a59ec38d7d49dd9d9be311df21d49e0d678674f2e1e23c63b0af11"
+      },
+      "cleanup": {
+        "containers": 0,
+        "volumes": 0,
+        "closed_ports": [
+          61765,
+          61777,
+          61789
+        ]
+      },
+      "http": {
+        "tests": 67,
+        "passed": 67,
+        "failed": 0,
+        "skipped": 0
+      },
+      "migrations": [
+        "comment-vote-migration-unit",
+        "article-thumbnail-migration",
+        "math-answer-column-migration",
+        "comment-vote-migration-live"
+      ],
+      "redis_faults": [
+        {
+          "case": "redis-login-set-delay",
+          "completion_events": [
+            {
+              "id": "1",
+              "operation": "login",
+              "elapsed_ms": 1501.66,
+              "outcome": "exception"
+            }
+          ],
+          "transport": {
+            "matched": 1,
+            "replies_dropped": 0,
+            "replies_delayed": 1,
+            "delayed_replies_forwarded": 1
+          }
+        },
+        {
+          "case": "redis-login-set-drop",
+          "completion_events": [
+            {
+              "id": "1",
+              "operation": "login",
+              "elapsed_ms": 0.942,
+              "outcome": "exception"
+            }
+          ],
+          "transport": {
+            "matched": 1,
+            "replies_dropped": 1,
+            "replies_delayed": 0,
+            "delayed_replies_forwarded": 0
+          }
+        },
+        {
+          "case": "redis-logout-eval-delay",
+          "completion_events": [
+            {
+              "id": "2",
+              "operation": "logout",
+              "elapsed_ms": 1501.057,
+              "outcome": "exception"
+            },
+            {
+              "id": "3",
+              "operation": "refresh",
+              "elapsed_ms": 1.143,
+              "outcome": "success"
+            }
+          ],
+          "transport": {
+            "matched": 1,
+            "replies_dropped": 0,
+            "replies_delayed": 1,
+            "delayed_replies_forwarded": 1
+          }
+        },
+        {
+          "case": "redis-refresh-eval-delay",
+          "completion_events": [
+            {
+              "id": "2",
+              "operation": "refresh",
+              "elapsed_ms": 1500.672,
+              "outcome": "exception"
+            },
+            {
+              "id": "3",
+              "operation": "refresh",
+              "elapsed_ms": 0.955,
+              "outcome": "success"
+            }
+          ],
+          "transport": {
+            "matched": 1,
+            "replies_dropped": 0,
+            "replies_delayed": 1,
+            "delayed_replies_forwarded": 1
+          }
+        }
+      ],
+      "linux_runtime": {
+        "run_id": "20261024T024727Z-c9daa0c24cad",
+        "instance": "primary",
+        "backend_container_id": "559363175c72fa1087a5bbf457ac27690ade28b270285266d1084a295f7d09a5",
+        "binary_sha256": "575b4e1fc29d6c3957aa5c5e2f89e65a5765049811bf3a91798ef25268aa4919",
+        "runtime_image": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee",
+        "runtime_image_id": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee",
+        "base_image": "woniunote.iter21/system-libs:ubuntu22.04",
+        "base_image_id": "sha256:1ab30b868e397d3575e7f7d491e530e25bdadad33bd7d5bdcdc0e20dc4de7685",
+        "runtime_spec_sha256": "1a9d3db90020ccfe075a208a114c4bcf2c72552c3dd2a305d613481b0a8c2a3c",
+        "http_port": 61765,
+        "credentials_included": false
+      }
+    },
+    {
+      "label": "source23-formal6-runner",
+      "run_id": "20261024T025053Z-1969968159f9",
+      "driver": {
+        "status": "FINISHED",
+        "command": [
+          "bash",
+          "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-23/backend_cpp/tests/integration/run_integration.sh"
+        ],
+        "environment": {
+          "TMPDIR": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/private-source23-formal6-runner",
+          "WONIUNOTE_BACKEND_BIN": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/release/woniunote_backend",
+          "WONIUNOTE_TEST_SCENARIO": "functional",
+          "WONIUNOTE_TEST_KEEP_SERVICES": "0",
+          "WONIUNOTE_TEST_REAL_E2E": "0",
+          "WONIUNOTE_TEST_ARTIFACT_ROOT": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source23-formal6-runner-results"
+        },
+        "source_manifest_sha256": "610340df59a9bf04ddda747320ccd858e2b5f5b6cbc4eb1f50d3bbe18c04670c",
+        "backend_sha256": "ed369ca39096b6536e5be274572c08bc4824b6a363a8475cd7ce6754689b8f96",
+        "expected_exit": 2,
+        "exit": 2,
+        "seconds": 37.5,
+        "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source23-formal6-runner-root.log",
+        "log_sha256": "00100537dbde6ca03063f2aa8cf6e9412e977bbb064ef8c40c161ff4a6e809a5"
+      },
+      "result_files": {
+        "run.json": "e0b6312539e880892af0ad67d83010cb1ed6ec9f1ea86c49096a08624567d8a9"
+      },
+      "cleanup": {
+        "containers": 0,
+        "volumes": 0,
+        "closed_ports": [
+          49437,
+          49451,
+          49465
+        ]
+      },
+      "formal_rejection": "PASS: health phase passed, challenge unavailable, no business tests",
+      "redis_faults": []
+    },
+    {
+      "label": "source23-mac6-real-browser",
+      "run_id": "20261024T025631Z-6b5590fc33f7",
+      "driver": {
+        "status": "FINISHED",
+        "command": [
+          "bash",
+          "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-23/backend_cpp/tests/integration/run_integration.sh"
+        ],
+        "environment": {
+          "TMPDIR": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/private-source23-mac6-real-browser",
+          "WONIUNOTE_BACKEND_BIN": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/test/woniunote_backend",
+          "WONIUNOTE_TEST_SCENARIO": "functional",
+          "WONIUNOTE_TEST_KEEP_SERVICES": "0",
+          "WONIUNOTE_TEST_REAL_E2E": "1",
+          "WONIUNOTE_TEST_ARTIFACT_ROOT": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source23-mac6-real-browser-results",
+          "PYTEST_CMD": "/Users/yunjinqi/opt/anaconda3/bin/conda run --no-capture-output -n base python -m pytest -k public_profiles_and_authenticated_projection"
+        },
+        "node": "22.13.0",
+        "source_manifest_sha256": "610340df59a9bf04ddda747320ccd858e2b5f5b6cbc4eb1f50d3bbe18c04670c",
+        "backend_sha256": "ec454ec733784494bc0c5a44ed6aa2cd69e67d3de40a3c54c69f766fdf98eea5",
+        "exit": 0,
+        "seconds": 102.008,
+        "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source23-mac6-real-browser-root.log",
+        "log_sha256": "84797d760baad1bd5d83a9e340fd9577b14a585dd254d2f3dc7433b3c6d49a3a"
+      },
+      "result_files": {
+        "article-thumbnail-migration-summary.json": "d7aeca472c0ecf3a53b8cd02f0f4f3b87c85613ec670ee6ea4fe0339d9629ce1",
+        "comment-vote-migration-live-summary.json": "719024a8bd29595f4c9e3a1984cefa56336e958a9b03f6798b23713944e34792",
+        "comment-vote-migration-summary.json": "d694eb6805fbe2f5c14519d8491fdcf871784e1f01b6c9656ea547fd6b9bb9c8",
+        "math-training-migration-summary.json": "13ba4059cae8a377abc9a304e9e354884445ed43bf1a87c1433ebef6a26b1a27",
+        "real-browser-summary.json": "d821e7d2bd34bcceb6cbcda643681ce9a538085c1ba327b1c5f6c0e8816aaa86",
+        "run.json": "f0bd34c08e074f908da4a89ec6c7c88cda0d29bab09800f7a60cf33a025e0f4e",
+        "test-summary.json": "2a559ca34266fa858dcebe239ba539ee21bd8c46a871cc982f6a0075b5802c93"
+      },
+      "cleanup": {
+        "containers": 0,
+        "volumes": 0,
+        "closed_ports": [
+          50347,
+          50375,
+          50391,
+          50359
+        ]
+      },
+      "http": {
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "migrations": [
+        "comment-vote-migration-unit",
+        "article-thumbnail-migration",
+        "math-answer-column-migration",
+        "comment-vote-migration-live"
+      ],
+      "redis_faults": [],
+      "browser": {
+        "run_id": "20261024T025631Z-6b5590fc33f7",
+        "suite": "real-chromium-auth-and-business-suite",
+        "result": "passed"
+      }
+    }
+  ]
+}

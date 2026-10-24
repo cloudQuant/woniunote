@@ -1,0 +1,95 @@
+{
+  "status": "PASS_LOCAL_D04_FINAL5_CYCLE",
+  "source_sha": "3b189b0b7664de480c7768f70654dd6050409840",
+  "backend_binary_sha256": "0b0473ad398607b451d56f93d971da13d97ad877d3d2e820625fcfd0c7509adb",
+  "source28_snapshot_sha256": "49b422a2382257bb1cb7745fe692a1de6d94d59bed624ef6292594865ce21893",
+  "scope": "Actual managed4-to5 upgrade; existing frontend4 page saved pending title to new backend5; rollback5-to4; restore same immutable5 release, not second rebuild; eight-section independent data/media comparison; formal logout",
+  "captures": {
+    "final5-preflight-new-write": {
+      "file": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T061109Z-56507-final5-preflight-new-write.json",
+      "sha256": "1d4caa1b38af7e3692506e61eb7c02ab938a2ef58fe50f6e577c88a481ad6a28",
+      "candidate": "de510038840d29aa6be5a6806d6c417873dacd16",
+      "backend_pid": 89525
+    },
+    "final5-after-deploy": {
+      "file": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T064504Z-73483-final5-after-deploy.json",
+      "sha256": "987da7c94648edaf43c36484446c70dfa780aaca85b6172cf6c245a44a477b0d",
+      "candidate": "3b189b0b7664de480c7768f70654dd6050409840",
+      "backend_pid": 94491
+    },
+    "final5-old-page-new-write": {
+      "file": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T064550Z-74694-final5-old-page-new-write.json",
+      "sha256": "7b1fb1712d41e1efac60ac80deaa10c20c68955f43768a2374f722c0a898ec59",
+      "candidate": "3b189b0b7664de480c7768f70654dd6050409840",
+      "backend_pid": 94491
+    },
+    "final5-rollback-to4": {
+      "file": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T064643Z-75289-final5-rollback-to4.json",
+      "sha256": "4ec738d1df45e90cc404a276aa538441cea02a8adb0de22882fa2f0e491bc5c7",
+      "candidate": "de510038840d29aa6be5a6806d6c417873dacd16",
+      "backend_pid": 95074
+    },
+    "final5-restored": {
+      "file": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T064746Z-76988-final5-restored.json",
+      "sha256": "545189ade55f4eef9137303a267578eb4169722627622cc90c09c9fa99748c62",
+      "candidate": "3b189b0b7664de480c7768f70654dd6050409840",
+      "backend_pid": 95612
+    },
+    "final5-logout": {
+      "file": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T064901Z-77640-final5-logout.json",
+      "sha256": "c6ae74f2cbee8f97932daf14951a0d191ae074548dc491ad55fd29d1653cfde6",
+      "candidate": "3b189b0b7664de480c7768f70654dd6050409840",
+      "backend_pid": 95612
+    }
+  },
+  "business_sections_preserved": [
+    "articles",
+    "comments",
+    "votes",
+    "math_records",
+    "wrong_answers",
+    "schema_columns",
+    "table_counts",
+    "upload"
+  ],
+  "formal_ui": {
+    "new_frontend_old_backend_actual_input_and_save": true,
+    "title_and_body_recovered_after_reload": true,
+    "old_page_saved_after_upgrade_http_status": 200,
+    "saved_title_visible_after_rollback_and_restore": true,
+    "comment_count": 5,
+    "logout_http_status": 200,
+    "logout_timestamp": "24/Oct/2026:14:48:38 +0800",
+    "redis_refresh_slot_absent": true
+  },
+  "frontend_vendor": {
+    "managed_http_matches_source28_sha256": "e6039d85a779cebef2168aabf0d73657fd56cbe92ee61d066679eaab1bda39df",
+    "cache_control": "no-cache, must-revalidate"
+  },
+  "uploaded_image_http_sha256": "9802f742ad084d11f8de174b1a0906c0dd43583b02d66ae523788e17d06c6ee3",
+  "new_write_title_sha256": "dfcaba7e0f676b7b9685ce577a7a5c1c6c5c6ed6d6ed226cf0c2e6d8828432f7",
+  "new_write_body_sha256": "f6b45f6150b76c286df5aec8c934cec0ac71e41fe4329221ea8c1f7971fe00fa",
+  "infrastructure_pids": {
+    "mysql": 738,
+    "redis": 627,
+    "nginx": 705
+  },
+  "operation_log_hashes": {
+    "d04-final5-preflight-prepare.log": "f65e3da9ba5b320d0acf2e134765f8943ce5463cd7229b17feac35c8c22cbf06",
+    "d04-final5-preflight-switch.log": "72cd141a229d881bef97b1b1e0e5a50e64b25781fa557dc2c5254e8e517e9146",
+    "d04-final5-preflight-restore.log": "1dfec8766212286fafbf01ede9c4d1f0364327af447159d94002576f242fab83",
+    "d04-final5-deploy.log": "f0a5917945fcc8d53c1e12e1f27b93c20938b9cc92beef67c6d41c54885596c5",
+    "d04-final5-rollback-to4.log": "8f3b86d116358dcbb50d450392e592301e745437a345da287ae3384439122c53",
+    "d04-final5-restore.log": "caa3e8af88472dd5d6170e9c333565c34c8cd0e36823286a59bd1cf053bb2e71"
+  },
+  "screenshots_sha256": {
+    "d04-final5-editor-restored.png": "921597014bb0e7682b082b28a8e4e6b24b08616911a74a879dd8c99997bb79d0",
+    "d04-final5-preflight-write.png": "33298b531a4cf6faf1d058e175c3fe3e04b608978303f350f964b40bc54dd503",
+    "d04-final5-old-page-new-backend-write.png": "f10c1675315177e295219957c044f11f4a96a177f75229f167daa7e0f3509f71",
+    "d04-final5-rollback-read.png": "b74a1cac5979170815975448b277efbf4087e153a8ac9cf346a98174bfcab4e0",
+    "d04-final5-logout.png": "0cc0e6b4411283b82204b5b9f045cbec718c2e12cef95b02c46b7836d95a0fe5"
+  },
+  "unchanged_auth_forced_expiry": "Component-level reuse explicitly bound by backend/schema tree and frontend auth blobs; not repeated forced expiry for5",
+  "remote_ci": "NOT_RUN",
+  "production": "NOT_RUN"
+}

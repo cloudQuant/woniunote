@@ -1,0 +1,59 @@
+{
+  "run_id": "20261024T050629Z-9695ff052fdc",
+  "runtime_dir": null,
+  "runtime_retained": false,
+  "restricted_runtime_has_raw_diagnostics": false,
+  "evidence_policy": "sanitized summaries and content-free metadata; raw logs and browser attachments stay in the restricted runtime",
+  "artifact_dir": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-vcpkg-results/20261024T050629Z-9695ff052fdc",
+  "backend_url": "http://127.0.0.1:56893",
+  "frontend_url": null,
+  "database": "woniunote_test_20261024T050629Z9695ff052fdc",
+  "scenario": "functional",
+  "rate_limit_per_minute": 1000,
+  "mysql": {
+    "container_name": "woniunote-i21-20261024T050629Z-9695ff052fdc-mysql",
+    "container_id": "bacd3e7c287343d1190f41a59737b3e9aff23336d32f2b71e45c39b84d8085e8",
+    "host": "127.0.0.1",
+    "port": 56909,
+    "image": "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+    "image_id": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+    "image_version": "8.0.46-1.el9",
+    "repo_digests": [
+      "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+    ],
+    "container_status": "running",
+    "container_exit_code": null,
+    "transport_tls": {
+      "enabled": false,
+      "server_have_ssl": "DISABLED",
+      "scope": "run-owned disposable integration container only",
+      "client_policy": "plaintext fallback enabled only in owned backend and test subprocesses"
+    },
+    "data_volume": {
+      "name": "woniunote-i21-20261024T050629Z-9695ff052fdc-mysql-data",
+      "driver": "local",
+      "identity": {
+        "run_id": "20261024T050629Z-9695ff052fdc",
+        "service": "mysql"
+      },
+      "status": "removed"
+    }
+  },
+  "redis": {
+    "container_name": "woniunote-i21-20261024T050629Z-9695ff052fdc-redis",
+    "container_id": "b96a712d67ca0dffbb03e9b194a91eb90716d4edd1d3fc1262906abb1eb1c8df",
+    "host": "127.0.0.1",
+    "port": 56928,
+    "image": "redis@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85",
+    "image_id": "sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85",
+    "image_version": "7.4.11",
+    "repo_digests": [
+      "redis@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85"
+    ],
+    "container_status": "running",
+    "container_exit_code": null
+  },
+  "backend_binary": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-24/scripts/tests/iter21-linux-runtime/launcher",
+  "backend_pid": 13047,
+  "credentials_included": false
+}

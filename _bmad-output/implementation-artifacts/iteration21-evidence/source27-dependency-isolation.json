@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "exit": 0,
+  "node_version": "v22.13.0",
+  "command": [
+    "npm",
+    "ci",
+    "--registry=https://registry.npmjs.org"
+  ],
+  "seconds": 87.27,
+  "lock_sha256": "c2a3d8a75e0125643602a4816ff5e1b260fd2b98d198f6f40769aec95517e8a1",
+  "log_sha256": "cef9044c2209303108446186da425b0c565fc2f4ade9161ca895549fdf8c5fd9",
+  "scope": "Replaces only source27 node_modules symlink with independent exact-lock dependencies; source manifest initial reused-dependency note superseded by this runtime record; product/tests unchanged; first full attempt failed during collection with cross-path Playwright instance mismatch and ran zero tests"
+}

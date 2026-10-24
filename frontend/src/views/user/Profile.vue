@@ -96,11 +96,12 @@
  * 提供修改头像、昵称、QQ等个人信息的功能。
  * 同时包含修改密码的表单，支持旧密码验证和新密码确认。
  */
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { userApi, uploadApi } from '@/api'
 import { notifyError } from '@/utils/errorToast'
+import { logWarning } from '@/utils/logger'
 
 const userStore = useUserStore()
 
@@ -108,6 +109,7 @@ const formRef = ref(null)
 const passwordFormRef = ref(null)
 const saving = ref(false)
 const changingPassword = ref(false)
+const profileOwner = ref(null)
 
 const form = reactive({
   nickname: '',
@@ -120,6 +122,54 @@ const passwordForm = reactive({
   new_password: '',
   confirm_password: ''
 })
+
+function ownerKey(snapshot) {
+  return JSON.stringify([snapshot?.epoch || '', snapshot?.userIdentity || null])
+}
+
+function clearPasswordFields() {
+  passwordForm.old_password = ''
+  passwordForm.new_password = ''
+  passwordForm.confirm_password = ''
+  passwordFormRef.value?.clearValidate?.()
+}
+
+function resetProfileForCurrentUser(snapshot = userStore.captureCredentials()) {
+  const user = userStore.user
+  form.nickname = user?.nickname || ''
+  form.avatar = user?.avatar || ''
+  form.qq = user?.qq || ''
+  profileOwner.value = ownerKey(snapshot)
+  clearPasswordFields()
+  formRef.value?.clearValidate?.()
+}
+
+watch(
+  () => ownerKey(userStore.captureCredentials()),
+  (nextOwner) => {
+    if (profileOwner.value && profileOwner.value !== nextOwner) {
+      resetProfileForCurrentUser(userStore.captureCredentials())
+    }
+  },
+  { flush: 'sync' }
+)
+
+async function syncProfileOwnerForSubmit() {
+  const ownerAtSubmit = profileOwner.value
+  await userStore.syncSession()
+  const snapshot = userStore.captureCredentials()
+  const currentOwner = ownerKey(snapshot)
+  if (!ownerAtSubmit) {
+    resetProfileForCurrentUser(snapshot)
+    return snapshot
+  }
+  if (currentOwner !== ownerAtSubmit || profileOwner.value !== currentOwner) {
+    resetProfileForCurrentUser(snapshot)
+    ElMessage.warning('登录账号已切换，资料已更新，请核对后再提交。')
+    return null
+  }
+  return snapshot
+}
 
 const rules = {
   nickname: [
@@ -152,7 +202,11 @@ const passwordRules = {
 
 async function uploadAvatar({ file }) {
   try {
-    const res = await uploadApi.uploadAvatar(file)
+    const snapshot = await syncProfileOwnerForSubmit()
+    if (!snapshot) return
+    const res = await uploadApi.uploadAvatar(file, { _sessionSnapshot: snapshot })
+    await userStore.syncSession()
+    if (!userStore.isSessionCurrent(snapshot) || profileOwner.value !== ownerKey(snapshot)) return
     form.avatar = res.data.url
     ElMessage.success('头像上传成功')
   } catch (error) {
@@ -166,15 +220,20 @@ async function saveProfile() {
   
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
-  
+
   saving.value = true
   try {
+    const snapshot = await syncProfileOwnerForSubmit()
+    if (!snapshot) return
     const res = await userApi.updateProfile({
       nickname: form.nickname,
       avatar: form.avatar,
       qq: form.qq
-    })
-    userStore.updateUser(res.data)
+    }, { _sessionSnapshot: snapshot })
+    await userStore.syncSession()
+    if (!userStore.isSessionCurrent(snapshot) || profileOwner.value !== ownerKey(snapshot)) return
+    const updated = await userStore.updateUser(res.data, snapshot)
+    if (!updated) return
     ElMessage.success('保存成功')
   } catch (error) {
     console.error('保存失败:', error)
@@ -189,13 +248,17 @@ async function changePassword() {
   
   const valid = await passwordFormRef.value.validate().catch(() => false)
   if (!valid) return
-  
+
   changingPassword.value = true
   try {
+    const snapshot = await syncProfileOwnerForSubmit()
+    if (!snapshot) return
     await userApi.updatePassword({
       old_password: passwordForm.old_password,
       new_password: passwordForm.new_password
-    })
+    }, { _sessionSnapshot: snapshot })
+    await userStore.syncSession()
+    if (!userStore.isSessionCurrent(snapshot)) return
     ElMessage.success('密码修改成功')
     passwordFormRef.value.resetFields()
   } catch (error) {
@@ -206,13 +269,15 @@ async function changePassword() {
   }
 }
 
-onMounted(() => {
-  const user = userStore.user
-  if (user) {
-    form.nickname = user.nickname || ''
-    form.avatar = user.avatar || ''
-    form.qq = user.qq || ''
+onMounted(async () => {
+  try {
+    await userStore.syncSession()
+  } catch (error) {
+    // The store reports the storage failure and clears in-memory credentials.
+    logWarning('用户资料页面无法同步登录状态', { message: error?.message || '未知错误' })
+    return
   }
+  if (!profileOwner.value) resetProfileForCurrentUser(userStore.captureCredentials())
 })
 </script>
 

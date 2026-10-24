@@ -1,0 +1,37 @@
+{
+  "status": "PASS_LOCAL_G1_G4_REMOTE_CI_NOT_RUN",
+  "overall": "INCOMPLETE_NO_GO_PENDING_G5",
+  "main_base_sha": "fefab0570c370bebd796df9c683343805d850d18",
+  "source28_snapshot_sha256": "49b422a2382257bb1cb7745fe692a1de6d94d59bed624ef6292594865ce21893",
+  "source28_manifest_sha256": "48b35a289eb05791a30c0b5c2c1fa5f89ac5a4c1a6eb80aa5c1443e1d5591a65",
+  "current_main_inputs_match_frozen_source28": 430,
+  "backend_source10_snapshot_sha256": "8fa23d6f6a1d374abd260ab602da94d485fdd4c08312b4244ff736d42fdd5548",
+  "local_checks": {
+    "backend_builds": "6 variants, each configure/build success and CTest8/8",
+    "backend_http": "source24 mac/system-libs/vcpkg each71/71 with real isolated dependencies",
+    "formal_test_hook_negative": "3 release paths x2 configurations,6 cases health200 and hooks404; formal runner stops before test hooks",
+    "unit": "648 passed, unchanged359 frontend input paths bound; vendor increment browser validated",
+    "coverage": "S/L98.91 B95.03 F96.15, unchanged95 thresholds",
+    "mock": "source28 four projects266 passed0failed2existing skipped;268 contexts allclosed attributed zero violations;workers1retries0",
+    "real_ui": "source28 Chromium6passed,HTTPhealth1passed; required migration phases passed; exact cleanup independently verified",
+    "quality": "source28 lint/build; current silent-catch separatePASS; same lockfile official registry audit0",
+    "D04": "candidate5 actual4-to5 deployment, retained old page write,5-to4 rollback,same5 restore,8data sections preserved,formal logout200/refresh slot absent"
+  },
+  "evidence": [
+    "backend10-primary-build-readback.json",
+    "source24-final-runtime-summary.json",
+    "source28-frontend-quality-binding.json",
+    "source28-mock-full-primary-summary.json",
+    "source28-real-increment-summary.json",
+    "source28-real-resource-readback.json",
+    "final-silent-catch-primary.json",
+    "d04-final5-cycle-primary-readback.json"
+  ],
+  "review": "primary inspected all new deltas; independent frontend review found no blocker; historical failures retained",
+  "limits": [
+    "Remote required CI jobs NOT_RUN",
+    "Main checkout not committed/pushed/merged/released",
+    "No production deployment or production database mutation",
+    "Iteration22 DRAFTv17 awaits external review and development admission"
+  ]
+}

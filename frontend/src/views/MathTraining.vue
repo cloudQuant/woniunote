@@ -17,6 +17,32 @@
         </div>
       </div>
 
+      <section
+        v-if="pendingRecordSnapshots.length"
+        class="save-outcome-alert"
+        role="alert"
+        aria-live="assertive"
+        data-testid="pending-record-snapshots"
+      >
+        <h2>训练记录提交结果尚未确认</h2>
+        <p>系统未自动重试。请核对历史记录；本页保留了提交快照供你查看。</p>
+        <details v-for="(snapshot, index) in pendingRecordSnapshots" :key="snapshot.requestId || index">
+          <summary>请求编号：{{ snapshot.requestId || '暂不可用' }} · 查看提交快照</summary>
+          <p>
+            {{ snapshot.payload.total_questions }} 题，正确 {{ snapshot.payload.correct_count }} 题，
+            错误 {{ snapshot.payload.wrong_count }} 题，正确率 {{ snapshot.payload.accuracy }}%
+          </p>
+          <ul v-if="snapshot.payload.wrong_answers.length">
+            <li v-for="(item, answerIndex) in snapshot.payload.wrong_answers" :key="answerIndex">
+              {{ item.question }}；正确答案 {{ item.correct_answer }}；
+              <template v-if="item.user_answer === null">已跳过</template>
+              <template v-else>作答 {{ item.user_answer }}</template>
+            </li>
+          </ul>
+          <p v-else>本次没有错题。</p>
+        </details>
+      </section>
+
       <el-row :gutter="24">
         <!-- 左侧设置面板 -->
         <el-col :span="7" :xs="24">
@@ -204,6 +230,7 @@ const {
   difficulty, isRunning, questions, currentIndex, answer, wrongAnswers,
   correct, wrong, answerLocked, feedback, currentQuestionElapsed,
   history, historyLoading, historyPage, historyTotal, pageSize, summary,
+  pendingRecordSnapshots,
   // 计算属性
   currentQuestion, progressPercent, progressColor, accuracyText,
   // 方法
@@ -214,7 +241,8 @@ const {
 
 // 暴露训练逻辑接口，供单元测试与外部调试使用
 defineExpose({
-  questions, wrongAnswers, randInt, getRange, generateQuestionForOp, buildQuestions,
+  questions, wrongAnswers, pendingRecordSnapshots,
+  randInt, getRange, generateQuestionForOp, buildQuestions,
   loadSummary, formatTime, formatDuration, difficultyTagType, tableRowClassName
 })
 </script>
@@ -253,6 +281,38 @@ defineExpose({
   color: var(--wn-color-text-secondary);
   font-size: 14px;
   margin: 6px 0 0;
+}
+
+.save-outcome-alert {
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  border: 1px solid var(--wn-color-warning);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--wn-color-warning) 12%, var(--wn-color-surface));
+  color: var(--wn-color-text);
+}
+
+.save-outcome-alert h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.save-outcome-alert p {
+  margin: 6px 0;
+}
+
+.save-outcome-alert details {
+  margin-top: 10px;
+}
+
+.save-outcome-alert summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.save-outcome-alert ul {
+  margin: 8px 0 0;
+  padding-left: 22px;
 }
 
 .sidebar-card,

@@ -31,6 +31,9 @@
         :disabled="answerLocked"
         class="answer-input"
         type="number"
+        min="-2147483647"
+        max="2147483647"
+        step="any"
       />
       <div class="answer-actions">
         <el-button type="primary" size="large" @click="emit('submit')" :disabled="answerLocked">
@@ -47,6 +50,9 @@
         <el-icon v-if="feedback.correct"><CircleCheckFilled /></el-icon>
         <el-icon v-else><CircleCloseFilled /></el-icon>
         <span v-if="feedback.correct">正确！用时 {{ feedback.seconds }}s</span>
+        <span v-else-if="feedback.userAnswer === null">
+          已跳过，正确答案是 <strong>{{ feedback.correctAnswer }}</strong>
+        </span>
         <span v-else>错误，正确答案是 <strong>{{ feedback.correctAnswer }}</strong></span>
       </div>
     </transition>

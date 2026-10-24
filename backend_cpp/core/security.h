@@ -26,6 +26,7 @@ struct TokenPayload {
     std::string sub;        // Subject (user ID)
     std::string type;       // Token type ("access" or "refresh")
     std::string jti;        // Unique token id (for refresh rotation / reuse detection)
+    std::string sid;        // Stable login-session id shared by access and refresh tokens
     std::chrono::system_clock::time_point exp;  // Expiration time
 };
 
@@ -73,7 +74,8 @@ public:
      * @return JWT token string
      */
     static std::string createAccessToken(const std::string& userId, 
-                                          int expireMinutes = 0);
+                                          int expireMinutes = 0,
+                                          const std::string& sid = "");
 
     /**
      * @brief Create refresh token
@@ -84,13 +86,20 @@ public:
      */
     static std::string createRefreshToken(const std::string& userId,
                                            int expireDays = 0,
-                                           const std::string& jti = "");
+                                           const std::string& jti = "",
+                                           const std::string& sid = "");
 
     /**
      * @brief Generate a random unique token id (jti), hex-encoded.
      * @return 32-char hex string (128 bits of entropy)
      */
     static std::string generateJti();
+
+    /**
+     * @brief Generate a stable login-session id using the cryptographic RNG.
+     * @return 32-char hex string, or empty if secure randomness is unavailable.
+     */
+    static std::string generateSessionId();
 
     /**
      * @brief Decode and verify a JWT token

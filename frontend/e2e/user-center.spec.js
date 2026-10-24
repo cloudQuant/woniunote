@@ -1,5 +1,6 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './support/test'
 import { mockApi, loginAs } from './support/mockApi'
+import { completeApiResponse, waitForApiResponse } from './support/apiLifecycle'
 
 test.describe('User center', () => {
   test.beforeEach(async ({ page }) => {
@@ -8,33 +9,38 @@ test.describe('User center', () => {
   })
 
   test('profile sub-route renders the user info', async ({ page }) => {
-    await page.goto('/user')
+    await page.goto('/user', { waitUntil: 'domcontentloaded' })
     await expect(page.locator('.user-center-page')).toBeVisible()
     // The nickname appears in the sidebar user card.
     await expect(page.locator('.user-name')).toContainText('tester')
   })
 
   test('my articles sub-route lists the user articles', async ({ page }) => {
-    await page.goto('/user/articles')
+    await page.goto('/user/articles', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/user\/articles/)
     await expect(page.locator('.user-content').getByText('量化投资入门').first()).toBeVisible()
   })
 
   test('my favorites sub-route renders (empty state ok)', async ({ page }) => {
-    await page.goto('/user/favorites')
+    const favoritesResponse = waitForApiResponse(page, 'GET', '/api/favorites')
+    await page.goto('/user/favorites', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/user\/favorites/)
     // Scope to the content heading (the sidebar also has a "我的收藏" menu item).
     await expect(page.locator('.user-content .page-title')).toContainText('我的收藏')
+    await completeApiResponse(favoritesResponse)
   })
 
   test('my credits sub-route shows the balance summary', async ({ page }) => {
-    await page.goto('/user/credits')
+    const balanceResponse = waitForApiResponse(page, 'GET', '/api/credits/balance')
+    const historyResponse = waitForApiResponse(page, 'GET', '/api/credits/history')
+    await page.goto('/user/credits', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/user\/credits/)
     await expect(page.locator('.user-content .page-title').first()).toContainText('我的积分')
+    await Promise.all([balanceResponse, historyResponse].map(completeApiResponse))
   })
 
   test('category management tab renders for regular users with pagination', async ({ page }) => {
-    await page.goto('/user/articles')
+    await page.goto('/user/articles', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/user\/articles/)
     await expect(page.locator('.user-sidebar')).toContainText('分类管理')
     await expect(page.getByRole('tab', { name: '我的文章' })).toBeVisible()
@@ -53,7 +59,7 @@ test.describe('User center', () => {
   })
 
   test('category route opens maintenance details directly', async ({ page }) => {
-    await page.goto('/user/categories')
+    await page.goto('/user/categories', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/user\/categories/)
     await expect(page.getByText('文章菜单分类')).toBeVisible()
     await expect(page.locator('.category-overview').getByText('当前分类')).toBeVisible()

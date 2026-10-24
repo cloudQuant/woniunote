@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './support/test'
 import { mockApi, loginAs } from './support/mockApi'
 import {
   editorBodyHtml,
@@ -85,14 +85,14 @@ test.describe('Write article + Markdown import', () => {
   })
 
   test('anonymous visitor is redirected to login and bounced back to /write', async ({ page }) => {
-    await page.goto('/write')
+    await page.goto('/write', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/login/)
     await expect(page).toHaveURL(/redirect=%2Fwrite|redirect=\/write/)
   })
 
   test('author opens the write page with the editor and the import entry', async ({ page }) => {
     await loginAs(page, 'user')
-    await page.goto('/write')
+    await page.goto('/write', { waitUntil: 'domcontentloaded' })
 
     await expect(page).toHaveURL(/\/write$/)
     await expect(page.locator('.write-article-page')).toBeVisible()
@@ -106,7 +106,7 @@ test.describe('Write article + Markdown import', () => {
 
   test('import dialog converts pasted Markdown and keeps $...$ formulas intact', async ({ page }) => {
     await loginAs(page, 'user')
-    await page.goto('/write')
+    await page.goto('/write', { waitUntil: 'domcontentloaded' })
 
     const dialog = await openImportDialog(page)
     await dialog.getByText('粘贴Markdown').click()
@@ -139,7 +139,7 @@ test.describe('Write article + Markdown import', () => {
 
   test('confirming the import inserts the converted HTML into the editor', async ({ page }) => {
     await loginAs(page, 'user')
-    await page.goto('/write')
+    await page.goto('/write', { waitUntil: 'domcontentloaded' })
 
     const dialog = await openImportDialog(page)
     await dialog.getByText('粘贴Markdown').click()
@@ -161,7 +161,7 @@ test.describe('Write article + Markdown import', () => {
 
   test('closing the import dialog without confirming leaves the editor interactive', async ({ page }) => {
     await loginAs(page, 'user')
-    await page.goto('/write')
+    await page.goto('/write', { waitUntil: 'domcontentloaded' })
 
     const dialog = await openImportDialog(page)
     await dialog.getByText('粘贴Markdown').click()
@@ -181,7 +181,7 @@ test.describe('Write article + Markdown import', () => {
 
   test('saving a draft in edit mode posts the article body with drafted=1', async ({ page }) => {
     await loginAs(page, 'user')
-    await page.goto('/edit/1')
+    await page.goto('/edit/1', { waitUntil: 'domcontentloaded' })
 
     // The form is pre-filled from the article detail API.
     await expect(page.getByPlaceholder('请输入文章标题')).toHaveValue('量化投资入门')
@@ -196,16 +196,21 @@ test.describe('Write article + Markdown import', () => {
     const saveButton = page.getByRole('button', { name: '保存草稿' })
     await waitForStableLayout(saveButton)
 
-    const requestPromise = page.waitForRequest(
-      (req) => req.method() === 'PUT' && new URL(req.url()).pathname === '/api/articles/1'
+    const responsePromise = page.waitForResponse(
+      (response) => response.request().method() === 'PUT' && new URL(response.url()).pathname === '/api/articles/1'
     )
     await saveButton.click()
-    const body = (await requestPromise).postDataJSON()
+    const response = await responsePromise
+    expect(response.status()).toBe(200)
+    const body = response.request().postDataJSON()
 
     expect(body.headline).toBe('量化投资入门')
     expect(body.type).toBe(101)
     expect(body.drafted).toBe(1)
     expect(body.content).toContain('这是一篇关于量化投资的文章正文')
+    expect(body.thumbnail).toBe('101.png')
+    await expect(page).toHaveURL(/\/article\/1$/)
+    await expect(page.locator('.article-title')).toHaveText('量化投资入门')
   })
 
   // Regression guard for a fixed defect (iteration 17, found by this spec):
@@ -220,7 +225,7 @@ test.describe('Write article + Markdown import', () => {
   // `input` (debounced 300ms) plus a `blur` flush on the editor iframe body.
   test('publishing a new article posts the editor content', async ({ page }) => {
     await loginAs(page, 'user')
-    await page.goto('/write')
+    await page.goto('/write', { waitUntil: 'domcontentloaded' })
 
     await page.getByPlaceholder('请输入文章标题').fill('E2E 新文章')
 
@@ -234,15 +239,19 @@ test.describe('Write article + Markdown import', () => {
     const publishButton = page.getByRole('button', { name: '发布' })
     await waitForStableLayout(publishButton)
 
-    const requestPromise = page.waitForRequest(
-      (req) => req.method() === 'POST' && new URL(req.url()).pathname === '/api/articles'
+    const responsePromise = page.waitForResponse(
+      (response) => response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/articles'
     )
     await publishButton.click()
-    const body = (await requestPromise).postDataJSON()
+    const response = await responsePromise
+    expect(response.status()).toBe(200)
+    const body = response.request().postDataJSON()
 
     expect(body.headline).toBe('E2E 新文章')
     expect(body.type).toBe(101)
     expect(body.drafted).toBe(0)
     expect(body.content).toContain('这是通过编辑器输入的正文')
+    await expect(page).toHaveURL(/\/article\/3$/)
+    await expect(page.locator('.article-title')).toHaveText('量化投资进阶')
   })
 })

@@ -7,7 +7,7 @@ installLocalStorage()
 silenceExpectedConsole(['error'])
 
 const m = vi.hoisted(() => ({
-  msg: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
+  msg: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), warning: vi.fn() }),
   push: vi.fn(),
   user: { isLoggedIn: false },
   route: { params: { id: '7' } },
@@ -212,19 +212,20 @@ describe('useArticleComments', () => {
     expect(comment.agreecount).toBe(2)
   })
 
-  it('agreeComment 已登录时本地自增计数，缺省从 0 起算', async () => {
+  it('agreeComment 成功后从服务端重读计数，不乐观自增', async () => {
     m.user.isLoggedIn = true
     const { api } = setup()
     const comment = { commentid: 1, agreecount: 2 }
-    const bare = { commentid: 2 }
+    m.commentApi.getByArticle.mockResolvedValueOnce({
+      data: [{ commentid: 1, agreecount: 3, opposecount: 0, replies: [] }]
+    })
 
     await api.agreeComment(comment)
-    await api.agreeComment(bare)
 
     expect(m.commentApi.agree).toHaveBeenCalledWith(1)
-    expect(m.commentApi.agree).toHaveBeenCalledWith(2)
-    expect(comment.agreecount).toBe(3)
-    expect(bare.agreecount).toBe(1)
+    expect(m.commentApi.getByArticle).toHaveBeenCalledTimes(1)
+    expect(comment.agreecount).toBe(2)
+    expect(api.comments.value[0].agreecount).toBe(3)
   })
 
   it('agreeComment 失败时计数不变并打印错误', async () => {
@@ -239,6 +240,94 @@ describe('useArticleComments', () => {
     expect(console.error).toHaveBeenCalledWith('点赞失败:', expect.any(Error))
   })
 
+  it('agreeComment 结果未知时不重发、不自增，刷新计数并保留待核实状态', async () => {
+    m.user.isLoggedIn = true
+    const error = Object.assign(new Error('unknown'), {
+      response: { data: { error_code: 'WRITE_OUTCOME_UNKNOWN' } }
+    })
+    m.commentApi.agree.mockRejectedValueOnce(error)
+    m.commentApi.getByArticle.mockResolvedValueOnce({
+      data: [{ commentid: 1, agreecount: 3, opposecount: 0, replies: [] }]
+    })
+    const { api } = setup()
+    const comment = { commentid: 1, agreecount: 2 }
+
+    await api.agreeComment(comment)
+
+    expect(m.commentApi.agree).toHaveBeenCalledTimes(1)
+    expect(m.commentApi.getByArticle).toHaveBeenCalledTimes(1)
+    expect(comment.agreecount).toBe(2)
+    expect(api.comments.value[0].agreecount).toBe(3)
+    expect(api.pendingVoteVerifications.value['1']).toEqual({
+      voteType: 'agree',
+      countRefreshState: 'refreshed'
+    })
+  })
+
+  it('识别响应 data.data 中的未知写入错误码并只刷新、不重发', async () => {
+    m.user.isLoggedIn = true
+    m.commentApi.agree.mockRejectedValueOnce({
+      response: { data: { data: { error_code: 'WRITE_OUTCOME_UNKNOWN' } } }
+    })
+    const { api } = setup()
+
+    await api.agreeComment({ commentid: 15, agreecount: 2 })
+
+    expect(m.commentApi.agree).toHaveBeenCalledTimes(1)
+    expect(m.commentApi.getByArticle).toHaveBeenCalledTimes(1)
+    expect(api.pendingVoteVerifications.value['15']).toEqual({
+      voteType: 'agree',
+      countRefreshState: 'refreshed'
+    })
+    expect(m.msg.warning).toHaveBeenCalledWith(expect.stringContaining('暂未确认'))
+  })
+
+  it('明确的点赞与反对 4xx 失败显示错误提示而不进入待核实', async () => {
+    m.user.isLoggedIn = true
+    const rejectedResponse = () => ({
+      response: { status: 400, data: { error_code: 'INVALID_REQUEST', message: '请求无效' } }
+    })
+    m.commentApi.agree.mockRejectedValueOnce(rejectedResponse())
+    m.commentApi.oppose.mockRejectedValueOnce(rejectedResponse())
+    const { api } = setup()
+
+    await api.agreeComment({ commentid: 16, agreecount: 0 })
+    await api.opposeComment({ commentid: 17, opposecount: 0 })
+
+    expect(m.msg).toHaveBeenNthCalledWith(1, {
+      message: '点赞失败',
+      type: 'error',
+      grouping: true
+    })
+    expect(m.msg).toHaveBeenNthCalledWith(2, {
+      message: '踩失败',
+      type: 'error',
+      grouping: true
+    })
+    expect(m.msg).toHaveBeenCalledTimes(2)
+    expect(api.pendingVoteVerifications.value).toEqual({})
+    expect(m.commentApi.agree).toHaveBeenCalledTimes(1)
+    expect(m.commentApi.oppose).toHaveBeenCalledTimes(1)
+  })
+
+  it('投票响应丢失且计数刷新失败时保持待核实状态', async () => {
+    m.user.isLoggedIn = true
+    m.commentApi.agree.mockRejectedValueOnce(new Error('network'))
+    m.commentApi.getByArticle.mockRejectedValueOnce(new Error('refresh network'))
+    const { api } = setup()
+    const comment = { commentid: 1, agreecount: 2 }
+
+    await api.agreeComment(comment)
+
+    expect(m.commentApi.agree).toHaveBeenCalledTimes(1)
+    expect(m.commentApi.getByArticle).toHaveBeenCalledTimes(1)
+    expect(comment.agreecount).toBe(2)
+    expect(api.pendingVoteVerifications.value['1']).toEqual({
+      voteType: 'agree',
+      countRefreshState: 'failed'
+    })
+  })
+
   it('opposeComment 未登录时跳转登录页且不调用接口', async () => {
     const { api } = setup()
     const comment = { commentid: 1, opposecount: 0 }
@@ -251,18 +340,20 @@ describe('useArticleComments', () => {
     expect(comment.opposecount).toBe(0)
   })
 
-  it('opposeComment 已登录时本地自增计数，缺省从 0 起算', async () => {
+  it('opposeComment 成功后只使用服务端返回的新计数', async () => {
     m.user.isLoggedIn = true
     const { api } = setup()
     const comment = { commentid: 1, opposecount: 4 }
-    const bare = { commentid: 2 }
+    m.commentApi.getByArticle.mockResolvedValueOnce({
+      data: [{ commentid: 1, agreecount: 0, opposecount: 5, replies: [] }]
+    })
 
     await api.opposeComment(comment)
-    await api.opposeComment(bare)
 
     expect(m.commentApi.oppose).toHaveBeenCalledWith(1)
-    expect(comment.opposecount).toBe(5)
-    expect(bare.opposecount).toBe(1)
+    expect(m.commentApi.getByArticle).toHaveBeenCalledTimes(1)
+    expect(comment.opposecount).toBe(4)
+    expect(api.comments.value[0].opposecount).toBe(5)
   })
 
   it('opposeComment 失败时计数不变并打印错误', async () => {

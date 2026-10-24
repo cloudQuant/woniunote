@@ -17,6 +17,9 @@
 #include <mutex>
 #include <chrono>
 #include <algorithm>
+#ifdef WONIUNOTE_ENABLE_TEST_CHALLENGE
+#include <cstdlib>
+#endif
 
 using namespace drogon;
 
@@ -154,8 +157,33 @@ static std::string getCaptcha(const std::string& id)
         captchaCache.erase(it);  // One-time use
         return code;
     }
+    if (it != captchaCache.end()) {
+        captchaCache.erase(it);
+    }
     return "";
 }
+
+#ifdef WONIUNOTE_ENABLE_TEST_CHALLENGE
+static void storeExpiredCaptcha(const std::string& id, const std::string& code)
+{
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    captchaCache[id] = {code, std::chrono::steady_clock::now() - std::chrono::seconds(1)};
+}
+
+static std::string peekCaptcha(const std::string& id)
+{
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    auto it = captchaCache.find(id);
+    if (it == captchaCache.end()) {
+        return "";
+    }
+    if (it->second.second <= std::chrono::steady_clock::now()) {
+        captchaCache.erase(it);
+        return "";
+    }
+    return it->second.first;
+}
+#endif
 
 bool CaptchaController::validateCaptcha(const std::string& captchaId,
                                         const std::string& captchaCode)
@@ -234,6 +262,76 @@ void CaptchaController::verify(const HttpRequestPtr& req,
                             data,
                             valid ? k200OK : k400BadRequest));
 }
+
+#ifdef WONIUNOTE_ENABLE_TEST_CHALLENGE
+void CaptchaController::testChallenge(const HttpRequestPtr& req,
+                                      std::function<void(const HttpResponsePtr&)>&& callback)
+{
+    const char* expectedRunId = std::getenv("WONIUNOTE_TEST_RUN_ID");
+    const std::string suppliedRunId = req->getHeader("X-Woniunote-Test-Run");
+    const std::string peerAddress = req->getPeerAddr().toIp();
+    const bool loopback = peerAddress == "127.0.0.1" || peerAddress == "::1"
+                          || peerAddress == "::ffff:127.0.0.1";
+    if (!expectedRunId || *expectedRunId == '\0' || suppliedRunId != expectedRunId || !loopback) {
+        callback(Response::notFound("Not found"));
+        return;
+    }
+
+    const auto body = req->getJsonObject();
+    std::string requestedId;
+    bool expired = req->getParameter("expire") == "true";
+    if (body && body->isObject()) {
+        if (body->isMember("expire")) {
+            const auto& value = (*body)["expire"];
+            expired = expired || (value.isBool() && value.asBool()) ||
+                      (value.isString() && value.asString() == "true");
+        }
+        if (body->isMember("captcha_id")) {
+            const auto& idValue = (*body)["captcha_id"];
+            if (!idValue.isString() || idValue.asString().empty()) {
+                callback(Response::badRequest("Invalid captcha id"));
+                return;
+            }
+            requestedId = idValue.asString();
+        }
+    }
+
+    // UI E2E tests first request a real captcha through GET /api/captcha/generate,
+    // then use this guarded hook to read its existing cache entry. The login
+    // request still consumes and validates that same entry through production
+    // CaptchaController::validateCaptcha.
+    if (!requestedId.empty()) {
+        const std::string cachedCode = peekCaptcha(requestedId);
+        if (cachedCode.empty()) {
+            callback(Response::notFound("Challenge unavailable"));
+            return;
+        }
+        Json::Value data;
+        data["captcha_id"] = requestedId;
+        data["captcha_code"] = cachedCode;
+        data["expired"] = false;
+        callback(Response::success(data));
+        return;
+    }
+
+    const std::string captchaId = generateCaptchaId();
+    const std::string captchaCode = generateCaptchaCode();
+    if (expired) {
+        storeExpiredCaptcha(captchaId, captchaCode);
+    } else {
+        storeCaptcha(captchaId, captchaCode);
+    }
+
+    // Deliberately do not log the code or response body. The test reads this
+    // value only in its isolated process and submits it through the real login
+    // endpoint, which consumes the same in-memory challenge cache.
+    Json::Value data;
+    data["captcha_id"] = captchaId;
+    data["captcha_code"] = captchaCode;
+    data["expired"] = expired;
+    callback(Response::success(data));
+}
+#endif
 
 } // namespace controllers
 } // namespace woniunote

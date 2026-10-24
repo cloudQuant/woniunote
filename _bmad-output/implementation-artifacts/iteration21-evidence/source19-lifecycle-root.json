@@ -1,0 +1,28 @@
+{
+  "source_manifest_sha256": "cdec1ee82d7746bde149f4a84f8760481984edd741e6f861581f1fee98d5bb23",
+  "command": [
+    "/Users/yunjinqi/opt/anaconda3/bin/conda",
+    "run",
+    "--no-capture-output",
+    "-n",
+    "base",
+    "python",
+    "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-19/scripts/tests/test_iter21_runner_lifecycle.py",
+    "--repo",
+    "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-19",
+    "--backend-bin",
+    "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-19/binary/woniunote_backend",
+    "--artifact-root",
+    "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/lifecycle19",
+    "--expected-runner-sha256",
+    "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249",
+    "--expected-backend-sha256",
+    "b551cf9178645e228ca46cb142bc3c353930ded2bd1cb7961722a69122cc93bc"
+  ],
+  "environment": {},
+  "exit": 0,
+  "seconds": 45.567,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-lifecycle-root.log",
+  "sha256": "350e445bf4b7839cf8dcfa7d9464284c245f3a3808691329e7531a8dc8f31949",
+  "run_ids": []
+}

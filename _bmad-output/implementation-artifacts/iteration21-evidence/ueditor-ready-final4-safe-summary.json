@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "runId": "ueditor-ready-final4-4194",
+  "browserRun": "Playwright, Node 22.13.0, workers=1, retries=0, port=4194",
+  "result": "4 passed",
+  "projects": [
+    {
+      "project": "chromium",
+      "contextClosed": true,
+      "violationCount": 0,
+      "domReadyAtInteractiveWithoutWindowLoad": true,
+      "editorReadyBeforeWindowLoad": true,
+      "instanceKeys": [
+        "ueditorInstant0"
+      ],
+      "iframeIds": [
+        "ueditor_0"
+      ]
+    },
+    {
+      "project": "firefox",
+      "contextClosed": true,
+      "violationCount": 0,
+      "domReadyAtInteractiveWithoutWindowLoad": true,
+      "editorReadyBeforeWindowLoad": true,
+      "instanceKeys": [
+        "ueditorInstant0"
+      ],
+      "iframeIds": [
+        "ueditor_0"
+      ]
+    },
+    {
+      "project": "webkit",
+      "contextClosed": true,
+      "violationCount": 0,
+      "domReadyAtInteractiveWithoutWindowLoad": true,
+      "editorReadyBeforeWindowLoad": true,
+      "instanceKeys": [
+        "ueditorInstant0"
+      ],
+      "iframeIds": [
+        "ueditor_0"
+      ]
+    },
+    {
+      "project": "mobile-chrome",
+      "contextClosed": true,
+      "violationCount": 0,
+      "domReadyAtInteractiveWithoutWindowLoad": true,
+      "editorReadyBeforeWindowLoad": true,
+      "instanceKeys": [
+        "ueditorInstant0"
+      ],
+      "iframeIds": [
+        "ueditor_0"
+      ]
+    }
+  ],
+  "afterWindowLoadAssertionsPassed": [
+    "window.load observed after releasing the controlled MathJax route",
+    "one ready UEditor instance and one iframe remain",
+    "iframe id and instance key match the pre-load values",
+    "editor content matches the text typed before window.load"
+  ],
+  "previewEgressDeniedCount": 0,
+  "contextViolationCount": 0
+}

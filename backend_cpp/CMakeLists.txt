@@ -193,6 +193,27 @@ endif()
 
 # Testing (optional)
 option(BUILD_TESTING "Build tests" OFF)
+
+# Test-only captcha challenge creation for real HTTP/browser tests. This is
+# deliberately independent from BUILD_TESTING and is disabled in normal builds.
+option(WONIUNOTE_ENABLE_TEST_CHALLENGE
+    "Register the loopback-only captcha challenge test endpoint"
+    OFF
+)
+if(WONIUNOTE_ENABLE_TEST_CHALLENGE)
+    target_compile_definitions(woniunote_backend PRIVATE WONIUNOTE_ENABLE_TEST_CHALLENGE=1)
+endif()
+
+# Test-only auth transaction fault hooks are separate from both BUILD_TESTING
+# and the captcha hook. Normal builds leave these routes uncompiled.
+option(WONIUNOTE_ENABLE_TEST_AUTH_FAULTS
+    "Register loopback-only auth transaction fault hooks for integration tests"
+    OFF
+)
+if(WONIUNOTE_ENABLE_TEST_AUTH_FAULTS)
+    target_compile_definitions(woniunote_backend PRIVATE WONIUNOTE_ENABLE_TEST_AUTH_FAULTS=1)
+endif()
+
 if(BUILD_TESTING)
     enable_testing()
     add_subdirectory(tests)

@@ -1,0 +1,118 @@
+{
+  "status": "INCOMPLETE",
+  "captured_at": "2026-10-24T03:57:15.083831+00:00",
+  "candidate2": "9c597548fc18d3250f68cba8e55bfaa171edacfb",
+  "candidate3": "7fb178838c6ae4511c748a77e67d258ca576d5e9",
+  "formal_candidate2_user_login": "user completed password and visual CAPTCHA; authenticated profile and writes observed",
+  "candidate2_baseline_writes": {
+    "math_record": 1,
+    "decimal_answer": 1.25,
+    "skipped_answer": null,
+    "original_article1": "remains draft with original hashes",
+    "new_article2": "draft created, cover uploaded, then published",
+    "comment1_vote": "agree=1"
+  },
+  "preflight_prepare_failure": {
+    "exit": 1,
+    "reason": "source binary was root:700 from restricted prebuild, helper expected root:755",
+    "before_mutation": true,
+    "retry": "guard corrected to verified root:700; installed copy remains root:755"
+  },
+  "temporary_candidate3": {
+    "pid": 77396,
+    "binary_sha256": "c6bd04e727069cf246b5344225917d5f216df134810c6d36d5d612898a641a7f",
+    "loopback_port": 5174,
+    "health": 200,
+    "captcha_test_hook_post": 404,
+    "auth_test_hook_post": 404,
+    "stopped": true
+  },
+  "combinations": [
+    {
+      "frontend": "candidate2",
+      "backend": "candidate3",
+      "nginx_sha256": "4c08fb68dc4c838feffb0a2d5808d9a1d298968a57f5a0e4a968cd0a527869fc",
+      "observed": [
+        "article2 and comment1/vote read",
+        "protected profile read",
+        "comment2 created and UI success shown"
+      ],
+      "comment2_sha256": "2193e7248b91b6209399c712527d57d0b2c077f373a6ca88e87bfc48cd01548d"
+    },
+    {
+      "frontend": "candidate3 prebuilt dist",
+      "backend": "candidate2",
+      "nginx_sha256": "6fe97df0a2bc5da857e1f245548e3992a7c1afddd4f750bfac4062d87cab0862",
+      "observed": [
+        "protected profile read",
+        "article2 and candidate3 comment2 read",
+        "comment3 created and UI success shown"
+      ],
+      "comment3_sha256": "64404e0db58983c79a78572570a7a6ae02327ea407147da3afcacf4e89ce24ff"
+    }
+  ],
+  "frontend_identity": {
+    "files": 315,
+    "all_bytes_equal": true,
+    "boundary": "Does not demonstrate retention of changed hash assets; separate r4 evidence applies."
+  },
+  "database_readback": {
+    "article2_replycount": 3,
+    "article_content_hashes_unchanged": true,
+    "decimal_and_null_preserved": true,
+    "comment_ids": [
+      1,
+      2,
+      3
+    ],
+    "vote1_preserved": true
+  },
+  "nginx_restored_sha256": "c39445bad1b9dd1bb4c3b800d69ad9d72257a8556b152a6b80fff27fa15c5d0a",
+  "editor": {
+    "article_id": 2,
+    "unsaved_title_marker_created": true,
+    "logout_ui": "login changed; editor isolated, use original account to recover",
+    "recovery_after_upgrade": "NOT_RUN"
+  },
+  "formal_candidate2_logout": {
+    "time": "2026-10-24T11:55:56+08:00",
+    "http": 200,
+    "ui": "已退出登录",
+    "redis_key_exists_after": false,
+    "earlier_old_v2_logout_401_retained": true
+  },
+  "still_required": [
+    "actual cross-version refresh before compatibility record",
+    "manager upgrade rollback redeploy",
+    "post-switch editor recovery and data checks",
+    "final formal smoke",
+    "remote CI and independent review"
+  ],
+  "files": [
+    {
+      "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-candidate3-preflight-prepare.log",
+      "sha256": "5afa803095b55350f305fc8b884889ebc0c0958fcec001fb3c2254885f50cb8a"
+    },
+    {
+      "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-candidate3-preflight-prepare-r2.log",
+      "sha256": "daf95c47627507459e44d3de24a8a728014cce03561eb4659e7b92a1514c9e3d"
+    },
+    {
+      "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-candidate3-preflight-start.log",
+      "sha256": "49d69e399461e81186ddb876ea2666d3a5175bb22178bef146428e79bbcc6c09"
+    },
+    {
+      "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-candidate3-preflight-stop.log",
+      "sha256": "f7ca352569f53cd1c737dcb8d01f5d1e8aa43592e64ef8583f441bbd1b3a69b9"
+    },
+    {
+      "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-data-candidate2-baseline.json",
+      "sha256": "bfabf320191981213cb059a5bd31e1d570ae49462e30882d991af3e412a7285f"
+    },
+    {
+      "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-old-front-new-back-comment.png",
+      "sha256": "f74dae6de71879f7aee072965e27c7132f24b4d30a40f7d2f208252cbfb25268"
+    }
+  ],
+  "boundary": "No passwords, tokens, runtime config contents, or article/comment bodies retained. No compatibility all-PASS record created."
+}

@@ -1,0 +1,81 @@
+{
+  "status": "PASS",
+  "verified_utc": "2026-10-24T00:55:12.269975+00:00",
+  "source20_manifest_sha256": "829ea7394c3b13929de63b465f840e968b1e758baf236ed7dd66185b2e30cf8c",
+  "source20_worktree_inputs_equal": true,
+  "source20_files": 428,
+  "source20_binary_verified_separately": true,
+  "backend5_build_inputs_equal_except_test_harness": [
+    "backend_cpp/tests/integration/run_integration.sh",
+    "backend_cpp/tests/integration/test_api_integration.py"
+  ],
+  "backend_sanitized_config_exclusions": [
+    "backend_cpp/config.json",
+    "backend_cpp/config.prod.json"
+  ],
+  "protected_vscode_hash_unchanged": true,
+  "checked_logs": [
+    {
+      "metadata": "backend5-mac-checks.json",
+      "log_hashes_verified": 6
+    },
+    {
+      "metadata": "backend5-linux-checks.json",
+      "log_hashes_verified": 12
+    },
+    {
+      "metadata": "frontend18-root-checks.json",
+      "log_hashes_verified": 6
+    },
+    {
+      "metadata": "backend5-cppcheck-root.json",
+      "log_hashes_verified": 1
+    },
+    {
+      "metadata": "source19-real-e2e-lint-root.json",
+      "log_hashes_verified": 1
+    },
+    {
+      "metadata": "source19-real-root.json",
+      "log_hashes_verified": 1
+    },
+    {
+      "metadata": "source19-lifecycle-root.json",
+      "log_hashes_verified": 1
+    },
+    {
+      "metadata": "source20-mock-target-root.json",
+      "log_hashes_verified": 1
+    },
+    {
+      "metadata": "source20-mock-full-root.json",
+      "log_hashes_verified": 1
+    }
+  ],
+  "lifecycle_cleanup": [
+    {
+      "run": "a",
+      "run_id": "20261024T004024Z-2dc504f75426",
+      "containers_remaining": 0,
+      "volumes_remaining": 0,
+      "ports_closed": {
+        "http": true,
+        "mysql": true,
+        "redis": true
+      }
+    },
+    {
+      "run": "b",
+      "run_id": "20261024T004024Z-100aebb17163",
+      "containers_remaining": 0,
+      "volumes_remaining": 0,
+      "ports_closed": {
+        "http": true,
+        "mysql": true,
+        "redis": true
+      }
+    }
+  ],
+  "linux_formal_negative_containers_absent": true,
+  "scope": "current artifact/log/runtime identity verification; not a final acceptance assertion"
+}

@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "scope": "independent existing negative/static evidence readback; no service startup",
+  "pre_service_negative_cases": 12,
+  "all_log_hashes_match": true,
+  "exact_run_resources_remaining": 0,
+  "current_runner_hash_matches": true,
+  "static_log_hashes_match": true,
+  "current_workflow_hash_matches": true
+}

@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "source_digest": "70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd",
+  "binary_sha256": "ed369ca39096b6536e5be274572c08bc4824b6a363a8475cd7ce6754689b8f96",
+  "scope": "formal macOS binary no DB/Redis configured; test routes absent default and injected env; no business writes",
+  "cases": [
+    {
+      "injected_env": false,
+      "health": 200,
+      "http_port": 57219,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "method": "POST",
+      "process_exit": 0,
+      "port_closed": true
+    },
+    {
+      "injected_env": true,
+      "health": 200,
+      "http_port": 57237,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "method": "POST",
+      "process_exit": 0,
+      "port_closed": true
+    }
+  ],
+  "cleanup": "owned PIDs ended and ports closed"
+}

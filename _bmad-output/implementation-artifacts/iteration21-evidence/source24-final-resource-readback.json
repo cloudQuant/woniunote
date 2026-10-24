@@ -1,0 +1,55 @@
+{
+  "status": "PASS",
+  "scope": "independent current docker identities/labels and loopback socket readback; absent frontend URL means browser not started",
+  "runs": [
+    {
+      "run_id": "20261024T044736Z-eb3d20de3a02",
+      "run_manifest_sha256": "e00dbd5bebdd6bba15029e324e7eeb4d5fdd99ae1d7bf3825ae68bad1f25b8d7",
+      "containers_absent": {
+        "458be3a196873437e5286a370709b86a88a6acb8025f1ce81ffaa3a31efa885e": true,
+        "648a1d09f25f3800a0406c7092bb8eb2521575fd17f3b1ee6a60ace8ded6c31b": true
+      },
+      "ports_closed": {
+        "57550": true,
+        "57581": true,
+        "57466": true,
+        "57481": true
+      },
+      "mysql_volume_absent": true,
+      "run_label_container_count": 0,
+      "run_label_volume_count": 0
+    },
+    {
+      "run_id": "20261024T045847Z-34866da15f22",
+      "run_manifest_sha256": "5712a401c5495f0a9fdde949ed4bfffd49865e3d1f0db5d93ff67d4eddb73af4",
+      "containers_absent": {
+        "14477bea898bc6aff4eda968edd0e7046881c78593ee3dffcb590ade64686175": true,
+        "c1e49e74c0bca608b7e68156db9704cd93153f9b26d6d58b15154e900e41eb04": true
+      },
+      "ports_closed": {
+        "63378": true,
+        "63437": true,
+        "63299": true
+      },
+      "mysql_volume_absent": true,
+      "run_label_container_count": 0,
+      "run_label_volume_count": 0
+    },
+    {
+      "run_id": "20261024T050659Z-fe3b3f069d7d",
+      "run_manifest_sha256": "4a6e75ad7bbbf89b502e00ddb64bfe5b66abcbdbbfc4ac0f55f4be49370225df",
+      "containers_absent": {
+        "5f9816d57a070a065cb728b6cef10f90440c3496decadf47d353efca62602e24": true,
+        "bf428b27524ed880d9d96bafdec37557e536041bb654a468528f644cf1c1ba59": true
+      },
+      "ports_closed": {
+        "57086": true,
+        "57151": true,
+        "57035": true
+      },
+      "mysql_volume_absent": true,
+      "run_label_container_count": 0,
+      "run_label_volume_count": 0
+    }
+  ]
+}

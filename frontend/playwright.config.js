@@ -1,4 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
+import { randomUUID } from 'node:crypto'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 /**
  * Playwright E2E configuration for the WoniuNote Vue 3 frontend.
@@ -10,11 +13,31 @@ import { defineConfig, devices } from '@playwright/test'
  * user interaction paths — the parts a unit test cannot cover — while keeping
  * runs hermetic and CI-friendly.
  *
- * To run against a real backend instead, set E2E_BASE_URL to its origin and
- * remove the per-test route mocks.
+ * This config is exclusively for route-mocked tests. Real-backend tests use
+ * their isolated configuration and must never bypass the mock preview guard.
  */
+if (process.env.E2E_BASE_URL) {
+  throw new Error('Mock E2E refuses E2E_BASE_URL; use the isolated real-backend Playwright config')
+}
+if (process.env.WONIUNOTE_REAL_E2E === '1' || process.env.WONIUNOTE_API_PROXY_TARGET) {
+  throw new Error('Mock E2E refuses real-backend proxy configuration')
+}
+
 const PORT = process.env.E2E_PORT || 4173
-const BASE_URL = process.env.E2E_BASE_URL || `http://127.0.0.1:${PORT}`
+const BASE_URL = `http://127.0.0.1:${PORT}`
+// Playwright worker processes import this config again. Preserve the run ID
+// and path inherited from the runner so their context audits are read by the
+// same global teardown gate instead of being split across per-worker logs.
+if (!process.env.WONIUNOTE_MOCK_EGRESS_RUN_ID) {
+  process.env.WONIUNOTE_MOCK_EGRESS_RUN_ID = randomUUID()
+  process.env.WONIUNOTE_MOCK_EGRESS_LOG = join(
+    tmpdir(),
+    `woniunote-mock-egress-${process.pid}-${process.env.WONIUNOTE_MOCK_EGRESS_RUN_ID}.json`
+  )
+}
+if (!process.env.WONIUNOTE_MOCK_EGRESS_LOG) {
+  throw new Error('Mock E2E run ID exists without an egress audit path')
+}
 
 // Which browser projects to run. Default to chromium-only locally (so a bare
 // `npx playwright install chromium` is enough); set PW_BROWSERS=all in CI to
@@ -51,6 +74,7 @@ const projects = allProjects.filter((p) => wants(p.name))
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.js',
+  globalTeardown: './e2e/support/mockEgressTeardown.js',
   timeout: 30000,
   expect: { timeout: 5000 },
   fullyParallel: true,
@@ -60,17 +84,15 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: BASE_URL,
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure'
   },
   projects: projects.length > 0 ? projects : [allProjects[0]],
   // Build once, then serve the static build for fast, production-like E2E.
-  webServer: process.env.E2E_BASE_URL
-    ? undefined
-    : {
-        command: `npm run build && npm run preview -- --host 127.0.0.1 --port ${PORT} --strictPort`,
-        url: BASE_URL,
-        timeout: 180000,
-        reuseExistingServer: !process.env.CI
-      }
+  webServer: {
+    command: `npm run build && npm run preview -- --config vite.mock-preview.config.js --host 127.0.0.1 --port ${PORT} --strictPort`,
+    url: BASE_URL,
+    timeout: 180000,
+    reuseExistingServer: false
+  }
 })

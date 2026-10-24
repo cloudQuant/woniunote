@@ -1,0 +1,120 @@
+{
+  "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-4/backend_cpp",
+  "source_digest": "2d95d2534e4678a4899104304619020d74b6df30e3d495a0c6a38df79f4462d5",
+  "results": [
+    {
+      "variant": "test",
+      "phase": "configure",
+      "command": [
+        "cmake",
+        "-S",
+        "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-4/backend_cpp",
+        "-B",
+        "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build4/test",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_TOOLCHAIN_FILE=/Users/yunjinqi/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "-DVCPKG_INSTALLED_DIR=/Users/yunjinqi/Documents/woniunote/backend_cpp/build-iter20-check/vcpkg_installed",
+        "-DVCPKG_MANIFEST_INSTALL=OFF",
+        "-DBUILD_TESTING=ON",
+        "-DWONIUNOTE_ENABLE_TEST_CHALLENGE=ON",
+        "-DWONIUNOTE_ENABLE_TEST_AUTH_FAULTS=ON"
+      ],
+      "exit": 0,
+      "signal": null,
+      "seconds": 4.775,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend4-mac-test-configure.log",
+      "sha256": "bb9c7f794f1699a91c8e96c4449b4cfbcee9929b5c8ba8a14628787794116f92"
+    },
+    {
+      "variant": "test",
+      "phase": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build4/test",
+        "--config",
+        "Release",
+        "--parallel",
+        "2"
+      ],
+      "exit": 0,
+      "signal": null,
+      "seconds": 129.753,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend4-mac-test-build.log",
+      "sha256": "7bb4dc78b4a82653ff9e749083e42470fae1cdb61b7cb53a0ea33908755efa4b"
+    },
+    {
+      "variant": "test",
+      "phase": "ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build4/test",
+        "--output-on-failure",
+        "--no-tests=error"
+      ],
+      "exit": 0,
+      "signal": null,
+      "seconds": 4.73,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend4-mac-test-ctest.log",
+      "sha256": "2d9ee76eebe1aec94c041dac6b567c0d1445b4cdec474597233d2b077b8caed2"
+    },
+    {
+      "variant": "release",
+      "phase": "configure",
+      "command": [
+        "cmake",
+        "-S",
+        "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-4/backend_cpp",
+        "-B",
+        "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build4/release",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_TOOLCHAIN_FILE=/Users/yunjinqi/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "-DVCPKG_INSTALLED_DIR=/Users/yunjinqi/Documents/woniunote/backend_cpp/build-iter20-check/vcpkg_installed",
+        "-DVCPKG_MANIFEST_INSTALL=OFF",
+        "-DBUILD_TESTING=ON",
+        "-DWONIUNOTE_ENABLE_TEST_CHALLENGE=OFF",
+        "-DWONIUNOTE_ENABLE_TEST_AUTH_FAULTS=OFF"
+      ],
+      "exit": 0,
+      "signal": null,
+      "seconds": 3.805,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend4-mac-release-configure.log",
+      "sha256": "22f4e35eff07ea767c5474c29494eb03bfd93e25ec25fa3906de94fe4cbeac20"
+    },
+    {
+      "variant": "release",
+      "phase": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build4/release",
+        "--config",
+        "Release",
+        "--parallel",
+        "2"
+      ],
+      "exit": 0,
+      "signal": null,
+      "seconds": 83.709,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend4-mac-release-build.log",
+      "sha256": "8bc2f97ff106db6ad0aa88e4c97cf78e7e5884edbd70280a80335edb3028c6c9"
+    },
+    {
+      "variant": "release",
+      "phase": "ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build4/release",
+        "--output-on-failure",
+        "--no-tests=error"
+      ],
+      "exit": 0,
+      "signal": null,
+      "seconds": 2.89,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend4-mac-release-ctest.log",
+      "sha256": "91beb8a02843cbc424ae2e13204aa422af563eb13b0a3a44effb9e28166c937b"
+    }
+  ]
+}

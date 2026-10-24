@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './support/test'
 import { mockApi } from './support/mockApi'
 
 test.describe('Category layout', () => {
@@ -8,7 +8,7 @@ test.describe('Category layout', () => {
 
   test('keeps the sidebar left through the 768px boundary, then keeps article content first on smaller screens', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/type/909/3')
+    await page.goto('/type/909/3', { waitUntil: 'domcontentloaded' })
 
     const mainColumn = page.locator('.category-main-column')
     const sidebarColumn = page.locator('.category-sidebar-column')

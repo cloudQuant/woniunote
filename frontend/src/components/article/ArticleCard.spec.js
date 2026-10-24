@@ -153,7 +153,7 @@ describe('ArticleCard.vue —— 缩略图三级回退与主题响应式', () =>
     document.documentElement.style.removeProperty('--wn-color-primary')
   })
 
-  it('thumbnail 为相对文件名时走后端缩略图路由（非 SVG 占位）', () => {
+  it('thumbnail 为旧 basename 时走带缓存版本的后端缩略图路由', () => {
     const wrapper = mount(
       ArticleCard,
       mountOptions({ props: { article: { articleid: 1, headline: 'h', thumbnail: '101.png' } } })
@@ -163,6 +163,35 @@ describe('ArticleCard.vue —— 缩略图三级回退与主题响应式', () =>
     expect(url).toContain('101.png')
     expect(url).toContain('v3')
     expect(url.startsWith(DATA_URI_PREFIX)).toBe(false)
+  })
+
+  it('thumbnail 为旧 /api/thumb/<basename> 时不会重复拼接路由', () => {
+    const wrapper = mount(
+      ArticleCard,
+      mountOptions({ props: {
+        article: { articleid: 1, headline: 'h', thumbnail: '/api/thumb/101.png' }
+      } })
+    )
+    expect(wrapper.vm.thumbnailUrl).toBe('/api/thumb/101.png?v3')
+  })
+
+  it('保留同源 /uploads 封面路径原样显示', () => {
+    const path = '/uploads/uploads/images/2026/10/1_1000.png'
+    const wrapper = mount(
+      ArticleCard,
+      mountOptions({ props: { article: { articleid: 1, headline: 'h', thumbnail: path } } })
+    )
+    expect(wrapper.vm.thumbnailUrl).toBe(path)
+  })
+
+  it('历史封面无效时回退到安全的分类默认图', () => {
+    const wrapper = mount(
+      ArticleCard,
+      mountOptions({ props: {
+        article: { articleid: 1, headline: 'h', type: 101, thumbnail: '/api/thumb/../secret.png' }
+      } })
+    )
+    expect(wrapper.vm.thumbnailUrl).toBe('/api/thumb/101.png?v3')
   })
 
   it('thumbnail 为完整 URL 时原样使用（非 SVG 占位）', () => {

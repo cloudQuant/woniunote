@@ -1,0 +1,94 @@
+{
+  "cases": [
+    {
+      "backend_sha256": "b551cf9178645e228ca46cb142bc3c353930ded2bd1cb7961722a69122cc93bc",
+      "business_tests_not_run": true,
+      "case": "mysql_startup_failure",
+      "cleanup": {
+        "containers_removed": true,
+        "volumes_removed": true
+      },
+      "elapsed_seconds": 22.557,
+      "exit_code": 2,
+      "expected_startup_diagnostic": true,
+      "fault_container": {
+        "container_id": "c54efd87da087fe16ea03e5c3035c24c74c65c52099f5f88d322d502900039cd",
+        "exit_code": 137,
+        "mapping": "127.0.0.1:64475",
+        "name": "woniunote-i21-20261024T014056Z-aa48de7d04cc-mysql",
+        "port": 64475,
+        "run_id": "20261024T014056Z-aa48de7d04cc",
+        "service": "mysql",
+        "state_after": "exited",
+        "state_before": "running"
+      },
+      "fault_identity_verified": true,
+      "manifest_binding_verified": true,
+      "run_id": "20261024T014056Z-aa48de7d04cc",
+      "runner_sha256": "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249",
+      "schema_not_created": true,
+      "status": "PASS",
+      "timed_out": false
+    },
+    {
+      "backend_sha256": "b551cf9178645e228ca46cb142bc3c353930ded2bd1cb7961722a69122cc93bc",
+      "business_tests_not_run": true,
+      "case": "redis_startup_failure",
+      "cleanup": {
+        "containers_removed": true,
+        "volumes_removed": true
+      },
+      "elapsed_seconds": 24.077,
+      "exit_code": 2,
+      "expected_startup_diagnostic": true,
+      "fault_container": {
+        "container_id": "f3872b3532fb934d80367e7ef583bee1d4e48e40508bd823688d1be968414ef4",
+        "exit_code": 0,
+        "mapping": "127.0.0.1:64551",
+        "name": "woniunote-i21-20261024T014117Z-4c75ffb3a5cf-redis",
+        "port": 64551,
+        "run_id": "20261024T014117Z-4c75ffb3a5cf",
+        "service": "redis",
+        "state_after": "exited",
+        "state_before": "running"
+      },
+      "fault_identity_verified": true,
+      "manifest_binding_verified": true,
+      "run_id": "20261024T014117Z-4c75ffb3a5cf",
+      "runner_sha256": "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249",
+      "schema_not_created": true,
+      "status": "PASS",
+      "timed_out": false
+    },
+    {
+      "backend_sha256": "b551cf9178645e228ca46cb142bc3c353930ded2bd1cb7961722a69122cc93bc",
+      "business_tests_not_run": true,
+      "case": "malformed_template_rejected",
+      "cleanup": {
+        "containers_removed": true,
+        "volumes_removed": true
+      },
+      "elapsed_seconds": 39.116,
+      "exit_code": 1,
+      "json_parse_diagnostic": true,
+      "manifest_binding_verified": true,
+      "run_id": "20261024T014142Z-cea7eb2be00f",
+      "runner_sha256": "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249",
+      "schema_setup_reached": true,
+      "status": "PASS",
+      "timed_out": false
+    },
+    {
+      "case": "formal_binary_rejected",
+      "status": "INCOMPLETE"
+    }
+  ],
+  "docker_cli": "/opt/homebrew/bin/docker",
+  "failure_code": "formal_binary_not_rejected_by_hook_gate",
+  "formal_binary_sha256": "c8dd7830924c5994371463c9ae73faff891995176668b1e3f7d5731014370954",
+  "runner_sha256": "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249",
+  "scope": "source-20 isolated service negative cases and default rate-limit positive case",
+  "source_repo": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-20",
+  "status": "INCOMPLETE",
+  "test_binary_sha256": "b551cf9178645e228ca46cb142bc3c353930ded2bd1cb7961722a69122cc93bc"
+}

@@ -34,7 +34,7 @@ void UserController::getUser(const HttpRequestPtr& req,
 
             models::User user(result[0]);
             Logger::debug("[User] Found", {{"userid", std::to_string(id)}, {"username", user.getUsername()}});
-            callback(Response::success(user.toJsonWithoutPassword()));
+            callback(Response::success(user.toPublicJson()));
         },
         [callback](const orm::DrogonDbException& e) {
             Logger::error("Database error: " + std::string(e.base().what()));

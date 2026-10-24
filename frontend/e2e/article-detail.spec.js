@@ -1,10 +1,23 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './support/test'
 import { mockApi, loginAs } from './support/mockApi'
+
+function waitForCaptchaResponse(page) {
+  return page.waitForResponse((response) => {
+    const url = new URL(response.url())
+    return response.request().method() === 'GET' && url.pathname === '/api/captcha/generate'
+  })
+}
+
+async function completeSuccessfulResponse(responsePromise) {
+  const response = await responsePromise
+  expect(response.status()).toBe(200)
+  expect(await response.finished()).toBeNull()
+}
 
 test.describe('Article detail & comments', () => {
   test('renders article content, title and comments', async ({ page }) => {
     await mockApi(page)
-    await page.goto('/article/1')
+    await page.goto('/article/1', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveTitle(/量化投资入门/)
     await expect(page.getByText('这是一篇关于量化投资的文章正文')).toBeVisible()
     // Existing comment from the mock renders.
@@ -13,7 +26,7 @@ test.describe('Article detail & comments', () => {
 
   test('navigates to the next article through the detail navigation link', async ({ page }) => {
     await mockApi(page)
-    await page.goto('/article/1')
+    await page.goto('/article/1', { waitUntil: 'domcontentloaded' })
 
     const navigation = page.getByRole('navigation', { name: '同类文章导航' })
     await expect(navigation.getByText('暂无上一篇文章')).toBeVisible()
@@ -27,7 +40,7 @@ test.describe('Article detail & comments', () => {
 
   test('does not render a previous link when there is no previous article', async ({ page }) => {
     await mockApi(page)
-    await page.goto('/article/1')
+    await page.goto('/article/1', { waitUntil: 'domcontentloaded' })
 
     const previousRow = page.locator('.article-navigation__previous')
     await expect(previousRow.getByText('暂无上一篇文章')).toBeVisible()
@@ -36,18 +49,21 @@ test.describe('Article detail & comments', () => {
 
   test('anonymous favorite attempt redirects to login', async ({ page }) => {
     await mockApi(page)
-    await page.goto('/article/1')
+    await page.goto('/article/1', { waitUntil: 'domcontentloaded' })
     const favBtn = page.getByRole('button', { name: /收藏/ }).first()
-    if (await favBtn.count()) {
-      await favBtn.click()
-      await expect(page).toHaveURL(/\/login/)
-    }
+    await expect(favBtn).toBeVisible()
+    const captchaResponsePromise = waitForCaptchaResponse(page)
+    await favBtn.click()
+    await expect(page).toHaveURL(/\/login\?redirect=/)
+    await completeSuccessfulResponse(captchaResponsePromise)
+    await expect(page.locator('.login-title')).toContainText('登录')
+    await expect(page.getByPlaceholder('请输入用户名')).toBeVisible()
   })
 
   test('logged-in user can post a comment', async ({ page }) => {
     await mockApi(page)
     await loginAs(page, 'user')
-    await page.goto('/article/1')
+    await page.goto('/article/1', { waitUntil: 'domcontentloaded' })
 
     const box = page.locator('textarea').first()
     await box.fill('这是一条 E2E 测试评论')

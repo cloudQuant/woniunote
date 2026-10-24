@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "source_digest": "2d95d2534e4678a4899104304619020d74b6df30e3d495a0c6a38df79f4462d5",
+  "binary_sha256": "192a62565e6c6aa9efd06bf1f567f1c015093d10389373268909af6ce753a2c6",
+  "scope": "formal binary route absence, no configured DB/Redis, no business writes",
+  "cases": [
+    {
+      "injected_env": false,
+      "http_port": 56365,
+      "health": 200,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "method": "POST"
+    },
+    {
+      "injected_env": true,
+      "http_port": 56380,
+      "health": 200,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "method": "POST"
+    }
+  ],
+  "cleanup": "owned PIDs ended and ports closed"
+}

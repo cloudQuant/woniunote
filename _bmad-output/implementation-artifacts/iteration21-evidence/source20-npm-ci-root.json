@@ -1,0 +1,13 @@
+{
+  "source_manifest_sha256": "829ea7394c3b13929de63b465f840e968b1e758baf236ed7dd66185b2e30cf8c",
+  "command": [
+    "npm",
+    "ci"
+  ],
+  "browsers": "all",
+  "exit": 0,
+  "seconds": 3.703,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-npm-ci-root.log",
+  "sha256": "e5c1dd3041b7941b5879141d1bae61a9a1302f252ddb7ac343d971a9b422009c",
+  "audit": null
+}

@@ -1,0 +1,147 @@
+{
+  "evidence_root": "/tmp/woniunote-iter21-evidence/g1-closeout-20261023T183212Z-17180",
+  "inherited_evidence": {
+    "known_passes": [
+      "external backend/DB/Redis overrides",
+      "reserved and occupied ports",
+      "real-E2E development proxy refusal",
+      "credential JSON escaping round-trip",
+      "formal test-hook route absence",
+      "two-run exact-PID TERM isolation"
+    ],
+    "previous_g1_index": "/tmp/woniunote-iter21-evidence/ac21-00-negative-isolation-index-20261024.json",
+    "upload_isolation": "Still GAP in prior r4; r5 driver now prepared but not run."
+  },
+  "mysql_redis_start_failure": {
+    "evidence": "Log says owned services failed protocol checks before schema creation and cleanup ran. Manifest records exact names/IDs and ports, but resolved_image=unavailable and has no Docker exit state/code or container stderr. It is insufficient to attribute MySQL versus Redis startup failure or prove exact cleanup from artifacts.",
+    "first_run_id": "20261023T154300Z-b222282fb62e",
+    "log": {
+      "path": "/tmp/woniunote-iter21-evidence/integration-functional-first.log",
+      "sha256": "3c1e0533f1d66732973220bc49dc1797f7f8de183a93953eb03184076ce5745b"
+    },
+    "manifest": {
+      "path": "/tmp/woniunote-iter21-evidence/integration-results/20261023T154300Z-b222282fb62e/run.json",
+      "sha256": "85c8abd28103c5b2ebe2372a3de8aab3117cafcac736b1d9a4db490090daa3b9"
+    },
+    "minimal_followup": "In a new disposable evidence run, use a temporary Docker CLI wrapper that passes through every operation except after runner-created mysql/redis containers with the fresh run-id/service labels are present; validate full ID/name/labels, stop only the chosen exact owned service, return normal Docker output, then capture runner failure log and its exact-ID/label cleanup record. Do not change daemon or reuse existing resources.",
+    "status": "GAP"
+  },
+  "negative_checks": [
+    {
+      "case": "missing_python_executable",
+      "exit_code": 2,
+      "invocation": "WONIUNOTE_TEST_PYTHON=<case-root>/missing-python/no-python; TMPDIR=<case-root>/missing-python/tmp; WONIUNOTE_TEST_ARTIFACT_ROOT=<case-root>/missing-python/artifacts; bash <functional9 runner>",
+      "log": {
+        "path": "/tmp/woniunote-iter21-evidence/g1-closeout-20261023T183212Z-17180/missing-python/runner.log",
+        "sha256": "82334077ae38be4dc49c1c12570b9770ec3fac390cefec408cf7f15e750451e9"
+      },
+      "observed": "Rejected with executable-path preflight error before run ID/runtime/services; no runner-owned resources were created.",
+      "status": "PASS"
+    },
+    {
+      "case": "missing_docker_daemon",
+      "exit_code": 2,
+      "invocation": "DOCKER_HOST=unix://<case-root>/missing-docker/no-daemon.sock; DOCKER_CONTEXT unset; bash <functional9 runner>",
+      "log": {
+        "path": "/tmp/woniunote-iter21-evidence/g1-closeout-20261023T183212Z-17180/missing-docker/runner.log",
+        "sha256": "ba37cba0965b54562f2f139d2e2e096ef77799169a45438cc67a684f932b9653"
+      },
+      "observed": "Rejected with Docker daemon unavailable / no data changed before run ID/runtime/services. The nonexistent socket override was scoped to the runner child; host daemon configuration was not changed.",
+      "status": "PASS"
+    },
+    {
+      "case": "formal_macos_binary_rejected_by_runner",
+      "cleanup": {
+        "exact_container_ids_absent": true,
+        "exact_mysql_volume_absent": true,
+        "exact_run_label_containers_remaining": 0,
+        "path": "/tmp/woniunote-iter21-evidence/g1-closeout-20261023T183212Z-17180/resource-cleanup-check.json",
+        "sha256": "fca492b4e6b0ee157e0ef75878171458f155ba27e8456a69c8ed1aceb7848e88"
+      },
+      "exit_code": 2,
+      "invocation": "WONIUNOTE_BACKEND_BIN=/tmp/woniunote-iter21-formal-macos-3/woniunote_backend; WONIUNOTE_TEST_REAL_E2E=0; WONIUNOTE_TEST_KEEP_SERVICES=0; bash <functional9 runner>",
+      "log": {
+        "path": "/tmp/woniunote-iter21-evidence/g1-closeout-20261023T183212Z-17180/formal/runner.log",
+        "sha256": "75193372ee8d156cb743328a8b772bd2108b76fcbb1046e1b85ccc514c2118f8"
+      },
+      "observed": {
+        "boundary": "Runner created the run-owned disposable DB and loaded repository schema, started backend, then stopped at challenge-hook preflight. This is not evidence of zero setup writes; it is evidence no business test scenarios ran.",
+        "business_scenarios_started": false,
+        "business_test_summary_absent": true,
+        "formal_binary_sha256": "81205cb32cb9103049a0486c767e9ed4ecee5c4a87c1982fbb25042ac43035bc",
+        "runner_error": true,
+        "schema_setup_happened": true
+      },
+      "run_id": "20261023T183230Z-d2414bac66ce",
+      "status": "PASS"
+    },
+    {
+      "case": "malformed_config_parser_rejection",
+      "cleanup": {
+        "exact_container_ids_absent": true,
+        "exact_mysql_volume_absent": true,
+        "exact_run_label_containers_remaining": 0,
+        "path": "/tmp/woniunote-iter21-evidence/g1-closeout-20261023T183212Z-17180/resource-cleanup-check.json",
+        "sha256": "fca492b4e6b0ee157e0ef75878171458f155ba27e8456a69c8ed1aceb7848e88"
+      },
+      "exit_code": 1,
+      "inputs": {
+        "runner_path": "/tmp/woniunote-iter21-evidence/g1-closeout-20261023T183212Z-17180/bad-config/repo/backend_cpp/tests/integration/run_integration.sh",
+        "runner_sha256": "36ee445ba6cc4712ef70b3a993fdb91d45164fa089d3569cb756927dccd159bb",
+        "template_contents": "{ \"malformed\": ]",
+        "template_path": "/tmp/woniunote-iter21-evidence/g1-closeout-20261023T183212Z-17180/bad-config/repo/backend_cpp/tests/integration/config.integration.template.json",
+        "template_sha256": "62619f3e5ea2285d963d4f35a2f2071e9ba205d07dcebcee082023bf96e8c23c"
+      },
+      "invocation": "cwd=<case-root>/bad-config/repo; bash backend_cpp/tests/integration/run_integration.sh",
+      "log": {
+        "path": "/tmp/woniunote-iter21-evidence/g1-closeout-20261023T183212Z-17180/bad-config/runner.log",
+        "sha256": "2e3fcdb884d9c6773c64931ba224584b799e4c68ea0b89a7da7b3effec4fcf0c"
+      },
+      "observed": {
+        "backend_log_absent": true,
+        "boundary": "Runner had already created/loaded the run-owned disposable schema before parsing config; no backend process/business API test ran.",
+        "business_scenarios_started": false,
+        "parser_error": true,
+        "test_summary_absent": true
+      },
+      "run_id": "20261023T183316Z-9aaede3f856a",
+      "status": "PASS"
+    }
+  ],
+  "overall": "GAP",
+  "r5_driver": {
+    "invocation": "/Users/yunjinqi/opt/anaconda3/bin/conda run --no-capture-output -n base python /tmp/woniunote-iter21-preflight/root-term-driver-r5.py",
+    "new_assertions": [
+      "A/B upload directories are run-private and distinct",
+      "same sentinel basename but different paths and hashes",
+      "after only A runner PID TERM, A upload file is removed and B file hash is unchanged",
+      "B file is removed after B runner PID TERM"
+    ],
+    "path": "/tmp/woniunote-iter21-preflight/root-term-driver-r5.py",
+    "preserved_boundaries": [
+      "exact runner PID signal with identity check",
+      "full 64-character container ID plus exact name and run/service label validation",
+      "refuse existing evidence root",
+      "only exact run-owned resource cleanup"
+    ],
+    "sha256": "3c144c70c0134e0a2b41c1aacfb976572a004fe8ffdd5c62b1e55d466c485dee",
+    "status": "PREPARED_NOT_RUN",
+    "syntax_check": "/Users/yunjinqi/opt/anaconda3/bin/conda run --no-capture-output -n base python -c \"compile(open('/tmp/woniunote-iter21-preflight/root-term-driver-r5.py').read(), '/tmp/woniunote-iter21-preflight/root-term-driver-r5.py', 'exec')\""
+  },
+  "scope": "AC21-00 G1 supplemental evidence; temporary runners/tools only; no product or runner source modified",
+  "source": {
+    "formal_macos3_binary": {
+      "path": "/tmp/woniunote-iter21-formal-macos-3/woniunote_backend",
+      "sha256": "81205cb32cb9103049a0486c767e9ed4ecee5c4a87c1982fbb25042ac43035bc"
+    },
+    "functional8_to_functional9_diff": "Read-only diff showed only the allowlisted backend runtime metadata export/error-handling block; no test/startup/cleanup logic changed.",
+    "functional9_runner": {
+      "path": "/tmp/woniunote-iter21-functional-9/backend_cpp/tests/integration/run_integration.sh",
+      "sha256": "36ee445ba6cc4712ef70b3a993fdb91d45164fa089d3569cb756927dccd159bb"
+    },
+    "prior_index": {
+      "path": "/tmp/woniunote-iter21-evidence/ac21-00-negative-isolation-index-20261024.json",
+      "sha256": "0d9f754878a63a04046f6a20e0caaba75ce95ed106de5a2fc26b67c848357855"
+    }
+  }
+}

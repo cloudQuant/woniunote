@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "exit": 0,
+  "catch_blocks": 92,
+  "violations": 0,
+  "exemptions": 43,
+  "new_exemptions": 5,
+  "scope": "Five file+exact-body matches independently checked against existing warnEditorRecovery/onPageExitError and feedback failure fallback; product unchanged; no file-wide exemption",
+  "script_sha256": "f05dda1b18db10b1ba354171f6b14b90ba3b3275fa87ede1f442470a8e219c11",
+  "log_sha256": "8f25dc23014eb4b5147e777f7273e389a733fbc75f982a2945c29ccd927e920d"
+}

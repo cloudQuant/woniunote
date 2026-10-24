@@ -15,7 +15,7 @@ class CommentController : public drogon::HttpController<CommentController>
 {
 public:
     METHOD_LIST_BEGIN
-    ADD_METHOD_TO(CommentController::listByArticle, "/api/comments/article/{articleId}", drogon::Get);
+    ADD_METHOD_TO(CommentController::listByArticle, "/api/comments/article/{articleId}", drogon::Get, "woniunote::OptionalAuthFilter");
     ADD_METHOD_TO(CommentController::myComments, "/api/comments/my", drogon::Get, "woniunote::AuthFilter");
     ADD_METHOD_TO(CommentController::create, "/api/comments", drogon::Post, "woniunote::AuthFilter");
     ADD_METHOD_TO(CommentController::remove, "/api/comments/{id}", drogon::Delete, "woniunote::AuthFilter");

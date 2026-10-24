@@ -53,6 +53,14 @@
               <el-icon><ChatLineSquare /></el-icon> 回复
             </span>
           </div>
+          <div
+            v-if="voteVerificationText(comment.commentid)"
+            class="vote-verification"
+            role="status"
+            aria-live="polite"
+          >
+            {{ voteVerificationText(comment.commentid) }}
+          </div>
 
           <!-- 回复输入框 -->
           <div v-if="replyingTo === comment.commentid" class="reply-form">
@@ -101,6 +109,14 @@
                     <el-icon><CaretBottom /></el-icon> {{ reply.opposecount }}
                   </span>
                 </div>
+                <div
+                  v-if="voteVerificationText(reply.commentid)"
+                  class="vote-verification"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {{ voteVerificationText(reply.commentid) }}
+                </div>
               </div>
             </div>
           </div>
@@ -122,7 +138,7 @@
 import { CaretTop, CaretBottom, ChatLineSquare } from '@element-plus/icons-vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 
-defineProps({
+const props = defineProps({
   /**
    * 评论列表（含楼中楼 replies）
    */
@@ -178,6 +194,13 @@ defineProps({
   submittingReply: {
     type: Boolean,
     default: false
+  },
+  /**
+   * 投票提交结果未知时的待核实状态，按 commentid 索引。
+   */
+  pendingVoteVerifications: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -191,6 +214,18 @@ const emit = defineEmits([
   'agree',
   'oppose'
 ])
+
+function voteVerificationText(commentId) {
+  const state = props.pendingVoteVerifications[String(commentId)]
+  if (!state) return ''
+  if (state.countRefreshState === 'failed') {
+    return '投票结果待核实（评论计数刷新失败）'
+  }
+  if (state.countRefreshState === 'refreshing') {
+    return '投票结果待核实（正在刷新评论计数）'
+  }
+  return '投票结果待核实（计数已刷新，无法确认本人投票）'
+}
 
 /**
  * 格式化日期
@@ -289,6 +324,12 @@ function formatDate(dateStr) {
 
 .comment-actions span:hover {
   color: var(--wn-color-primary);
+}
+
+.vote-verification {
+  margin-top: 6px;
+  color: var(--wn-color-warning, #b7791f);
+  font-size: 12px;
 }
 
 /* 楼中楼回复 */

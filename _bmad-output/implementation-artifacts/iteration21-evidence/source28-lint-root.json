@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "snapshot": "source-28",
+  "command": [
+    "npm",
+    "run",
+    "lint:ci"
+  ],
+  "exit": 0,
+  "seconds": 2.49,
+  "node_version": "v22.13.0",
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source28-lint.log",
+  "log_sha256": "19d979f2fa04bb57796c816a754dd4abf6c5952b1ae8176b90410a40fc1c36d3",
+  "source_manifest_sha256": "48b35a289eb05791a30c0b5c2c1fa5f89ac5a4c1a6eb80aa5c1443e1d5591a65"
+}

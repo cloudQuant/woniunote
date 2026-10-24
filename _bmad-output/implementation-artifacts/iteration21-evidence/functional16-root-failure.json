@@ -1,0 +1,33 @@
+{
+  "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-16",
+  "command": [
+    "bash",
+    "backend_cpp/tests/integration/run_integration.sh"
+  ],
+  "real_e2e": true,
+  "exit": 1,
+  "signal": null,
+  "seconds": 82.943,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source16-mac-real.log",
+  "sha256": "c08affe39f8bfa6825021b3171f71d6841310f18238682ca45b7a7c8caa06675",
+  "resultRoot": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/mac-real16",
+  "status": "FAIL",
+  "source_manifest_sha256": "d4b118769d931598c407089c4c25dbd78772de57969b1c5b98e37f229ac41e60",
+  "backend_sha256": "39596818a99c91884cc17762fdb11f098819cb809622a7ab065a03280650c12a",
+  "run_id": "20261023T232400Z-a15dd6bc61d9",
+  "http": {
+    "passed": 60,
+    "failed": 1,
+    "skipped": 0,
+    "failure": "test_ueditor_image_stays_in_run_uploads_not_cwd_or_shared_parent",
+    "observed_content_type": "image/png, image/png",
+    "expected_content_type": "one image/png header"
+  },
+  "migrations": "NOT_RUN_after_HTTP_failure",
+  "real_browser": "NOT_RUN_after_HTTP_failure",
+  "cleanup_readback": {
+    "exact_run_label_containers": 0,
+    "exact_run_label_volumes": 0
+  },
+  "scope": "Retains first real HTTP failure; strict MIME contract unchanged."
+}

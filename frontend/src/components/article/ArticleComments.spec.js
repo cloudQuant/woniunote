@@ -81,6 +81,25 @@ describe('ArticleComments.vue', () => {
     expect(first.find('.reply-item .comment-content').text()).toBe('楼中楼回复')
   })
 
+  it('未知投票结果显示刷新中、失败与已刷新待核实状态', () => {
+    const wrapper = mountComments({
+      pendingVoteVerifications: {
+        '1': { voteType: 'agree', countRefreshState: 'refreshed' },
+        '2': { voteType: 'oppose', countRefreshState: 'failed' },
+        '3': { voteType: 'agree', countRefreshState: 'refreshing' }
+      }
+    })
+
+    const statusNodes = wrapper.findAll('[role="status"]')
+    const statuses = statusNodes.map((node) => node.text())
+    expect(statuses).toEqual([
+      '投票结果待核实（计数已刷新，无法确认本人投票）',
+      '投票结果待核实（评论计数刷新失败）',
+      '投票结果待核实（正在刷新评论计数）'
+    ])
+    expect(statusNodes.every((node) => node.attributes('aria-live') === 'polite')).toBe(true)
+  })
+
   it('昵称为空时回退为匿名，头像回退为首字母', () => {
     const wrapper = mountComments()
     const second = wrapper.findAll('.comment-item')[1]

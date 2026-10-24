@@ -26,6 +26,9 @@ export function useArticleComments({ article }) {
   const comments = ref([])
   const newComment = ref('')
   const submittingComment = ref(false)
+  // A refreshed aggregate count cannot prove whether this user’s vote committed.
+  // Keep unknown outcomes visible until the page is reloaded or the user resolves it.
+  const pendingVoteVerifications = ref({})
 
   // 回复（楼中楼）状态
   const replyingTo = ref(null)
@@ -46,9 +49,33 @@ export function useArticleComments({ article }) {
     try {
       const res = await commentApi.getByArticle(route.params.id, { page: 1, page_size: 50 })
       comments.value = res.data
+      return true
     } catch (error) {
       console.error('获取评论失败:', error)
       notifyError(error, '获取评论失败')
+      return false
+    }
+  }
+
+  function isUnknownVoteOutcome(error) {
+    return error?.errorCode === 'WRITE_OUTCOME_UNKNOWN' ||
+      error?.response?.data?.error_code === 'WRITE_OUTCOME_UNKNOWN' ||
+      error?.response?.data?.data?.error_code === 'WRITE_OUTCOME_UNKNOWN' ||
+      !error?.response
+  }
+
+  async function refreshAfterUnknownVote(comment, voteType) {
+    const commentId = String(comment.commentid)
+    pendingVoteVerifications.value = {
+      ...pendingVoteVerifications.value,
+      [commentId]: { voteType, countRefreshState: 'refreshing' }
+    }
+    ElMessage.warning('投票结果暂未确认，系统未自动重试；正在刷新评论计数。')
+
+    const refreshed = await fetchComments()
+    pendingVoteVerifications.value = {
+      ...pendingVoteVerifications.value,
+      [commentId]: { voteType, countRefreshState: refreshed ? 'refreshed' : 'failed' }
     }
   }
 
@@ -122,7 +149,7 @@ export function useArticleComments({ article }) {
   }
 
   /**
-   * 点赞评论。后端 vote 接口仅返回成功，前端本地自增计数。
+   * 点赞评论。计数以服务端重新读取为准，不在客户端乐观自增。
    * @param {Object} comment - 评论对象
    */
   async function agreeComment(comment) {
@@ -133,15 +160,19 @@ export function useArticleComments({ article }) {
 
     try {
       await commentApi.agree(comment.commentid)
-      comment.agreecount = (comment.agreecount || 0) + 1
+      await fetchComments()
     } catch (error) {
       console.error('点赞失败:', error)
-      notifyError(error, '点赞失败')
+      if (isUnknownVoteOutcome(error)) {
+        await refreshAfterUnknownVote(comment, 'agree')
+      } else {
+        notifyError(error, '点赞失败')
+      }
     }
   }
 
   /**
-   * 反对评论。后端 vote 接口仅返回成功，前端本地自增计数。
+   * 反对评论。计数以服务端重新读取为准，不在客户端乐观自增。
    * @param {Object} comment - 评论对象
    */
   async function opposeComment(comment) {
@@ -152,10 +183,14 @@ export function useArticleComments({ article }) {
 
     try {
       await commentApi.oppose(comment.commentid)
-      comment.opposecount = (comment.opposecount || 0) + 1
+      await fetchComments()
     } catch (error) {
       console.error('踩失败:', error)
-      notifyError(error, '踩失败')
+      if (isUnknownVoteOutcome(error)) {
+        await refreshAfterUnknownVote(comment, 'oppose')
+      } else {
+        notifyError(error, '踩失败')
+      }
     }
   }
 
@@ -164,6 +199,7 @@ export function useArticleComments({ article }) {
     comments,
     newComment,
     submittingComment,
+    pendingVoteVerifications,
     replyingTo,
     replyContent,
     submittingReply,

@@ -1,0 +1,19 @@
+{
+  "changes": [
+    {
+      "path": "frontend/e2e/support/mockApi.js",
+      "before": "2bfa8dae3e3ae2ed6822de6b57d719ba9722997d6eeb09a6eed9e3c62b053446",
+      "after": "7758d1b131fb8f735c240ee576ae99c0859e87d3c1b1f0b62fbec372c9c6a2b9"
+    },
+    {
+      "path": "frontend/e2e/write-article.spec.js",
+      "before": "70d3d7b2ac560a8007054ca85d2f1bb1a107b1abe69f34f5a19e733e4b4406e5",
+      "after": "e78abb21dd5b04e4445f7e229ae87c530d8b6e4623eff28fa02a0914d87c6cc7"
+    }
+  ],
+  "product_frontend_unchanged": true,
+  "backend_binary_unchanged": true,
+  "http_and_real_e2e_sources_unchanged": true,
+  "previous_manifest_sha256": "cdec1ee82d7746bde149f4a84f8760481984edd741e6f861581f1fee98d5bb23",
+  "manifest_sha256": "829ea7394c3b13929de63b465f840e968b1e758baf236ed7dd66185b2e30cf8c"
+}

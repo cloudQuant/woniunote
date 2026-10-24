@@ -1,0 +1,52 @@
+{
+  "source_digest": "6a7b43b5e24dc46a6df1c624726ac8814c4b4806dc96894cf76a58c1a6fb04ed",
+  "scope": "formal hook route absence with network none and no DB/Redis clients; not business acceptance",
+  "runtime_image_id": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee",
+  "cases": [
+    {
+      "variant": "system-libs",
+      "binary_sha256": "ab59577096211ec34a7a61595b6edd1f6de077da5bc757d5da37dbb7ea16f03c",
+      "injected_env": false,
+      "health": 200,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "container_id": "69535248cc20f01f41e0e940d690bfcda74325356f5d77d6d4b69d37f57fba65"
+    },
+    {
+      "variant": "system-libs",
+      "binary_sha256": "ab59577096211ec34a7a61595b6edd1f6de077da5bc757d5da37dbb7ea16f03c",
+      "injected_env": true,
+      "health": 200,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "container_id": "5f98b7d2661ea191aa79626e0b3b757506b35ce21b0e17b5547374eafc4d025b"
+    },
+    {
+      "variant": "vcpkg",
+      "binary_sha256": "0c7e7c87696308c10234a123ea5619444117a0961a0d90dfea5dd29cddec5ba1",
+      "injected_env": false,
+      "health": 200,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "container_id": "40497e587e1068a67e1dee442ff03165c85cdcf29f98ba30d5fcd38098b0a8fc"
+    },
+    {
+      "variant": "vcpkg",
+      "binary_sha256": "0c7e7c87696308c10234a123ea5619444117a0961a0d90dfea5dd29cddec5ba1",
+      "injected_env": true,
+      "health": 200,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "container_id": "a28bcfa55f4ad8d40ae745bcf59daf3e0fb267c9efad1abb7fa869482077d19f"
+    }
+  ],
+  "cleanup": "all exact owned containers removed"
+}

@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "source_digest": "8fa23d6f6a1d374abd260ab602da94d485fdd4c08312b4244ff736d42fdd5548",
+  "runtime_image_id": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee",
+  "scope": "formal no-network binary; no DB/Redis; loopback POST route absence with matching test header; no business writes",
+  "cases": [
+    {
+      "builder": "system-libs",
+      "injected_env": false,
+      "binary_sha256": "0b0473ad398607b451d56f93d971da13d97ad877d3d2e820625fcfd0c7509adb",
+      "container_id": "c8ad0da10fdcd6ec562f69718717e0a635c1a1a9917554144c1bf2e7c61804f2",
+      "method": "POST",
+      "matching_run_header_sent": true,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "health": 200,
+      "owned_container_removed": true
+    },
+    {
+      "builder": "system-libs",
+      "injected_env": true,
+      "binary_sha256": "0b0473ad398607b451d56f93d971da13d97ad877d3d2e820625fcfd0c7509adb",
+      "container_id": "e61fa422e69558a7397e349f10379b957f174d6655e82ed23e121f879211d6f1",
+      "method": "POST",
+      "matching_run_header_sent": true,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "health": 200,
+      "owned_container_removed": true
+    }
+  ]
+}

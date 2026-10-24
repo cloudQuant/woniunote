@@ -7,6 +7,8 @@
         ref="formRef"
         :model="form" 
         :rules="rules" 
+        :disabled="!editorOwnerReady || editorOwnerChanged"
+        :inert="!editorOwnerReady || editorOwnerChanged"
         label-position="top"
       >
         <el-form-item label="标题" prop="headline">
@@ -60,7 +62,7 @@
                   :http-request="uploadThumbnail"
                   accept="image/*"
                 >
-                  <img v-if="form.thumbnail" :src="form.thumbnail" class="thumbnail-preview" />
+                  <img v-if="thumbnailPreviewUrl" :src="thumbnailPreviewUrl" class="thumbnail-preview" />
                   <el-icon v-else class="upload-icon"><Plus /></el-icon>
                 </el-upload>
               </div>
@@ -88,24 +90,38 @@
  * 提供富文本编辑器（UEditor）用于撰写文章，支持设置标题、分类、积分、缩略图等元数据。
  * 支持保存草稿和发布文章，同时处理新建和编辑模式。
  */
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useArticleStore } from '@/stores/article'
-import { logInfo } from '@/utils/logger'
+import { useUserStore } from '@/stores/user'
+import { logInfo, logWarning } from '@/utils/logger'
 import { articleApi, uploadApi } from '@/api'
 import { notifyError } from '@/utils/errorToast'
+import {
+  isValidArticleThumbnail,
+  resolveArticleThumbnailUrl
+} from '@/utils/articleThumbnail'
+import {
+  clearEditorRecovery,
+  readEditorRecovery,
+  registerEditorSnapshotProvider,
+  saveEditorRecovery
+} from '@/utils/editorRecovery'
 import UEditor from '@/components/editor/UEditor.vue'
 
 const route = useRoute()
 const router = useRouter()
 const articleStore = useArticleStore()
+const userStore = useUserStore()
 
 const formRef = ref(null)
 const editorRef = ref(null)
 const saving = ref(false)
 const publishing = ref(false)
+const editorOwnerChanged = ref(false)
+const editorOwnerReady = ref(false)
 
 const isEdit = computed(() => !!route.params.id)
 
@@ -131,6 +147,156 @@ const form = reactive({
   credit: 0,
   drafted: 0
 })
+
+const thumbnailPreviewUrl = computed(() => resolveArticleThumbnailUrl(
+  form.thumbnail,
+  form.type,
+  { fallbackForEmpty: false }
+))
+
+const recoveryPath = route.fullPath || route.path || '/write'
+let editorOwnerSnapshot = null
+let editorOwnerKey = ''
+let recoveryOwnerId = null
+let editorOwnerInitialization = null
+let editorQuarantinePromise = Promise.resolve()
+let unregisterEditorSnapshot = () => {}
+
+function getSessionOwnerKey(snapshot) {
+  return JSON.stringify([snapshot?.epoch || '', snapshot?.userIdentity || null])
+}
+
+function getEditorDraft() {
+  // The form stays disabled until the article and any prior recovery snapshot
+  // finish loading. Never replace a saved draft with this initial placeholder.
+  if (!editorOwnerReady.value) return null
+
+  // Flush UEditor’s debounce before copying the form so the recovery snapshot
+  // includes the latest iframe content when a 401 redirects away from this page.
+  editorRef.value?.flushContent?.()
+  return {
+    headline: form.headline,
+    type: form.type,
+    typeArray: [...form.typeArray],
+    content: form.content,
+    thumbnail: form.thumbnail,
+    credit: form.credit,
+    drafted: form.drafted
+  }
+}
+
+function clearEditorForm() {
+  Object.assign(form, {
+    headline: '',
+    type: null,
+    typeArray: [],
+    content: '',
+    thumbnail: '',
+    credit: 0,
+    drafted: 0
+  })
+  formRef.value?.clearValidate?.()
+}
+
+function warnEditorRecovery(message, error) {
+  logWarning('编辑恢复数据处理失败', { message: error?.message || '未知错误' })
+  try {
+    ElMessage.warning(message)
+  } catch (messageError) {
+    logWarning('无法显示编辑恢复失败提示', {
+      message: messageError?.message || '未知错误'
+    })
+  }
+}
+
+function bindEditorToCurrentSession(snapshot) {
+  editorOwnerSnapshot = snapshot
+  editorOwnerKey = getSessionOwnerKey(snapshot)
+  recoveryOwnerId = snapshot.userId
+  unregisterEditorSnapshot()
+  unregisterEditorSnapshot = registerEditorSnapshotProvider(
+    recoveryOwnerId,
+    getEditorDraft,
+    {
+      path: recoveryPath,
+      shouldPersistOnExit: () => {
+        if (!editorOwnerSnapshot || !editorOwnerReady.value || editorOwnerChanged.value) return false
+        const currentSnapshot = userStore.captureCredentials()
+        return userStore.isSessionCurrent(editorOwnerSnapshot) &&
+          getSessionOwnerKey(currentSnapshot) === editorOwnerKey
+      },
+      onPageExitError: (error) => {
+        warnEditorRecovery(
+          '离开页面时，本地编辑恢复稿未能保存；页面刷新后可能无法找回',
+          error
+        )
+      }
+    }
+  )
+}
+
+async function initializeEditorOwner() {
+  if (editorOwnerSnapshot) return editorOwnerSnapshot
+  if (!editorOwnerInitialization) {
+    editorOwnerInitialization = (async () => {
+      await userStore.syncSession()
+      const snapshot = userStore.captureCredentials()
+      bindEditorToCurrentSession(snapshot)
+      return snapshot
+    })()
+  }
+  return editorOwnerInitialization
+}
+
+function quarantineEditorForOwnerChange() {
+  if (editorOwnerChanged.value) return editorQuarantinePromise
+  editorOwnerChanged.value = true
+  editorQuarantinePromise = (async () => {
+    try {
+      if (recoveryOwnerId !== null && recoveryOwnerId !== undefined) {
+        await saveEditorRecovery(recoveryOwnerId, recoveryPath)
+      }
+    } catch (error) {
+      notifyError(error, '账号已切换，无法保存原账号的编辑恢复稿')
+    } finally {
+      unregisterEditorSnapshot()
+      clearEditorForm()
+    }
+    ElMessage.warning('登录账号已切换，当前编辑已隔离；请使用原账号恢复草稿。')
+  })()
+  return editorQuarantinePromise
+}
+
+watch(
+  () => getSessionOwnerKey(userStore.captureCredentials()),
+  (nextOwner) => {
+    if (editorOwnerSnapshot && nextOwner !== editorOwnerKey) {
+      void quarantineEditorForOwnerChange()
+    }
+  },
+  { flush: 'sync' }
+)
+
+async function captureBoundSessionForRequest() {
+  await initializeEditorOwner()
+  await userStore.syncSession()
+  const snapshot = userStore.captureCredentials()
+  if (editorOwnerChanged.value || getSessionOwnerKey(snapshot) !== editorOwnerKey) {
+    await quarantineEditorForOwnerChange()
+    return null
+  }
+  return snapshot
+}
+
+async function isBoundSessionCurrent(snapshot) {
+  await userStore.syncSession()
+  if (editorOwnerChanged.value ||
+      getSessionOwnerKey(userStore.captureCredentials()) !== editorOwnerKey) {
+    await quarantineEditorForOwnerChange()
+    return false
+  }
+  return userStore.isSessionCurrent(snapshot)
+}
 
 const rules = {
   headline: [
@@ -159,7 +325,14 @@ function onTypeChange(value) {
 
 async function uploadThumbnail({ file }) {
   try {
-    const res = await uploadApi.uploadImage(file)
+    const snapshot = await captureBoundSessionForRequest()
+    if (!snapshot) return
+    const res = await uploadApi.uploadImage(file, { _sessionSnapshot: snapshot })
+    if (!await isBoundSessionCurrent(snapshot)) return
+    if (!isValidArticleThumbnail(res?.data?.url) || !res.data.url) {
+      ElMessage.error('上传返回了无效的缩略图路径')
+      return
+    }
     form.thumbnail = res.data.url
     ElMessage.success('上传成功')
   } catch (error) {
@@ -179,7 +352,11 @@ async function publish() {
 }
 
 async function saveArticle() {
-  if (!formRef.value) return
+  if (!formRef.value || editorOwnerChanged.value) return
+  if (!isValidArticleThumbnail(form.thumbnail)) {
+    ElMessage.error('缩略图路径无效')
+    return
+  }
 
   // 提交前冲刷编辑器待同步内容：编辑器输入走 300ms 防抖，用户“输入后立即点击
   // 保存/发布”时防抖可能尚未触发；且 Firefox 在点击 iframe 外部按钮时不一定
@@ -198,6 +375,8 @@ async function saveArticle() {
   }
   
   try {
+    const snapshot = await captureBoundSessionForRequest()
+    if (!snapshot) return
     const data = {
       headline: form.headline,
       type: form.type,
@@ -208,14 +387,16 @@ async function saveArticle() {
     }
     
     if (isEdit.value) {
-      const res = await articleApi.update(route.params.id, data)
+      const res = await articleApi.update(route.params.id, data, { _sessionSnapshot: snapshot })
+      if (!await isBoundSessionCurrent(snapshot)) return
       ElMessage.success('更新成功')
       const targetId = res?.data?.articleid || route.params.id
       if (targetId) {
         router.push({ name: 'ArticleDetail', params: { id: targetId } })
       }
     } else {
-      const res = await articleApi.create(data)
+      const res = await articleApi.create(data, { _sessionSnapshot: snapshot })
+      if (!await isBoundSessionCurrent(snapshot)) return
       ElMessage.success(form.drafted === 1 ? '草稿已保存' : '发布成功')
       router.push({ name: 'ArticleDetail', params: { id: res.data.articleid } })
     }
@@ -232,7 +413,10 @@ async function fetchArticle() {
   if (!isEdit.value) return
   
   try {
-    const res = await articleApi.getDetail(route.params.id)
+    const snapshot = await captureBoundSessionForRequest()
+    if (!snapshot) return
+    const res = await articleApi.getDetail(route.params.id, { _sessionSnapshot: snapshot })
+    if (!await isBoundSessionCurrent(snapshot)) return
     const article = res.data
     
     form.headline = article.headline
@@ -245,15 +429,52 @@ async function fetchArticle() {
     form.typeArray = articleStore.getTypePath(article.type)
   } catch (error) {
     console.error('获取文章失败:', error)
+    if (error?.response?.status === 401) return
     ElMessage.error('文章不存在')
     router.push({ name: 'Home' })
   }
 }
 
+function restoreEditorRecovery() {
+  if (editorOwnerChanged.value) return
+  let snapshot
+  try {
+    snapshot = readEditorRecovery(recoveryOwnerId, recoveryPath)
+  } catch (error) {
+    warnEditorRecovery(
+      '本地编辑恢复稿无法读取，已加载服务器内容；请检查浏览器存储设置',
+      error
+    )
+    return
+  }
+  if (!snapshot) return
+
+  Object.assign(form, snapshot.draft)
+  try {
+    clearEditorRecovery(recoveryOwnerId)
+  } catch (error) {
+    warnEditorRecovery('已恢复未保存内容，但无法清理本地恢复副本', error)
+    return
+  }
+  ElMessage.info?.('已恢复上次未保存的编辑内容')
+}
+
 onMounted(async () => {
   await articleStore.fetchArticleTypes()
+  try {
+    await initializeEditorOwner()
+  } catch (error) {
+    logWarning('编辑器会话初始化失败，store 已提示并清除内存登录状态', {
+      message: error?.message || '未知错误'
+    })
+    return
+  }
   await fetchArticle()
+  restoreEditorRecovery()
+  editorOwnerReady.value = true
 })
+
+onBeforeUnmount(() => unregisterEditorSnapshot())
 </script>
 
 <style scoped>

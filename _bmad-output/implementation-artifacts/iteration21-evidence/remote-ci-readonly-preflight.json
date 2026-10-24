@@ -1,0 +1,55 @@
+{
+  "status": "PASS_READ_ONLY_TARGET_PREFLIGHT",
+  "checked_at_utc": "2026-10-24T07:10:02.770Z",
+  "repository": "cloudQuant/woniunote",
+  "github_base_branch": "dev_cpp",
+  "github_base_sha": "fefab0570c370bebd796df9c683343805d850d18",
+  "matches_local_accepted_base": true,
+  "candidate_branch": "codex/iteration21-acceptance",
+  "candidate_branch_search": {
+    "branches": [],
+    "cursor": null
+  },
+  "matching_pr_count": 0,
+  "local_candidate_ref_present": false,
+  "origin_fetch_url": "https://gitee.com/yunjinqi/woniunote.git",
+  "origin_push_urls": [
+    "https://github.com/cloudQuant/woniunote.git",
+    "https://gitee.com/yunjinqi/woniunote.git"
+  ],
+  "corrected_push_remote": "github",
+  "corrected_push_url": "https://github.com/cloudQuant/woniunote.git",
+  "workflow": ".github/workflows/cpp-vue-ci.yml",
+  "trigger": {
+    "push_branches": [
+      "dev_cpp",
+      "master",
+      "main"
+    ],
+    "pull_request_base_branches": [
+      "dev_cpp",
+      "master",
+      "main"
+    ],
+    "workflow_dispatch": false
+  },
+  "required_by_iteration21": [
+    "repo-hygiene",
+    "backend-cpp",
+    "backend-static-analysis",
+    "frontend-vue",
+    "frontend-e2e",
+    "backend-integration"
+  ],
+  "limits": [
+    "No candidate commit, branch creation, push, PR or workflow execution performed; remote write approval remains pending",
+    "Actions permissions endpoint was unsupported by connector; branch protection endpoint returned 403; no inference about administrator settings or available CI quota",
+    "Observed remote refs can change; recheck immediately before authorized write",
+    "This read-only preflight does not satisfy G5"
+  ],
+  "sources": [
+    "https://api.github.com/repos/cloudQuant/woniunote/branches/dev_cpp",
+    "https://api.github.com/repos/cloudQuant/woniunote/pulls?state=all&head=cloudQuant%3Acodex%2Fiteration21-acceptance&per_page=100"
+  ],
+  "workflow_sha256": "490bbffbcec46510a30af5936a0f2d89df6a2b6ab04e0e42f95f9ce3d8b42b18"
+}

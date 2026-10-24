@@ -1,0 +1,31 @@
+{
+  "status": "FAILED",
+  "commands": [
+    {
+      "phase": "stop-original",
+      "command": [
+        "bash",
+        "scripts/tests/iter21-business-runtime/run.sh",
+        "stop-original",
+        "1935a00eda4f4b61e2728637fbe5d170c5ab78b1e3889185367a7a3eeb32021f",
+        "--confirm-d04-mutation"
+      ],
+      "exit": 0,
+      "seconds": 0.282,
+      "log_sha256": "08f9904919f7ea9fe62c185e8503a0846434de1d133f9ff9583aa261c0a7a82e",
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-maintenance-stop-and-backup-stop-original.log"
+    },
+    {
+      "phase": "backup-check",
+      "command": [
+        "bash",
+        "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/d04-backup-restore-guarded.sh",
+        "check"
+      ],
+      "exit": 1,
+      "seconds": 0.38,
+      "log_sha256": "1f8e486779bb6fbb86df1dc2b65ccaea0e67743ad440075073ed3ea79a9a6d77",
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-maintenance-stop-and-backup-backup-check.log"
+    }
+  ]
+}

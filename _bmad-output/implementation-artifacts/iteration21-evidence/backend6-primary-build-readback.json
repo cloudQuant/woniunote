@@ -1,0 +1,78 @@
+{
+  "status": "PASS",
+  "scope": "independent readback of six build records, 12 binaries, phase logs, CTest results, compile flags and frozen source; not HTTP/deployment acceptance",
+  "source_digest": "70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd",
+  "report_sha256": "f9dd9d01e716505e249d964dc66403c92c974a3deeb085911c9d5bc528b00553",
+  "variants": [
+    {
+      "name": "macOS-test",
+      "phases_verified": 3,
+      "binary_sha256": "ec454ec733784494bc0c5a44ed6aa2cd69e67d3de40a3c54c69f766fdf98eea5",
+      "ctest": "8/8",
+      "cache_flags_verified": {
+        "BUILD_TESTING": "ON",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "ON",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "ON"
+      }
+    },
+    {
+      "name": "macOS-release",
+      "phases_verified": 3,
+      "binary_sha256": "ed369ca39096b6536e5be274572c08bc4824b6a363a8475cd7ce6754689b8f96",
+      "ctest": "8/8",
+      "cache_flags_verified": {
+        "BUILD_TESTING": "ON",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "OFF",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "OFF"
+      }
+    },
+    {
+      "name": "Linux-system-libs-test",
+      "phases_verified": 3,
+      "binary_sha256": "90cd75545a599767d34053abb4000b46380891381983c63fb0f77e47b51dfab5",
+      "ctest": "8/8",
+      "cache_flags_verified": {
+        "BUILD_TESTING": "ON",
+        "USE_SYSTEM_LIBS": "ON",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "ON",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "ON"
+      }
+    },
+    {
+      "name": "Linux-system-libs-release",
+      "phases_verified": 3,
+      "binary_sha256": "c6bd04e727069cf246b5344225917d5f216df134810c6d36d5d612898a641a7f",
+      "ctest": "8/8",
+      "cache_flags_verified": {
+        "BUILD_TESTING": "ON",
+        "USE_SYSTEM_LIBS": "ON",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "OFF",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "OFF"
+      }
+    },
+    {
+      "name": "Linux-vcpkg-test",
+      "phases_verified": 3,
+      "binary_sha256": "575b4e1fc29d6c3957aa5c5e2f89e65a5765049811bf3a91798ef25268aa4919",
+      "ctest": "8/8",
+      "cache_flags_verified": {
+        "BUILD_TESTING": "ON",
+        "USE_SYSTEM_LIBS": "OFF",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "ON",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "ON"
+      }
+    },
+    {
+      "name": "Linux-vcpkg-release",
+      "phases_verified": 3,
+      "binary_sha256": "ae71b6623bd431797238fab946ac232132d18b11dc1108567ed1a5401b3b4e51",
+      "ctest": "8/8",
+      "cache_flags_verified": {
+        "BUILD_TESTING": "ON",
+        "USE_SYSTEM_LIBS": "OFF",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "OFF",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "OFF"
+      }
+    }
+  ]
+}

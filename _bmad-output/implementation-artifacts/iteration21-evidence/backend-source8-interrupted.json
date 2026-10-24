@@ -1,0 +1,8 @@
+{
+  "status": "SUPERSEDED_INTERRUPTED",
+  "reason": "source8 predates final MySQL transport classification; retain successful Mac variants but do not claim final acceptance",
+  "driver_pid": 70570,
+  "container_id": "d3e6af77c3506352abaa506f50f49a1290529dee4086779040b57f67e3909dba",
+  "stop_exit": 0,
+  "retained_partial_logs": true
+}

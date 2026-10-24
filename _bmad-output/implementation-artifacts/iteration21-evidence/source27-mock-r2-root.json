@@ -1,0 +1,21 @@
+{
+  "status": "FAIL",
+  "snapshot": "source-27",
+  "command": [
+    "npm",
+    "run",
+    "test:e2e",
+    "--",
+    "--workers=1",
+    "--retries=0"
+  ],
+  "node_version": "v22.13.0",
+  "exit": 1,
+  "seconds": 545.99,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source27-mock-r2.log",
+  "log_sha256": "bf67b1ea33768838853c0ed0f55ae363dcb21855e505298a5ed86510a1f95882",
+  "egress_log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source27-mock-r2-egress.json",
+  "egress_sha256": "e69709ba373f1bee3cd6980f4e2d072009f3a705a84fcbc97ca48228e97a1be1",
+  "run_id": "2988d1dc-a4ff-4bd6-b52f-4ccdae1906ff",
+  "scope": "All four mock browser projects; independent exact-lock dependencies installed; workers1/retries0; previous collection failure retained separately"
+}

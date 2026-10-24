@@ -1,0 +1,12 @@
+{
+  "status": "PASS_UNCHANGED_UNIT_INPUTS",
+  "frontend_paths_checked": 359,
+  "coverage_reused_tests": 648,
+  "source24_manifest_sha256": "cd50f3b121093b2243b6a0c1ee9f92314520bbd908b1f4839407316358779840",
+  "source28_manifest_sha256": "48b35a289eb05791a30c0b5c2c1fa5f89ac5a4c1a6eb80aa5c1443e1d5591a65",
+  "coverage_log_sha256": "c7b5ad7cfbcc8b736c3a5c78b845aaf4e4edf585969db994f5372f6776484c51",
+  "excluded_changed_checker": "final-silent-catch-primary.json",
+  "vendor_changed": "frontend/public/ueditor/ueditor.all.js",
+  "vendor_validation": "targeted regression 4 passed; source28 full mock and real6 pending separately",
+  "scope": "All 359 unchanged product/unit/real/build inputs bound by SHA; this record alone does not certify the changed vendor"
+}

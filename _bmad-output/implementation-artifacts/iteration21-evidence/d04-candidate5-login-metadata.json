@@ -1,0 +1,11 @@
+{
+  "status": "PASS_FORMAL_LOGIN",
+  "origin": "https://localhost:18443/",
+  "candidate_active_at_login": "de510038840d29aa6be5a6806d6c417873dacd16",
+  "method": "Existing credentials supplied and authorized by user; action-time CAPTCHA confirmation received; UI entered credentials and current visible CAPTCHA",
+  "initial_stale_challenge": "rejected as invalid or expired, refreshed once",
+  "verification": "login dialog dismissed; account menu visible; author edit button and 5 preserved comments visible on article2",
+  "screenshot_sha256": "0566b72d937d35aa643abd617a59b099a1b0da87df4ca2355c4b2fc9f165d116",
+  "credential_material_included": false,
+  "scope": "Formal local loopback browser authentication only; not production, not a new forced-expiry run"
+}

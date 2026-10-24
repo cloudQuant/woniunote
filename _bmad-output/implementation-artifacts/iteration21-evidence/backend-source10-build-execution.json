@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "status": "FAIL",
+  "snapshot": "8fa23d6f6a1d374abd260ab602da94d485fdd4c08312b4244ff736d42fdd5548",
+  "variants": [
+    {
+      "name": "macOS-test",
+      "phases": [
+        {
+          "name": "configure",
+          "command": "cmake -S /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-10/backend_cpp -B /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build10/test -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/Users/yunjinqi/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_INSTALLED_DIR=/Users/yunjinqi/Documents/woniunote/backend_cpp/build-iter20-check/vcpkg_installed -DVCPKG_MANIFEST_INSTALL=OFF -DBUILD_TESTING=ON -DWONIUNOTE_ENABLE_TEST_CHALLENGE=ON -DWONIUNOTE_ENABLE_TEST_AUTH_FAULTS=ON",
+          "exit": 0,
+          "seconds": 2.9,
+          "log": "backend10-mac-test-configure.log",
+          "sha256": "99d64bbec5de4c83dd0bd9b6228b63510850b366d953beccf1e1fb8bc4f8b1db"
+        },
+        {
+          "name": "build",
+          "command": "cmake --build /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build10/test --config Release --parallel 1",
+          "exit": 0,
+          "seconds": 125.01,
+          "log": "backend10-mac-test-build.log",
+          "sha256": "fa394f849bbf5bfb3892d70e8fb3120d11320e1ecf2275a76b7372781174cc32"
+        },
+        {
+          "name": "ctest",
+          "command": "ctest --test-dir /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build10/test --output-on-failure --no-tests=error",
+          "exit": 0,
+          "seconds": 8.57,
+          "log": "backend10-mac-test-ctest.log",
+          "sha256": "ad13f90d83b57d0747195e9459f66cfc3a3238c4ed9f7ed04ac44225d6778f1b"
+        }
+      ],
+      "backend_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build10/test/woniunote_backend",
+        "sha256": "70aff8fa6c8095c4614bb5bf5a2ff019e714b2e8915345dbda07e3583f6e2466"
+      },
+      "cache_verified": {
+        "BUILD_TESTING": "ON",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "ON",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "ON"
+      }
+    },
+    {
+      "name": "macOS-release",
+      "phases": [
+        {
+          "name": "configure",
+          "command": "cmake -S /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-10/backend_cpp -B /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build10/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/Users/yunjinqi/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_INSTALLED_DIR=/Users/yunjinqi/Documents/woniunote/backend_cpp/build-iter20-check/vcpkg_installed -DVCPKG_MANIFEST_INSTALL=OFF -DBUILD_TESTING=ON -DWONIUNOTE_ENABLE_TEST_CHALLENGE=OFF -DWONIUNOTE_ENABLE_TEST_AUTH_FAULTS=OFF",
+          "exit": 0,
+          "seconds": 4.27,
+          "log": "backend10-mac-release-configure.log",
+          "sha256": "a6fd816b72d47c5b79e506f4d248d4cd8e9fbc5596dec1e1bf2876287e4421fa"
+        },
+        {
+          "name": "build",
+          "command": "cmake --build /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build10/release --config Release --parallel 1",
+          "exit": 0,
+          "seconds": 148.2,
+          "log": "backend10-mac-release-build.log",
+          "sha256": "fa394f849bbf5bfb3892d70e8fb3120d11320e1ecf2275a76b7372781174cc32"
+        },
+        {
+          "name": "ctest",
+          "command": "ctest --test-dir /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build10/release --output-on-failure --no-tests=error",
+          "exit": 0,
+          "seconds": 3.89,
+          "log": "backend10-mac-release-ctest.log",
+          "sha256": "51e2c23d133113c79e7a07161bd5e1cd215a298b42a6c0f4fe16a6a3f15b5ea7"
+        }
+      ],
+      "backend_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build10/release/woniunote_backend",
+        "sha256": "df379f9b65c4cf81d66e5f2ec39c33bff7d1b54c58eaad4d6e88b8c399a4d57a"
+      },
+      "cache_verified": {
+        "BUILD_TESTING": "ON",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "OFF",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "OFF"
+      }
+    },
+    {
+      "name": "Linux-system-libs-test",
+      "phases": [
+        {
+          "name": "prepare",
+          "command": "bash scripts/iter21-linux/bootstrap.sh prepare --builder system-libs --snapshot /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-10 --snapshot-sha256 70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd --variant test --output /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build10/system-libs/test --jobs 1 --cpus 1",
+          "exit": 2,
+          "seconds": 1.52,
+          "log": "backend10-linux-system-libs-test-prepare.log",
+          "sha256": "b98b1b15196a64de3aba3bf04615ecfa9b8735552fee98e8018af25ae3b9e3ba"
+        }
+      ]
+    }
+  ],
+  "scope": "six frozen C++ variants; local build/CTest only"
+}

@@ -1,0 +1,92 @@
+{
+  "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-16/frontend",
+  "audit_path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/mock-target16-6341399b-48c8-4a01-ba7b-595bfddaa5e2.json",
+  "results": [
+    {
+      "name": "npm-ci",
+      "command": [
+        "npm",
+        "ci",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "exit": 0,
+      "signal": null,
+      "seconds": 5.156,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source16-npm-ci.log",
+      "sha256": "ba0d11a4c133e438e68d22fe2d18ce3863b95c1f1e3ccad831085d17787215f5"
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint:ci"
+      ],
+      "exit": 0,
+      "signal": null,
+      "seconds": 1.623,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source16-lint.log",
+      "sha256": "19d979f2fa04bb57796c816a754dd4abf6c5952b1ae8176b90410a40fc1c36d3"
+    },
+    {
+      "name": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0,
+      "signal": null,
+      "seconds": 4.853,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source16-build.log",
+      "sha256": "0739f8c97173c8ee99bf8244d382b58d17af1f6c146f26a901eaedd84a37b7db"
+    },
+    {
+      "name": "guard",
+      "command": [
+        "node",
+        "e2e/support/probeMockPreviewGuard.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "seconds": 0.261,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source16-guard.log",
+      "sha256": "5416bac88ba66ff9b4237808565dfe4240f33b2dc29ad3a0da5e913af538156f"
+    },
+    {
+      "name": "strict",
+      "command": [
+        "node",
+        "e2e/support/probeStrictMockApi.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "seconds": 1.958,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source16-strict.log",
+      "sha256": "5dbe13267acc7c723ec7a41eb6682ef158d478616409dafe697349e0a3a2938f"
+    },
+    {
+      "name": "mock-target",
+      "command": [
+        "npm",
+        "run",
+        "test:e2e",
+        "--",
+        "e2e/auth.spec.js",
+        "e2e/auth-concurrency.spec.js",
+        "e2e/article-detail.spec.js",
+        "e2e/ui-polish.spec.js",
+        "--grep",
+        "login page renders|successful login|regular username|late refresh|serializes concurrent|favorite|search entry",
+        "--workers=1",
+        "--retries=0"
+      ],
+      "exit": 0,
+      "signal": null,
+      "seconds": 60.96,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source16-mock-target.log",
+      "sha256": "72a811ae41d348221faa6c631e598f2b9bf1235fa128322a6330913b54a17b7c"
+    }
+  ]
+}

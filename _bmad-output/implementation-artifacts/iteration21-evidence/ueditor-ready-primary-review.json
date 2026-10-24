@@ -1,0 +1,35 @@
+{
+  "status": "PASS_TARGETED_REGRESSION",
+  "original_vendor_baseline": "FAIL as expected: .edui-editor absent after DOMContentLoaded, before window.load",
+  "baseline_log_sha256": "15339eeefe24d5a2ff43c53059c74f20f841a1a16070ee85b9b135e9a110995e",
+  "fixed_log_sha256": "f55cae720ca6e1488e1be6b3e50bf5cc905a2df3523842c909652f19bd598e65",
+  "contexts": [
+    {
+      "file": "ueditor-ready-final4-egress.json.context.47971-7ab62de4-f9e8-401e-9c0d-19d5b1261943",
+      "sha256": "7dc28ccb0cb517ea88172179d9a8414859cdf0dff0889ef6176b9b2f67a0a1ea",
+      "project": "chromium"
+    },
+    {
+      "file": "ueditor-ready-final4-egress.json.context.48006-94af59e7-3c88-4d89-a49d-1a9480408820",
+      "sha256": "401b2c19053924b293e58ef45db2ec38121870df1e0fc52ee3b449fe10120770",
+      "project": "firefox"
+    },
+    {
+      "file": "ueditor-ready-final4-egress.json.context.48090-9a76e150-491e-4d1d-afa4-cdf479e1540c",
+      "sha256": "1a850d7d4f8d7c218c2e5acc529980a20b070b3e6bc4a22df139c5e9dad88c60",
+      "project": "webkit"
+    },
+    {
+      "file": "ueditor-ready-final4-egress.json.context.48127-e3b4902c-7bc1-4d2d-bbbe-6c5960c193dd",
+      "sha256": "fc2f3bbc1747532bac7c77b6d0ed5bb9bc8e31ff625fde15b8d2f3b58cd3df52",
+      "project": "mobile-chrome"
+    }
+  ],
+  "worker_code_matches_source28": true,
+  "primary_review": "Exact one-condition vendor diff and full regression inspected; WebKit uses existing contentDocument/focus helper and exactly one keyboard type",
+  "independent_review": "frontend_audit read-only review found no blocking issue, no independent rerun",
+  "limitations": [
+    "MathJax response is controlled; not real CDN availability",
+    "Complete four-project and real-backend suites reported separately"
+  ]
+}

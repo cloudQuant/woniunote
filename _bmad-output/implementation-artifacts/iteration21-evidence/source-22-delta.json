@@ -1,0 +1,237 @@
+{
+  "schema": "woniunote.iteration21.source-22-delta.v1",
+  "source_20": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-20",
+  "source_22": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-22",
+  "manifest_path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-22-manifest.json",
+  "source_20_manifest_sha256": "829ea7394c3b13929de63b465f840e968b1e758baf236ed7dd66185b2e30cf8c",
+  "backend_source_6_requested_digest": "70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd",
+  "backend_source_6_observed_digest": "70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd",
+  "backend_source_6_binding_status": "MATCH",
+  "runner_sha256": "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249",
+  "source_20_files_copied_unchanged_outside_overlay": 409,
+  "source_20_candidate_binary_excluded": true,
+  "current_integration_overlay_count": 19,
+  "integration_delta_counts": {
+    "added": 1,
+    "content_changed": 2,
+    "mode_changed": 0,
+    "unchanged": 16
+  },
+  "removed_source_20_integration_files": [],
+  "integration_files": [
+    {
+      "path": "backend_cpp/tests/integration/README.md",
+      "status": "unchanged",
+      "source_20_sha256": "221e94de1f3afdb40ee5139cc13f982e52680c46be36d82a6b7c4e0eba0963a9",
+      "current_sha256": "221e94de1f3afdb40ee5139cc13f982e52680c46be36d82a6b7c4e0eba0963a9",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/README.md"
+    },
+    {
+      "path": "backend_cpp/tests/integration/config.integration.template.json",
+      "status": "unchanged",
+      "source_20_sha256": "d2f2106656b4cf469c865e80b58b7149a025ce064bfe8d558396d4228a6048b8",
+      "current_sha256": "d2f2106656b4cf469c865e80b58b7149a025ce064bfe8d558396d4228a6048b8",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/config.integration.template.json"
+    },
+    {
+      "path": "backend_cpp/tests/integration/conftest.py",
+      "status": "unchanged",
+      "source_20_sha256": "26b0dc223002ab62df5d40c29d5861f9c594210e1dd95cc61abd2dc53934c731",
+      "current_sha256": "26b0dc223002ab62df5d40c29d5861f9c594210e1dd95cc61abd2dc53934c731",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/conftest.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/iter21_fault_proxy.py",
+      "status": "unchanged",
+      "source_20_sha256": "67acbac8d789e19a962a70d8538b54ee8e88cc63c732f07a4cd8e7c00acf33b5",
+      "current_sha256": "67acbac8d789e19a962a70d8538b54ee8e88cc63c732f07a4cd8e7c00acf33b5",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/iter21_fault_proxy.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/iter21_support.py",
+      "status": "unchanged",
+      "source_20_sha256": "2cc912c7bb2b0cfe4684dc3577c6bf7573eef46a361fabb7e792b23d80c60bf7",
+      "current_sha256": "2cc912c7bb2b0cfe4684dc3577c6bf7573eef46a361fabb7e792b23d80c60bf7",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/iter21_support.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/pytest.ini",
+      "status": "unchanged",
+      "source_20_sha256": "d73d6f68f827e5fe6f517e04e701ba1f5b078ae0793bdf3b6caf5d1d6cfc8713",
+      "current_sha256": "d73d6f68f827e5fe6f517e04e701ba1f5b078ae0793bdf3b6caf5d1d6cfc8713",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/pytest.ini"
+    },
+    {
+      "path": "backend_cpp/tests/integration/run_integration.sh",
+      "status": "unchanged",
+      "source_20_sha256": "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249",
+      "current_sha256": "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249",
+      "source_20_mode": "0755",
+      "current_mode": "0755",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/run_integration.sh"
+    },
+    {
+      "path": "backend_cpp/tests/integration/sanitize_backend_runtime.py",
+      "status": "unchanged",
+      "source_20_sha256": "15a3d88c9951897b2da8da04adf398a718c4e31379f2b6afddd98a08b8e41923",
+      "current_sha256": "15a3d88c9951897b2da8da04adf398a718c4e31379f2b6afddd98a08b8e41923",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/sanitize_backend_runtime.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_api_integration.py",
+      "status": "unchanged",
+      "source_20_sha256": "6adf1fcefc5057fcca14be0eb9c1d117f0c32a640dcc9354acf3ebb60e55fd9f",
+      "current_sha256": "6adf1fcefc5057fcca14be0eb9c1d117f0c32a640dcc9354acf3ebb60e55fd9f",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/test_api_integration.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_iter21_admin.py",
+      "status": "unchanged",
+      "source_20_sha256": "4ddfa1436ebe6b8ea53a391fcbdc0cd454e57cfd8373d7c1f92b13ab64caedb6",
+      "current_sha256": "4ddfa1436ebe6b8ea53a391fcbdc0cd454e57cfd8373d7c1f92b13ab64caedb6",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/test_iter21_admin.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_iter21_article_thumbnail.py",
+      "status": "unchanged",
+      "source_20_sha256": "c32850e8700b78bcea2337ffaca1cd84e60b3f5a842b70b6fc95b305a1f72d5b",
+      "current_sha256": "c32850e8700b78bcea2337ffaca1cd84e60b3f5a842b70b6fc95b305a1f72d5b",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/test_iter21_article_thumbnail.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_iter21_auth.py",
+      "status": "unchanged",
+      "source_20_sha256": "e7b848d53de3ba9ac536ded2c28b5364c272199363f31558cde246c1b6ebda95",
+      "current_sha256": "e7b848d53de3ba9ac536ded2c28b5364c272199363f31558cde246c1b6ebda95",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/test_iter21_auth.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_iter21_comments.py",
+      "status": "content_changed",
+      "source_20_sha256": "73bd0b62a2768440f37fa94cf14b94a30469415f2ff8ede057b966b051724637",
+      "current_sha256": "b90965f4ee93ffdbb56d98388030e3fc7f483f7a342d1e1fd384684e53c1bbd2",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/test_iter21_comments.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_iter21_math.py",
+      "status": "unchanged",
+      "source_20_sha256": "67f6ff3e98111d2a0c1f8bf568cde75f0c34e2989a2abc3c9025775b71afa573",
+      "current_sha256": "67f6ff3e98111d2a0c1f8bf568cde75f0c34e2989a2abc3c9025775b71afa573",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/test_iter21_math.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_iter21_transaction_edges.py",
+      "status": "unchanged",
+      "source_20_sha256": "b874d32311603a227cc4e69eb3b4e6e37b623aae13ba0153f9c611216a82f281",
+      "current_sha256": "b874d32311603a227cc4e69eb3b4e6e37b623aae13ba0153f9c611216a82f281",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/test_iter21_transaction_edges.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_iter21_transport_faults.py",
+      "status": "content_changed",
+      "source_20_sha256": "fdf43a3fd3d3a4bbd1bdcf7630ebc9739a0fe71eb99331ce6ff189cd20d07ec2",
+      "current_sha256": "568615cf4c028492a25b08328a30811741d2df4c2048165046180771d7a107eb",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/test_iter21_transport_faults.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_iter21_upload_isolation.py",
+      "status": "unchanged",
+      "source_20_sha256": "57163346cbba3633f9f8c1758d6c6a0cdf8b472a57598971c8b0158aa24dc598",
+      "current_sha256": "57163346cbba3633f9f8c1758d6c6a0cdf8b472a57598971c8b0158aa24dc598",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/test_iter21_upload_isolation.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_iter21_user_projection.py",
+      "status": "added",
+      "source_20_sha256": null,
+      "current_sha256": "f0e57e69d9e3663caf6d06d49589cc3c104bbe0cce2aeba9ea301f2fa08a637d",
+      "source_20_mode": null,
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/test_iter21_user_projection.py"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_z_rate_limit.py",
+      "status": "unchanged",
+      "source_20_sha256": "4d726b3a9b994e18fe77d31026ba30b0f94a50d5c69078c26118e0b61d46e2d3",
+      "current_sha256": "4d726b3a9b994e18fe77d31026ba30b0f94a50d5c69078c26118e0b61d46e2d3",
+      "source_20_mode": "0644",
+      "current_mode": "0644",
+      "source_path": "/Users/yunjinqi/Documents/woniunote/backend_cpp/tests/integration/test_z_rate_limit.py"
+    }
+  ],
+  "excluded_runtime_artifacts": {
+    "path_components": [
+      ".coverage",
+      ".mypy_cache",
+      ".pytest_cache",
+      ".ruff_cache",
+      "__pycache__",
+      "dist",
+      "log",
+      "logs",
+      "node_modules",
+      "result",
+      "results",
+      "test-results",
+      "trace",
+      "traces"
+    ],
+    "file_patterns": [
+      ".env",
+      ".env.*",
+      "config.local.json",
+      "config.local.*",
+      "*.log",
+      "*.trace",
+      "*.result",
+      "*.results"
+    ],
+    "source_20_manifest_entries": [
+      {
+        "path": "binary/woniunote_backend",
+        "sha256": "b551cf9178645e228ca46cb142bc3c353930ded2bd1cb7961722a69122cc93bc",
+        "reason": "candidate-5 binary explicitly excluded; bind verified binary separately"
+      }
+    ]
+  },
+  "services_or_tests_run": false,
+  "identity_digest_correction": {
+    "previous_requested_value": "70e9f79837a4b3cea2d0a841d7d3d095e15e4b5c90ec82294c82370029794dbd",
+    "corrected_expected_value": "70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd",
+    "observed_source6_manifest_value": "70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd",
+    "reason": "Parent confirmed the earlier expected digest was a hand-copy typo.",
+    "confirmed_utc": "2026-10-24T02:31:45.104221+00:00"
+  }
+}

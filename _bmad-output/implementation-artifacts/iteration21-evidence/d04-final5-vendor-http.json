@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "vendor_sha256": "e6039d85a779cebef2168aabf0d73657fd56cbe92ee61d066679eaab1bda39df",
+  "served_matches_source28": true,
+  "cache_control": "no-cache, must-revalidate",
+  "phase": "new frontend5 with existing identical backend4",
+  "headers_sha256": "1566ea058c2a72857794f980dac21fca52368dab83b45931fb781077981587ab"
+}

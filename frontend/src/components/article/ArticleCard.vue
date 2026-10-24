@@ -187,6 +187,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useArticleStore } from '@/stores/article'
 import { useThemeStore } from '@/stores/theme'
+import { resolveArticleThumbnailUrl } from '@/utils/articleThumbnail'
 
 const props = defineProps({
   /**
@@ -203,9 +204,7 @@ const router = useRouter()
 const articleStore = useArticleStore()
 const themeStore = useThemeStore()
 
-// 缓存破坏版本号（更新缩略图后递增此值）
-const THUMB_VERSION = 'v3'
-
+// 旧式缩略图路由的缓存版本由共享解析器维护。
 /**
  * 计算缩略图 URL
  * 1. 如果有 thumbnail 字段，使用后端缩略图服务
@@ -213,24 +212,16 @@ const THUMB_VERSION = 'v3'
  * 3. 兜底使用 SVG 占位图
  */
 const thumbnailUrl = computed(() => {
-  // 1. 如果后端返回了具体的 thumbnail 字段，认为是 thumb 文件名，例如 "101.png"
-  if (props.article.thumbnail) {
-    // 如果已经是完整URL，直接返回
-    if (props.article.thumbnail.startsWith('http://') || props.article.thumbnail.startsWith('https://')) {
-      return props.article.thumbnail
-    }
-    // 否则走新后端缩略图路由（带版本号防止缓存）
-    return `/api/thumb/${props.article.thumbnail}?${THUMB_VERSION}`
+  const thumbnail = props.article.thumbnail
+  // Keep the card's existing compatibility with absolute image URLs.
+  if (typeof thumbnail === 'string' && /^https?:\/\//.test(thumbnail)) {
+    return thumbnail
   }
 
-  // 2. 如果没有 thumbnail，但有文章类型，则使用类型ID自动生成缩略图
-  if (props.article.type) {
-    return `/api/thumb/${props.article.type}.png?${THUMB_VERSION}`
-  }
+  const resolvedUrl = resolveArticleThumbnailUrl(thumbnail, props.article.type)
+  if (resolvedUrl) return resolvedUrl
 
-  // 3. 最后兜底：使用 SVG data URL 作为占位图（取色源自当前主题令牌）
-  // 显式读取 currentTheme 建立响应式依赖：主题切换 → computed 重算 →
-  // getComputedStyle 读到新令牌 → 占位图重渲染（R12.2）。
+  // Fall back to the theme-aware SVG placeholder if no safe image is available.
   const _themeKey = themeStore.currentTheme
   return buildPlaceholderSvg({
     articleid: props.article.articleid || 0,

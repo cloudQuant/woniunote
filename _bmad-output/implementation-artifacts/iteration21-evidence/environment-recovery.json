@@ -1,0 +1,64 @@
+{
+  "time_utc": "2026-10-23T23:13:45.892Z",
+  "scope": "Current environment readback; does not reconstruct missing test results",
+  "old_handles": {
+    "65074": "unknown process id",
+    "69228": "unknown process id"
+  },
+  "missing_paths": [
+    {
+      "path": "/tmp/woniunote-iter21-evidence",
+      "exists": false
+    },
+    {
+      "path": "/tmp/woniunote-iter21-frontend-final-15",
+      "exists": false
+    },
+    {
+      "path": "/tmp/woniunote-iter21-functional-14",
+      "exists": false
+    },
+    {
+      "path": "/tmp/woniunote-iter21-preflight/root-term-driver-r5.py",
+      "exists": false
+    }
+  ],
+  "docker_action": "ordinary start after backend processes absent; no restart or prune",
+  "docker": [
+    {
+      "command": [
+        "docker",
+        "version",
+        "--format",
+        "{{.Server.Version}}"
+      ],
+      "exit": 0,
+      "output": "29.3.1"
+    },
+    {
+      "command": [
+        "docker",
+        "ps",
+        "-aq",
+        "--filter",
+        "label=org.woniunote.iter21.run-id=20261023T194027Z-4cad795acb03"
+      ],
+      "exit": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "docker",
+        "volume",
+        "ls",
+        "-q",
+        "--filter",
+        "label=org.woniunote.iter21.run-id=20261023T194027Z-4cad795acb03"
+      ],
+      "exit": 0,
+      "output": ""
+    }
+  ],
+  "full_mock15_status": "UNVERIFIED; no terminal log available",
+  "source16_manifest_sha256": "d4b118769d931598c407089c4c25dbd78772de57969b1c5b98e37f229ac41e60"
+}

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "npx",
+    "playwright",
+    "test",
+    "--workers=2",
+    "--retries=0"
+  ],
+  "projects": "all",
+  "port": 56303,
+  "exit_code": 0,
+  "seconds": 252.47,
+  "log": "/tmp/woniunote-iter21-evidence/frontend-final13-mock-root.log",
+  "log_sha256": "6cb60e1190933c871d8c5da77af49a900def3d5a74131f909f9aab79dbba205e"
+}

@@ -5,7 +5,7 @@ import { installLocalStorage, mountOptions } from '@/test/harness'
 installLocalStorage()
 
 const m = vi.hoisted(() => ({
-  msg: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
+  msg: Object.assign(vi.fn(), { success: vi.fn(), warning: vi.fn(), error: vi.fn() }),
   api: {
     createRecord: vi.fn(() => Promise.resolve({})),
     getRecords: vi.fn(() => Promise.resolve({ data: [{ id: 1, difficulty: 2 }], total: 1 })),
@@ -56,6 +56,18 @@ describe('MathTraining.vue — pure helpers', () => {
     expect(Number.isInteger(div.answer)).toBe(true) // clean division
   })
 
+  it('uses the selected difficulty when generating multiplication questions', () => {
+    const w = mountMT()
+    for (const [difficulty, maxOperand] of [[1, 9], [2, 20], [3, 50]]) {
+      const question = w.vm.generateQuestionForOp('*', difficulty)
+      expect(question.a).toBeGreaterThanOrEqual(2)
+      expect(question.a).toBeLessThanOrEqual(maxOperand)
+      expect(question.b).toBeGreaterThanOrEqual(2)
+      expect(question.b).toBeLessThanOrEqual(maxOperand)
+      expect(question.answer).toBe(question.a * question.b)
+    }
+  })
+
   it('buildQuestions makes 20 questions (5 per operator)', () => {
     const w = mountMT()
     w.vm.buildQuestions()
@@ -98,10 +110,30 @@ describe('MathTraining.vue — pure helpers', () => {
   it('accuracyText and progress computeds', async () => {
     const w = mountMT()
     expect(w.vm.accuracyText).toBe('-')
+    expect(w.vm.currentQuestion).toBe(null)
+    expect(w.vm.progressPercent).toBe(0)
     w.vm.correct = 3
     w.vm.wrong = 1
     await w.vm.$nextTick()
     expect(w.vm.accuracyText).toBe('75%')
+  })
+
+  it('changes progress color as a running session advances', async () => {
+    const w = mountMT()
+    w.vm.startSession()
+    expect(w.vm.progressPercent).toBe(0)
+    expect(w.vm.progressColor).toBe('#409eff')
+
+    w.vm.currentIndex = 6
+    await w.vm.$nextTick()
+    expect(w.vm.progressPercent).toBe(30)
+    expect(w.vm.progressColor).toBe('#67c23a')
+
+    w.vm.currentIndex = 14
+    await w.vm.$nextTick()
+    expect(w.vm.progressPercent).toBe(70)
+    expect(w.vm.progressColor).toBe('#e6a23c')
+    w.unmount()
   })
 
   it('loads history and summary on mount', async () => {
@@ -119,6 +151,16 @@ describe('MathTraining.vue — pure helpers', () => {
     const w = mountMT()
     await flushPromises()
     expect(w.vm.history).toEqual([])
+    expect(w.vm.summary).toBe(null)
+  })
+
+  it('uses empty history and summary defaults for successful but incomplete API responses', async () => {
+    m.api.getRecords.mockResolvedValueOnce({})
+    m.api.getSummary.mockResolvedValueOnce({})
+    const w = mountMT()
+    await flushPromises()
+    expect(w.vm.history).toEqual([])
+    expect(w.vm.historyTotal).toBe(0)
     expect(w.vm.summary).toBe(null)
   })
 })
@@ -177,12 +219,44 @@ describe('MathTraining.vue — session flow', () => {
     expect(w.vm.wrongAnswers[0].correct_answer).toBe(q.answer)
   })
 
-  it('non-numeric answer counts as wrong', () => {
+  it('empty and out-of-range answers are rejected without counting as wrong', () => {
     const w = mountTracked()
     w.vm.startSession()
+    w.vm.answer = ''
+    w.vm.submitAnswer()
+    expect(w.vm.wrong).toBe(0)
+    expect(w.vm.answerLocked).toBe(false)
+
+    // Clearing a numeric input can surface null through a component boundary.
+    w.vm.answer = null
+    w.vm.submitAnswer()
+    expect(w.vm.wrong).toBe(0)
+    expect(w.vm.answerLocked).toBe(false)
+
     w.vm.answer = 'abc'
     w.vm.submitAnswer()
+    expect(w.vm.wrong).toBe(0)
+    w.vm.answer = '2147483648'
+    w.vm.submitAnswer()
+    expect(w.vm.wrong).toBe(0)
+    expect(m.msg.warning).toHaveBeenCalled()
+  })
+
+  it('wrong finite decimal answers remain numeric and are preserved', () => {
+    const w = mountTracked()
+    w.vm.startSession()
+    w.vm.answer = '1.5'
+    w.vm.submitAnswer()
     expect(w.vm.wrong).toBe(1)
+    expect(w.vm.wrongAnswers[0].user_answer).toBe(1.5)
+  })
+
+  it('skipping records null instead of a numeric zero', () => {
+    const w = mountTracked()
+    w.vm.startSession()
+    w.vm.skipQuestion()
+    expect(w.vm.wrongAnswers[0].user_answer).toBe(null)
+    expect(w.vm.feedback.userAnswer).toBe(null)
   })
 
   it('submitAnswer is a no-op when locked or not running', () => {
@@ -202,6 +276,10 @@ describe('MathTraining.vue — session flow', () => {
     w.vm.startSession()
     w.vm.skipQuestion()
     expect(w.vm.wrong).toBe(1)
+    // A repeated click during the feedback lock must not count the same item twice.
+    w.vm.skipQuestion()
+    expect(w.vm.wrong).toBe(1)
+    expect(w.vm.wrongAnswers).toHaveLength(1)
     vi.advanceTimersByTime(700)
     expect(w.vm.currentIndex).toBe(1)
   })
@@ -219,12 +297,67 @@ describe('MathTraining.vue — session flow', () => {
     expect(w.vm.isRunning).toBe(false)
   })
 
-  it('endSession surfaces save errors', async () => {
-    m.api.createRecord.mockRejectedValueOnce(new Error('save fail'))
+  it('unknown save outcome keeps the immutable snapshot and does not retry', async () => {
+    m.api.createRecord.mockRejectedValueOnce({
+      response: { status: 503, data: { error_code: 'WRITE_OUTCOME_UNKNOWN', request_id: 'math-req-7' } }
+    })
+    const w = mountTracked()
+    await flushPromises()
+    m.api.getRecords.mockClear()
+    m.api.getSummary.mockClear()
+    w.vm.startSession()
+    w.vm.wrongAnswers.push({
+      question: '1 / 2', correct_answer: 0, user_answer: null, operation: '/'
+    })
+    await w.vm.endSession()
+    expect(m.api.createRecord).toHaveBeenCalledTimes(1)
+    expect(m.api.getRecords).not.toHaveBeenCalled()
+    expect(m.api.getSummary).not.toHaveBeenCalled()
+    expect(m.msg.warning).toHaveBeenCalledWith(
+      '训练记录提交结果尚未确认，请刷新历史记录核实；系统未自动重试。'
+    )
+    expect(w.vm.pendingRecordSnapshots).toHaveLength(1)
+    const snapshot = w.vm.pendingRecordSnapshots[0]
+    expect(snapshot.requestId).toBe('math-req-7')
+    expect(snapshot.payload.wrong_answers[0].user_answer).toBe(null)
+    expect(Object.isFrozen(snapshot.payload)).toBe(true)
+    expect(Object.isFrozen(snapshot.payload.wrong_answers)).toBe(true)
+    expect(Object.isFrozen(snapshot.payload.wrong_answers[0])).toBe(true)
+    const alert = w.get('[data-testid="pending-record-snapshots"]')
+    expect(alert.text()).toContain('math-req-7')
+    expect(alert.text()).toContain('已跳过')
+  })
+
+  it('keeps an empty snapshot when a network failure has no request id', async () => {
+    m.api.createRecord.mockRejectedValueOnce(new Error('connection lost'))
+    const w = mountTracked()
+    await flushPromises()
+    m.api.getRecords.mockClear()
+    m.api.getSummary.mockClear()
+
+    w.vm.startSession()
+    await w.vm.endSession()
+
+    expect(m.api.createRecord).toHaveBeenCalledTimes(1)
+    expect(m.api.getRecords).not.toHaveBeenCalled()
+    expect(m.api.getSummary).not.toHaveBeenCalled()
+    expect(w.vm.pendingRecordSnapshots).toHaveLength(1)
+    expect(w.vm.pendingRecordSnapshots[0].requestId).toBe(null)
+    expect(w.vm.pendingRecordSnapshots[0].payload.wrong_answers).toEqual([])
+    const alert = w.get('[data-testid="pending-record-snapshots"]')
+    expect(alert.text()).toContain('请求编号：暂不可用')
+    expect(alert.text()).toContain('本次没有错题。')
+  })
+
+  it('known save failures surface an error without keeping an unknown snapshot', async () => {
+    m.api.createRecord.mockRejectedValueOnce({
+      response: { status: 400, data: { error_code: 'BAD_REQUEST' } }
+    })
     const w = mountTracked()
     w.vm.startSession()
     await w.vm.endSession()
     expect(m.msg.error).toHaveBeenCalledWith('保存训练记录失败')
+    expect(w.vm.pendingRecordSnapshots).toHaveLength(0)
   })
 
   it('finishing the last question ends the session', () => {

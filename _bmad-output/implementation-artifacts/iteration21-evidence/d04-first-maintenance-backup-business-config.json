@@ -1,0 +1,31 @@
+{
+  "status": "FAILED",
+  "backup_script_sha256": "00e874985b2c7a97c32acca1bcba70402b2a764d0c232fda29ecfeac08b93224",
+  "candidate_runtime_config_sha256": "1f49ab333fd037ee15a601f10f860530fe5d79c5b966a45fd1619179c4b7bd1b",
+  "commands": [
+    {
+      "phase": "check",
+      "command": [
+        "bash",
+        "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/d04-backup-restore-guarded.sh",
+        "check"
+      ],
+      "exit": 0,
+      "seconds": 0.921,
+      "log_sha256": "4e8e523cb49d35cc8ee59b5c07c034349576e4026d59eb9d24d1af5fbb1fe965",
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-maintenance-backup-business-config-check.log"
+    },
+    {
+      "phase": "backup-restore",
+      "command": [
+        "bash",
+        "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/d04-backup-restore-guarded.sh",
+        "backup-restore"
+      ],
+      "exit": 1,
+      "seconds": 1.002,
+      "log_sha256": "f29fd721cfb92e9c8a8f39f7bc71e2109748a14f93d1ebf06a633fdffa7a9234",
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-maintenance-backup-business-config-backup-restore.log"
+    }
+  ]
+}

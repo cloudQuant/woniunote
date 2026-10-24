@@ -1,0 +1,27 @@
+{
+  "status": "PASS_LOCAL_READ_ONLY",
+  "scope": "version check and tracked hygiene subset, no staging/commit and no remote CI; staged candidate must rerun full repo-hygiene job",
+  "tracked_sensitive_or_generated_files": 0,
+  "content_checks": [
+    {
+      "name": "private_key_marker",
+      "exit_no_match": 1
+    },
+    {
+      "name": "known_leaked_literals",
+      "exit_no_match": 1
+    },
+    {
+      "name": "plaintext_sql",
+      "exit_no_match": 1
+    }
+  ],
+  "release_version": "2.0.0",
+  "git_diff_check": 0,
+  "unrelated_vscode_sha256": "d00995eea224fdab6782ba3de53694c659eeca8e2dd15155b9bf66773c8e08a9",
+  "silent_catch_first_final": {
+    "exit": 1,
+    "violations": 5,
+    "scope": "existing explicit feedback wrappers and feedback-failure logging are not recognized; narrow reviewed exemption update pending"
+  }
+}

@@ -4,6 +4,7 @@
  */
 
 #include "Article.h"
+#include "core/article_thumbnail.h"
 #include "core/logger.h"
 
 namespace woniunote {
@@ -31,24 +32,6 @@ Article::Article(const drogon::orm::Row& row)
     if (!row["nickname"].isNull()) nickname_ = row["nickname"].as<std::string>();
 }
 
-// Helper function to generate stable thumbnail filename based on article type
-// Returns just the filename (e.g., "906.png"), NOT the full path
-// Frontend will prepend "/api/thumb/" prefix
-static std::string getStableThumbnail(const std::string& thumbnail, int type)
-{
-    // If thumbnail is already set and valid (just filename), use it
-    if (!thumbnail.empty() && thumbnail.find(".png") != std::string::npos) {
-        // If it's a full path starting with /api/thumb/, extract just the filename
-        size_t pos = thumbnail.rfind('/');
-        if (pos != std::string::npos) {
-            return thumbnail.substr(pos + 1);
-        }
-        return thumbnail;
-    }
-    // Generate thumbnail filename based on article type (e.g., "906.png")
-    return std::to_string(type) + ".png";
-}
-
 Json::Value Article::toJson() const
 {
     Logger::debug("[Model] Article toJson", {{"articleid", std::to_string(articleid_)}, {"headline", headline_}});
@@ -58,7 +41,7 @@ Json::Value Article::toJson() const
     ret["type"] = type_;
     ret["headline"] = headline_;
     ret["content"] = content_;
-    ret["thumbnail"] = getStableThumbnail(thumbnail_, type_);
+    ret["thumbnail"] = core::articleThumbnailForDto(thumbnail_, type_);
     ret["credit"] = credit_;
     ret["readcount"] = readcount_;
     ret["replycount"] = replycount_;
@@ -83,7 +66,7 @@ Json::Value Article::toJsonBrief() const
     ret["userid"] = static_cast<Json::Int64>(userid_);
     ret["type"] = type_;
     ret["headline"] = headline_;
-    ret["thumbnail"] = getStableThumbnail(thumbnail_, type_);
+    ret["thumbnail"] = core::articleThumbnailForDto(thumbnail_, type_);
     ret["credit"] = credit_;
     ret["readcount"] = readcount_;
     ret["replycount"] = replycount_;

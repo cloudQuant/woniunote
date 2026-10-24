@@ -1,0 +1,37 @@
+{
+  "status": "PASS_LOCAL_INCREMENT",
+  "snapshot_sha256": "49b422a2382257bb1cb7745fe692a1de6d94d59bed624ef6292594865ce21893",
+  "backend_source": "backend-source10 unchanged",
+  "backend_binary_sha256": "70aff8fa6c8095c4614bb5bf5a2ff019e714b2e8915345dbda07e3583f6e2466",
+  "run_id": "20261024T055853Z-55e4922ef6f3",
+  "http": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "selection": "test_health_is_up",
+    "full_71_reused_from": "source24 unchanged backend/input evidence"
+  },
+  "real_chromium": {
+    "passed": 6,
+    "failed": 0,
+    "scope": "real isolated backend MySQL/Redis; test challenge, not formal CAPTCHA"
+  },
+  "migrations": {
+    "math-training-migration-summary.json": "passed",
+    "comment-vote-migration-summary.json": "passed",
+    "comment-vote-migration-live-summary.json": "passed",
+    "article-thumbnail-migration-summary.json": "passed"
+  },
+  "cleanup": "source28-real-resource-readback.json",
+  "artifact_hashes": {
+    "article-thumbnail-migration-summary.json": "5e4ed31b8b70baa880618ade90d8ed118525efb0ce95ad2826f7a7870b9ff6a5",
+    "comment-vote-migration-live-summary.json": "324cfb2a86674fb57795a261306f71564791878efe17f8c6112e0bb2f2331b55",
+    "comment-vote-migration-summary.json": "3f3317e9585f6023f38db0ac1e7e5459ae3febc4c2ecbfa64783627c7dc6cd66",
+    "math-training-migration-summary.json": "7ef38399e6cb3dbf7d2bb254f012126064a53fab171ae5be1efe5b4a1349320d",
+    "real-browser-summary.json": "781b508be5908606248aca3e94567cd5fd5aaf450cfcc1c3520a2f6f65125c2c",
+    "run.json": "0dc509c4e44e1d39d348ff95532bceecd865afb47c2e8289c2275491dda7dd79",
+    "test-summary.json": "65447755de192614393a10531ab215c9a380e8711ed5ef8aef5d984471aadb4a"
+  },
+  "strict_mock_complete": "pending separately",
+  "formal_D04_candidate5": "pending separately"
+}

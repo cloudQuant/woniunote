@@ -1,0 +1,17 @@
+{
+  "source_manifest_sha256": "829ea7394c3b13929de63b465f840e968b1e758baf236ed7dd66185b2e30cf8c",
+  "command": [
+    "npm",
+    "run",
+    "test:e2e",
+    "--",
+    "--workers=1",
+    "--retries=0"
+  ],
+  "browsers": "all",
+  "exit": 0,
+  "seconds": 501.552,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-mock-full-root.log",
+  "sha256": "8926e3d08ea28f2928b1a552e506b9c207b668b57fcb250a6fae9148964a1cc6",
+  "audit": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-mock-full-639ebd18-4ad2-45cb-8647-259ee63b8ec8.json"
+}

@@ -10,13 +10,22 @@
 #include "core/config.h"
 #include "core/logger.h"
 #include "core/response.h"
+#include "core/transaction_response.h"
+#include "core/auth_redis_config.h"
 #include "models/User.h"
 #include <drogon/HttpResponse.h>
 #include <drogon/drogon.h>
 #include <algorithm>
 #include <atomic>
+#include <cctype>
+#include <chrono>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <vector>
 
 using namespace drogon;
 
@@ -24,6 +33,179 @@ namespace woniunote {
 namespace controllers {
 
 namespace {
+using ResponseCallback = std::function<void(const HttpResponsePtr&)>;
+
+struct AuthRedisOperation {
+    std::uint64_t id;
+    std::chrono::steady_clock::time_point submittedAt;
+};
+
+AuthRedisOperation beginAuthRedisOperation()
+{
+    static std::atomic<std::uint64_t> nextId{0};
+    return {nextId.fetch_add(1, std::memory_order_relaxed) + 1,
+            std::chrono::steady_clock::now()};
+}
+
+void recordAuthRedisCompletion(const AuthRedisOperation& operation,
+                               const char* name,
+                               const char* outcome) noexcept
+{
+#ifdef WONIUNOTE_ENABLE_TEST_AUTH_FAULTS
+    const double elapsedMilliseconds =
+        std::chrono::duration<double, std::milli>(
+            std::chrono::steady_clock::now() - operation.submittedAt).count();
+    // Keep this marker off Logger: its stdout and file sinks can point at the
+    // same file. The isolated harness captures this single stderr stream.
+    std::fprintf(stderr,
+                 "[AUTH_REDIS_COMPLETION] id=%llu operation=%s "
+                 "elapsed_ms=%.3f outcome=%s\n",
+                 static_cast<unsigned long long>(operation.id), name,
+                 elapsedMilliseconds, outcome);
+    std::fflush(stderr);
+#else
+    static_cast<void>(operation);
+    static_cast<void>(name);
+    static_cast<void>(outcome);
+#endif
+}
+
+// Owns only the HTTP callback and timer. The guard does not hold a database or
+// Redis operation; late dependency callbacks can safely arrive after timeout.
+class ResponseOnce final : public std::enable_shared_from_this<ResponseOnce> {
+public:
+    static std::shared_ptr<ResponseOnce> create(ResponseCallback callback)
+    {
+        return std::shared_ptr<ResponseOnce>(
+            new ResponseOnce(std::move(callback)));
+    }
+
+    void armDeadline(std::chrono::milliseconds timeout,
+                     HttpResponsePtr timeoutResponse)
+    {
+        auto* loop = drogon::app().getLoop();
+        if (loop == nullptr) {
+            reply(std::move(timeoutResponse));
+            return;
+        }
+
+        const auto delay = std::max(timeout, std::chrono::milliseconds{1});
+        const auto candidateDeadline = std::chrono::steady_clock::now() + delay;
+        trantor::TimerId oldTimerId;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (completed_.load(std::memory_order_acquire)) {
+                return;
+            }
+            if (deadline_.has_value() && candidateDeadline >= *deadline_) {
+                return;
+            }
+            deadline_ = candidateDeadline;
+            timeoutResponse_ = timeoutResponse;
+            oldTimerId = timerId_;
+            timerId_ = trantor::InvalidTimerId;
+        }
+        if (oldTimerId != trantor::InvalidTimerId) {
+            loop->runInLoop([loop, oldTimerId]() {
+                loop->invalidateTimer(oldTimerId);
+            });
+        }
+
+        auto self = shared_from_this();
+        const auto remaining = std::max(
+            candidateDeadline - std::chrono::steady_clock::now(),
+            std::chrono::steady_clock::duration{std::chrono::milliseconds{1}});
+        const auto newTimerId = loop->runAfter(
+            std::chrono::duration<double>(remaining).count(),
+            [self, timeoutResponse = std::move(timeoutResponse)]() mutable {
+                self->reply(std::move(timeoutResponse));
+            });
+
+        bool cancelNewTimer = false;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            loop_ = loop;
+            if (completed_.load(std::memory_order_acquire) ||
+                !deadline_.has_value() || *deadline_ != candidateDeadline) {
+                cancelNewTimer = true;
+            } else {
+                timerId_ = newTimerId;
+            }
+        }
+        if (cancelNewTimer && newTimerId != trantor::InvalidTimerId) {
+            loop->runInLoop([loop, newTimerId]() {
+                loop->invalidateTimer(newTimerId);
+            });
+        }
+    }
+
+    bool reply(HttpResponsePtr response)
+    {
+        ResponseCallback callback;
+        trantor::EventLoop* loop = nullptr;
+        trantor::TimerId timerId;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (completed_.exchange(true, std::memory_order_acq_rel)) {
+                return false;
+            }
+            callback = std::move(callback_);
+            loop = loop_;
+            timerId = timerId_;
+            timerId_ = trantor::InvalidTimerId;
+        }
+        if (loop != nullptr && timerId != trantor::InvalidTimerId) {
+            loop->runInLoop([loop, timerId]() {
+                loop->invalidateTimer(timerId);
+            });
+        }
+        if (callback) {
+            callback(response);
+        }
+        return true;
+    }
+
+    // Reserves the right to initiate the next dependency operation. If the
+    // deadline already completed the request, the late callback must not
+    // enqueue a fresh Redis write.
+    bool beginOperation()
+    {
+        HttpResponsePtr expiredResponse;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (completed_.load(std::memory_order_acquire)) {
+                return false;
+            }
+            if (!deadline_.has_value() ||
+                std::chrono::steady_clock::now() < *deadline_) {
+                return true;
+            }
+            expiredResponse = timeoutResponse_;
+        }
+        reply(std::move(expiredResponse));
+        return false;
+    }
+
+    bool completed() const noexcept
+    {
+        return completed_.load(std::memory_order_acquire);
+    }
+
+private:
+    explicit ResponseOnce(ResponseCallback callback)
+        : callback_(std::move(callback))
+    {
+    }
+
+    mutable std::mutex mutex_;
+    ResponseCallback callback_;
+    std::atomic_bool completed_{false};
+    trantor::EventLoop* loop_{nullptr};
+    trantor::TimerId timerId_{trantor::InvalidTimerId};
+    std::optional<std::chrono::steady_clock::time_point> deadline_;
+    HttpResponsePtr timeoutResponse_;
+};
+
 // Parse a user id string to int64 defensively. A JWT may carry a validly
 // signed but non-numeric "sub"; std::stoll would otherwise throw.
 std::optional<int64_t> parseUserId(const std::string& s)
@@ -41,58 +223,123 @@ std::optional<int64_t> parseUserId(const std::string& s)
     }
 }
 
-// Redis key holding the single active refresh-token id (jti) for a user.
-// Refresh rotation overwrites it; presenting any other jti is treated as reuse.
+// Redis key holding the single active login session for a user. The value is
+// <sid>:<jti>; both identifiers are generated as hex, so ':' is unambiguous.
 std::string refreshJtiKey(const std::string& userId)
 {
     return "refresh_jti:" + userId;
 }
 
-// Persist the active refresh jti for a user (TTL = refresh token lifetime),
-// then invoke done(). If Redis is unavailable, rotation tracking is best-effort
-// and we still proceed (done() is called) so login/refresh keep working.
-void storeRefreshJti(const std::string& userId, const std::string& jti,
-                     std::function<void()> done)
+std::string sessionValue(const std::string& sid, const std::string& jti)
 {
-    auto redis = drogon::app().getRedisClient("default");
-    if (!redis) {
-        Logger::warning("[Auth] Redis unavailable; refresh jti not tracked");
-        done();
-        return;
-    }
-    int ttlSeconds = Config::instance().getRefreshTokenExpireDays() * 24 * 3600;
-    if (ttlSeconds <= 0) ttlSeconds = 7 * 24 * 3600;
-    auto sharedDone = std::make_shared<std::function<void()>>(std::move(done));
-    auto completed = std::make_shared<std::atomic_bool>(false);
-
-    drogon::app().getLoop()->runAfter(1.0, [userId, sharedDone, completed]() {
-        bool expected = false;
-        if (!completed->compare_exchange_strong(expected, true)) {
-            return;
-        }
-        Logger::warning("[Auth] Store refresh jti timed out; continuing login",
-                        {{"userid", userId}});
-        (*sharedDone)();
-    });
-
-    redis->execCommandAsync(
-        [sharedDone, completed](const nosql::RedisResult&) {
-            bool expected = false;
-            if (!completed->compare_exchange_strong(expected, true)) {
-                return;
-            }
-            (*sharedDone)();
-        },
-        [sharedDone, completed](const nosql::RedisException& e) {
-            bool expected = false;
-            if (!completed->compare_exchange_strong(expected, true)) {
-                return;
-            }
-            Logger::warning("[Auth] Failed to store refresh jti: " + std::string(e.what()));
-            (*sharedDone)();
-        },
-        "SETEX %s %d %s", refreshJtiKey(userId).c_str(), ttlSeconds, jti.c_str());
+    return sid + ":" + jti;
 }
+
+nosql::RedisClientPtr authSessionRedisClient()
+{
+    try {
+        return drogon::app().getRedisClient(
+            woniunote::kAuthSessionRedisClientName);
+    } catch (...) {
+        return {};
+    }
+}
+
+std::optional<long long> refreshTtlSeconds(const std::string& token)
+{
+    const auto payload = Security::decodeToken(token);
+    if (!payload.has_value() || payload->type != "refresh") {
+        return std::nullopt;
+    }
+    const auto remaining = std::chrono::duration_cast<std::chrono::seconds>(
+        payload->exp - std::chrono::system_clock::now()).count();
+    if (remaining <= 0) {
+        return std::nullopt;
+    }
+    return remaining;
+}
+
+bool isDuplicateUsername(const orm::DrogonDbException& error)
+{
+    const auto* sqlError =
+        dynamic_cast<const orm::SqlError*>(&error.base());
+    if (sqlError == nullptr) {
+        return false;
+    }
+
+    // This predicate is used only for the users INSERT below. That statement
+    // omits the generated primary key, and uk_username is the users table's
+    // only remaining unique index, so duplicate-key errno means username.
+    if (sqlError->errcode() == 1062 || sqlError->extendedErrcode() == 1062) {
+        return true;
+    }
+
+    // Drogon's MySQL backend in the pinned 1.9.11 build creates SqlError from
+    // mysql_error() and the query only, dropping mysql_errno(). For that path,
+    // identify only the username unique index; do not turn other SQL failures
+    // or duplicate constraints into a client conflict.
+    if (sqlError->errcode() != 0 || sqlError->extendedErrcode() != 0) {
+        return false;
+    }
+    const std::string message = sqlError->what();
+    constexpr char kDuplicatePrefix[] = "Duplicate entry ";
+    constexpr char kKeyMarker[] = " for key ";
+    constexpr char kUsernameIndex[] = "uk_username";
+    if (message.rfind(kDuplicatePrefix, 0) != 0) {
+        return false;
+    }
+    const auto keyStart = message.rfind(kKeyMarker);
+    if (keyStart == std::string::npos) {
+        return false;
+    }
+    const std::string quotedKey = message.substr(
+        keyStart + sizeof(kKeyMarker) - 1);
+    if (quotedKey.size() < 2 ||
+        (quotedKey.front() != '\'' && quotedKey.front() != '`') ||
+        quotedKey.back() != quotedKey.front()) {
+        return false;
+    }
+    const std::string key = quotedKey.substr(1, quotedKey.size() - 2);
+    const auto qualifier = key.rfind('.');
+    const std::string index = qualifier == std::string::npos
+        ? key
+        : key.substr(qualifier + 1);
+    return index == kUsernameIndex;
+}
+
+constexpr char kRotateSessionScript[] =
+    "local current=redis.call('GET',KEYS[1]); "
+    "if not current then return 0 end; "
+    "if current ~= ARGV[1] then return -1 end; "
+    "redis.call('SET',KEYS[1],ARGV[2],'EX',ARGV[3]); return 1";
+
+constexpr char kLogoutSessionScript[] =
+    "local current=redis.call('GET',KEYS[1]); "
+    "if not current then return 0 end; "
+    "local separator=string.find(current,':',1,true); "
+    "if not separator then return 0 end; "
+    "if string.sub(current,1,separator-1) ~= ARGV[1] then return 0 end; "
+    "return redis.call('DEL',KEYS[1])";
+
+#ifdef WONIUNOTE_ENABLE_TEST_AUTH_FAULTS
+bool isAuthorizedAuthTestRequest(const HttpRequestPtr& req)
+{
+    const char* expectedRunId = std::getenv("WONIUNOTE_TEST_RUN_ID");
+    const std::string peerAddress = req->getPeerAddr().toIp();
+    const bool loopback = peerAddress == "127.0.0.1" || peerAddress == "::1" ||
+                          peerAddress == "::ffff:127.0.0.1";
+    return expectedRunId != nullptr && *expectedRunId != '\0' &&
+           req->getHeader("X-Woniunote-Test-Run") == expectedRunId && loopback;
+}
+
+std::string authTestFaultMode(const HttpRequestPtr& req)
+{
+    if (!isAuthorizedAuthTestRequest(req)) {
+        return {};
+    }
+    return req->getHeader("X-Woniunote-Test-Auth-Fault");
+}
+#endif
 }  // namespace
 
 // Thin wrappers that delegate to the shared Response helpers so the JSON
@@ -124,7 +371,11 @@ void AuthController::registerUser(const HttpRequestPtr& req,
     }
 
     // Validate required fields
-    if (!json->isMember("username") || !json->isMember("password")) {
+    if (!json->isObject() || !json->isMember("username") ||
+        !json->isMember("password") || !(*json)["username"].isString() ||
+        !(*json)["password"].isString() ||
+        (json->isMember("nickname") && !(*json)["nickname"].isString()) ||
+        (json->isMember("qq") && !(*json)["qq"].isString())) {
         callback(makeErrorResponse(400, "用户名和密码不能为空"));
         return;
     }
@@ -140,87 +391,317 @@ void AuthController::registerUser(const HttpRequestPtr& req,
         return;
     }
 
-    Logger::debug("[Auth] Checking if username exists", {{"username", username}});
+    auto callbackState = std::make_shared<ResponseCallback>(std::move(callback));
+    auto responseSent = std::make_shared<std::atomic_bool>(false);
+    auto sendOnce = [callbackState, responseSent](HttpResponsePtr response) {
+        if (!responseSent->exchange(true, std::memory_order_acq_rel)) {
+            (*callbackState)(response);
+        }
+    };
+    struct RegistrationResult {
+        std::mutex mutex;
+        Json::Value user;
+        int64_t userId{0};
+        bool ready{false};
+    };
+    auto registrationResult = std::make_shared<RegistrationResult>();
 
-    // Wrap the whole registration in a transaction so the user row and the
-    // initial credit row are written atomically (both or neither).
-    Database::beginTransaction(
-        [this, callback, username, password, nickname, qq]
-        (const std::shared_ptr<orm::Transaction>& trans) {
-            if (!trans) {
-                callback(makeErrorResponse(500, "无法开启事务"));
+    auto completion = TransactionResponse::create(
+        std::chrono::seconds{3},
+        [this, sendOnce, registrationResult]
+        (TransactionOutcome outcome, const std::string& requestId) {
+            if (outcome == TransactionOutcome::committed) {
+                Json::Value user;
+                int64_t userId = 0;
+                bool ready = false;
+                {
+                    std::lock_guard<std::mutex> lock(registrationResult->mutex);
+                    user = registrationResult->user;
+                    userId = registrationResult->userId;
+                    ready = registrationResult->ready;
+                }
+                if (!ready) {
+                    Logger::error("[Auth] Registration commit callback lacked response data",
+                                  {{"request_id", requestId}});
+                    sendOnce(TransactionResponse::unknownResponse(requestId));
+                    return;
+                }
+                Logger::info("[Auth] Registration committed",
+                             {{"userid", std::to_string(userId)},
+                              {"request_id", requestId}});
+                sendOnce(makeJsonResponse(200, "注册成功", user));
                 return;
             }
 
-            // Check if username exists
-            trans->execSqlAsync(
-                "SELECT userid FROM users WHERE username = ?",
-                [this, callback, username, password, nickname, qq, trans]
-                (const orm::Result& result) {
-                    if (result.size() > 0) {
-                        Logger::warning("[Auth] Register failed: username exists", {{"username", username}});
-                        callback(makeErrorResponse(400, "用户名已存在"));
-                        return;
-                    }
+            if (outcome == TransactionOutcome::unknown) {
+                Logger::error("[Auth] Registration commit outcome unknown",
+                              {{"request_id", requestId}});
+                sendOnce(TransactionResponse::unknownResponse(requestId));
+                return;
+            }
 
-                    Logger::debug("[Auth] Creating new user", {{"username", username}});
-                    std::string hashedPassword = Security::hashPassword(password);
+            if (outcome == TransactionOutcome::unavailable) {
+                Logger::warning("[Auth] Registration dependency unavailable before write",
+                                {{"request_id", requestId}});
+                sendOnce(makeErrorResponse(503, "数据库暂时不可用"));
+                return;
+            }
+            Logger::warning("[Auth] Registration failed; rollback requested",
+                            {{"request_id", requestId}});
+            sendOnce(makeErrorResponse(500, "注册失败"));
+        },
+        TransactionOutcome::unavailable);
 
-                    trans->execSqlAsync(
-                        "INSERT INTO users (username, password, nickname, qq, role, credit, createtime, updatetime) "
-                        "VALUES (?, ?, ?, ?, 'user', 50, NOW(), NOW())",
-                        [this, callback, trans, username](const orm::Result& insertResult) {
-                            int64_t userId = insertResult.insertId();
-
-                            // Add credit record for registration. If this fails,
-                            // the whole transaction is rolled back (see below).
-                            trans->execSqlAsync(
-                                "INSERT INTO credit (userid, category, target, credit, createtime, updatetime) "
-                                "VALUES (?, '用户注册', ?, 50, NOW(), NOW())",
-                                [this, callback, trans, userId, username](const orm::Result&) {
-                                    // Fetch created user for the response.
-                                    trans->execSqlAsync(
-                                        "SELECT * FROM users WHERE userid = ?",
-                                        [this, callback, username](const orm::Result& userResult) {
-                                            if (userResult.size() > 0) {
-                                                models::User user(userResult[0]);
-                                                Logger::info("[Auth] User registered successfully", {{"userid", std::to_string(user.getUserid())}, {"username", username}});
-                                                callback(makeJsonResponse(200, "注册成功", user.toJsonWithoutPassword()));
-                                            } else {
-                                                callback(makeErrorResponse(500, "注册失败"));
-                                            }
-                                        },
-                                        [this, callback](const orm::DrogonDbException& e) {
-                                            Logger::error("Failed to fetch user: " + std::string(e.base().what()));
-                                            callback(makeErrorResponse(500, "注册失败"));
-                                        },
-                                        userId
-                                    );
-                                },
-                                [this, callback](const orm::DrogonDbException& e) {
-                                    // Credit insert failed -> transaction rolls back the user insert.
-                                    Logger::error("Failed to add credit record, rolling back: " + std::string(e.base().what()));
-                                    callback(makeErrorResponse(500, "注册失败"));
-                                },
-                                userId, userId
-                            );
-                        },
-                        [this, callback](const orm::DrogonDbException& e) {
-                            Logger::error("Failed to create user: " + std::string(e.base().what()));
-                            callback(makeErrorResponse(500, "注册失败"));
-                        },
-                        username, hashedPassword, nickname, qq
-                    );
-                },
-                [this, callback](const orm::DrogonDbException& e) {
-                    Logger::error("Database error: " + std::string(e.base().what()));
-                    callback(makeErrorResponse(500, "数据库错误"));
-                },
-                username
-            );
+    auto handleSqlFailure = [completion](
+        const std::shared_ptr<orm::Transaction>& trans,
+        const std::string& phase, const orm::DrogonDbException& error) {
+        if (trans) {
+            trans->rollback();
         }
-    );
+        const auto outcome = completion->failureOutcome(error);
+        const std::string requestId = completion->requestId();
+        if (outcome == TransactionOutcome::unknown) {
+            Logger::error("[Auth] Registration SQL outcome unknown",
+                          {{"phase", phase}, {"request_id", requestId}});
+        } else {
+            Logger::warning("[Auth] Registration SQL failed; rollback requested",
+                            {{"phase", phase}, {"request_id", requestId}});
+        }
+        completion->complete(outcome);
+    };
+
+#ifdef WONIUNOTE_ENABLE_TEST_AUTH_FAULTS
+    const std::string testFault = authTestFaultMode(req);
+#else
+    const std::string testFault;
+#endif
+
+    try {
+        Database::beginTransaction(
+            [this, username, password, nickname, qq, completion, sendOnce,
+             registrationResult, handleSqlFailure, testFault]
+            (const std::shared_ptr<orm::Transaction>& trans) {
+                if (!trans) {
+                    completion->complete(TransactionOutcome::unavailable);
+                    return;
+                }
+                if (completion->completed()) {
+                    trans->rollback();
+                    return;
+                }
+                trans->setCommitCallback(
+                    [completion, testFault](bool committed) {
+                        static_cast<void>(testFault);
+#ifdef WONIUNOTE_ENABLE_TEST_AUTH_FAULTS
+                        if (committed && testFault == "drop_commit_callback") {
+                            Logger::warning(
+                                "[Auth] Test fault discarded confirmed commit callback",
+                                {{"request_id", completion->requestId()}});
+                            return;
+                        }
+#endif
+                        completion->complete(committed
+                            ? TransactionOutcome::committed
+                            : TransactionOutcome::unknown);
+                    });
+
+                trans->execSqlAsync(
+                    "SELECT userid FROM users WHERE username = ?",
+                    [this, username, password, nickname, qq, trans, completion,
+                     sendOnce, registrationResult, handleSqlFailure, testFault]
+                    (const orm::Result& result) {
+                        if (completion->completed()) {
+                            trans->rollback();
+                            return;
+                        }
+                        if (!result.empty()) {
+                            trans->rollback();
+                            sendOnce(makeErrorResponse(400, "用户名已存在"));
+                            completion->complete(TransactionOutcome::aborted);
+                            return;
+                        }
+
+                        const std::string hashedPassword = Security::hashPassword(password);
+                        if (hashedPassword.empty()) {
+                            trans->rollback();
+                            sendOnce(makeErrorResponse(503, "暂时无法安全处理注册请求"));
+                            completion->complete(TransactionOutcome::aborted);
+                            return;
+                        }
+
+                        if (!completion->beginWriting()) {
+                            trans->rollback();
+                            return;
+                        }
+                        trans->execSqlAsync(
+                            "INSERT INTO users (username, password, nickname, qq, role, credit, createtime, updatetime) "
+                            "VALUES (?, ?, ?, ?, 'user', 50, NOW(), NOW())",
+                            [this, username, trans, completion, sendOnce,
+                             registrationResult, handleSqlFailure, testFault]
+                            (const orm::Result& insertResult) {
+                                static_cast<void>(testFault);
+                                if (completion->completed()) {
+                                    trans->rollback();
+                                    return;
+                                }
+                                const int64_t userId = insertResult.insertId();
+                                if (userId <= 0) {
+                                    Logger::error("[Auth] Registration insert returned no user id",
+                                                  {{"request_id", completion->requestId()}});
+                                    trans->rollback();
+                                    completion->complete(TransactionOutcome::unknown);
+                                    return;
+                                }
+                                Logger::info(
+                                    "[Auth] Registration user row inserted within transaction",
+                                    {{"userid", std::to_string(userId)},
+                                     {"request_id", completion->requestId()}});
+
+#ifdef WONIUNOTE_ENABLE_TEST_AUTH_FAULTS
+                                if (testFault == "sql_fail_after_user_insert") {
+                                    trans->execSqlAsync(
+                                        "INSERT INTO woniunote_test_missing_table (userid) VALUES (?)",
+                                        [](const orm::Result&) {},
+                                        [trans, handleSqlFailure](
+                                            const orm::DrogonDbException& error) {
+                                            handleSqlFailure(
+                                                trans, "test_sql_failure_after_user_insert", error);
+                                        },
+                                        userId);
+                                    return;
+                                }
+#endif
+
+                                if (!completion->beginWriting()) {
+                                    trans->rollback();
+                                    return;
+                                }
+                                trans->execSqlAsync(
+                                    "INSERT INTO credit (userid, category, target, credit, createtime, updatetime) "
+                                    "VALUES (?, '用户注册', ?, 50, NOW(), NOW())",
+                                    [this, username, userId, trans, completion,
+                                     registrationResult, handleSqlFailure]
+                                    (const orm::Result&) {
+                                        if (completion->completed()) {
+                                            trans->rollback();
+                                            return;
+                                        }
+                                        trans->execSqlAsync(
+                                            "SELECT * FROM users WHERE userid = ?",
+                                            [this, userId, trans, completion,
+                                             registrationResult]
+                                            (const orm::Result& userResult) {
+                                                if (completion->completed()) {
+                                                    trans->rollback();
+                                                    return;
+                                                }
+                                                if (userResult.empty()) {
+                                                    Logger::error(
+                                                        "[Auth] Registration response row missing before commit",
+                                                        {{"request_id", completion->requestId()}});
+                                                    trans->rollback();
+                                                    completion->complete(TransactionOutcome::aborted);
+                                                    return;
+                                                }
+                                                models::User user(userResult[0]);
+                                                {
+                                                    std::lock_guard<std::mutex> lock(
+                                                        registrationResult->mutex);
+                                                    registrationResult->user = user.toJsonWithoutPassword();
+                                                    registrationResult->userId = user.getUserid();
+                                                    registrationResult->ready = true;
+                                                }
+                                            },
+                                            [handleSqlFailure, trans](
+                                                const orm::DrogonDbException& error) {
+                                                handleSqlFailure(
+                                                    trans, "select_registered_user", error);
+                                            },
+                                            userId);
+                                    },
+                                    [this, username, userId, completion, handleSqlFailure, trans]
+                                    (const orm::DrogonDbException& error) {
+                                        Logger::warning("[Auth] Initial credit insert failed",
+                                                        {{"request_id", completion->requestId()}});
+                                        handleSqlFailure(
+                                            trans, "insert_initial_credit", error);
+                                    },
+                                    userId, userId);
+                            },
+                            [this, completion, sendOnce, handleSqlFailure, trans]
+                            (const orm::DrogonDbException& error) {
+                                if (isDuplicateUsername(error)) {
+                                    Logger::warning("[Auth] Registration unique conflict",
+                                                    {{"request_id", completion->requestId()}});
+                                    trans->rollback();
+                                    sendOnce(makeErrorResponse(400, "用户名已存在"));
+                                    completion->complete(TransactionOutcome::aborted);
+                                    return;
+                                }
+                                handleSqlFailure(trans, "insert_user", error);
+                            },
+                            username, hashedPassword, nickname, qq);
+                    },
+                    [handleSqlFailure, trans](const orm::DrogonDbException& error) {
+                        handleSqlFailure(trans, "check_username", error);
+                    },
+                    username);
+            });
+    } catch (const std::exception&) {
+        Logger::error("[Auth] Failed to start registration transaction",
+                      {{"request_id", completion->requestId()}});
+        completion->complete(TransactionOutcome::unavailable);
+    }
 }
+
+#ifdef WONIUNOTE_ENABLE_TEST_AUTH_FAULTS
+void AuthController::testEmptyTransaction(
+    const HttpRequestPtr& req,
+    std::function<void(const HttpResponsePtr&)>&& callback)
+{
+    if (!isAuthorizedAuthTestRequest(req)) {
+        callback(makeErrorResponse(404, "Not found"));
+        return;
+    }
+
+    auto completion = TransactionResponse::create(
+        std::chrono::seconds{3},
+        [callback = std::move(callback)](
+            TransactionOutcome outcome, const std::string& requestId) mutable {
+            if (outcome == TransactionOutcome::committed) {
+                Json::Value data;
+                data["committed"] = true;
+                callback(Response::success(data));
+            } else if (outcome == TransactionOutcome::unknown) {
+                callback(TransactionResponse::unknownResponse(requestId));
+            } else {
+                callback(Response::error(503, "数据库暂时不可用", k503ServiceUnavailable));
+            }
+        });
+
+    try {
+        Database::beginTransaction(
+            [completion](const std::shared_ptr<orm::Transaction>& trans) {
+                if (!trans) {
+                    completion->complete(TransactionOutcome::aborted);
+                    return;
+                }
+                if (completion->completed()) {
+                    trans->rollback();
+                    return;
+                }
+                trans->setCommitCallback(
+                    [completion](bool committed) {
+                        completion->complete(committed
+                            ? TransactionOutcome::committed
+                            : TransactionOutcome::unknown);
+                    });
+            });
+    } catch (const std::exception&) {
+        completion->complete(TransactionOutcome::aborted);
+    }
+}
+#endif
 
 void AuthController::login(const HttpRequestPtr& req,
                            std::function<void(const HttpResponsePtr&)>&& callback)
@@ -228,12 +709,19 @@ void AuthController::login(const HttpRequestPtr& req,
     Logger::info("[Auth] Login request received", {{"ip", req->getPeerAddr().toIp()}});
     
     auto json = req->getJsonObject();
-    if (!json) {
+    if (!json || !json->isObject()) {
         Logger::warning("[Auth] Login failed: invalid JSON");
         callback(makeErrorResponse(400, "请求格式错误"));
         return;
     }
 
+    if (!json->isMember("username") || !json->isMember("password") ||
+        !(*json)["username"].isString() || !(*json)["password"].isString() ||
+        (json->isMember("captcha_id") && !(*json)["captcha_id"].isString()) ||
+        (json->isMember("captcha_code") && !(*json)["captcha_code"].isString())) {
+        callback(makeErrorResponse(400, "请求格式错误"));
+        return;
+    }
     std::string username = json->get("username", "").asString();
     std::string password = json->get("password", "").asString();
 
@@ -243,64 +731,139 @@ void AuthController::login(const HttpRequestPtr& req,
         return;
     }
     
-    Logger::debug("[Auth] Attempting login", {{"username", username}});
-
     // Validate captcha. The frontend always sends captcha_id/captcha_code;
     // reject the login if they are missing or incorrect.
     std::string captchaId = json->get("captcha_id", "").asString();
     std::string captchaCode = json->get("captcha_code", "").asString();
     if (!CaptchaController::validateCaptcha(captchaId, captchaCode)) {
-        Logger::warning("[Auth] Login failed: invalid captcha", {{"username", username}});
+        Logger::warning("[Auth] Login failed: invalid captcha");
         callback(makeErrorResponse(400, "验证码错误或已过期"));
         return;
     }
 
-    auto dbClient = Database::getClient();
+#ifdef WONIUNOTE_ENABLE_TEST_AUTH_FAULTS
+    const std::string testFault = authTestFaultMode(req);
+#else
+    const std::string testFault;
+#endif
 
-    dbClient->execSqlAsync(
-        "SELECT * FROM users WHERE username = ?",
-        [this, callback, password, username](const orm::Result& result) {
-            if (result.size() == 0) {
-                Logger::warning("[Auth] Login failed: user not found", {{"username", username}});
-                callback(makeErrorResponse(401, "用户名或密码错误"));
-                return;
-            }
+    auto response = ResponseOnce::create(std::move(callback));
+    response->armDeadline(std::chrono::seconds{3},
+                          makeErrorResponse(503, "认证服务暂时不可用"));
 
-            models::User user(result[0]);
+    DbClientPtr dbClient;
+    try {
+        dbClient = Database::getClient();
+    } catch (const std::exception&) {
+        response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+        return;
+    }
 
-            // Verify password
-            if (!Security::verifyPassword(password, user.getPassword())) {
-                Logger::warning("[Auth] Login failed: wrong password", {{"username", username}});
-                callback(makeErrorResponse(401, "用户名或密码错误"));
-                return;
-            }
-            
-            Logger::info("[Auth] Login successful", {{"userid", std::to_string(user.getUserid())}, {"username", username}});
+    try {
+        dbClient->execSqlAsync(
+            "SELECT * FROM users WHERE username = ?",
+            [this, response, password, username, testFault](const orm::Result& result) {
+                static_cast<void>(testFault);
+                if (response->completed()) {
+                    return;
+                }
+                if (result.empty()) {
+                    response->reply(makeErrorResponse(401, "用户名或密码错误"));
+                    return;
+                }
 
-            // Generate tokens. The refresh token carries a unique jti that is
-            // recorded in Redis so it can be rotated and reuse-detected.
-            std::string userId = std::to_string(user.getUserid());
-            std::string jti = Security::generateJti();
-            std::string accessToken = Security::createAccessToken(userId);
-            std::string refreshToken = Security::createRefreshToken(userId, 0, jti);
+                models::User user(result[0]);
+                if (!Security::verifyPassword(password, user.getPassword())) {
+                    response->reply(makeErrorResponse(401, "用户名或密码错误"));
+                    return;
+                }
 
-            Json::Value data;
-            data["access_token"] = accessToken;
-            data["refresh_token"] = refreshToken;
-            data["token_type"] = "bearer";
-            data["user"] = user.toJsonWithoutPassword();
+                const std::string userId = std::to_string(user.getUserid());
+                const std::string sid = Security::generateSessionId();
+                const std::string jti = Security::generateJti();
+                if (sid.empty() || jti.empty()) {
+                    Logger::error("[Auth] Secure randomness unavailable during login",
+                                  {{"userid", userId}});
+                    response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                    return;
+                }
 
-            auto self = this;
-            storeRefreshJti(userId, jti, [self, callback, data]() {
-                callback(self->makeJsonResponse(200, "登录成功", data));
-            });
-        },
-        [this, callback](const orm::DrogonDbException& e) {
-            Logger::error("Database error: " + std::string(e.base().what()));
-            callback(makeErrorResponse(500, "数据库错误"));
-        },
-        username
-    );
+#ifdef WONIUNOTE_ENABLE_TEST_AUTH_FAULTS
+                const int accessExpiryMinutes = testFault == "expired_access" ? -1 : 0;
+#else
+                const int accessExpiryMinutes = 0;
+#endif
+                const std::string accessToken =
+                    Security::createAccessToken(userId, accessExpiryMinutes, sid);
+                const std::string refreshToken =
+                    Security::createRefreshToken(userId, 0, jti, sid);
+                const auto ttlSeconds = refreshTtlSeconds(refreshToken);
+                if (accessToken.empty() || refreshToken.empty() || !ttlSeconds.has_value()) {
+                    response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                    return;
+                }
+
+                auto redis = authSessionRedisClient();
+                if (!redis) {
+                    Logger::warning("[Auth] Redis unavailable during login",
+                                    {{"userid", userId}});
+                    response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                    return;
+                }
+
+                Json::Value data;
+                data["access_token"] = accessToken;
+                data["refresh_token"] = refreshToken;
+                data["token_type"] = "bearer";
+                data["user"] = user.toJsonWithoutPassword();
+                const std::string key = refreshJtiKey(userId);
+                const std::string value = sessionValue(sid, jti);
+
+                response->armDeadline(std::chrono::seconds{2},
+                                      makeErrorResponse(503, "认证服务暂时不可用"));
+                if (!response->beginOperation()) {
+                    return;
+                }
+                const auto redisOperation = beginAuthRedisOperation();
+                try {
+                    redis->execCommandAsync(
+                        [this, response, data, userId, redisOperation]
+                        (const nosql::RedisResult& result) {
+                            recordAuthRedisCompletion(
+                                redisOperation, "login", "success");
+                            if (result.type() != nosql::RedisResultType::kStatus ||
+                                result.asString() != "OK") {
+                                Logger::warning("[Auth] Redis did not confirm login session",
+                                                {{"userid", userId}});
+                                response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                                return;
+                            }
+                            Logger::info("[Auth] Login session stored",
+                                         {{"userid", userId}});
+                            response->reply(makeJsonResponse(200, "登录成功", data));
+                        },
+                        [response, userId, redisOperation]
+                        (const nosql::RedisException&) {
+                            recordAuthRedisCompletion(
+                                redisOperation, "login", "exception");
+                            Logger::warning("[Auth] Redis login session write failed",
+                                            {{"userid", userId}});
+                            response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                        },
+                        "SET %s %s EX %lld", key.c_str(), value.c_str(), *ttlSeconds);
+                } catch (const std::exception&) {
+                    recordAuthRedisCompletion(
+                        redisOperation, "login", "synchronous_error");
+                    response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                }
+            },
+            [response](const orm::DrogonDbException&) {
+                response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+            },
+            username);
+    } catch (const std::exception&) {
+        response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+    }
 }
 
 void AuthController::refresh(const HttpRequestPtr& req,
@@ -308,16 +871,21 @@ void AuthController::refresh(const HttpRequestPtr& req,
 {
     Logger::debug("[Auth] Token refresh request");
     auto json = req->getJsonObject();
-    if (!json || !json->isMember("refresh_token")) {
+    if (!json || !json->isObject() || !json->isMember("refresh_token")) {
         Logger::warning("[Auth] Refresh failed: missing token");
         callback(makeErrorResponse(400, "刷新令牌缺失"));
         return;
     }
 
+    if (!(*json)["refresh_token"].isString()) {
+        callback(makeErrorResponse(400, "刷新令牌格式错误"));
+        return;
+    }
     std::string refreshToken = (*json)["refresh_token"].asString();
     auto payload = Security::decodeToken(refreshToken);
 
-    if (!payload.has_value() || payload->type != "refresh") {
+    if (!payload.has_value() || payload->type != "refresh" ||
+        payload->sid.empty() || payload->jti.empty()) {
         Logger::warning("[Auth] Refresh failed: invalid token");
         callback(makeErrorResponse(401, "无效的刷新令牌"));
         return;
@@ -331,92 +899,120 @@ void AuthController::refresh(const HttpRequestPtr& req,
         return;
     }
 
+    const std::string presentedSid = payload->sid;
     const std::string presentedJti = payload->jti;
-    auto self = this;
+    auto response = ResponseOnce::create(std::move(callback));
+    response->armDeadline(std::chrono::seconds{3},
+                          makeErrorResponse(503, "认证服务暂时不可用"));
 
-    // Verify the presented refresh jti against the single active jti stored in
-    // Redis, then rotate. This detects reuse of an already-rotated (or stolen)
-    // refresh token and revokes the session. Degrades gracefully when Redis is
-    // down (issues new tokens without reuse detection) to preserve availability.
-    auto issueNewTokens = [self, callback, userId, parsedId]() {
-        auto dbClient = Database::getClient();
+    DbClientPtr dbClient;
+    try {
+        dbClient = Database::getClient();
+    } catch (const std::exception&) {
+        response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+        return;
+    }
+
+    try {
         dbClient->execSqlAsync(
             "SELECT * FROM users WHERE userid = ?",
-            [self, callback, userId](const orm::Result& result) {
-                if (result.size() == 0) {
-                    callback(self->makeErrorResponse(401, "用户不存在"));
+            [this, response, userId, parsedId, presentedSid, presentedJti]
+            (const orm::Result& result) {
+                if (response->completed()) {
+                    return;
+                }
+                if (result.empty()) {
+                    response->reply(makeErrorResponse(401, "用户不存在"));
                     return;
                 }
 
-                std::string newJti = Security::generateJti();
-                std::string newAccessToken = Security::createAccessToken(userId);
-                std::string newRefreshToken =
-                    Security::createRefreshToken(userId, 0, newJti);
+                const std::string newJti = Security::generateJti();
+                if (newJti.empty()) {
+                    Logger::error("[Auth] Secure randomness unavailable during refresh",
+                                  {{"userid", userId}});
+                    response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                    return;
+                }
+                const std::string newAccessToken =
+                    Security::createAccessToken(userId, 0, presentedSid);
+                const std::string newRefreshToken =
+                    Security::createRefreshToken(userId, 0, newJti, presentedSid);
+                const auto ttlSeconds = refreshTtlSeconds(newRefreshToken);
+                if (newAccessToken.empty() || newRefreshToken.empty() ||
+                    !ttlSeconds.has_value()) {
+                    response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                    return;
+                }
 
-                Logger::info("[Auth] Token refreshed (rotated)", {{"userid", userId}});
+                auto redis = authSessionRedisClient();
+                if (!redis) {
+                    Logger::warning("[Auth] Redis unavailable during refresh",
+                                    {{"userid", userId}});
+                    response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                    return;
+                }
 
                 Json::Value data;
                 data["access_token"] = newAccessToken;
                 data["refresh_token"] = newRefreshToken;
                 data["token_type"] = "bearer";
+                const std::string key = refreshJtiKey(userId);
+                const std::string oldValue = sessionValue(presentedSid, presentedJti);
+                const std::string newValue = sessionValue(presentedSid, newJti);
 
-                storeRefreshJti(userId, newJti, [self, callback, data]() {
-                    callback(self->makeJsonResponse(200, "刷新成功", data));
-                });
+                response->armDeadline(std::chrono::seconds{2},
+                                      makeErrorResponse(503, "认证服务暂时不可用"));
+                if (!response->beginOperation()) {
+                    return;
+                }
+                const auto redisOperation = beginAuthRedisOperation();
+                try {
+                    redis->execCommandAsync(
+                        [this, response, data, userId, redisOperation]
+                        (const nosql::RedisResult& result) {
+                            recordAuthRedisCompletion(
+                                redisOperation, "refresh", "success");
+                            if (result.type() != nosql::RedisResultType::kInteger) {
+                                Logger::warning("[Auth] Redis returned invalid refresh status",
+                                                {{"userid", userId}});
+                                response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                                return;
+                            }
+                            const long long status = result.asInteger();
+                            if (status != 1) {
+                                Logger::warning("[Auth] Refresh session compare failed",
+                                                {{"userid", userId}});
+                                response->reply(makeErrorResponse(
+                                    401, "刷新令牌已失效，请重新登录"));
+                                return;
+                            }
+                            Logger::info("[Auth] Refresh session rotated",
+                                         {{"userid", userId}});
+                            response->reply(makeJsonResponse(200, "刷新成功", data));
+                        },
+                        [response, userId, redisOperation]
+                        (const nosql::RedisException&) {
+                            recordAuthRedisCompletion(
+                                redisOperation, "refresh", "exception");
+                            Logger::warning("[Auth] Redis refresh rotation failed",
+                                            {{"userid", userId}});
+                            response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                        },
+                        "EVAL %s 1 %s %s %s %lld", kRotateSessionScript,
+                        key.c_str(), oldValue.c_str(), newValue.c_str(), *ttlSeconds);
+                } catch (const std::exception&) {
+                    recordAuthRedisCompletion(
+                        redisOperation, "refresh", "synchronous_error");
+                    response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                }
             },
-            [self, callback](const orm::DrogonDbException& e) {
-                Logger::error("Database error: " + std::string(e.base().what()));
-                callback(self->makeErrorResponse(500, "数据库错误"));
+            [response](const orm::DrogonDbException&) {
+                response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
             },
             parsedId.value());
-    };
-
-    auto redis = drogon::app().getRedisClient("default");
-    if (!redis || presentedJti.empty()) {
-        // No Redis, or a legacy token issued before jti tracking existed:
-        // fall back to the original behaviour (sign new tokens, no reuse check).
-        if (presentedJti.empty()) {
-            Logger::debug("[Auth] Refresh token without jti; skipping reuse check");
-        } else {
-            Logger::warning("[Auth] Redis unavailable; skipping refresh reuse check");
-        }
-        issueNewTokens();
-        return;
+    } catch (const std::exception&) {
+        response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
     }
-
-    auto sharedIssue = std::make_shared<std::function<void()>>(std::move(issueNewTokens));
-    redis->execCommandAsync(
-        [self, callback, userId, presentedJti, sharedIssue, redis]
-        (const nosql::RedisResult& result) {
-            std::string storedJti =
-                result.type() == nosql::RedisResultType::kNil ? "" : result.asString();
-
-            if (storedJti.empty()) {
-                // No active session recorded; treat as invalid/expired refresh.
-                Logger::warning("[Auth] Refresh rejected: no active session", {{"userid", userId}});
-                callback(self->makeErrorResponse(401, "刷新令牌已失效，请重新登录"));
-                return;
-            }
-            if (storedJti != presentedJti) {
-                // Reuse of a rotated/stolen refresh token -> revoke all sessions.
-                Logger::warning("[Auth] Refresh token reuse detected; revoking session",
-                                {{"userid", userId}});
-                redis->execCommandAsync(
-                    [](const nosql::RedisResult&) {},
-                    [](const nosql::RedisException&) {},
-                    "DEL %s", refreshJtiKey(userId).c_str());
-                callback(self->makeErrorResponse(401, "检测到刷新令牌复用，请重新登录"));
-                return;
-            }
-            // Valid -> rotate.
-            (*sharedIssue)();
-        },
-        [sharedIssue](const nosql::RedisException& e) {
-            // Redis read failed mid-flight: degrade to issuing tokens.
-            Logger::warning("[Auth] Refresh reuse check failed, degrading: " + std::string(e.what()));
-            (*sharedIssue)();
-        },
-        "GET %s", refreshJtiKey(userId).c_str());
 }
 
 void AuthController::me(const HttpRequestPtr& req,
@@ -459,21 +1055,110 @@ void AuthController::me(const HttpRequestPtr& req,
 void AuthController::logout(const HttpRequestPtr& req,
                             std::function<void(const HttpResponsePtr&)>&& callback)
 {
-    auto userId = req->getAttributes()->get<std::string>("user_id");
-    Logger::info("[Auth] User logged out", {{"userid", userId}});
-
-    // Revoke the active refresh session so a stolen refresh token cannot be
-    // used after logout. Best-effort: succeed regardless of Redis state.
-    auto redis = drogon::app().getRedisClient("default");
-    if (redis && !userId.empty() && parseUserId(userId).has_value()) {
-        redis->execCommandAsync(
-            [](const nosql::RedisResult&) {},
-            [](const nosql::RedisException&) {},
-            "DEL %s", refreshJtiKey(userId).c_str());
+    const std::string authHeader = req->getHeader("Authorization");
+    std::string headerToken;
+    const std::string bearerPrefix = "Bearer ";
+    if (authHeader.rfind(bearerPrefix, 0) == 0) {
+        headerToken = authHeader.substr(bearerPrefix.size());
     }
 
-    // Client should clear tokens; server just returns success
-    callback(makeJsonResponse(200, "登出成功"));
+    std::string bodyRefreshToken;
+    const auto json = req->getJsonObject();
+    if (json && !json->isObject()) {
+        callback(makeErrorResponse(400, "请求格式错误"));
+        return;
+    }
+    if (json && json->isMember("refresh_token")) {
+        if (!(*json)["refresh_token"].isString()) {
+            callback(makeErrorResponse(400, "刷新令牌格式错误"));
+            return;
+        }
+        bodyRefreshToken = (*json)["refresh_token"].asString();
+    }
+
+    std::vector<TokenPayload> credentials;
+    const auto addCredential = [&credentials](const std::string& token) {
+        if (token.empty()) {
+            return;
+        }
+        const auto payload = Security::decodeToken(token);
+        if (!payload.has_value() ||
+            (payload->type != "access" && payload->type != "refresh") ||
+            payload->sid.empty() || !parseUserId(payload->sub).has_value() ||
+            (payload->type == "refresh" && payload->jti.empty())) {
+            return;
+        }
+        credentials.push_back(*payload);
+    };
+    addCredential(headerToken);
+    addCredential(bodyRefreshToken);
+
+    if (credentials.empty()) {
+        callback(makeErrorResponse(401, "有效的登录凭据缺失或已过期"));
+        return;
+    }
+
+    const TokenPayload& identity = credentials.front();
+    const bool conflictingIdentity = std::any_of(
+        credentials.begin() + 1, credentials.end(),
+        [&identity](const TokenPayload& credential) {
+            return credential.sub != identity.sub || credential.sid != identity.sid;
+        });
+    if (conflictingIdentity) {
+        callback(makeErrorResponse(401, "退出凭据身份不一致"));
+        return;
+    }
+
+    const std::string userId = identity.sub;
+    const std::string sid = identity.sid;
+    auto response = ResponseOnce::create(std::move(callback));
+    response->armDeadline(std::chrono::seconds{3},
+                          makeErrorResponse(503, "认证服务暂时不可用"));
+    auto redis = authSessionRedisClient();
+    if (!redis) {
+        Logger::warning("[Auth] Redis unavailable during logout",
+                        {{"userid", userId}});
+        response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+        return;
+    }
+
+    const std::string key = refreshJtiKey(userId);
+    response->armDeadline(std::chrono::seconds{2},
+                          makeErrorResponse(503, "认证服务暂时不可用"));
+    if (!response->beginOperation()) {
+        return;
+    }
+    const auto redisOperation = beginAuthRedisOperation();
+    try {
+        redis->execCommandAsync(
+            [this, response, userId, redisOperation]
+            (const nosql::RedisResult& result) {
+                recordAuthRedisCompletion(
+                    redisOperation, "logout", "success");
+                if (result.type() != nosql::RedisResultType::kInteger) {
+                    Logger::warning("[Auth] Redis returned invalid logout status",
+                                    {{"userid", userId}});
+                    response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+                    return;
+                }
+                Logger::info("[Auth] Logout session compare completed",
+                             {{"userid", userId}});
+                response->reply(makeJsonResponse(200, "登出成功"));
+            },
+            [response, userId, redisOperation]
+            (const nosql::RedisException&) {
+                recordAuthRedisCompletion(
+                    redisOperation, "logout", "exception");
+                Logger::warning("[Auth] Redis logout revoke failed",
+                                {{"userid", userId}});
+                response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+            },
+            "EVAL %s 1 %s %s", kLogoutSessionScript, key.c_str(), sid.c_str());
+    } catch (const std::exception&) {
+        recordAuthRedisCompletion(
+            redisOperation, "logout", "synchronous_error");
+        response->reply(makeErrorResponse(503, "认证服务暂时不可用"));
+    }
 }
 
 } // namespace controllers

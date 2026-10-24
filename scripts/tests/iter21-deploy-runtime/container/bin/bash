@@ -1,0 +1,22 @@
+#!/bin/bash
+set -Eeuo pipefail
+
+if [[ "${1:-}" == */deploy_release.sh && "${2:-}" == __locked ]]; then
+    {
+        printf 'locked_child_script=%s\n' "$1"
+        printf 'locked_child_args=%s\n' "$*"
+        printf 'wrapper_pid=%s wrapper_ppid=%s\n' "$$" "$PPID"
+        printf '%s\n' 'proc_locks_begin'
+        cat /proc/locks
+        printf '%s\n' 'proc_locks_end'
+        for observed_pid in "$$" "$PPID"; do
+            if [ -r "/proc/$observed_pid/status" ]; then
+                printf 'proc_status_pid=%s\n' "$observed_pid"
+                cat "/proc/$observed_pid/status"
+            fi
+        done
+        ps -o pid=,ppid=,pgid=,comm= -p "$$,$PPID" || true
+    } >> "${ITER21_EVIDENCE:?evidence path missing}/locked-entry.log"
+fi
+
+exec /bin/bash "$@"

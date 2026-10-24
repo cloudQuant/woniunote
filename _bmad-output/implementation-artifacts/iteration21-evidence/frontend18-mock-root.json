@@ -1,0 +1,16 @@
+{
+  "source_manifest_sha256": "a7a2546cf9b1f056e63a50776671661fc808e5b47512c3ac960711bec23d5488",
+  "command": [
+    "npm",
+    "run",
+    "test:e2e",
+    "--",
+    "--workers=1",
+    "--retries=0"
+  ],
+  "browsers": "all",
+  "exit": 1,
+  "seconds": 690.663,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/frontend18-mock-root.log",
+  "sha256": "755bc3d52c504929f7d3fa213de089adc8870be69f73bd00e4f549cd262630a6"
+}

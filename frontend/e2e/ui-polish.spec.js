@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './support/test'
 import { mockApi } from './support/mockApi'
 
 /**
@@ -27,6 +27,19 @@ function readStyle(page, sel, prop) {
   )
 }
 
+function waitForApiResponse(page, method, pathname, queryMatches = () => true) {
+  return page.waitForResponse((response) => {
+    const url = new URL(response.url())
+    return response.request().method() === method && url.pathname === pathname && queryMatches(url)
+  })
+}
+
+async function completeSuccessfulResponse(responsePromise) {
+  const response = await responsePromise
+  expect(response.status()).toBe(200)
+  expect(await response.finished()).toBeNull()
+}
+
 test.describe('UI polish — responsive layout, dialog, reduced motion, hover', () => {
   test.beforeEach(async ({ page }) => {
     await mockApi(page)
@@ -35,7 +48,18 @@ test.describe('UI polish — responsive layout, dialog, reduced motion, hover', 
   // ── R5.1 移动端搜索入口 ──────────────────────────────────────────────
   test('mobile: search entry is visible above the article list and navigates on submit', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 800 })
-    await page.goto('/')
+    const initialArticleResponse = waitForApiResponse(
+      page,
+      'GET',
+      '/api/articles',
+      (url) => !url.searchParams.has('keyword')
+    )
+    const initialHotResponse = waitForApiResponse(page, 'GET', '/api/articles/hot')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await Promise.all([
+      completeSuccessfulResponse(initialArticleResponse),
+      completeSuccessfulResponse(initialHotResponse)
+    ])
 
     const searchBar = page.locator('.search-bar')
     await expect(searchBar).toBeVisible()
@@ -53,15 +77,28 @@ test.describe('UI polish — responsive layout, dialog, reduced motion, hover', 
 
     // Typing a keyword and submitting navigates to the search route (R5.2).
     await searchBar.locator('input').first().fill('python')
+    const searchArticleResponse = waitForApiResponse(
+      page,
+      'GET',
+      '/api/articles',
+      (url) => url.searchParams.get('keyword') === 'python'
+    )
+    const searchHotResponse = waitForApiResponse(page, 'GET', '/api/articles/hot')
     await searchBar.getByRole('button', { name: '搜索' }).click()
     await expect(page).toHaveURL(/\/search\?keyword=python/)
+    await Promise.all([
+      completeSuccessfulResponse(searchArticleResponse),
+      completeSuccessfulResponse(searchHotResponse)
+    ])
+    await expect(page.locator('.search-page h2')).toContainText('搜索结果：python')
+    await expect(page.locator('.search-page .article-item').first()).toBeVisible()
   })
 
   // ── R6 登录弹窗宽度自适应 ────────────────────────────────────────────
   test('dialog: width does not overflow a narrow (<520px) viewport', async ({ page }) => {
     const viewportWidth = 375
     await page.setViewportSize({ width: viewportWidth, height: 800 })
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
 
     await page.locator('.login-link').click()
     const dialog = page.locator('.login-dialog')
@@ -85,7 +122,7 @@ test.describe('UI polish — responsive layout, dialog, reduced motion, hover', 
 
   test('dialog: width is approximately 520px on a wide (≥520px) viewport', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 })
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
 
     await page.locator('.login-link').click()
     const dialog = page.locator('.login-dialog')
@@ -107,7 +144,7 @@ test.describe('UI polish — responsive layout, dialog, reduced motion, hover', 
   // ── R7 首页最大阅读宽度与边距 ────────────────────────────────────────
   test('home: content is capped and horizontally centered on a wide viewport', async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 900 })
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
 
     const container = page.locator('.home-container')
     await expect(container).toBeVisible()
@@ -132,7 +169,7 @@ test.describe('UI polish — responsive layout, dialog, reduced motion, hover', 
 
   test('home: keeps side padding (content not flush to edge) on a narrow viewport', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 800 })
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
 
     const container = page.locator('.home-container')
     await expect(container).toBeVisible()
@@ -156,7 +193,7 @@ test.describe('UI polish — responsive layout, dialog, reduced motion, hover', 
     test.skip(isMobile, 'desktop hover/slogan behavior only')
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.setViewportSize({ width: 1280, height: 900 })
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
 
     // Slogan only renders at desktop widths (hidden <=768px), so use 1280px.
     const slogan = page.locator('.slogan')
@@ -180,7 +217,7 @@ test.describe('UI polish — responsive layout, dialog, reduced motion, hover', 
     test.skip(isMobile, 'hover elevation is a pointer-device interaction')
     await page.emulateMedia({ reducedMotion: 'no-preference' })
     await page.setViewportSize({ width: 1280, height: 900 })
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
 
     const firstArticle = page.locator('.article-item').first()
     await expect(firstArticle).toBeVisible()

@@ -1,0 +1,110 @@
+{
+  "source_manifest": "frontend-final-14-source-manifest.json",
+  "run_status": "FAIL",
+  "command": [
+    "npx",
+    "playwright",
+    "test",
+    "--workers=2",
+    "--retries=0"
+  ],
+  "node": "22.13.0",
+  "workers": 2,
+  "retries": 0,
+  "exit_code": 1,
+  "passed": 257,
+  "failed": 5,
+  "skipped": 2,
+  "duration_seconds": 263.44,
+  "log_sha256": "dca0dca5f906a561d5bf1a9746fd09dcf5bec5b0f0438c609d5c2ee7173878a0",
+  "server_audit": {
+    "schemaVersion": 1,
+    "ready": true,
+    "deniedCount": 5,
+    "events": [
+      {
+        "method": "GET",
+        "path": "/api/articles"
+      },
+      {
+        "method": "GET",
+        "path": "/api/articles/hot"
+      },
+      {
+        "method": "GET",
+        "path": "/api/uedit"
+      },
+      {
+        "method": "GET",
+        "path": "/api/articles/hot"
+      },
+      {
+        "method": "GET",
+        "path": "/api/articles"
+      }
+    ],
+    "eventsTruncated": false
+  },
+  "context_audits": {
+    "count": 264,
+    "all_closed": true,
+    "violation_count": 14,
+    "violated_context_count": 9,
+    "events": [
+      {
+        "kind": "unconfirmed-api-at-test-end",
+        "method": "GET",
+        "path": "/api/uedit",
+        "count": 2
+      },
+      {
+        "kind": "unconfirmed-api-at-context-close",
+        "method": "GET",
+        "path": "/api/articles",
+        "count": 2
+      },
+      {
+        "kind": "unconfirmed-api-at-context-close",
+        "method": "GET",
+        "path": "/api/articles/hot",
+        "count": 3
+      },
+      {
+        "kind": "unconfirmed-api-at-test-end",
+        "method": "GET",
+        "path": "/api/captcha/generate",
+        "count": 2
+      },
+      {
+        "kind": "unconfirmed-api-at-context-close",
+        "method": "GET",
+        "path": "/api/uedit",
+        "count": 2
+      },
+      {
+        "kind": "unconfirmed-api-at-test-end",
+        "method": "GET",
+        "path": "/api/articles",
+        "count": 1
+      },
+      {
+        "kind": "unconfirmed-api-at-context-close",
+        "method": "GET",
+        "path": "/api/thumb/101.png",
+        "count": 1
+      },
+      {
+        "kind": "unconfirmed-api-at-context-close",
+        "method": "GET",
+        "path": "/api/thumb/701.png",
+        "count": 1
+      }
+    ]
+  },
+  "all_spec_files_use_guard_fixture": true,
+  "notes": [
+    "Five tests ended while triggered API reads remained active.",
+    "Both existing mobile hover skips retained.",
+    "Final server audit denied 5 escaped API reads; 9 contexts recorded 14 lifecycle violations. Global teardown correctly failed beyond the 5 individual test failures."
+  ]
+}

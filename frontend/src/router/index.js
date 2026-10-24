@@ -6,6 +6,7 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { logWarning } from '@/utils/logger'
 
 /**
  * 路由配置数组
@@ -165,14 +166,26 @@ const router = createRouter({
  * 全局前置守卫
  * 处理页面标题、登录验证和权限控制
  */
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
+  let sessionReady = true
+
+  try {
+    await userStore.syncSession()
+  } catch (error) {
+    // The store already fails closed and reports the storage error. Public
+    // pages can still render; protected navigation must treat this as logged out.
+    sessionReady = false
+    logWarning('路由认证前会话同步失败，按未登录处理', {
+      message: error?.message || '未知错误'
+    })
+  }
 
   // 设置页面标题
   document.title = to.meta.title ? `${to.meta.title} - cloudQuant` : 'cloudQuant'
 
   // 需要登录的页面
-  if (to.meta.requiresAuth && !userStore.isLoggedIn) {
+  if (to.meta.requiresAuth && (!sessionReady || !userStore.isLoggedIn)) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
     return
   }
@@ -184,7 +197,7 @@ router.beforeEach((to, from, next) => {
   }
 
   // 已登录用户访问登录/注册页面
-  if (to.meta.guest && userStore.isLoggedIn) {
+  if (to.meta.guest && sessionReady && userStore.isLoggedIn) {
     next({ name: 'Home' })
     return
   }
