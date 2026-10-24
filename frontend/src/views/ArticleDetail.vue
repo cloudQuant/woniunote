@@ -76,6 +76,7 @@
               :submitting-comment="submittingComment"
               :replying-to="replyingTo"
               :submitting-reply="submittingReply"
+              :pending-vote-verifications="pendingVoteVerifications"
               @submit-comment="submitComment"
               @start-reply="startReply"
               @cancel-reply="cancelReply"
@@ -134,7 +135,7 @@ const articleBodyRef = ref(null)
 const {
   comments, newComment, submittingComment,
   replyingTo, replyContent, submittingReply,
-  totalComments,
+  totalComments, pendingVoteVerifications,
   fetchComments, submitComment,
   startReply, cancelReply, submitReply,
   agreeComment, opposeComment

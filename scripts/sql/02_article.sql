@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS `article` (
     `type` INT NOT NULL COMMENT '文章分类ID',
     `headline` VARCHAR(100) NOT NULL COMMENT '标题',
     `content` LONGTEXT COMMENT '文章内容(HTML)',
-    `thumbnail` VARCHAR(30) DEFAULT NULL COMMENT '缩略图文件名',
+    `thumbnail` VARCHAR(512) DEFAULT NULL COMMENT '缩略图文件名',
     `credit` INT DEFAULT 0 COMMENT '阅读所需积分',
     `readcount` INT DEFAULT 0 COMMENT '阅读次数',
     `replycount` INT DEFAULT 0 COMMENT '评论数',

@@ -112,10 +112,10 @@
           label-position="left"
           class="login-form"
         >
-          <el-form-item label="登录邮箱：" prop="username">
+          <el-form-item label="登录用户名：" prop="username">
             <el-input 
               v-model="loginForm.username" 
-              placeholder="请输入你的邮箱地址"
+              placeholder="请输入用户名"
               size="large"
             />
           </el-form-item>
@@ -218,12 +218,12 @@ const loginForm = reactive({
 // 表单验证规则
 const loginRules = {
   username: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 50, message: '用户名长度在 3 到 50 个字符', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+    { min: 6, max: 32, message: '密码长度在 6 到 32 个字符', trigger: 'blur' }
   ],
   captchaCode: [
     { required: true, message: '请输入验证码', trigger: 'blur' }
@@ -354,6 +354,7 @@ async function handleLogin() {
       loginForm.captchaCode = ''
     } catch (error) {
       ElMessage.error(error.message || '登录失败')
+      loginForm.captchaCode = ''
       // 登录失败后刷新验证码
       refreshCaptcha()
     } finally {
@@ -387,10 +388,18 @@ function handleUserCommand(command) {
       router.push({ name: 'AdminDashboard' })
       break
     case 'logout':
-      userStore.logout()
-      ElMessage.success('已退出登录')
-      router.push({ name: 'Home' })
-      break
+      return handleLogout()
+  }
+}
+
+async function handleLogout() {
+  const logoutRequest = userStore.logout()
+  router.push({ name: 'Home' })
+  const result = await logoutRequest
+  if (result?.revoked) {
+    ElMessage.success('已退出登录')
+  } else {
+    ElMessage.warning('本地已退出，但服务端会话撤销未确认，请重新登录确认。')
   }
 }
 </script>
@@ -657,11 +666,14 @@ function handleUserCommand(command) {
 .captcha-row {
   display: flex;
   align-items: center;
+  width: 100%;
+  min-width: 0;
   gap: var(--wn-space-4);
 }
 
 .captcha-input {
   flex: 1;
+  min-width: 0;
 }
 
 .captcha-img {
@@ -684,5 +696,23 @@ function handleUserCommand(command) {
 
 .login-footer .el-button {
   min-width: 80px;
+}
+
+@media (max-width: 768px) {
+  .login-form :deep(.el-form-item) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .login-form :deep(.el-form-item__label) {
+    width: 100% !important;
+    justify-content: flex-start;
+    padding: 0 0 var(--wn-space-2);
+  }
+
+  .login-form :deep(.el-form-item__content) {
+    width: 100%;
+    margin-left: 0 !important;
+  }
 }
 </style>

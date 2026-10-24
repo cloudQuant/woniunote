@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+
+CONDA="/Users/yunjinqi/opt/anaconda3/bin/conda"
+if [ ! -x "$CONDA" ]; then
+  echo "ERROR: Anaconda conda executable is unavailable." >&2
+  exit 2
+fi
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
+LAUNCHER_PATH="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)/launcher"
+exec "$CONDA" run --no-capture-output -n base python \
+  "$SCRIPT_DIR/launcher.py" --launcher-path "$LAUNCHER_PATH" "$@"

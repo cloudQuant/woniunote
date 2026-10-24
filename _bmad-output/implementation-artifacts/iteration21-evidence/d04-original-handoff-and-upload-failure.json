@@ -1,0 +1,39 @@
+{
+  "status": "PARTIAL",
+  "scope": "D04 original-v2 browser handoff and stored draft only; not candidate formal auth or cross-version acceptance",
+  "recorded_at_utc": "2026-10-24T02:15:03.299299+00:00",
+  "origin": "https://localhost:18443",
+  "user_completed_credentials_and_visual_captcha": true,
+  "ui_saved_notice": "草稿已保存",
+  "editor_closed_after_initial_save": true,
+  "article_id": 1,
+  "user_id": 2,
+  "category_id": 808,
+  "drafted": 1,
+  "hidden": 0,
+  "headline_sha256": "ffd6b8c0e1cd5cbd1890acb2a8ac3fbffee924f309b0ffdfd6f994cbddecb0b1",
+  "stored_content_sha256": "47960e88170aa746101f0e90d0dce25557e710c3e16aaccf0599880dd2c9b107",
+  "stored_content_bytes": 359,
+  "article_count": 1,
+  "backend_sha256": "1935a00eda4f4b61e2728637fbe5d170c5ab78b1e3889185367a7a3eeb32021f",
+  "frontend_index_sha256": "7c4cfa9910ec4206b589e8b95666d5e74b0ea14427b60a71add8b1595e6cf0f5",
+  "runtime_config_sha256": "4dd82289bcba52b6c24c66a15243613abeb2f0e476c7d41feb55e175de8d9987",
+  "schema": "woniunote_iter21_3956dcbf124d19e5",
+  "database_host": "lima-woniunote-iter21-systemd-20261024t0028z",
+  "screenshots": {
+    "d04-original-draft-saved.png": "c37a24eae70d7b2ce1ebed3f598df264f5bf0eef91c6f41df586ecfaad21f41d",
+    "d04-original-upload-error.png": "9b5e5dd7ad6e173d66578561f57cccef7b6a83b3b1e466aa7334817ec8d7ba85"
+  },
+  "upload_attempt": {
+    "status": "FAIL",
+    "http_status": 500,
+    "endpoint": "POST /api/upload/image",
+    "sample": "frontend/public/logo.png",
+    "sample_sha256": "9802f742ad084d11f8de174b1a0906c0dd43583b02d66ae523788e17d06c6ee3",
+    "root_cause_observed": "Nginx worker cannot traverse root mode-0700 original-v2-runtime to its client-body directory; nginx error reports permission denied before upstream",
+    "application_backend_request_not_proven": true,
+    "repair_status": "NOT_RUN"
+  },
+  "secrets_tokens_passwords_or_article_body_recorded": false,
+  "maintenance_migration_and_candidate_switch": "NOT_RUN"
+}

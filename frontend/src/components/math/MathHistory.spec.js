@@ -137,6 +137,27 @@ describe('MathHistory.vue', () => {
     expect(rendered[0].findAll('.cell')[4].find('span').classes()).toContain('text-danger')
   })
 
+  it('显示合法的零题训练记录及零正确率', () => {
+    const wrapper = mountHistory({
+      history: [{
+        created_at: '2026-01-04T10:00:00Z',
+        difficulty: 1,
+        total_questions: 0,
+        correct_count: 0,
+        wrong_count: 0,
+        accuracy: 0,
+        duration_seconds: 0
+      }],
+      historyTotal: 1,
+      pageSize: 10
+    })
+    const cells = wrapper.findAll('.el-table__row')[0].findAll('.cell')
+    expect(cells[2].text()).toBe('0')
+    expect(cells[3].text()).toBe('0')
+    expect(cells[4].text()).toBe('0.0%')
+    expect(cells[5].text()).toBe('0s')
+  })
+
   it('隔行样式通过 tableRowClassName 生效', () => {
     const wrapper = mountHistory({ history: ROWS, historyTotal: 3 })
     const table = wrapper.findComponent({ name: 'el-table' })

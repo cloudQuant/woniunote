@@ -1,0 +1,122 @@
+{
+  "run_id": "20261024T004412Z-db7edf88e3ce",
+  "case": "redis-refresh-eval-delay",
+  "attempt_id": "70dd2b773e8d",
+  "mysql": {
+    "matched": 0,
+    "replies_dropped": 0,
+    "dropped_connection_closes": 0,
+    "replies_delayed": 0,
+    "delayed_replies_forwarded": 0,
+    "protocol_gaps": 0,
+    "connect_errors": 0,
+    "accepted_connections": 0,
+    "upstream_connections": 0,
+    "mysql_client_packets": 2,
+    "mysql_handshake_packets": 0,
+    "mysql_tls_connections": 0,
+    "mysql_unsupported_connections": 0,
+    "mysql_command_packets": 2,
+    "mysql_query_packets": 2,
+    "mysql_commit_query_packets": 0,
+    "mysql_statement_prepare_packets": 0,
+    "mysql_statement_execute_packets": 0,
+    "mysql_commit_candidates": 0,
+    "mysql_command_codes": {
+      "0x03": 2
+    },
+    "lifetime": {
+      "matched": 0,
+      "replies_dropped": 0,
+      "dropped_connection_closes": 0,
+      "replies_delayed": 0,
+      "delayed_replies_forwarded": 0,
+      "protocol_gaps": 0,
+      "connect_errors": 0,
+      "accepted_connections": 4,
+      "upstream_connections": 4,
+      "mysql_client_packets": 11,
+      "mysql_handshake_packets": 4,
+      "mysql_tls_connections": 0,
+      "mysql_unsupported_connections": 0,
+      "mysql_command_packets": 7,
+      "mysql_query_packets": 7,
+      "mysql_commit_query_packets": 0,
+      "mysql_statement_prepare_packets": 0,
+      "mysql_statement_execute_packets": 0,
+      "mysql_commit_candidates": 0,
+      "mysql_command_codes": {
+        "0x03": 7
+      }
+    }
+  },
+  "redis": {
+    "matched": 1,
+    "replies_dropped": 0,
+    "dropped_connection_closes": 0,
+    "replies_delayed": 1,
+    "delayed_replies_forwarded": 1,
+    "protocol_gaps": 0,
+    "connect_errors": 0,
+    "accepted_connections": 0,
+    "upstream_connections": 0,
+    "mysql_client_packets": 0,
+    "mysql_handshake_packets": 0,
+    "mysql_tls_connections": 0,
+    "mysql_unsupported_connections": 0,
+    "mysql_command_packets": 0,
+    "mysql_query_packets": 0,
+    "mysql_commit_query_packets": 0,
+    "mysql_statement_prepare_packets": 0,
+    "mysql_statement_execute_packets": 0,
+    "mysql_commit_candidates": 0,
+    "mysql_command_codes": {},
+    "lifetime": {
+      "matched": 1,
+      "replies_dropped": 0,
+      "dropped_connection_closes": 0,
+      "replies_delayed": 1,
+      "delayed_replies_forwarded": 1,
+      "protocol_gaps": 0,
+      "connect_errors": 0,
+      "accepted_connections": 2,
+      "upstream_connections": 2,
+      "mysql_client_packets": 0,
+      "mysql_handshake_packets": 0,
+      "mysql_tls_connections": 0,
+      "mysql_unsupported_connections": 0,
+      "mysql_command_packets": 0,
+      "mysql_query_packets": 0,
+      "mysql_commit_query_packets": 0,
+      "mysql_statement_prepare_packets": 0,
+      "mysql_statement_execute_packets": 0,
+      "mysql_commit_candidates": 0,
+      "mysql_command_codes": {}
+    }
+  },
+  "proxy_endpoints": {
+    "mysql": {
+      "listen_host": "127.0.0.1",
+      "listen_port": 58647,
+      "upstream_host": "127.0.0.1",
+      "upstream_port": 55923
+    },
+    "redis": {
+      "listen_host": "127.0.0.1",
+      "listen_port": 58648,
+      "upstream_host": "127.0.0.1",
+      "upstream_port": 55946
+    }
+  },
+  "secondary_backend_config_endpoints": {
+    "mysql": {
+      "host": "127.0.0.1",
+      "port": 58647
+    },
+    "redis": {
+      "host": "127.0.0.1",
+      "port": 58648
+    }
+  },
+  "payloads_recorded": false
+}

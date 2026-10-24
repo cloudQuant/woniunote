@@ -1,0 +1,12 @@
+{
+  "command": [
+    "bash",
+    "/tmp/woniunote-iter21-functional-13/backend_cpp/tests/integration/run_integration.sh"
+  ],
+  "source_manifest": "functional-13-source-manifest.json",
+  "scope": "one health pytest, real migrations, 4 real auth + 2 real business Chromium cases; not a full HTTP repeat",
+  "exit_code": 1,
+  "seconds": 87.68,
+  "log": "/tmp/woniunote-iter21-evidence/functional13-real-root.log",
+  "log_sha256": "4111dc852e21e1288c1b7c3d75effd4d0cfd8a9f8547e3cdb9b0b0d5f54e5dea"
+}

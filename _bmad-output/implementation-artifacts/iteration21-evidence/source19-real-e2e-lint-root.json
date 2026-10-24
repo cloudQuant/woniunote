@@ -1,0 +1,13 @@
+{
+  "command": [
+    "./node_modules/.bin/eslint",
+    "e2e-real/auth.real.spec.js",
+    "e2e-real/business.real.spec.js",
+    "e2e-real/support/realBusinessHelpers.js"
+  ],
+  "cwd": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-19/frontend",
+  "exit": 0,
+  "seconds": 0.961,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-real-e2e-lint-root.log",
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

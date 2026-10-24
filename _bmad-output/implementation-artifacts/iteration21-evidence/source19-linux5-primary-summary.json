@@ -1,0 +1,242 @@
+{
+  "status": "PASS",
+  "source_manifest_sha256": "cdec1ee82d7746bde149f4a84f8760481984edd741e6f861581f1fee98d5bb23",
+  "backend_source_digest": "a92a5eba8033e1de43ae3d66ee9f0b7ce5aae995470ebf9147600425f8f06cca",
+  "scope": "two Linux test-variant functional HTTP and isolated migrations; does not include formal visual CAPTCHA or D04",
+  "runs": [
+    {
+      "builder": "system-libs",
+      "run_id": "20261024T004108Z-dc513aafdf45",
+      "exit": 0,
+      "tests": 63,
+      "passed": 63,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 183.013,
+      "log_sha256": "5bd4a43a76d2e32f4c560fc005b1a080985f909628c2a15977fc391afbae759c",
+      "test_summary_sha256": "d9560d330805409cd7dcebaaac600c3fd8b2a2a90b3592dd5cc9e746785a0542",
+      "runtime": {
+        "run_id": "20261024T004108Z-dc513aafdf45",
+        "instance": "primary",
+        "backend_container_id": "1024e2c90429d5d21200a6828ee751ef68959d2000ff9a3c62ac35853455b580",
+        "binary_sha256": "59caddb5924a294bbfaefd428e3e58b2f1240d08fc7a1505c2c419da8d28c2f5",
+        "runtime_image": "woniunote.iter21/backend-runtime:ubuntu22.04-iter21",
+        "runtime_image_id": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee",
+        "base_image": "woniunote.iter21/system-libs:ubuntu22.04",
+        "base_image_id": "sha256:1ab30b868e397d3575e7f7d491e530e25bdadad33bd7d5bdcdc0e20dc4de7685",
+        "runtime_spec_sha256": "1a9d3db90020ccfe075a208a114c4bcf2c72552c3dd2a305d613481b0a8c2a3c",
+        "http_port": 52406,
+        "credentials_included": false
+      },
+      "migrations": {
+        "math-training-migration-summary.json": {
+          "result": "passed",
+          "sha256": "f784b5a312a3e4458ce956feddab4ff850cd42158bc4cf3c87f19e71b151d2a1"
+        },
+        "comment-vote-migration-summary.json": {
+          "result": "passed",
+          "sha256": "0c438a71415977d99961a1267d483cfbda02f334900c1520073ad8802184730f"
+        },
+        "comment-vote-migration-live-summary.json": {
+          "result": "passed",
+          "sha256": "1967ca83fbf0eec29dbff3011f754b9ed7f34a5c28a54b1525066380f392d23d"
+        },
+        "article-thumbnail-migration-summary.json": {
+          "result": "passed",
+          "sha256": "b663e6a7fdc6a57203ea18e15af30c84f16d17273f4188e61b24a6ca55252103"
+        }
+      },
+      "transport_evidence": [
+        {
+          "file": "iter21-transport-mysql-commit-ack-drop-4fa92f3abb21.json",
+          "sha256": "a251539ff0b378edc60691007f44fb0f953177a208ff6c53c5aacf387650cd44",
+          "keys": [
+            "attempt_id",
+            "case",
+            "mysql",
+            "payloads_recorded",
+            "proxy_endpoints",
+            "redis",
+            "run_id",
+            "secondary_backend_config_endpoints"
+          ]
+        },
+        {
+          "file": "iter21-transport-mysql-training-commit-ack-drop-b888aeb303a5.json",
+          "sha256": "c831a3a14d5827bac0371d576d1dd97d042c12d5c1b195ab7a972ddc8f1810d3",
+          "keys": [
+            "attempt_id",
+            "case",
+            "mysql",
+            "payloads_recorded",
+            "proxy_endpoints",
+            "redis",
+            "run_id",
+            "secondary_backend_config_endpoints"
+          ]
+        },
+        {
+          "file": "iter21-transport-mysql-vote-commit-ack-drop-4758bfce1982.json",
+          "sha256": "106100683a976daf846ba24c90396885b4102935a6e80044a56f477a06f9ef69",
+          "keys": [
+            "attempt_id",
+            "case",
+            "mysql",
+            "payloads_recorded",
+            "proxy_endpoints",
+            "redis",
+            "run_id",
+            "secondary_backend_config_endpoints"
+          ]
+        },
+        {
+          "file": "iter21-transport-redis-login-set-drop-818dcae6f1f9.json",
+          "sha256": "857f3a0270f9d810b9037ad21d389842caa1c153af11c45dbacb58b850ac3edf",
+          "keys": [
+            "attempt_id",
+            "case",
+            "mysql",
+            "payloads_recorded",
+            "proxy_endpoints",
+            "redis",
+            "run_id",
+            "secondary_backend_config_endpoints"
+          ]
+        },
+        {
+          "file": "iter21-transport-redis-refresh-eval-delay-87cbe812dd82.json",
+          "sha256": "5ae7189042da31e073757c38830cb2cd0f167fff1f2cb9c96fb0182d05f8a275",
+          "keys": [
+            "attempt_id",
+            "case",
+            "mysql",
+            "payloads_recorded",
+            "proxy_endpoints",
+            "redis",
+            "run_id",
+            "secondary_backend_config_endpoints"
+          ]
+        }
+      ],
+      "owned_containers_remaining": 0,
+      "owned_volumes_remaining": 0
+    },
+    {
+      "builder": "vcpkg",
+      "run_id": "20261024T004412Z-db7edf88e3ce",
+      "exit": 0,
+      "tests": 63,
+      "passed": 63,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 193.141,
+      "log_sha256": "ede1b3146ade794c14cc26360dd36acae12d95d53879847a7e68fcbd45460bc6",
+      "test_summary_sha256": "d9560d330805409cd7dcebaaac600c3fd8b2a2a90b3592dd5cc9e746785a0542",
+      "runtime": {
+        "run_id": "20261024T004412Z-db7edf88e3ce",
+        "instance": "primary",
+        "backend_container_id": "8c1d14bda4262933b51091c8b0706931c965d074a82ed67414f7974ed0dbd677",
+        "binary_sha256": "1d57719c5dd52e28ef0078fb300ae1694f2028aa607a1930a1ba1e939dcff399",
+        "runtime_image": "woniunote.iter21/backend-runtime:ubuntu22.04-iter21",
+        "runtime_image_id": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee",
+        "base_image": "woniunote.iter21/system-libs:ubuntu22.04",
+        "base_image_id": "sha256:1ab30b868e397d3575e7f7d491e530e25bdadad33bd7d5bdcdc0e20dc4de7685",
+        "runtime_spec_sha256": "1a9d3db90020ccfe075a208a114c4bcf2c72552c3dd2a305d613481b0a8c2a3c",
+        "http_port": 55905,
+        "credentials_included": false
+      },
+      "migrations": {
+        "math-training-migration-summary.json": {
+          "result": "passed",
+          "sha256": "dfefab35ff6477db4e81d9b7dc0e1b0822a606e502ad100bbd25df4186c7d861"
+        },
+        "comment-vote-migration-summary.json": {
+          "result": "passed",
+          "sha256": "5349a1fbc9c4c2c2e8eaac98f100e778aea4273142de1d0a5a2aa67830b692fa"
+        },
+        "comment-vote-migration-live-summary.json": {
+          "result": "passed",
+          "sha256": "3ce7250fa93998784544be7418c1c04965fe3c33fa1ef54d620f4dace3f57f90"
+        },
+        "article-thumbnail-migration-summary.json": {
+          "result": "passed",
+          "sha256": "1060e9deed9625d7deaf199658459fa6d7d1b4260f192f434475b065fb1ae0db"
+        }
+      },
+      "transport_evidence": [
+        {
+          "file": "iter21-transport-mysql-commit-ack-drop-44919adb75d7.json",
+          "sha256": "4766751e5956c7c7ecf321cf8d3fc63858bfa0657f35fc3b5e44cafd18b2f18b",
+          "keys": [
+            "attempt_id",
+            "case",
+            "mysql",
+            "payloads_recorded",
+            "proxy_endpoints",
+            "redis",
+            "run_id",
+            "secondary_backend_config_endpoints"
+          ]
+        },
+        {
+          "file": "iter21-transport-mysql-training-commit-ack-drop-dfa9791b25cc.json",
+          "sha256": "e17c3cc0c9b6723a53f51d8fc08ccbd2f50a0ca9f50864de356dac8e932ed8c1",
+          "keys": [
+            "attempt_id",
+            "case",
+            "mysql",
+            "payloads_recorded",
+            "proxy_endpoints",
+            "redis",
+            "run_id",
+            "secondary_backend_config_endpoints"
+          ]
+        },
+        {
+          "file": "iter21-transport-mysql-vote-commit-ack-drop-9353bee67e21.json",
+          "sha256": "d6e19ac0aa4f59ccfd7b461c5a1fd08b05927d9c3baf5ee8ecbe8b25c542c615",
+          "keys": [
+            "attempt_id",
+            "case",
+            "mysql",
+            "payloads_recorded",
+            "proxy_endpoints",
+            "redis",
+            "run_id",
+            "secondary_backend_config_endpoints"
+          ]
+        },
+        {
+          "file": "iter21-transport-redis-login-set-drop-1ffff7d15961.json",
+          "sha256": "97a48faf06258aab84850ae93e473a5be17dabeee47a951eb2303e83b14ea252",
+          "keys": [
+            "attempt_id",
+            "case",
+            "mysql",
+            "payloads_recorded",
+            "proxy_endpoints",
+            "redis",
+            "run_id",
+            "secondary_backend_config_endpoints"
+          ]
+        },
+        {
+          "file": "iter21-transport-redis-refresh-eval-delay-70dd2b773e8d.json",
+          "sha256": "d782e1f4aed502c2407886f1ba03b6a6abcc654066796822734344e5ce6f4b01",
+          "keys": [
+            "attempt_id",
+            "case",
+            "mysql",
+            "payloads_recorded",
+            "proxy_endpoints",
+            "redis",
+            "run_id",
+            "secondary_backend_config_endpoints"
+          ]
+        }
+      ],
+      "owned_containers_remaining": 0,
+      "owned_volumes_remaining": 0
+    }
+  ]
+}

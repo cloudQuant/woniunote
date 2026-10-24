@@ -1,0 +1,47 @@
+{
+  "status": "PASS_FOR_PAIR_ADMISSION_WITH_COMPONENT_REUSE",
+  "from": "de510038840d29aa6be5a6806d6c417873dacd16",
+  "to": "3b189b0b7664de480c7768f70654dd6050409840",
+  "reverse_pair_included": true,
+  "actual_ui": {
+    "new_frontend_existing_backend": "Exact candidate5 vendor HTTP hash; formal session retained; title and editor body input survived reload; UI update success independently persisted",
+    "formal_login": "d04-candidate5-login-metadata.json",
+    "editor_screenshot_sha256": "921597014bb0e7682b082b28a8e4e6b24b08616911a74a879dd8c99997bb79d0",
+    "write_screenshot_sha256": "33298b531a4cf6faf1d058e175c3fe3e04b608978303f350f964b40bc54dd503"
+  },
+  "component_reuse": {
+    "backend_tree_and_schema_tree_identical_to4": true,
+    "frontend_auth_api_store_storage_identical_to4": true,
+    "frozen_identity": "d04-candidate5-frozen.json",
+    "prior_pair_compatibility": "d04-final4-compatibility-evidence.json",
+    "prior_pair_sha256": "e072e2ccd896f573b647ea1483bd8c7c314266f89777d342eae6e278e8e1b8e2",
+    "scope": "Old-frontend/new-backend and expired-access refresh admission reuse unchanged backend/API/schema/auth components with full tree/blob identity, prior actual cross-version evidence, and current new-frontend/existing-backend real UI. No newly compiled candidate5 process claimed before manager deployment; post-deploy binary hash and UI readback are separate."
+  },
+  "source28_regression": {
+    "strict_mock": "266 passed / 0 failed / 2 existing skipped; 268 contexts zero violations",
+    "real_browser": "6 passed; unchanged backend10 binary",
+    "source_manifest_sha256": "48b35a289eb05791a30c0b5c2c1fa5f89ac5a4c1a6eb80aa5c1443e1d5591a65"
+  },
+  "new_write_readback": {
+    "file": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T061109Z-56507-final5-preflight-new-write.json",
+    "sha256": "1d4caa1b38af7e3692506e61eb7c02ab938a2ef58fe50f6e577c88a481ad6a28",
+    "article2_title_sha256": "556efb698fc74167d0a7ae3becbdb538261ee06884c72e55aef69a71e2cd8994",
+    "article2_content_sha256": "f6b45f6150b76c286df5aec8c934cec0ac71e41fe4329221ea8c1f7971fe00fa",
+    "other_business_sections_unchanged": [
+      "comments",
+      "votes",
+      "math_records",
+      "wrong_answers",
+      "schema_columns",
+      "table_counts",
+      "upload"
+    ]
+  },
+  "runtime_config_sha256": "3080c4cad9d00db9e018ca009476f7e848a1ffec2962cb8662b768c548e0e32d",
+  "nginx_restored_before_manager": "c39445bad1b9dd1bb4c3b800d69ad9d72257a8556b152a6b80fff27fa15c5d0a",
+  "limitations": [
+    "No production or remote CI acceptance",
+    "Controlled regression does not certify external MathJax CDN availability",
+    "No new forced-expiry run for unchanged candidate5 auth components"
+  ]
+}

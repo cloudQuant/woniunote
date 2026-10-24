@@ -5,6 +5,7 @@
 
 #include "ArticleAuthorService.h"
 #include "ArticleServiceLogic.h"
+#include "core/article_thumbnail.h"
 #include "core/database.h"
 #include "core/logger.h"
 #include "core/response.h"
@@ -141,7 +142,20 @@ void ArticleAuthorService::createArticle(const std::string& userId,
     std::string headline = json["headline"].asString();
     int type = json["type"].asInt();
     std::string content = json.get("content", "").asString();
-    std::string thumbnail = json.get("thumbnail", "").asString();
+    std::string thumbnail;
+    if (json.isMember("thumbnail")) {
+        if (!json["thumbnail"].isString()) {
+            callback(Response::badRequest("封面地址无效"));
+            return;
+        }
+        const auto normalizedThumbnail = core::normalizeArticleThumbnail(
+            json["thumbnail"].asString());
+        if (!normalizedThumbnail) {
+            callback(Response::badRequest("封面地址无效"));
+            return;
+        }
+        thumbnail = *normalizedThumbnail;
+    }
     int credit = json.get("credit", 0).asInt();
     int drafted = json.get("drafted", 0).asInt();
 
@@ -185,11 +199,12 @@ void ArticleAuthorService::updateArticle(const std::string& userId,
                                          const Json::Value& json,
                                          ArticleAuthorService::ResponseCallback callback)
 {
+    const bool hasThumbnail = json.isMember("thumbnail");
     auto dbClient = Database::getClient();
 
     dbClient->execSqlAsync(
         "SELECT userid, drafted FROM article WHERE articleid = ?",
-        [callback, id, userId, json, dbClient](const orm::Result& result) {
+        [callback, id, userId, json, dbClient, hasThumbnail](const orm::Result& result) {
             if (result.size() == 0) {
                 callback(Response::notFound("文章不存在"));
                 return;
@@ -204,6 +219,20 @@ void ArticleAuthorService::updateArticle(const std::string& userId,
             std::string headline = json.get("headline", "").asString();
             std::string content = json.get("content", "").asString();
             int type = json.get("type", 0).asInt();
+            std::string thumbnail;
+            if (hasThumbnail) {
+                if (!json["thumbnail"].isString()) {
+                    callback(Response::badRequest("封面地址无效"));
+                    return;
+                }
+                const auto normalizedThumbnail = core::normalizeArticleThumbnail(
+                    json["thumbnail"].asString());
+                if (!normalizedThumbnail) {
+                    callback(Response::badRequest("封面地址无效"));
+                    return;
+                }
+                thumbnail = *normalizedThumbnail;
+            }
             // drafted carries the draft/publish transition: the author UI sends
             // drafted=0 when publishing an existing draft. Leaving it out of the
             // UPDATE kept every edited article a draft, so "save draft, edit
@@ -213,15 +242,28 @@ void ArticleAuthorService::updateArticle(const std::string& userId,
                               ? json["drafted"].asInt()
                               : result[0]["drafted"].as<int>();
 
+            auto onUpdate = [callback](const orm::Result&) {
+                callback(Response::ok("更新成功"));
+            };
+            auto onError = [callback](const orm::DrogonDbException& e) {
+                Logger::error("Update error: " + std::string(e.base().what()));
+                callback(Response::serverError("更新失败"));
+            };
+
+            if (hasThumbnail) {
+                dbClient->execSqlAsync(
+                    "UPDATE article SET headline = ?, content = ?, type = ?, drafted = ?, thumbnail = ?, updatetime = NOW() WHERE articleid = ?",
+                    onUpdate,
+                    onError,
+                    headline, content, type, drafted, thumbnail, id
+                );
+                return;
+            }
+
             dbClient->execSqlAsync(
                 "UPDATE article SET headline = ?, content = ?, type = ?, drafted = ?, updatetime = NOW() WHERE articleid = ?",
-                [callback](const orm::Result&) {
-                    callback(Response::ok("更新成功"));
-                },
-                [callback](const orm::DrogonDbException& e) {
-                    Logger::error("Update error: " + std::string(e.base().what()));
-                    callback(Response::serverError("更新失败"));
-                },
+                onUpdate,
+                onError,
                 headline, content, type, drafted, id
             );
         },

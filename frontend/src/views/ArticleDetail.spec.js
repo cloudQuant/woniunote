@@ -219,7 +219,7 @@ describe('ArticleDetail.vue', () => {
     expect(m.commentApi.create).not.toHaveBeenCalled()
   })
 
-  it('agree/oppose increment counts when logged in, gate when not', async () => {
+  it('agree/oppose reload server counts when logged in, gate when not', async () => {
     const wrapper = mount(ArticleDetail, mountOptions())
     await flushPromises()
     const c = { commentid: 10, agreecount: 0, opposecount: 0 }
@@ -229,9 +229,10 @@ describe('ArticleDetail.vue', () => {
     expect(m.commentApi.agree).not.toHaveBeenCalled()
     m.userReactive.isLoggedIn = true
     await wrapper.vm.agreeComment(c)
-    expect(c.agreecount).toBe(1)
+    expect(c.agreecount).toBe(0)
     await wrapper.vm.opposeComment(c)
-    expect(c.opposecount).toBe(1)
+    expect(c.opposecount).toBe(0)
+    expect(m.commentApi.getByArticle).toHaveBeenCalledTimes(3)
   })
 
   it('editArticle navigates to edit route', async () => {

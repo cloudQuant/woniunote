@@ -1,209 +1,87 @@
-"""
-HTTP black-box integration tests for the WoniuNote C++ Drogon backend.
+"""Basic HTTP contracts against the real isolated C++ backend."""
 
-These run against a live backend instance (started by run_integration.sh) that
-is pointed at an isolated `woniunote_test` database. They assert routing,
-auth-filter behaviour, the unified response envelope + HTTP status alignment,
-and rate limiting — paths that the C++ unit tests cannot reach.
-
-Base URL comes from WONIUNOTE_TEST_BASE_URL (e.g. http://127.0.0.1:5273).
-"""
-
-import os
-import time
-import uuid
-
-import pytest
 import requests
 
-BASE_URL = os.environ.get("WONIUNOTE_TEST_BASE_URL", "http://127.0.0.1:5273").rstrip("/")
-TIMEOUT = 10
-# Strict mode (release/CI): a case that cannot observe the real behaviour must
-# fail instead of skipping. Local debug runs may leave it off.
-STRICT = os.environ.get("WONIUNOTE_TEST_STRICT") == "1"
+from iter21_support import TIMEOUT, challenge, response_json, require_status, url
 
-
-def url(path: str) -> str:
-    return f"{BASE_URL}{path}"
-
-
-def _envelope_ok(body):
-    """A valid response envelope has integer code + string message."""
-    assert isinstance(body, dict), f"expected JSON object, got {type(body)}"
-    assert "code" in body and isinstance(body["code"], int)
-    assert "message" in body and isinstance(body["message"], str)
-
-
-# --------------------------------------------------------------------------
-# Liveness
-# --------------------------------------------------------------------------
 
 def test_health_is_up():
-    r = requests.get(url("/health"), timeout=TIMEOUT)
-    assert r.status_code == 200
-    body = r.json()
+    response = requests.get(url("/health"), timeout=TIMEOUT)
+    body = require_status(response, 200)
     assert body.get("status") == "healthy"
 
 
-# --------------------------------------------------------------------------
-# AuthFilter: protected routes reject missing/invalid tokens with 401
-# --------------------------------------------------------------------------
+def test_article_types_preserve_seeded_chinese_names():
+    response = requests.get(url("/api/articles/types"), timeout=TIMEOUT)
+    body = require_status(response, 200)
+    assert body.get("code") == 200
 
-def test_me_without_token_is_401():
-    r = requests.get(url("/api/auth/me"), timeout=TIMEOUT)
-    assert r.status_code == 401
-    _envelope_ok(r.json())
+    data = body.get("data")
+    assert isinstance(data, dict)
+    types = data.get("types")
+    assert isinstance(types, dict)
+    assert types.get("1") == "交易策略"
+    assert types.get("2") == "量化框架"
+    assert types.get("101") == "CTA策略"
 
 
-def test_me_with_malformed_authorization_is_401():
-    r = requests.get(
+def test_protected_auth_endpoint_rejects_missing_and_invalid_tokens():
+    missing = requests.get(url("/api/auth/me"), timeout=TIMEOUT)
+    assert missing.status_code == 401
+
+    malformed = requests.get(
         url("/api/auth/me"),
-        headers={"Authorization": "NotBearer xyz"},
+        headers={"Authorization": "NotBearer invalid"},
         timeout=TIMEOUT,
     )
-    assert r.status_code == 401
+    assert malformed.status_code == 401
 
-
-def test_me_with_garbage_bearer_token_is_401():
-    r = requests.get(
+    garbage = requests.get(
         url("/api/auth/me"),
         headers={"Authorization": "Bearer not.a.real.jwt"},
         timeout=TIMEOUT,
     )
-    assert r.status_code == 401
+    assert garbage.status_code == 401
 
 
-# --------------------------------------------------------------------------
-# Registration: real DB write through the full stack
-# --------------------------------------------------------------------------
-
-def test_register_new_user_succeeds_with_envelope():
-    username = f"itest_{uuid.uuid4().hex[:12]}"
-    r = requests.post(
-        url("/api/auth/register"),
-        json={"username": username, "password": "Str0ng!Pass", "nickname": "itest"},
+def test_challenge_test_hook_requires_current_run_identity():
+    response = requests.post(
+        url("/api/captcha/test/challenge"),
+        json={},
+        headers={"X-Woniunote-Test-Run": "not-the-current-run"},
         timeout=TIMEOUT,
     )
-    assert r.status_code == 200, r.text
-    body = r.json()
-    _envelope_ok(body)
-    assert body["code"] == 200
-    # The created user is returned without a password field.
-    data = body.get("data") or {}
-    assert "password" not in data
+    assert response.status_code == 404
+    # The failed request must not have returned a challenge body.
+    body = response_json(response)
+    assert "captcha_code" not in body
+    assert "captcha_id" not in body
 
 
-def test_register_duplicate_username_is_400():
-    username = f"itest_{uuid.uuid4().hex[:12]}"
-    payload = {"username": username, "password": "Str0ng!Pass"}
+def test_auth_register_duplicate_and_invalid_payload_statuses():
+    captcha_id, captcha_code = challenge()
+    assert captcha_id and captcha_code
+
+    username = f"i21_dup_{captcha_id[:12]}"
+    payload = {"username": username, "password": "Iter21!StrongPass"}
     first = requests.post(url("/api/auth/register"), json=payload, timeout=TIMEOUT)
-    assert first.status_code == 200, first.text
+    first_body = require_status(first, 200)
+    assert first_body.get("code") == 200
 
-    dup = requests.post(url("/api/auth/register"), json=payload, timeout=TIMEOUT)
-    # Duplicate must be a real 400, not a 200 with an error code in the body.
-    assert dup.status_code == 400, dup.text
-    _envelope_ok(dup.json())
+    duplicate = requests.post(url("/api/auth/register"), json=payload, timeout=TIMEOUT)
+    duplicate_body = require_status(duplicate, 400)
+    assert duplicate_body.get("code") == 400
 
+    missing = requests.post(
+        url("/api/auth/register"), json={"username": "only"}, timeout=TIMEOUT
+    )
+    missing_body = require_status(missing, 400)
+    assert missing_body.get("code") == 400
 
-def test_register_missing_fields_is_400():
-    r = requests.post(url("/api/auth/register"), json={"username": "only"}, timeout=TIMEOUT)
-    assert r.status_code == 400
-    _envelope_ok(r.json())
-
-
-def test_register_invalid_json_is_400():
-    r = requests.post(
+    malformed = requests.post(
         url("/api/auth/register"),
         data="not-json",
         headers={"Content-Type": "application/json"},
         timeout=TIMEOUT,
     )
-    assert r.status_code == 400
-
-
-# --------------------------------------------------------------------------
-# Article detail navigation: same type, public-only, articleid sequence
-# --------------------------------------------------------------------------
-
-def test_article_detail_navigation_uses_public_same_type_neighbours():
-    r = requests.get(url("/api/articles/15004"), timeout=TIMEOUT)
-    assert r.status_code == 200, r.text
-    body = r.json()
-    _envelope_ok(body)
-    assert body["code"] == 200
-
-    navigation = body["data"]["navigation"]
-    assert navigation["previous"] == {
-        "articleid": 15001,
-        "headline": "导航序号-第一篇",
-    }
-    assert navigation["next"] == {
-        "articleid": 15006,
-        "headline": "导航序号-最后篇",
-    }
-    assert set(navigation["previous"]) == {"articleid", "headline"}
-    assert set(navigation["next"]) == {"articleid", "headline"}
-
-
-@pytest.mark.parametrize(
-    ("article_id", "expected_previous", "expected_next"),
-    [
-        (15001, None, {"articleid": 15004, "headline": "导航序号-中间篇"}),
-        (15006, {"articleid": 15004, "headline": "导航序号-中间篇"}, None),
-    ],
-)
-def test_article_detail_navigation_returns_null_at_type_boundaries(
-    article_id, expected_previous, expected_next
-):
-    r = requests.get(url(f"/api/articles/{article_id}"), timeout=TIMEOUT)
-    assert r.status_code == 200, r.text
-    body = r.json()
-    _envelope_ok(body)
-
-    navigation = body["data"]["navigation"]
-    assert navigation["previous"] == expected_previous
-    assert navigation["next"] == expected_next
-
-
-# --------------------------------------------------------------------------
-# Rate limiting (needs Redis): exceeding the per-minute limit returns 429
-# --------------------------------------------------------------------------
-
-@pytest.mark.skipif(
-    os.environ.get("WONIUNOTE_TEST_SKIP_RATELIMIT") == "1",
-    reason="rate-limit test explicitly disabled",
-)
-def test_rate_limit_eventually_returns_429():
-    """Hammer a rate-limited endpoint until a real 429 appears.
-
-    The limit is configured low (see config.integration.json) so this stays
-    fast. Redis must be reachable: without it the backend fails open and no
-    429 is ever produced.
-
-    Strict mode (WONIUNOTE_TEST_STRICT=1, used by CI/release acceptance) fails
-    the run in that case — a release gate must not pass because the rate
-    limiter silently did not engage. Local debug runs may skip instead.
-    """
-    limit = int(os.environ.get("WONIUNOTE_TEST_RATE_LIMIT", "60"))
-    saw_429 = False
-    # A handful over the limit is enough; cap iterations to stay quick.
-    for _ in range(limit + 20):
-        r = requests.post(
-            url("/api/auth/refresh"),
-            json={"refresh_token": "x"},
-            timeout=TIMEOUT,
-        )
-        if r.status_code == 429:
-            saw_429 = True
-            assert r.headers.get("Retry-After") is not None, (
-                "429 response must carry Retry-After"
-            )
-            break
-    if not saw_429:
-        message = (
-            "No 429 observed after "
-            f"{limit + 20} requests (Redis unavailable or rate limiting disabled)"
-        )
-        if STRICT:
-            pytest.fail(f"Strict mode: {message}")
-        pytest.skip(message)
+    assert malformed.status_code == 400

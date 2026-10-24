@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "variant": "vcpkg",
+  "source_digest": "70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd",
+  "binary_sha256": "ae71b6623bd431797238fab946ac232132d18b11dc1108567ed1a5401b3b4e51",
+  "runtime_image_id": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee",
+  "scope": "formal Linux binary route absence; no DB/Redis configured, no host ports and no business writes",
+  "cases": [
+    {
+      "injected_env": false,
+      "health": 200,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "method": "POST",
+      "request_peer": "container loopback",
+      "network": "none",
+      "container_id": "b3bf0067b051243e42c76225cef2695c2f31e912f663a6f675ffefe77cda6861",
+      "removed": true
+    },
+    {
+      "injected_env": true,
+      "health": 200,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      },
+      "method": "POST",
+      "request_peer": "container loopback",
+      "network": "none",
+      "container_id": "c79606a6d84e3aebcc99e0b57c3172161cdae922b6d9593c293bf8870053e7f1",
+      "removed": true
+    }
+  ]
+}

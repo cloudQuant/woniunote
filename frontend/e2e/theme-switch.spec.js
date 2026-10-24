@@ -1,5 +1,10 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './support/test'
 import { mockApi } from './support/mockApi'
+import {
+  completeApiResponse,
+  waitForArticleThumbnailResponses,
+  waitForHomeResponses
+} from './support/apiLifecycle'
 
 test.describe('Theme switching', () => {
   test.beforeEach(async ({ page }) => {
@@ -7,13 +12,16 @@ test.describe('Theme switching', () => {
   })
 
   test('defaults to the claude theme on first visit', async ({ page }) => {
-    await page.goto('/')
+    const homeResponses = waitForHomeResponses(page)
+    const thumbnailResponses = waitForArticleThumbnailResponses(page)
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
     const theme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
     expect(theme).toBe('claude')
+    await Promise.all([...homeResponses, ...thumbnailResponses].map(completeApiResponse))
   })
 
   test('each theme updates html attributes, selected state, and persistence', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
     const trigger = page.locator('button.theme-switcher-trigger')
     const themeCases = [
       ['claude', false],
@@ -53,7 +61,7 @@ test.describe('Theme switching', () => {
   })
 
   test('the theme selector can be opened and applied with the keyboard', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
     const trigger = page.locator('button.theme-switcher-trigger')
 
     await trigger.focus()
@@ -72,7 +80,7 @@ test.describe('Theme switching', () => {
 
   test('the grouped selector stays inside a narrow viewport', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
     await page.locator('button.theme-switcher-trigger').click()
 
     const panel = page.locator('.theme-switcher-popover')

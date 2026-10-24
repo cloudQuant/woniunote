@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "baseline": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T054006Z-38962-final4-before5.json",
+  "baseline_sha256": "4b6c15a710166ad26326c4bb84ae00caebae0c02978dba8ebf8216c2e5a1e455",
+  "prior": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T050749Z-13682-final4-logout.json",
+  "prior_sha256": "5ce11801b52892067adfaf597f88189b6b0a4204ebb67e285ecfc3ce87da3cf0",
+  "unchanged_business_sections": {
+    "articles": true,
+    "comments": true,
+    "votes": true,
+    "math_records": true,
+    "wrong_answers": true,
+    "schema_columns": true,
+    "table_counts": true,
+    "upload": true
+  },
+  "scope": "Read-only baseline before candidate5; no product5 deployed or authenticated UI exercised"
+}

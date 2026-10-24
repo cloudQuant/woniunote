@@ -1,0 +1,77 @@
+{
+  "scope": "Independent read-only review of backend-source6/source20 and current iteration21 deploy code; findings retained while repairs undergo validation",
+  "status": "INCOMPLETE",
+  "current_findings": [
+    {
+      "id": "R21-FINAL-01",
+      "severity": "P2",
+      "area": "registration/comment transaction",
+      "finding": "Dependency unavailable before first write could return 500; contract requires503. After-write ambiguity must remain WRITE_OUTCOME_UNKNOWN.",
+      "status": "FIX_IN_VALIDATION"
+    },
+    {
+      "id": "R21-FINAL-02",
+      "severity": "P2",
+      "area": "editor recovery",
+      "finding": "Recovery storage failure could prevent expired-session cleanup or leave form disabled. Refresh after consumed recovery discarded unsaved edits; initial401 could overwrite prior recovery.",
+      "status": "FIX_IN_VALIDATION"
+    },
+    {
+      "id": "R21-FINAL-03",
+      "severity": "P1",
+      "area": "D04 runbook",
+      "finding": "Shared mysql defaults made mysqldump reject database/connect-timeout; restore steps lacked the verified isolated path and runnable commands.",
+      "status": "DOCUMENTATION_REVISED_REVIEW_PENDING"
+    },
+    {
+      "id": "R21-FINAL-04",
+      "severity": "P2",
+      "area": "release artifact verification",
+      "finding": "Missing entry JS/CSS could pass index-only smoke.",
+      "status": "FIX_IN_PROGRESS"
+    },
+    {
+      "id": "R21-FINAL-05",
+      "severity": "P1",
+      "area": "initial install admission",
+      "finding": "No current symlink plus inactive service could bypass explicit maintenance evidence through start/restart/setup. AC21-14 requires bottom-manager admission.",
+      "status": "FIX_IN_PROGRESS"
+    }
+  ],
+  "historical_findings_not_introduced_here": [
+    {
+      "area": "author article DTO",
+      "finding": "Brief DTO omits drafted; MyArticles treats absent status as published. UI observation reproduced; actual DB article1 remains drafted=1.",
+      "disposition": "next-plan review candidate, not implementation in iteration21"
+    },
+    {
+      "area": "public comment DTO",
+      "finding": "Public comment serialization includes peer ipaddr; deployment determines whether this is client or proxy address.",
+      "disposition": "next-plan review candidate, not implementation in iteration21"
+    }
+  ],
+  "runtime_regression": {
+    "page": "/edit/2",
+    "action": "explicit reload after successful managed upgrade",
+    "expected_unsaved_title_restored": false,
+    "server_saved_data_preserved": true,
+    "historical_recovery_after_same_user_login": true,
+    "status": "FAIL retained; repaired client requires fresh browser verification"
+  },
+  "coverage_first_revision": {
+    "test_files": 43,
+    "tests_passed": 637,
+    "tests_failed": 0,
+    "branch_percent": 94.67,
+    "existing_required_branch_percent": 95,
+    "exit_code": 1,
+    "status": "FAIL",
+    "log_sha256": "8e9c92616052734c78876a672dfaae65f24358383dff28c4e543709f3170bf69"
+  },
+  "limits": [
+    "Read-only reviews are not runtime acceptance",
+    "No remote CI executed",
+    "No production operation",
+    "No credentials retained"
+  ]
+}

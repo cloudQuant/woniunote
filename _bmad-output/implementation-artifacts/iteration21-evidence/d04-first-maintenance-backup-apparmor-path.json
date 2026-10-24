@@ -1,0 +1,14 @@
+{
+  "status": "FINISHED",
+  "command": [
+    "bash",
+    "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/d04-backup-restore-guarded.sh",
+    "backup-restore"
+  ],
+  "backup_script_sha256": "2d97ad7a354868af56759f088c5a03df5a26cfe75d223bf7682f810d94cfcc3b",
+  "candidate_runtime_config_sha256": "3080c4cad9d00db9e018ca009476f7e848a1ffec2962cb8662b768c548e0e32d",
+  "exit": 0,
+  "seconds": 9.948,
+  "log_sha256": "73926b438e42e54efe18bb8e1028d25dcffe5f4f2e3254691cbecefd6d9a3755",
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-maintenance-backup-apparmor-path.log"
+}

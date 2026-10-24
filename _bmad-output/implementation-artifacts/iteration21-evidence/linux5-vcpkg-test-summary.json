@@ -1,0 +1,324 @@
+{
+  "tests": 63,
+  "passed": 63,
+  "failed": 0,
+  "skipped": 0,
+  "cases": [
+    {
+      "class": "test_api_integration",
+      "name": "test_health_is_up",
+      "result": "passed"
+    },
+    {
+      "class": "test_api_integration",
+      "name": "test_article_types_preserve_seeded_chinese_names",
+      "result": "passed"
+    },
+    {
+      "class": "test_api_integration",
+      "name": "test_protected_auth_endpoint_rejects_missing_and_invalid_tokens",
+      "result": "passed"
+    },
+    {
+      "class": "test_api_integration",
+      "name": "test_challenge_test_hook_requires_current_run_identity",
+      "result": "passed"
+    },
+    {
+      "class": "test_api_integration",
+      "name": "test_auth_register_duplicate_and_invalid_payload_statuses",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_admin",
+      "name": "test_admin_filter_allows_admin_and_rejects_non_admin",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_admin",
+      "name": "test_admin_filter_rejects_a_valid_token_for_a_missing_user",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_admin",
+      "name": "test_admin_filter_rejects_empty_noninteger_negative_and_overflow_subjects",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_article_thumbnail",
+      "name": "test_article_thumbnail_create_read_update_and_validation",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_login_requires_and_consumes_a_real_cached_captcha",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_login_error_after_valid_captcha_consumes_the_challenge",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_successfully_used_captcha_cannot_be_reused_for_a_second_login",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_expired_cached_captcha_is_rejected_by_real_login_validation",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_login_refresh_rotation_and_refresh_only_logout",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_logout_rejects_conflicting_access_and_refresh_identities",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_logout_rejects_same_user_credentials_with_different_sids_and_preserves_latest",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_refresh_without_session_record_is_rejected_without_creating_state",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_refresh_rejects_legacy_jti_only_session_value_without_mutating_it",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_refresh_rejects_wrong_type_bad_signature_and_expired_signed_token_without_mutation",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_logout_ignores_expired_access_but_accepts_live_refresh",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_same_refresh_is_single_use_under_twenty_concurrent_rounds",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_refresh_then_logout_and_logout_then_refresh_are_linearized",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_new_login_then_old_logout_preserves_replacement_session",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_one_hundred_registrations_commit_user_and_initial_credit_immediately",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_same_name_concurrent_registration_has_one_success_and_stable_conflicts",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_empty_transaction_reports_only_confirmed_commit",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_comments",
+      "name": "test_comment_auth_direct_replies_votes_and_public_user_projection",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_comments",
+      "name": "test_comment_list_omits_orphans_cross_article_links_deep_replies_and_hidden_parents",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_comments",
+      "name": "test_vote_requires_a_visible_root_or_direct_parent_and_handles_large_ids",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_comments",
+      "name": "test_owner_can_read_and_comment_on_hidden_or_draft_article_only",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_comments",
+      "name": "test_comment_list_uses_one_visibility_snapshot_while_article_is_hidden",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_routes_require_authentication",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_record_recomputes_accuracy_and_round_trips_all_operators",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_accepts_zero_and_maximum_question_counts",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_time_contract_uses_rounded_elapsed_seconds",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_strict_json_types_dates_and_answer_bounds",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_explicit_pagination_rejects_malformed_values_and_checks_offset",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_records_sort_tied_timestamps_by_id_and_paginate_without_drift",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_records_and_wrong_answers_are_user_scoped",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_wrong_answer_insert_failure_rolls_back_parent_and_all_children[first]",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_wrong_answer_insert_failure_rolls_back_parent_and_all_children[middle]",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_wrong_answer_insert_failure_rolls_back_parent_and_all_children[last]",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_deadline_reports_unknown_and_does_not_commit_late_success",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_math",
+      "name": "test_math_answer_migration_is_idempotent_and_preserves_legacy_values",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_transaction_edges",
+      "name": "test_concurrent_votes_count_once_per_user_and_accumulate_for_distinct_users",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_upload_isolation",
+      "name": "test_upload_controller_image_round_trips_from_document_root",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_upload_isolation",
+      "name": "test_ueditor_image_stays_in_run_uploads_not_cwd_or_shared_parent",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_admin",
+      "name": "test_admin_filter_times_out_while_real_users_table_lock_is_held_then_recovers",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_admin",
+      "name": "test_admin_filter_database_outage_is_503_and_owned_service_recovers",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_registration_sql_failure_fault_rolls_back_user_and_credit",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_registration_discarded_commit_callback_fault_returns_unknown_with_request_id",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_auth",
+      "name": "test_z_runner_owned_redis_outage_is_bounded_and_recovers_outage",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_transaction_edges",
+      "name": "test_vote_count_update_sql_failure_rolls_back_inserted_vote_and_count",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_transaction_edges",
+      "name": "test_training_commit_ack_drop_returns_unknown_but_persists_once",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_transaction_edges",
+      "name": "test_vote_commit_ack_drop_returns_unknown_but_persists_once",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_transaction_edges",
+      "name": "test_training_write_persists_once_when_client_drops_http_response",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_transaction_edges",
+      "name": "test_vote_persists_once_when_client_drops_http_response",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_transport_faults",
+      "name": "test_protocol_matchers_ignore_non_auth_evals_and_non_commit_queries",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_transport_faults",
+      "name": "test_mysql_proxy_observes_commit_then_drops_server_ack_and_closes_stream",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_transport_faults",
+      "name": "test_proxy_metric_reset_retains_lifetime_transport_diagnostics",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_transport_faults",
+      "name": "test_redis_login_set_reply_drop_returns_503_after_session_is_persisted",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_transport_faults",
+      "name": "test_redis_refresh_delayed_eval_ack_times_out_without_second_http_success",
+      "result": "passed"
+    },
+    {
+      "class": "test_iter21_transport_faults",
+      "name": "test_mysql_commit_ack_drop_returns_unknown_with_parent_and_child_rows_persisted",
+      "result": "passed"
+    }
+  ],
+  "failure_details": "restricted to the per-run runtime"
+}

@@ -1,0 +1,122 @@
+{
+  "backend_path": "/tmp/woniunote-iter21-functional-5/binary/woniunote_backend",
+  "backend_sha256": "39596818a99c91884cc17762fdb11f098819cb809622a7ab065a03280650c12a",
+  "evidence_root": "/tmp/woniunote-iter21-preflight/root-term-only-20261024-r5",
+  "experiment": "two-run-runner-pid-term-isolation",
+  "gate": "/tmp/woniunote-iter21-preflight/runner-term-only-20261024-fixed/gate.sh",
+  "keep_services_during_gate": true,
+  "pinned_images": {
+    "mysql": "docker.io/library/mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+    "redis": "docker.io/library/redis@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85"
+  },
+  "runner_path": "/tmp/woniunote-iter21-functional-9/backend_cpp/tests/integration/run_integration.sh",
+  "runner_sha256": "36ee445ba6cc4712ef70b3a993fdb91d45164fa089d3569cb756927dccd159bb",
+  "runs": {
+    "a": {
+      "container_ids": {
+        "mysql": "0710a6a656ee543092018460485e335fcc420ed369fa09e71432184192ce05d0",
+        "redis": "d1d8728385864628316eccd07a1d165ead29c011ff59afcb5a6c3def0566b69f"
+      },
+      "finally_term_completed": true,
+      "gate_pid": 21304,
+      "gate_process_gone": true,
+      "health_before_term": true,
+      "loopback_listeners_closed_after_term": true,
+      "mysql_volume": "woniunote-i21-20261023T183800Z-da146d5a2c57-mysql-data",
+      "owned_resources_after_term": {
+        "containers": 0,
+        "volumes": 0
+      },
+      "ports": {
+        "http": 52637,
+        "mysql": 52651,
+        "redis": 52669
+      },
+      "private_config_validated": true,
+      "redis_sentinel_before_term": true,
+      "run_id": "20261023T183800Z-da146d5a2c57",
+      "runner_pid": 20763,
+      "schema_base_tables": 13,
+      "sleep_pid": 21305,
+      "sleep_process_gone": true,
+      "term": {
+        "elapsed_seconds": 4.001,
+        "expected_shell_status_143": true,
+        "returncode": 143,
+        "signal": "TERM",
+        "signal_sent": true
+      },
+      "upload_sentinel": {
+        "basename": "iter21-term-isolation-sentinel.bin",
+        "path": "/tmp/woniunote-iter21-preflight/root-term-only-20261024-r5/a/tmp/woniunote-iter21/20261023T183800Z-da146d5a2c57/uploads/iter21-term-isolation-sentinel.bin",
+        "sha256": "3eef27eaf074fac94e609556b9c04a9845b4abada929f32fe26f936af134c3d2"
+      },
+      "upload_sentinel_removed_after_term": true
+    },
+    "b": {
+      "container_ids": {
+        "mysql": "ae074d16c4d85458449c558d25a11eac550b3fa121e96db3adde844c418fdb39",
+        "redis": "30813eb9f703b6bba61b7d8b40a242c16505996908dd76b6cb0f77fef265fe6f"
+      },
+      "finally_term_completed": true,
+      "gate_pid": 21878,
+      "gate_process_gone": true,
+      "health_after_a_term": true,
+      "health_before_term": true,
+      "mysql_sentinel_after_a_term": true,
+      "mysql_sentinel_before_term": true,
+      "mysql_volume": "woniunote-i21-20261023T183825Z-7927e03c3c00-mysql-data",
+      "owned_resources_after_term": {
+        "containers": 0,
+        "volumes": 0
+      },
+      "ports": {
+        "http": 52786,
+        "mysql": 52797,
+        "redis": 52810
+      },
+      "private_config_validated": true,
+      "redis_sentinel_after_a_term": true,
+      "redis_sentinel_before_term": true,
+      "run_id": "20261023T183825Z-7927e03c3c00",
+      "runner_pid": 21318,
+      "same_container_ids_after_a_term": true,
+      "schema_base_tables": 13,
+      "schema_base_tables_after_a_term": 13,
+      "schema_base_tables_after_sentinel": 13,
+      "sleep_pid": 21879,
+      "sleep_process_gone": true,
+      "term": {
+        "elapsed_seconds": 4.263,
+        "expected_shell_status_143": true,
+        "returncode": 143,
+        "signal": "TERM",
+        "signal_sent": true
+      },
+      "upload_sentinel": {
+        "basename": "iter21-term-isolation-sentinel.bin",
+        "path": "/tmp/woniunote-iter21-preflight/root-term-only-20261024-r5/b/tmp/woniunote-iter21/20261023T183825Z-7927e03c3c00/uploads/iter21-term-isolation-sentinel.bin",
+        "sha256": "ae864f2dd6e658ee81b470b4fa3725de615ee85743c41ed4f60f3d11404dfb31"
+      },
+      "upload_sentinel_removed_after_term": true,
+      "upload_sentinel_sha256_after_a_term": "ae864f2dd6e658ee81b470b4fa3725de615ee85743c41ed4f60f3d11404dfb31",
+      "upload_sentinel_unchanged_after_a_term": true
+    }
+  },
+  "status": "PASS",
+  "upload_isolation": {
+    "a_removed_after_a_term": true,
+    "b_removed_after_b_term": true,
+    "b_sha256_after_a_term": "ae864f2dd6e658ee81b470b4fa3725de615ee85743c41ed4f60f3d11404dfb31",
+    "b_unchanged_after_a_term": true,
+    "basename_a": "iter21-term-isolation-sentinel.bin",
+    "basename_b": "iter21-term-isolation-sentinel.bin",
+    "different_paths": true,
+    "initial_hashes_differ": true,
+    "path_a": "/tmp/woniunote-iter21-preflight/root-term-only-20261024-r5/a/tmp/woniunote-iter21/20261023T183800Z-da146d5a2c57/uploads/iter21-term-isolation-sentinel.bin",
+    "path_b": "/tmp/woniunote-iter21-preflight/root-term-only-20261024-r5/b/tmp/woniunote-iter21/20261023T183825Z-7927e03c3c00/uploads/iter21-term-isolation-sentinel.bin",
+    "same_basename": true,
+    "sha256_a": "3eef27eaf074fac94e609556b9c04a9845b4abada929f32fe26f936af134c3d2",
+    "sha256_b": "ae864f2dd6e658ee81b470b4fa3725de615ee85743c41ed4f60f3d11404dfb31"
+  }
+}

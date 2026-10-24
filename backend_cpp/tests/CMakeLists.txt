@@ -25,8 +25,10 @@ set(TEST_MODULES
     test_upload_safety
     test_response
     test_article_category
+    test_article_thumbnail
     test_config
     test_services
+    test_auth_sessions
 )
 
 foreach(module IN LISTS TEST_MODULES)

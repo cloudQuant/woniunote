@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+printf 'FIXTURE_SHIM npm %s cwd=%s\n' "$*" "$PWD" >&2
+case "${1:-}" in
+    ci)
+        exit 0
+        ;;
+    run)
+        [ "${2:-}" = build ] || { printf 'unsupported fixture npm run command\n' >&2; exit 64; }
+        version="$(cat fixture-version.txt)"
+        content="window.woniunoteFixture = '${version}';"
+        hash="$(printf '%s' "$content" | sha256sum | cut -c1-16)"
+        css_content="/* fixture-css:${version} */\nbody { color: #123456; }\n"
+        css_hash="$(printf '%b' "$css_content" | sha256sum | cut -c1-16)"
+        mkdir -p dist/assets
+        printf '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/assets/app-style-%s.css"></head><body data-release="%s"><script type="module" src="/assets/app-%s.js"></script></body></html>\n' "$css_hash" "$version" "$hash" > dist/index.html
+        printf '%s\n' "$content" > "dist/assets/app-$hash.js"
+        if [ "${ITER21_FIXTURE_MISSING_CSS_FILE:-0}" != 1 ]; then
+            printf '%b' "$css_content" > "dist/assets/app-style-$css_hash.css"
+        fi
+        printf 'window.legacyUeditor = true;\n' > dist/assets/ueditor.config.js
+        printf 'self.fixturePdfWorker = true;\n' > dist/pdf.worker.min.mjs
+        ;;
+    *)
+        printf 'unsupported fixture npm command: %s\n' "${1:-}" >&2
+        exit 64
+        ;;
+esac

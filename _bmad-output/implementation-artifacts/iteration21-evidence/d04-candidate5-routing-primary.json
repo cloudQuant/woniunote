@@ -1,0 +1,15 @@
+{
+  "status": "PASS_LOCAL",
+  "checks": {
+    "bash_n_three_files": 0,
+    "candidate_routing_exit": 0,
+    "candidate_routing_pass_cases": 4
+  },
+  "source_sha256": {
+    "scripts/tests/iter21-business-runtime/run.sh": "dceb2d7e7b6da4bf25b4ba2ffcb08f669a9d37fb2d7f208ee541f900952f2ea6",
+    "scripts/tests/iter21-business-runtime/guest.sh": "ce2422701db53355ccf5d9ce865a436167d01c750ec034630dab753053b10459",
+    "scripts/tests/iter21-business-runtime/test-candidate-routing.sh": "8254c71a68232406cfa384d33c155d4db41dbaa62204aaf4ffd57ac2666090fd"
+  },
+  "primary_review": "Compared run/guest against frozen candidate4: bounded candidate5 label/path/manager scan addition only. deploy-first remains candidate2, install refuses existing destination, exact SHA selection and ambiguity rejection retained. Independently ran syntax checks and actual routing fixture.",
+  "runtime_scope": "No VM mutation performed by this routing check"
+}

@@ -1,0 +1,20 @@
+{
+  "previous": "frontend-final-13-source-manifest.json",
+  "current": "frontend-final-14-source-manifest.json",
+  "changed": [
+    "frontend/e2e/README.md",
+    "frontend/e2e/support/mockApi.js",
+    "frontend/e2e/support/test.js",
+    "frontend/e2e/write-article.spec.js",
+    "frontend/playwright.config.js"
+  ],
+  "added": [
+    "frontend/vite.mock-preview.config.js",
+    "frontend/e2e/support/mockEgress.js",
+    "frontend/e2e/support/mockEgressTeardown.js",
+    "frontend/e2e/support/probeMockPreviewGuard.mjs",
+    "frontend/e2e/support/probeStrictMockApi.mjs"
+  ],
+  "unchanged_count": 366,
+  "product_unit_build_and_real_config_unchanged": true
+}

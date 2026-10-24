@@ -1,173 +1,22 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Production restart is a frozen-SHA deployment. Development restart is locked
+# for both stop and start so it cannot overlap a release transaction.
+MODE="$1"
+[ -n "$MODE" ] || MODE=prod
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# WoniuNote 重启脚本 - 简化版，直接使用项目目录
-# 用法: bash restart_app.sh [prod|dev]
-#   prod (默认): 生产模式
-#   dev: 开发模式
-
-MODE="${1:-prod}"
-
-if [ "$MODE" != "prod" ] && [ "$MODE" != "dev" ]; then
-    echo "用法: bash restart_app.sh [prod|dev]"
-    exit 1
+if [ "$MODE" != prod ] && [ "$MODE" != dev ]; then
+    echo "用法: bash restart_app.sh [prod|dev]" >&2
+    exit 2
 fi
 
-echo "========================================"
-echo "  WoniuNote 应用重启脚本"
-echo "  运行模式: $MODE"
-echo "========================================"
-echo ""
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
-
-echo "[1/7] 更新代码..."
-git pull origin dev_cpp
-if [ $? -ne 0 ]; then
-    if [ "$MODE" = "prod" ]; then
-        echo "[错误] Git pull 失败，终止重启"
-        exit 1
-    fi
-    echo "     [警告] Git pull 失败（本地可能有未提交改动），开发模式下继续使用本地代码"
-else
-    echo "     代码已更新"
+if [ "$MODE" = prod ]; then
+    exec bash "$SCRIPT_DIR/scripts/deploy_release.sh" deploy --sha HEAD
 fi
 
-echo "[2/7] 停止服务..."
-bash "$SCRIPT_DIR/stop_app.sh"
-
-echo "[3/7] 清理缓存..."
-# 删除旧的构建产物和缓存
-rm -rf "$SCRIPT_DIR/frontend/dist"
-rm -rf "$SCRIPT_DIR/frontend/node_modules/.vite"
-# 清理 nginx 缓存（仅生产模式需要；开发模式无 Nginx，跳过以免触发 sudo 密码提示）
-if [ "$MODE" = "prod" ]; then
-    sudo rm -rf /var/cache/nginx/* 2>/dev/null || true
-fi
-: > "$SCRIPT_DIR/backend.log"
-: > "$SCRIPT_DIR/frontend.log"
-echo "     缓存已清理"
-
-echo "[4/7] 生成缩略图..."
-THUMB_SCRIPT="$SCRIPT_DIR/backend_cpp/scripts/generate_thumbs.py"
-if [ -f "$THUMB_SCRIPT" ]; then
-    python3 "$THUMB_SCRIPT"
-    if [ $? -eq 0 ]; then
-        echo "     缩略图生成完成"
-    else
-        echo "     警告: 缩略图生成失败，但继续启动"
-    fi
-else
-    echo "     跳过缩略图生成（脚本不存在）"
+if [ "$2" != --locked ]; then
+    exec bash "$SCRIPT_DIR/scripts/deploy_release.sh" run-locked bash "$0" dev --locked
 fi
 
-echo "[5/7] 更新 Nginx 配置..."
-NGINX_CONF_SRC="$SCRIPT_DIR/configs/woniunote_nginx_prod.conf"
-NGINX_CONF_DST="/etc/nginx/nginx.conf"
-
-# Nginx 仅用于生产模式（托管前端静态文件）。开发模式由 Vite dev server
-# 提供前端，无需 Nginx，因此跳过此步，避免在本地（如 macOS 无 /etc/nginx）误报错。
-if [ "$MODE" != "prod" ]; then
-    echo "     开发模式，跳过 Nginx 配置（前端由 Vite dev server 提供）"
-elif [ ! -d "$(dirname "$NGINX_CONF_DST")" ]; then
-    echo "     未检测到 $(dirname "$NGINX_CONF_DST")，跳过 Nginx 配置（本机未安装 Nginx？）"
-elif [ ! -f "$NGINX_CONF_SRC" ]; then
-    echo "[错误] Nginx 配置文件不存在: $NGINX_CONF_SRC"
-    exit 1
-else
-    sudo cp "$NGINX_CONF_SRC" "$NGINX_CONF_DST"
-    if [ $? -ne 0 ]; then
-        echo "[错误] 复制 Nginx 配置失败，请检查 sudo 权限"
-        exit 1
-    fi
-
-    sudo nginx -t
-    if [ $? -eq 0 ]; then
-        sudo systemctl reload nginx
-        echo "     Nginx 配置已更新并重载"
-    else
-        echo "[错误] Nginx 配置检查失败，请手动检查"
-        sudo nginx -t
-        exit 1
-    fi
-fi
-
-echo "[6/7] 删除旧的同步目录（如果存在）..."
-if [ "$MODE" = "prod" ] && [ -d "/var/www/woniunote/frontend" ]; then
-    sudo rm -rf /var/www/woniunote/frontend
-    echo "     旧目录已删除"
-else
-    echo "     无需删除"
-fi
-
-echo "[7/7] 启动服务..."
-if ! bash "$SCRIPT_DIR/start_app.sh" "$MODE"; then
-    echo "[错误] 服务启动失败，重启终止。请查看 backend.log 和 frontend.log。"
-    exit 1
-fi
-
-echo ""
-echo "========================================"
-echo "  重启完成! (模式: $MODE)"
-echo "========================================"
-if [ "$MODE" = "prod" ]; then
-    echo "  前端: https://www.yunjinqi.top"
-else
-    echo "  前端: http://localhost:8888"
-fi
-echo "  后端: http://localhost:5173"
-echo ""
-echo "  重要提示："
-echo "  浏览器按 Ctrl+Shift+R (Mac: Cmd+Shift+R) 强制刷新"
-echo ""
-
-# 验证前端构建文件是否正确部署（仅生产模式有 dist 构建产物；开发模式由 Vite 提供，跳过）
-if [ "$MODE" = "prod" ]; then
-    echo "[验证] 检查前端构建文件..."
-    if [ -f "$SCRIPT_DIR/frontend/dist/index.html" ]; then
-        CSS_FILE=$(grep -o 'href="/assets/[^"]*\.css"' "$SCRIPT_DIR/frontend/dist/index.html" | head -1 | sed 's/href="\/assets\///;s/"//')
-        JS_FILE=$(grep -o 'src="/assets/[^"]*\.js"' "$SCRIPT_DIR/frontend/dist/index.html" | head -1 | sed 's/src="\/assets\///;s/"//')
-        echo "  index.html 引用的 CSS: $CSS_FILE"
-        echo "  index.html 引用的 JS: $JS_FILE"
-
-        # 检查文件是否实际存在
-        if [ -f "$SCRIPT_DIR/frontend/dist/assets/$CSS_FILE" ] && [ -f "$SCRIPT_DIR/frontend/dist/assets/$JS_FILE" ]; then
-            echo "  ✓ 所有引用文件存在"
-        else
-            echo "  ✗ 警告: 部分引用文件不存在，可能构建不完整"
-        fi
-
-        # 检查 nginx root 目录是否正确
-        NGINX_ROOT=$(grep -A 20 "server_name yunjinqi.top" "$NGINX_CONF_DST" 2>/dev/null | grep "root" | head -1 | awk '{print $2}' | sed 's/;//')
-        if [ -n "$NGINX_ROOT" ]; then
-            echo "  Nginx root 目录: $NGINX_ROOT"
-            if [ "$NGINX_ROOT" != "$SCRIPT_DIR/frontend/dist" ]; then
-                echo "  ✗ 警告: Nginx root 与项目目录不一致"
-            fi
-        fi
-    else
-        echo "  ✗ 警告: dist/index.html 不存在"
-    fi
-fi
-
-# 验证缩略图是否生成
-echo "[验证] 检查缩略图..."
-THUMB_DIR="$SCRIPT_DIR/backend_cpp/resource/thumb"
-if [ -d "$THUMB_DIR" ]; then
-    THUMB_COUNT=$(ls "$THUMB_DIR"/*.png 2>/dev/null | wc -l)
-    echo "  缩略图目录: $THUMB_DIR"
-    echo "  缩略图数量: $THUMB_COUNT"
-    # 检查关键的缩略图是否存在
-    for id in 605 604 808 802; do
-        if [ -f "$THUMB_DIR/$id.png" ]; then
-            echo "  ✓ $id.png 存在"
-        else
-            echo "  ✗ $id.png 缺失"
-        fi
-    done
-else
-    echo "  ✗ 警告: 缩略图目录不存在"
-fi
-echo "========================================"
-
-exit 0
+bash "$SCRIPT_DIR/stop_app.sh" dev --locked
+bash "$SCRIPT_DIR/start_app.sh" dev --locked

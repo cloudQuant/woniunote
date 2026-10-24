@@ -1,0 +1,51 @@
+{
+  "recorded_at_utc": "2026-10-24T02:25:10.263874+00:00",
+  "status": "PASS",
+  "scope": "isolated original-v2 Nginx temp-directory repair, UI upload and public byte readback; not D04 migration or cross-version acceptance",
+  "repair": {
+    "script_sha256": "e0e5a2d83f9623e214e43acb44f0555bc8163dd80207125130788f868d99d40b",
+    "preflight_exit": 0,
+    "apply_exit": 0,
+    "config_before_sha256": "52cf048f938b53b0951ba853bb20a3bb2b6a072994e47780155c3c41d0514809",
+    "config_after_sha256": "3e695b74388a5a70b0903fbfe916e59a17b6d9b263f6bb69eda3bb694b6306d2",
+    "apply_log_sha256": "2a30a6fdf6aa59a6d258bd6d1e568f5860f871ebcf94b45816952657869316d5",
+    "nginx_test_passed": true,
+    "owned_unit_reloaded_once": true,
+    "backend_not_restarted": true,
+    "runtime_mode": "0700",
+    "config_and_key_mode": "0600",
+    "temp_parent_mode": "0711",
+    "temp_child_owner": "nobody",
+    "temp_child_mode": "0700"
+  },
+  "upload": {
+    "ui_notice": "上传成功",
+    "url_path": "/uploads/uploads/images/2026/10/1792808491869_3700.png",
+    "persisted_file": "/var/lib/woniunote-iter21-data/uploads/uploads/uploads/images/2026/10/1792808491869_3700.png",
+    "http_status": 200,
+    "content_type": "image/png",
+    "bytes": 10491,
+    "source_disk_and_HTTP_sha256": "9802f742ad084d11f8de174b1a0906c0dd43583b02d66ae523788e17d06c6ee3",
+    "browser_image_dimensions": "540x138"
+  },
+  "saved_draft": {
+    "article_id": 1,
+    "user_id": 2,
+    "drafted": 1,
+    "editor_closed": true,
+    "ui_notice": "更新成功",
+    "headline_sha256": "ffd6b8c0e1cd5cbd1890acb2a8ac3fbffee924f309b0ffdfd6f994cbddecb0b1",
+    "stored_content_sha256_after_editor_resave": "34437d1cfbd67966b851ea1d0861f54e67e320587906c4f9cd48f563e04a0bc5",
+    "stored_content_bytes": 218,
+    "two_visible_paragraphs_and_title_unchanged": true,
+    "html_bytes_changed_by_editor_resave": true,
+    "thumbnail_field_still_empty": true,
+    "thumbnail_persistence_not_claimed": "Original version update path does not persist thumbnail; candidate fix and D04 recovery remain separate"
+  },
+  "screenshots": {
+    "d04-original-draft-after-upload.png": "794b35351e78e03cab2519629855f0e7ce7767005309f35baaff4d54fc4528bf",
+    "d04-original-upload-readback.png": "de0d607a349c3211e79050d23ba0e5c5f95334323d3ba6c2b4f214057188727d"
+  },
+  "backup_restore_migration_and_candidate_switch": "NOT_RUN",
+  "raw_config_credentials_tokens_body_or_logs_included": false
+}

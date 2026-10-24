@@ -6,9 +6,11 @@ installLocalStorage()
 silenceExpectedConsole(['error'])
 
 const push = vi.fn()
+const routeState = vi.hoisted(() => ({ params: {}, query: {} }))
+const resolve = vi.fn((value) => ({ matched: [{}], path: new URL(value, 'http://localhost').pathname }))
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push }),
-  useRoute: () => ({ params: {}, query: {} })
+  useRouter: () => ({ push, resolve }),
+  useRoute: () => routeState
 }))
 
 const register = vi.fn(() => Promise.resolve({ data: { userid: 1 } }))
@@ -18,20 +20,26 @@ vi.mock('@/stores/user', () => ({
 
 const success = vi.fn()
 const error = vi.fn()
+const warning = vi.fn()
 // notifyError calls ElMessage({...}) as a function (Epic 18.1); keep the
 // .success/.error methods working for the existing assertions.
 const toast = vi.fn()
 vi.mock('element-plus', () => ({
   ElMessage: Object.assign((...a) => toast(...a), {
     success: (...a) => success(...a),
-    error: (...a) => error(...a)
+    error: (...a) => error(...a),
+    warning: (...a) => warning(...a)
   })
 }))
 
 import Register from './Register.vue'
 
 describe('Register.vue', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    routeState.params = {}
+    routeState.query = {}
+  })
 
   it('renders the registration form', () => {
     const wrapper = mount(Register, mountOptions())
@@ -65,6 +73,17 @@ describe('Register.vue', () => {
     })
     expect(success).toHaveBeenCalledWith('注册成功，请登录')
     expect(push).toHaveBeenCalledWith({ name: 'Login' })
+  })
+
+  it('preserves a safe redirect through registration and login', async () => {
+    routeState.query = { redirect: '/write?draft=1' }
+    const wrapper = mount(Register, mountOptions())
+    expect(wrapper.vm.loginTarget).toEqual({ name: 'Login', query: { redirect: '/write?draft=1' } })
+    wrapper.vm.form.username = 'newuser'
+    wrapper.vm.form.password = 'secret1'
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+    await wrapper.vm.handleRegister()
+    expect(push).toHaveBeenCalledWith({ name: 'Login', query: { redirect: '/write?draft=1' } })
   })
 
   it('handleRegister aborts when validation fails', async () => {
@@ -120,6 +139,34 @@ describe('Register.vue', () => {
       type: 'error',
       grouping: true
     })
+  })
+
+  it('asks the user to try login when the registration write outcome is unknown', async () => {
+    register.mockRejectedValueOnce(Object.assign(new Error('write outcome unknown'), {
+      errorCode: 'WRITE_OUTCOME_UNKNOWN'
+    }))
+    const wrapper = mount(Register, mountOptions())
+    wrapper.vm.form.username = 'newuser'
+    wrapper.vm.form.password = 'secret1'
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+    await wrapper.vm.handleRegister()
+    expect(warning).toHaveBeenCalledWith('注册结果暂未确认，请尝试正常登录，不要重复提交注册。')
+    expect(register).toHaveBeenCalledOnce()
+    expect(push).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { response: { data: { error_code: 'WRITE_OUTCOME_UNKNOWN' } } },
+    { response: { data: { data: { error_code: 'WRITE_OUTCOME_UNKNOWN' } } } }
+  ])('recognizes WRITE_OUTCOME_UNKNOWN in backend response envelopes', async (shape) => {
+    register.mockRejectedValueOnce(Object.assign(new Error('unknown result'), shape))
+    const wrapper = mount(Register, mountOptions())
+    wrapper.vm.form.username = 'newuser'
+    wrapper.vm.form.password = 'secret1'
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+    await wrapper.vm.handleRegister()
+    expect(warning).toHaveBeenCalledWith('注册结果暂未确认，请尝试正常登录，不要重复提交注册。')
+    expect(register).toHaveBeenCalledOnce()
   })
 
   it('binds every input through v-model', async () => {

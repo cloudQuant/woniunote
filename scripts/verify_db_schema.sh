@@ -59,6 +59,7 @@ EXPECTED_INDEXES=(
     ["article_category"]="PRIMARY,idx_parent_sort,idx_visible_sort"
     ["math_training_records"]="PRIMARY,idx_user_id,idx_difficulty,idx_created_at"
     ["math_training_wrong_answers"]="PRIMARY,idx_record_id,idx_user_id,idx_difficulty,idx_operation,idx_created_at"
+    ["comment_votes"]="PRIMARY,uk_comment_user,idx_userid"
 )
 
 echo "========================================"
@@ -118,6 +119,25 @@ MISSING_TABLES=0
 EXTRA_COLUMNS=0
 MISSING_COLUMNS=0
 INDEX_ISSUES=0
+
+# thumbnail is an API-visible path and must be wide enough for full upload URLs.
+# This check is read-only and reports the exact forward migration for old schemas.
+THUMBNAIL_MIGRATION="$PROJECT_DIR/scripts/sql/migrations/2026-10-24_article_thumbnail.sql"
+THUMBNAIL_QUERY="SELECT CONCAT(DATA_TYPE, '|', CHARACTER_MAXIMUM_LENGTH, '|', IS_NULLABLE) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$DB_NAME' AND TABLE_NAME='article' AND COLUMN_NAME='thumbnail';"
+if ! THUMBNAIL_SHAPE="$($MYSQL_CMD -N -B -e "$THUMBNAIL_QUERY" 2>/dev/null)"; then
+    log_error "无法读取 article.thumbnail 列定义；核对失败。"
+    log_error "请先备份数据库并按迁移说明处理：$THUMBNAIL_MIGRATION（此脚本不会修改数据库）。"
+    echo "[封面列检查失败] article.thumbnail schema query failed; see $THUMBNAIL_MIGRATION" >> "$LOG_FILE"
+    TOTAL_ISSUES=$((TOTAL_ISSUES + 1))
+elif [[ "$THUMBNAIL_SHAPE" != "varchar|512|YES" ]]; then
+    THUMBNAIL_ACTUAL="${THUMBNAIL_SHAPE:-missing}"
+    log_error "article.thumbnail 不兼容：实际 ${THUMBNAIL_ACTUAL}，要求 varchar|512|YES。"
+    log_error "请先备份数据库并按迁移说明处理：$THUMBNAIL_MIGRATION（此脚本不会修改数据库）。"
+    echo "[封面列不兼容] article.thumbnail actual=$THUMBNAIL_ACTUAL expected=varchar|512|YES; see $THUMBNAIL_MIGRATION" >> "$LOG_FILE"
+    TOTAL_ISSUES=$((TOTAL_ISSUES + 1))
+else
+    log_info "article.thumbnail schema: $THUMBNAIL_SHAPE"
+fi
 
 # 获取数据库中的所有表
 ACTUAL_TABLES=$($MYSQL_CMD -N -e "USE $DB_NAME; SHOW TABLES;" 2>/dev/null)

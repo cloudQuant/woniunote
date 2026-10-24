@@ -1,0 +1,66 @@
+[
+  {
+    "name": "node",
+    "command": [
+      "node",
+      "--version"
+    ],
+    "exit_code": 0,
+    "seconds": 0.09,
+    "log": "/tmp/woniunote-iter21-evidence/frontend-final12-node-root.log"
+  },
+  {
+    "name": "lint",
+    "command": [
+      "npm",
+      "run",
+      "lint:ci"
+    ],
+    "exit_code": 0,
+    "seconds": 1.56,
+    "log": "/tmp/woniunote-iter21-evidence/frontend-final12-lint-root.log"
+  },
+  {
+    "name": "silent-catch",
+    "command": [
+      "node",
+      "scripts/check-silent-catch.mjs"
+    ],
+    "exit_code": 0,
+    "seconds": 0.07,
+    "log": "/tmp/woniunote-iter21-evidence/frontend-final12-silent-catch-root.log"
+  },
+  {
+    "name": "coverage",
+    "command": [
+      "npm",
+      "run",
+      "test:coverage"
+    ],
+    "exit_code": 1,
+    "seconds": 7.77,
+    "log": "/tmp/woniunote-iter21-evidence/frontend-final12-coverage-root.log"
+  },
+  {
+    "name": "build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit_code": 0,
+    "seconds": 4.07,
+    "log": "/tmp/woniunote-iter21-evidence/frontend-final12-build-root.log"
+  },
+  {
+    "name": "audit",
+    "command": [
+      "npm",
+      "run",
+      "audit:ci"
+    ],
+    "exit_code": 0,
+    "seconds": 1.12,
+    "log": "/tmp/woniunote-iter21-evidence/frontend-final12-audit-root.log"
+  }
+]

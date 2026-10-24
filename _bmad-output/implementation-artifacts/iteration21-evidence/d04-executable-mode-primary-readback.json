@@ -1,0 +1,19 @@
+{
+  "2": {
+    "commit": "9c597548fc18d3250f68cba8e55bfaa171edacfb",
+    "parent": "cdc6ca8f43329c699f078cd606231289e7e333dc",
+    "tree": "2926d41514ff9af62038a670d0ff362d66695798",
+    "change": "mode change 100644 => 100755 scripts/deploy_release.sh",
+    "content_sha256": "1dd40318f7d8d439e8c85e4bfa8d875a75b1a6f63ce447dc6dd56d4d953c5cb6",
+    "working_tree": "clean"
+  },
+  "3": {
+    "commit": "7fb178838c6ae4511c748a77e67d258ca576d5e9",
+    "parent": "dd5b140b7685a4caaa40de2c18620f867eb89c18",
+    "tree": "35900a554b1c07a3ebc69b0b05d664f93958a300",
+    "change": "mode change 100644 => 100755 scripts/deploy_release.sh",
+    "content_sha256": "1dd40318f7d8d439e8c85e4bfa8d875a75b1a6f63ce447dc6dd56d4d953c5cb6",
+    "working_tree": "clean"
+  },
+  "candidate_evidence_sha256": "2a63e3a185e21ee457e7a2d2e83270831204dd94701d7e672d8c94ed0adc4a2b"
+}

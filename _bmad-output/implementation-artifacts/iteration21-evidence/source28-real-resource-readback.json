@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "run_id": "20261024T055853Z-55e4922ef6f3",
+  "containers_absent": {
+    "61f5ad9a3c597cbfc88448c0389758bed446b313f50ca91bf0adc78591f5886b": true,
+    "a10a218e6700a21eea77a7778b6641cfff433eb4bf33b41d7c6899c11b973b4f": true
+  },
+  "ports_closed": {
+    "60443": true,
+    "60458": true,
+    "60408": true,
+    "60423": true
+  },
+  "mysql_volume_absent": true,
+  "run_label_container_count": 0,
+  "run_label_volume_count": 0,
+  "run_manifest_sha256": "0dc509c4e44e1d39d348ff95532bceecd865afb47c2e8289c2275491dda7dd79",
+  "scope": "Independent docker exact identities/labels and loopback socket readback"
+}

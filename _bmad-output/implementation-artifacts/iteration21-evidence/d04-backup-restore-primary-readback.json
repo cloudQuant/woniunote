@@ -1,0 +1,120 @@
+{
+  "result": "PASS",
+  "manifest": {
+    "run_id": "20261024T032519Z-73851",
+    "target_instance": "woniunote-iter21-systemd-20261024t0028z",
+    "database_schema": "woniunote_iter21_3956dcbf124d19e5",
+    "database_user": "wni21_3956dcbf124d19e5",
+    "database_host": "127.0.0.1",
+    "database_port": "3306",
+    "original_binary_sha256": "1935a00eda4f4b61e2728637fbe5d170c5ab78b1e3889185367a7a3eeb32021f",
+    "original_runtime_config_sha256": "4dd82289bcba52b6c24c66a15243613abeb2f0e476c7d41feb55e175de8d9987",
+    "candidate_runtime_config_sha256": "3080c4cad9d00db9e018ca009476f7e848a1ffec2962cb8662b768c548e0e32d",
+    "comment_vote_preflight_source_sha256": "cd61986568cdc272e4385b18a0aa1482d2df6d948e5e9c18f70a61fedd9c0b85",
+    "backup_type": "full-current-data-and-persistent-uploads",
+    "restore_isolation": "separate-mysqld-unix-socket-only",
+    "restore_root": "/var/lib/mysql-files/woniunote-d04-restore-20261024T032518Z-74308-963",
+    "migration_or_application_service_change": "none",
+    "run_state": "COMPLETE",
+    "source_mysql_service_pid": "738",
+    "source_mysql_server_uuid_sha256": "363867ce8d08e6ea10e6f727405528486460494277842f2d785fcc42cf3b857a",
+    "source_table_count": "13",
+    "source_counts_sha256": "6e83497a519cfd4c1be1dca6549f199801d20eb85a275c9ff99fb49f08004257",
+    "source_structure_tables_sha256": "edc44ddc51d1f3dda2112bca5ee35f6035f9536554fdbed29a7bd198801ae479",
+    "source_structure_columns_sha256": "b911a0b3a5167ae23804d002e8ca4cf4fc3daf58395e4ce322482ea96e6be088",
+    "source_structure_indexes_sha256": "ec3c016162cad6c88777b1b692ae90f0354a04a6745164af6b0b6b692988fd99",
+    "source_structure_foreign_keys_sha256": "aad534fd36eefd35b182e835971909492248a475c160c4901cd7212cb522e44d",
+    "draft_articleid": "1",
+    "draft_userid": "2",
+    "drafted": "1",
+    "hidden": "0",
+    "draft_headline_sha256": "ffd6b8c0e1cd5cbd1890acb2a8ac3fbffee924f309b0ffdfd6f994cbddecb0b1",
+    "draft_content_bytes": "218",
+    "draft_content_sha256": "34437d1cfbd67966b851ea1d0861f54e67e320587906c4f9cd48f563e04a0bc5",
+    "dump_sha256": "f94b4e32ad7b2b7b5ad4998cbb4e1e03c0b87bc7d46d551a7671e7c7adc4ff2c",
+    "dump_bytes": "29286",
+    "uploads_archive_sha256": "75113567c3f1227a8ae428152c3dbd03bc1a01e287f501183d3657742be6a613",
+    "uploads_restore_copy_scope": "single-pinned-image-member",
+    "upload_member_sha256": "9802f742ad084d11f8de174b1a0906c0dd43583b02d66ae523788e17d06c6ee3",
+    "upload_restore_copy_sha256": "9802f742ad084d11f8de174b1a0906c0dd43583b02d66ae523788e17d06c6ee3",
+    "comment_vote_preflight_state": "canonical_only",
+    "comment_vote_preflight_no_apply": "1",
+    "comment_vote_preflight_review": "REQUIRED",
+    "comment_vote_preflight_blocking_findings_count": "0",
+    "comment_vote_preflight_logical_count_differences_count": "0",
+    "comment_vote_preflight_report_sha256": "d31307cfbe15b20b10cd01837457fb1da698c54fce9c5199dbfff3f8823ae868",
+    "restore_server_uuid_sha256": "20cf6e716352aa461a35027934e21e2b518636c15a9917635b537ad929a3f2ec",
+    "restore_mysqld_pid": "74264",
+    "restore_datadir": "/var/lib/mysql-files/woniunote-d04-restore-20261024T032518Z-74308-963/datadir",
+    "restore_server_log": "/var/lib/mysql-files/woniunote-d04-restore-20261024T032518Z-74308-963/restore-server.log",
+    "restore_socket_path": "/tmp/woniunote-d04-socket-20261024T032518Z-74308-963.Wn5rrO8b/mysql.sock",
+    "restore_instance_isolated": "PASS",
+    "restore_tables_counts_structure_draft": "PASS",
+    "restore_upload_copy_hash": "PASS",
+    "restore_process_stopped_by_verified_pid": "PASS",
+    "source_application_services_remained_inactive": "PASS",
+    "source_mysql_service_pid_unchanged": "PASS",
+    "migrations_applied": "0"
+  },
+  "manifest_sha256": "aa47f52ed2fe14030fc38233ff9cc9ae8692c63df904869576219d164fdbee11",
+  "source_restore_metadata_identical": true,
+  "source_restore_counts_identical": true,
+  "restore_process_absent": true,
+  "source_mysql_main_pid": 738,
+  "application_units_inactive": true,
+  "comment_vote_preflight_review": "PASS: canonical_only, zero blockers, zero count differences, no writes",
+  "counts": [
+    {
+      "table": "users",
+      "rows": "2"
+    },
+    {
+      "table": "article",
+      "rows": "1"
+    },
+    {
+      "table": "comment",
+      "rows": "0"
+    },
+    {
+      "table": "comment_votes",
+      "rows": "0"
+    },
+    {
+      "table": "favorite",
+      "rows": "0"
+    },
+    {
+      "table": "credit",
+      "rows": "2"
+    },
+    {
+      "table": "card",
+      "rows": "0"
+    },
+    {
+      "table": "item",
+      "rows": "0"
+    },
+    {
+      "table": "math_training_records",
+      "rows": "0"
+    },
+    {
+      "table": "math_training_wrong_answers",
+      "rows": "0"
+    },
+    {
+      "table": "category",
+      "rows": "10"
+    },
+    {
+      "table": "cardcategory",
+      "rows": "19"
+    },
+    {
+      "table": "article_category",
+      "rows": "70"
+    }
+  ]
+}

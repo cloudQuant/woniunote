@@ -1,0 +1,20 @@
+{
+  "status": "FAIL_ORCHESTRATION",
+  "source_digest": "8fa23d6f6a1d374abd260ab602da94d485fdd4c08312b4244ff736d42fdd5548",
+  "runtime_image_id": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee",
+  "scope": "formal no-network binary; no DB/Redis; loopback POST route absence with matching test header; no business writes",
+  "cases": [
+    {
+      "builder": "system-libs",
+      "injected_env": false,
+      "binary_sha256": "0b0473ad398607b451d56f93d971da13d97ad877d3d2e820625fcfd0c7509adb",
+      "container_id": "f41023b2ee73086835e7eec413d0183cb0e9332501935bc8af33e0fed28d19a5",
+      "method": "POST",
+      "matching_run_header_sent": true,
+      "routes": {},
+      "health": 404,
+      "owned_container_removed": true
+    }
+  ],
+  "cause": "Probe used nonexistent /api/health instead of registered /api/system/health; no route assertion ran; owned container removed"
+}

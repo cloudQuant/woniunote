@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+printf 'FIXTURE_SHIM node %s\n' "$*" >&2
+case "${1:-}" in
+    scripts/check-node-version.mjs) printf 'v22.13.0 fixture shim\n' ;;
+    -) exec /usr/bin/node "$@" ;;
+    *) printf 'node shim rejects unsupported fixture command: %s\n' "${1:-}" >&2; exit 64 ;;
+esac

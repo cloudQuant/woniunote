@@ -1,0 +1,24 @@
+minimumLimaVersion: 2.0.0
+base:
+  - template:_images/ubuntu-22.04
+vmType: vz
+arch: aarch64
+cpus: 2
+memory: 2GiB
+disk: 12GiB
+mounts: []
+containerd:
+  system: false
+  user: false
+ssh:
+  localPort: 0
+  loadDotSSHPubKeys: false
+  forwardAgent: false
+  forwardX11: false
+  forwardX11Trusted: false
+networks: []
+portForwards:
+  - guestIP: 0.0.0.0
+    guestIPMustBeZero: false
+    proto: any
+    ignore: true

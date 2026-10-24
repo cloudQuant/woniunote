@@ -1,0 +1,56 @@
+{
+  "status": "PASS_LOCAL_D04_FINAL4_CYCLE",
+  "scope": "actual managed upgrade candidate3 to4; new UI title write; rollback to3; restore same immutable4 release (not a second fresh rebuild); independent eight-section DB/media comparison; no production",
+  "source_sha": "de510038840d29aa6be5a6806d6c417873dacd16",
+  "binary_sha256": "0b0473ad398607b451d56f93d971da13d97ad877d3d2e820625fcfd0c7509adb",
+  "comparison_sections": [
+    "articles",
+    "comments",
+    "votes",
+    "math_records",
+    "wrong_answers",
+    "schema_columns",
+    "table_counts",
+    "upload"
+  ],
+  "captures": {
+    "final4-after-deploy": {
+      "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T045821Z-3372-final4-after-deploy.json",
+      "sha256": "2ed3abadf7c3f5812941e8e0b54ba75c1f14c2d070b1e553597d85dcb95547e9",
+      "backend_pid": 88438
+    },
+    "final4-new-write": {
+      "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T050249Z-9157-final4-new-write.json",
+      "sha256": "8d34447d7b75e932fa495c158dd924995fc78e2bf4d02db16db40e706c100eec",
+      "backend_pid": 88438
+    },
+    "final4-rollback-to3": {
+      "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T050439Z-11151-final4-rollback-to3.json",
+      "sha256": "a238e9c0869223bca7713ff8ef3d561934efad4f400d38c1f3349997d0b2766e",
+      "backend_pid": 89001
+    },
+    "final4-restored": {
+      "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T050642Z-12883-final4-restored.json",
+      "sha256": "806a9107f34d88f6d9762c091cb34a86794ba5a915e0b749683d91e478f8a385",
+      "backend_pid": 89525
+    }
+  },
+  "editor_recovery": {
+    "manual_reload_on_final_frontend": true,
+    "reload_after_managed_upgrade": true,
+    "title_saved_by_real_ui": true,
+    "proof_screenshot": "d04-final4-editor-restored.png"
+  },
+  "compatibility_evidence": "d04-final4-compatibility-evidence.json",
+  "forced_expired_refresh": "reused only for byte-identical auth code; not rerun on candidate4",
+  "logout": {
+    "status": "PASS",
+    "ui": "login button and logout success toast",
+    "nginx_http_status": 200,
+    "nginx_timestamp": "24/Oct/2026:13:07:35 +0800",
+    "redis_slot_exists": false,
+    "capture_path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T050749Z-13682-final4-logout.json",
+    "capture_sha256": "5ce11801b52892067adfaf597f88189b6b0a4204ebb67e285ecfc3ce87da3cf0",
+    "raw_session_retained": false
+  }
+}

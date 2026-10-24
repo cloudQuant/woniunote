@@ -1,0 +1,47 @@
+{
+  "result": "PASS",
+  "evidence_dir": "/var/lib/woniunote-iter21-business/evidence/first-maintenance-migrations-20261024T032709Z",
+  "backup_manifest_sha256": "aa47f52ed2fe14030fc38233ff9cc9ae8692c63df904869576219d164fdbee11",
+  "migrations": [
+    {
+      "sql": "2026-10-23_math_answers.sql",
+      "sha256": "5cef1a5aefb23e26191f8c9afa71d13f07ed0642ffe9eb1c19e8a4815cc0708b",
+      "exit": 0
+    },
+    {
+      "sql": "2026-10-24_article_thumbnail.sql",
+      "sha256": "9b1bc83a4afe11883010a0d8e302b69d8c3254c3fe3cb46ccc75c77310b9365f",
+      "exit": 0
+    }
+  ],
+  "all_13_table_counts_and_data_hashes_preserved": true,
+  "data_hashes": {
+    "users": "486f16fd33c518e9114728a2bde1726c3fc443495eb172a794ef42d654602df4",
+    "article": "2e7d3285806748d3bda5f672399920de4a93e8081228992f4c09fb7a4ea89cc3",
+    "comment": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "comment_votes": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "favorite": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "credit": "f73979de1bae15b1743e3145cfc22a86ece3191e5cc09d451a6f1b4f63bbefcc",
+    "card": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "item": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "math_training_records": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "math_training_wrong_answers": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "category": "033bcd12e448bd305c38a75ef5cc43f255ca6f693bc372f3e5de77023ef39f90",
+    "cardcategory": "6d80a8de88b5c6f9c6347b0b8ce627e14b037f2316bc18c12d3cec0cab30b511",
+    "article_category": "991802952931ee46ce879f6b802d801839ea44ba39b1f8054dbdddc18f101edf"
+  },
+  "draft_fingerprint_sha256": "0333ab1c0b9952ffb2de06e6ce6ccac2926cdf2340457abdfd794547b34680f9",
+  "image_sha256": "9802f742ad084d11f8de174b1a0906c0dd43583b02d66ae523788e17d06c6ee3",
+  "changed_columns": [
+    {
+      "before": "article\t6\tthumbnail\tvarchar(30)\tYES\t<NULL>\t\tutf8mb4\tutf8mb4_unicode_ci",
+      "after": "article\t6\tthumbnail\tvarchar(512)\tYES\t<NULL>\t\tutf8mb4\tutf8mb4_unicode_ci"
+    },
+    {
+      "before": "math_training_wrong_answers\t6\tuser_answer\tint\tNO\t<NULL>\t\t\t",
+      "after": "math_training_wrong_answers\t6\tuser_answer\tdouble\tYES\t<NULL>\t\t\t"
+    }
+  ],
+  "mysql_pid_unchanged": 738,
+  "comment_votes_migration_applied": false
+}

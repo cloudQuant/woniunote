@@ -1,0 +1,52 @@
+{
+  "delta_from_source8": {
+    "added_paths": [],
+    "changed_paths": [
+      {
+        "path": "backend_cpp/core/transaction_response.h",
+        "source10_sha256": "02741902f36567dc3d0bd5ea06fd54f638f9aca6b58f35896c7b9203046a139c",
+        "source8_sha256": "c3934f3a1af43d247429bed8b76602213900002a03096a126bec78c0493caed1"
+      },
+      {
+        "path": "backend_cpp/tests/integration/iter21_fault_proxy.py",
+        "source10_sha256": "5bb9e974e85e3914b80c7fa6d67c54d517e687ebdddde4a143062a84274cddaf",
+        "source8_sha256": "12dc7f059e367a00483b48a7854ceb435941ed11c17456f68319668bc9bf3553"
+      },
+      {
+        "path": "backend_cpp/tests/integration/test_iter21_transaction_edges.py",
+        "source10_sha256": "10365838a52c3ce646fb5edb4a3ca5d3236706051d6e692bcd139c23b74c269e",
+        "source8_sha256": "a2a400511e2114fe70664f94fb54b03e8d48ebbb3d6b985b876adc9b703e2786"
+      }
+    ],
+    "removed_paths": []
+  },
+  "sanitization": [
+    {
+      "path": "backend_cpp/config.json",
+      "redacted_fields": [
+        "custom_config.jwt_secret",
+        "db_clients[0].passwd",
+        "redis_clients[0].passwd"
+      ],
+      "snapshot_sha256": "9ae6a4c2d3f862be4d41ea40b2cca3ab5d0d03d55d84fc1ed582fd08d928b540",
+      "source_sha256": "028806ac07ffce0d61337e399db44383e72ba7a013551ec4fdd1349b0622adee"
+    },
+    {
+      "path": "backend_cpp/config.prod.json",
+      "redacted_fields": [
+        "custom_config.jwt_secret",
+        "db_clients[0].passwd",
+        "redis_clients[0].passwd"
+      ],
+      "snapshot_sha256": "7d47407df71c0f62c00cbf2df4ca05ed23e9ef4c012b388b4ba50754d82ef66a",
+      "source_sha256": "efc1c7083e529092b4a7a4dc1e7467d103ba93962c30597f9af22cd1b72d9472"
+    }
+  ],
+  "schema": 1,
+  "source10_entry_count": 127,
+  "source10_snapshot_manifest_file": "backend-source10-manifest.json",
+  "source10_snapshot_sha256": "8fa23d6f6a1d374abd260ab602da94d485fdd4c08312b4244ff736d42fdd5548",
+  "source10_working_tree_inventory_file": "backend-source10-working-tree-inventory.json",
+  "source10_working_tree_inventory_sha256": "36b99bd13f3e37365fe60dec7e40161bb64c1d9630297aeac487371f36457833",
+  "source8_snapshot_sha256": "c7c72c2286df2265cca4ba01ac696d0dfae6e76bd8e44da166ffe71022dcfebe"
+}

@@ -1,0 +1,78 @@
+{
+  "a_term_cleanup_verified": true,
+  "b_survived_a_term": true,
+  "b_term_cleanup_verified": true,
+  "child_gate_signals_sent_by_driver": 0,
+  "docker_context": "desktop-linux",
+  "experiment": "two-run-runner-main-pid-term-isolation-with-live-uploads",
+  "run_b_upload_hashes_unchanged_after_a_term": true,
+  "runs": {
+    "a": {
+      "container_ids": {
+        "mysql": "ac3d55dcc5b6060e8ea94d52dd365f56550691f973ed5833a69deb54842a42bd",
+        "redis": "2fce4a781bb99030006bd7259113eca0d5b7c853f458fbef11231d67d7deaa5f"
+      },
+      "mysql_sentinel_verified": true,
+      "mysql_volume": "woniunote-i21-20261024T004024Z-2dc504f75426-mysql-data",
+      "ports": {
+        "http": 51895,
+        "mysql": 51936,
+        "redis": 51972
+      },
+      "redis_sentinel_verified": true,
+      "returncode": 143,
+      "run_id": "20261024T004024Z-2dc504f75426",
+      "runner_pid": 65944,
+      "term_elapsed_seconds": 3.486,
+      "upload_sentinels": [
+        {
+          "kind": "upload-controller",
+          "relative_path": "uploads/uploads/uploads/images/2026/10/1792802457675_3917.png",
+          "sha256": "21f2aebc460b2e079f4f32f0b02070b495a2c4ef3852d2cb2ad6e4c8fea36f19"
+        },
+        {
+          "kind": "ueditor",
+          "relative_path": "uploads/20261024_084057_943283.png",
+          "sha256": "21f2aebc460b2e079f4f32f0b02070b495a2c4ef3852d2cb2ad6e4c8fea36f19"
+        }
+      ]
+    },
+    "b": {
+      "container_ids": {
+        "mysql": "338f3e5d5db39c0bfa55baa531d5898dcbb996d2b0a547262e564d79a4b3c07d",
+        "redis": "820083f058a2531fbd04886bef1e566c2eb710f4b1339b1e546c014f1f565792"
+      },
+      "mysql_sentinel_verified": true,
+      "mysql_volume": "woniunote-i21-20261024T004024Z-100aebb17163-mysql-data",
+      "ports": {
+        "http": 51894,
+        "mysql": 51935,
+        "redis": 51971
+      },
+      "redis_sentinel_verified": true,
+      "returncode": 143,
+      "run_id": "20261024T004024Z-100aebb17163",
+      "runner_pid": 65945,
+      "term_elapsed_seconds": 3.466,
+      "upload_sentinels": [
+        {
+          "kind": "upload-controller",
+          "relative_path": "uploads/uploads/uploads/images/2026/10/1792802457983_5659.png",
+          "sha256": "a43e084e2024f29a8d6bd48154d40bccb305ab04b5af9a7148456e6b58c03d76"
+        },
+        {
+          "kind": "ueditor",
+          "relative_path": "uploads/20261024_084057_115572.png",
+          "sha256": "a43e084e2024f29a8d6bd48154d40bccb305ab04b5af9a7148456e6b58c03d76"
+        }
+      ]
+    }
+  },
+  "source": {
+    "backend_sha256": "b551cf9178645e228ca46cb142bc3c353930ded2bd1cb7961722a69122cc93bc",
+    "repo_commit": null,
+    "runner_sha256": "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249"
+  },
+  "status": "PASS",
+  "term_target": "runner-main-pid-only"
+}

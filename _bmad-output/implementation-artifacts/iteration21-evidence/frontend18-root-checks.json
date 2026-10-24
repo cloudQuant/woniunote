@@ -1,0 +1,76 @@
+{
+  "source_manifest_sha256": "a7a2546cf9b1f056e63a50776671661fc808e5b47512c3ac960711bec23d5488",
+  "node": "v22.13.0",
+  "results": [
+    {
+      "phase": "npm-ci",
+      "command": [
+        "npm",
+        "ci"
+      ],
+      "exit": 0,
+      "seconds": 4.897,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/frontend18-npm-ci-root.log",
+      "sha256": "6545ba6f4a8b4fb294a8cb90a3fd974eaee1578f0f26fa3cf417ac23331310fc"
+    },
+    {
+      "phase": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint:ci"
+      ],
+      "exit": 0,
+      "seconds": 2.572,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/frontend18-lint-root.log",
+      "sha256": "19d979f2fa04bb57796c816a754dd4abf6c5952b1ae8176b90410a40fc1c36d3"
+    },
+    {
+      "phase": "silent-catch",
+      "command": [
+        "node",
+        "scripts/check-silent-catch.mjs"
+      ],
+      "exit": 0,
+      "seconds": 0.088,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/frontend18-silent-catch-root.log",
+      "sha256": "4a615a5c0c7892e8f47fcfae64c1d5f9817b6ff67e2bee62fd1128d96ba5a572"
+    },
+    {
+      "phase": "coverage",
+      "command": [
+        "npm",
+        "run",
+        "test:coverage"
+      ],
+      "exit": 0,
+      "seconds": 10.062,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/frontend18-coverage-root.log",
+      "sha256": "c3532096ca5a70aa7e39f173f394ce094c8889daca7968fe6565266c421a44a5"
+    },
+    {
+      "phase": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0,
+      "seconds": 5.473,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/frontend18-build-root.log",
+      "sha256": "9e42e9c5441c32adab6240bd14a49b945f73dcecc5af91c478c3f233aa983523"
+    },
+    {
+      "phase": "audit",
+      "command": [
+        "npm",
+        "run",
+        "audit:ci"
+      ],
+      "exit": 0,
+      "seconds": 1.929,
+      "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/frontend18-audit-root.log",
+      "sha256": "0ae81aa55573c0ed11ee6445648364362523678485911f80d56d2cb9ab8c26dc"
+    }
+  ]
+}

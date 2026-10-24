@@ -12,6 +12,37 @@ export default defineConfig(() => {
   // wss://www.yunjinqi.top:443, which fails and triggers repeated full-page
   // reloads. Enable the prod HMR config only when WONIUNOTE_PUBLIC_HMR=1.
   const usePublicHmr = process.env.WONIUNOTE_PUBLIC_HMR === '1'
+  const realE2e = process.env.WONIUNOTE_REAL_E2E === '1'
+  const runId = process.env.WONIUNOTE_TEST_RUN_ID || ''
+  const explicitProxyTarget = process.env.WONIUNOTE_API_PROXY_TARGET || ''
+  let apiProxyTarget = 'http://localhost:5173'
+
+  if (explicitProxyTarget && !realE2e) {
+    throw new Error('WONIUNOTE_API_PROXY_TARGET is only accepted for an isolated real E2E run')
+  }
+  if (realE2e) {
+    if (!/^\d{8}T\d{6}Z-[0-9a-f]{12}$/.test(runId)) {
+      throw new Error('Real E2E requires the current isolated test run id')
+    }
+    if (!explicitProxyTarget) {
+      throw new Error('Real E2E requires an explicit isolated backend proxy target')
+    }
+    let target
+    try {
+      target = new URL(explicitProxyTarget)
+    } catch {
+      throw new Error('Real E2E backend proxy target must be a local HTTP URL')
+    }
+    const allowedHosts = new Set(['127.0.0.1', '::1', '[::1]', 'localhost'])
+    const port = Number(target.port)
+    if (target.protocol !== 'http:' || !allowedHosts.has(target.hostname) ||
+        !Number.isInteger(port) || port < 1024 || port > 65535 ||
+        [5173, 8888, 3306, 6379].includes(port) || target.pathname !== '/' ||
+        target.search || target.hash || target.username || target.password) {
+      throw new Error('Real E2E refuses non-loopback, development, or malformed backend targets')
+    }
+    apiProxyTarget = explicitProxyTarget
+  }
   const hmr = usePublicHmr
     ? { host: 'www.yunjinqi.top', clientPort: 443 }
     : true
@@ -42,11 +73,11 @@ export default defineConfig(() => {
       hmr,
       proxy: {
         '/api': {
-          target: 'http://localhost:5173',
+          target: apiProxyTarget,
           changeOrigin: true
         },
         '/uploads': {
-          target: 'http://localhost:5173',
+          target: apiProxyTarget,
           changeOrigin: true
         }
       }
@@ -57,11 +88,11 @@ export default defineConfig(() => {
       allowedHosts: ['yunjinqi.top', 'www.yunjinqi.top', 'localhost', '127.0.0.1'],
       proxy: {
         '/api': {
-          target: 'http://localhost:5173',
+          target: apiProxyTarget,
           changeOrigin: true
         },
         '/uploads': {
-          target: 'http://localhost:5173',
+          target: apiProxyTarget,
           changeOrigin: true
         }
       }

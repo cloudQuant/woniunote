@@ -1,0 +1,769 @@
+{
+  "entries": [
+    {
+      "mode": "0644",
+      "path": "backend_cpp/CHANGELOG_LOGGING.md",
+      "sha256": "237c74b51bc9e6ce5d584c502edfa3a18f45e2d52492356e0deb3be70087d926",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/CMakeLists.txt",
+      "sha256": "9740c3363826a81debc4791bc021a1c6f3d14f6ed9b4d0f6ff13a78879a6e66e",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/LOGGING.md",
+      "sha256": "43be8edbc48aa08fef70641a92edd6b92e907e16cae28dd5c0c994a3a531550e",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/README.md",
+      "sha256": "1da9f1ba001b2da246e002594bb61dee095470bc72dde66b3f10d179c2647360",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/build.bat",
+      "sha256": "ee499e78e8c93642d993d37f640c4d825906a001db7bfc06452a15f7bad9e693",
+      "type": "file"
+    },
+    {
+      "mode": "0755",
+      "path": "backend_cpp/build.sh",
+      "sha256": "1d7a0ebfaba1bcebdef9b3ec621466786ddbd8e8495ff7bde6f8c603d2caed07",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/config.json",
+      "sha256": "9ae6a4c2d3f862be4d41ea40b2cca3ab5d0d03d55d84fc1ed582fd08d928b540",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/config.prod.json",
+      "sha256": "7d47407df71c0f62c00cbf2df4ca05ed23e9ef4c012b388b4ba50754d82ef66a",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/AdminController.cc",
+      "sha256": "242c9ee731034477fbe51598632caddc51f0b944f4102bd88d1831d7853987fe",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/AdminController.h",
+      "sha256": "b28a3a896deaafac53c0684b9d283848c5f6ab412640192b2e703d2c0fbcd225",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/ArticleController.cc",
+      "sha256": "95db6bde0de5ac72c9a322d730130c3fc189b3b5876a39d38f5f89dfe857ffd6",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/ArticleController.h",
+      "sha256": "6291bb7be6358ba419020a12deb63ed89ed77451c33452a79046acef11eebd69",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/AuthController.cc",
+      "sha256": "b104b42438c71aa4c5cf9cc160e3a7a26664ebace758ff2d172b440c11752795",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/AuthController.h",
+      "sha256": "b381e36a0aaa25ccbfa6e3a20c284a38ad23039a7d6e44452d0a05febd351f38",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/CaptchaController.cc",
+      "sha256": "385b845a57fa59b4d8d555f0eae6b47c9a4f5f34d2486c96074a288907fbe339",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/CaptchaController.h",
+      "sha256": "99bac7b5da924ca13ac2f2183144da62f062d9b5a7fa91c6e6137df2a730be85",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/CommentController.cc",
+      "sha256": "97c063bf08000add73618a5913080297461f67c223a2c409685387934b94b0d5",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/CommentController.h",
+      "sha256": "da254d7f5e05952488ec4c358f87b6f9a51537d8d041ca31f64ce44c4b63daad",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/CreditController.cc",
+      "sha256": "561fd21f0db3899d1f165a8c3beff13e42d94e359116c496999d7ba997ab0112",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/CreditController.h",
+      "sha256": "a614c912ce0a30db6c30661f78d1216e899450cda41050f93b3838abfc42f08f",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/FavoriteController.cc",
+      "sha256": "d64b7203c4c9c11cf9a4ca3147f0703b1924a1c9da9175e158309a56bfc67357",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/FavoriteController.h",
+      "sha256": "174097db0df5e2778d43e981f746be1f60c4437aace60b06795f5db3a59c8d66",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/MathTrainingController.cc",
+      "sha256": "2cbd1ca0b790375e243dbd01c1150fd63ad4eb0fcd058bb0994e173509531266",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/MathTrainingController.h",
+      "sha256": "75350f4474da699bcde6fa77a2db9e237e2834c0670046b5eefe821157565b94",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/README.md",
+      "sha256": "0fcbb436a131a338dd1272ceae045fc84275c6a59ff1d6e16b157668eea9f763",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/SystemController.cc",
+      "sha256": "8fbb13aeeb0f2501be618e5b815cea7575a4a80a92ce1d3734f0f432189602fd",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/SystemController.h",
+      "sha256": "56d432dbcd35d37c0e2cffec4ee4926348516142ad7eaba0af8bc0f9e626da57",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/ThumbController.cc",
+      "sha256": "78116f52cc65a45d9daf7efb20e8f485bfe25980da3f2768da220e08805c8cc8",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/ThumbController.h",
+      "sha256": "7b4cf79f8434d32fdc9f6251a335e274194d435a642cb092c644bdc341b9258d",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/UEditorController.cc",
+      "sha256": "03933e9573d77cfe5ba8d5ff6eef5ca9320ecc5a94f0cb055fe1e577cb358b91",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/UEditorController.h",
+      "sha256": "7bb1eb339fc8bf0f55d40cf21f511245cefef0b6f9afcd339ece5b4af0cd80e6",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/UploadController.cc",
+      "sha256": "525e219e8a243c351e97e2f7a5c7d7a84669801e577aacc02e2b62800a0cd3a9",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/UploadController.h",
+      "sha256": "6fdf204b11256c4af064adeaa0af681c8c2688c1cd1a3bf1a876bfdbac3afe39",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/UserController.cc",
+      "sha256": "32975bf153822015525f9b5ae3ecafb3139df9d7cedaaa465dedef9ccb2ee88e",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/controllers/UserController.h",
+      "sha256": "f3d626ac48b0a5fcd72c8f501a83b4f2bbe8d6b9a9935f4ef4603ba67d692979",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/article_thumbnail.h",
+      "sha256": "dba6414e2f20e77616843ad92d0cb266546e3b60a49a82a80f46a4bb9a803f0c",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/auth_redis_config.h",
+      "sha256": "cf02362e0511ff35b5160de4bba9fa2af90d58462df5e389c45b1ca09ab361a9",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/config.cc",
+      "sha256": "1be365f8e66151267d724718a6eed2b0ceb5aeac3b01503cfc5bd925b5949350",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/config.h",
+      "sha256": "bd140c8ada90c3f9b2664b8015b6bc97eb5b68e8d61962a861c896c6a6d6a484",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/database.cc",
+      "sha256": "9aafc7b090569cd34f42f0ca94b6e56b31a20404969e6f316b4f3f3e5d8d3a70",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/database.h",
+      "sha256": "d5101cab19d8ea167180a4fe03079a1de912dcf3303d0145a2a04277da75430e",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/logger.cc",
+      "sha256": "bf5a0e57c6b46298db2fa9aceb52e487f96a26c89171032f85316de03fae49e8",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/logger.h",
+      "sha256": "5700becc3d628cea9204362410b8baac6e967e0820dc1f3994d1da37d62f249f",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/response.h",
+      "sha256": "d091052d507095e2cb5426b5e31a73e45551bde81c46cba726b4aa6284242c26",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/security.cc",
+      "sha256": "22badd5b8f1bc143c3178fe250f5b37842ec37343f8e7f95e5c1a2cdcca7f4e2",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/security.h",
+      "sha256": "74751705d9c2478f7710682f1d35e3377364c281c23c5bd97bbb96cad16e57bc",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/transaction_response.h",
+      "sha256": "a86b634a164c156cc8efdd8e6236f04adcc2668ece24ca1984b44193ca92c652",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/core/upload_safety.h",
+      "sha256": "e59f6cbbe49e10874a5564d76b6d2e43c82a1277a05fe1dabc7f2897585a3353",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/filters/AdminFilter.cc",
+      "sha256": "3f16fadfeaa40625f8b1bde804b5beb11b63404f854c8e2e9e58ce62d3c1bfb9",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/filters/AdminFilter.h",
+      "sha256": "e110881c7205b7b36ed8849be1d83ee71b2e4aca56467cc0fb9cbb3630fe8719",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/filters/AuthFilter.cc",
+      "sha256": "3fbc1b39a803cd11c72727eaf2dc2caa1de85098611a2fe0d9669f526c39ecbb",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/filters/AuthFilter.h",
+      "sha256": "318244a7cb91e72f33005c22fa22cfefe05ca084a6af2bc6aa74a138aee99a5b",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/filters/RateLimitFilter.cc",
+      "sha256": "665857332310c7ca9c920e0dfcf10cb3f44b18263c89811e620c17df6584e4bc",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/filters/RateLimitFilter.h",
+      "sha256": "53156a86fbcdb3e5dd43ee914ddf24d10ec5f554fd5a6b95acea347195e0c558",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/main.cc",
+      "sha256": "7b18c88cde1da52e48626977322998f31c2e3133debeff93aa948e995dd19695",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/Article.cc",
+      "sha256": "5ea963fd46166a4c77ee80a8ad044d8ed6963081fe2659a7ea4487c0b8a7062e",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/Article.h",
+      "sha256": "22f9f105d2f98e4866878ff1ca6eaa26111ddd2fe34747934045d153c7c8063e",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/ArticleCategory.cc",
+      "sha256": "397a0b6dddf9ca09d831f791240c1b9f992cb6c047510ccb21f953c69b675f79",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/ArticleCategory.h",
+      "sha256": "7519d811a1ae3e4e5bda6154e87131605d8fc9a0d979f01da9fe6d9b8dd7bb68",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/Comment.cc",
+      "sha256": "2a084e3a5ef8882360cad1ae68177c61be222e856f4f449bed593bc81327b6da",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/Comment.h",
+      "sha256": "2c71072d138f058dcebb38f463e904176e5b93e5acc705d0b851f2dc8b5c7d78",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/CommentVote.cc",
+      "sha256": "19bedec2ac8cda01db1003076924417d1883600679dfe1037c07fcc317f552be",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/CommentVote.h",
+      "sha256": "56731f3c03c542e7d1bc183942fcaa0f45b5649c7e451cd594539386ce936a73",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/Credit.cc",
+      "sha256": "c2d6255ba2ce6e49f73e45d7d8c80db2ff107f511946b8140f9b8a6020d67be8",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/Credit.h",
+      "sha256": "adf48e086e73fe2a6b40d907db0cdf717b94b5d1a221be6c99984551711eb7db",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/Favorite.cc",
+      "sha256": "4a2932e63b2cb5e070a36161cc1d1dc84d650dedcf564ab7e859258e750c6348",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/Favorite.h",
+      "sha256": "fe412cab4bb3abac302f228b4491ee51f9cb1501e4415428901b00d809113f57",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/MathTraining.cc",
+      "sha256": "c71e60f3b7ff90b910a33a6d8bb1fdc39e4d6539eff708ae3c583eeb70d43f4a",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/MathTraining.h",
+      "sha256": "1b19360a6fdeff2a892ec38918b8d474aee503c62795ae6792b9e2a2c2326e3d",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/User.cc",
+      "sha256": "2f5c6fea16c7b1c4171cb10a4ab80ba4ab76baba2c35773a27790af5a3c3a9af",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/User.h",
+      "sha256": "01084008fe0b59a1ea31352f4f57dbe7f6f07b866bf7f7cfe7497618a130828c",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/models/model.json",
+      "sha256": "338d25497aa46412adfe3e239ba2141d07b33edf50b63676a21e6e14c0c50883",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/query",
+      "sha256": "db87854ad92140026ae52a3929de23d2a446faf5445c67433b3cc989c83023d3",
+      "type": "file"
+    },
+    {
+      "mode": "0755",
+      "path": "backend_cpp/scripts/coverage.sh",
+      "sha256": "a1a7e5f5bc57da4c3b5bede462d85b5f9b139ddfa21b32fc3794e0f70cef6f7c",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/scripts/generate_thumbs.py",
+      "sha256": "12a16146c8dc4dccd3f7d614739ae5e1e94e9f4f5eb671b61b3f3f375981bf0b",
+      "type": "file"
+    },
+    {
+      "mode": "0755",
+      "path": "backend_cpp/scripts/run_cppcheck.sh",
+      "sha256": "b24dac5270d22fc49799d46ac80ececdf6d85976257c3c1ce5e61ac156c7e32d",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/services/ArticleAuthorService.cc",
+      "sha256": "86ce6eb3e38b68c7028ae046297d5d5d5993a5b7339276251c0c2503f22c0716",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/services/ArticleAuthorService.h",
+      "sha256": "80c7513ca68b544dc1300edabb71735cadbd4a9e5f01b4e1858883f70c7a8ab0",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/services/ArticleCategoryService.cc",
+      "sha256": "c294e0596c1dda2dfc6d1c8d0e63b7dc4a5e2656133c8f6c78734894932d5e3e",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/services/ArticleCategoryService.h",
+      "sha256": "69733d697f46be3bc419c8ce004d0162026ad28a573f0f799f37d4ab677619f3",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/services/ArticleServiceLogic.h",
+      "sha256": "0e67e8b3805031dbed589dc0d54c6a3cc626097d111a116e9348efed38884dbc",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/setup_vcpkg.bat",
+      "sha256": "e8a884ae5de32d27ff0e06a32257dfa3d55efe366e0cb1b12899e3a196df4bfe",
+      "type": "file"
+    },
+    {
+      "mode": "0755",
+      "path": "backend_cpp/setup_vcpkg.sh",
+      "sha256": "b3748c05a6a86c03b4d934daaa51517536aef56fcc14a7d617fe5df5dcd36e0b",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/CMakeLists.txt",
+      "sha256": "ee465bc8ac289d75f71c81b82330a2e6bf4264c261dfdafe3d16de41e494a9c9",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/README.md",
+      "sha256": "7e91433e22a3bfeed1dd0c10aa9a9b3218d1e07d9b6c86eac59fa7c4e0a2b750",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/README.md",
+      "sha256": "221e94de1f3afdb40ee5139cc13f982e52680c46be36d82a6b7c4e0eba0963a9",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/config.integration.template.json",
+      "sha256": "d2f2106656b4cf469c865e80b58b7149a025ce064bfe8d558396d4228a6048b8",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/conftest.py",
+      "sha256": "26b0dc223002ab62df5d40c29d5861f9c594210e1dd95cc61abd2dc53934c731",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/iter21_fault_proxy.py",
+      "sha256": "67acbac8d789e19a962a70d8538b54ee8e88cc63c732f07a4cd8e7c00acf33b5",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/iter21_support.py",
+      "sha256": "2cc912c7bb2b0cfe4684dc3577c6bf7573eef46a361fabb7e792b23d80c60bf7",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/pytest.ini",
+      "sha256": "d73d6f68f827e5fe6f517e04e701ba1f5b078ae0793bdf3b6caf5d1d6cfc8713",
+      "type": "file"
+    },
+    {
+      "mode": "0755",
+      "path": "backend_cpp/tests/integration/run_integration.sh",
+      "sha256": "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/sanitize_backend_runtime.py",
+      "sha256": "15a3d88c9951897b2da8da04adf398a718c4e31379f2b6afddd98a08b8e41923",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/test_api_integration.py",
+      "sha256": "6adf1fcefc5057fcca14be0eb9c1d117f0c32a640dcc9354acf3ebb60e55fd9f",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/test_iter21_admin.py",
+      "sha256": "4ddfa1436ebe6b8ea53a391fcbdc0cd454e57cfd8373d7c1f92b13ab64caedb6",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/test_iter21_article_thumbnail.py",
+      "sha256": "c32850e8700b78bcea2337ffaca1cd84e60b3f5a842b70b6fc95b305a1f72d5b",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/test_iter21_auth.py",
+      "sha256": "e7b848d53de3ba9ac536ded2c28b5364c272199363f31558cde246c1b6ebda95",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/test_iter21_comments.py",
+      "sha256": "b90965f4ee93ffdbb56d98388030e3fc7f483f7a342d1e1fd384684e53c1bbd2",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/test_iter21_math.py",
+      "sha256": "67f6ff3e98111d2a0c1f8bf568cde75f0c34e2989a2abc3c9025775b71afa573",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/test_iter21_transaction_edges.py",
+      "sha256": "b874d32311603a227cc4e69eb3b4e6e37b623aae13ba0153f9c611216a82f281",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/test_iter21_transport_faults.py",
+      "sha256": "568615cf4c028492a25b08328a30811741d2df4c2048165046180771d7a107eb",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/test_iter21_upload_isolation.py",
+      "sha256": "57163346cbba3633f9f8c1758d6c6a0cdf8b472a57598971c8b0158aa24dc598",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/test_iter21_user_projection.py",
+      "sha256": "f0e57e69d9e3663caf6d06d49589cc3c104bbe0cce2aeba9ea301f2fa08a637d",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/integration/test_z_rate_limit.py",
+      "sha256": "4d726b3a9b994e18fe77d31026ba30b0f94a50d5c69078c26118e0b61d46e2d3",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/test_article_category.cc",
+      "sha256": "ba3cb96de2ee9d081e44cf9bfbfad8e4c9afeb3f1a3f3e2ee7d10aea1accf7e2",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/test_article_thumbnail.cc",
+      "sha256": "ab08a0c2e555e737ed16b7f7963e6bf89c80bf20c89bea39cc301672d37e29a5",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/test_auth_sessions.cc",
+      "sha256": "cfec92a99413f67ff6617c909b7fe34f3432da1b88c410be606c816ade4a3ba8",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/test_config.cc",
+      "sha256": "61f5c778f47be533d21448bb9d61c171b85512ebfe0c73468ffa18a5aaa536f6",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/test_framework.h",
+      "sha256": "87f19b1cb8a3d309690781d3652b54e4a8341e154777990d9b9dd3f4f088d3b8",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/test_main.cc",
+      "sha256": "d5b7f197b7fae59d9217b799a1135fe3d3e3df91cd9ddb3ded6ec10343e2e55d",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/test_response.cc",
+      "sha256": "930f23f551644ceb7e728e3f3b5ffa5f485206abe84cb86d0a6287e4e5aba204",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/test_security.cc",
+      "sha256": "437a79b95ac4b42d971dbdb5923b985465287f29ada75bdb5d59049d17f0792b",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/test_services.cc",
+      "sha256": "7efb63661a03ce375e8f279f8bd4215f6ccc7b9227899e852b925eb5eeb686cd",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/tests/test_upload_safety.cc",
+      "sha256": "035b2ddf33809cd14a5da7fba0b5cbc7c12f0f8e1aff35315036ca36d126476c",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/third_party/picojson/picojson.h",
+      "sha256": "eecfb89d1a72ab38a20322e4f959210c432167350fc84956856d94dfe6e4a526",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/vcpkg-configuration.json",
+      "sha256": "ca8555ae95a3e786984869c66e1ed4b1311bf4867d714d6b5b449426da06f7fa",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/vcpkg-overlay-ports/README.md",
+      "sha256": "7bf84d884ca35b18bdcf2f380af4fd5325ea0ca413e5c12fa60f33d1287df1c2",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/vcpkg-overlay-ports/drogon/0001-vcpkg.patch",
+      "sha256": "cbdbe627fab2463600e8e7f09325209ce0e1df384ed5cd8191a464929c11b966",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/vcpkg-overlay-ports/drogon/0002-drogon-config.patch",
+      "sha256": "8b13f6db10504366110bc0e413736f4847a58181ef57f8184b731c1b883062ea",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/vcpkg-overlay-ports/drogon/0003-deps-redis.patch",
+      "sha256": "329d13b3e5bc25fc479d0967f38605c9c958fdb22d6a90d2d01ea8c6f7ac9186",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/vcpkg-overlay-ports/drogon/0004-drogon-ctl.patch",
+      "sha256": "da0ed2a646908892259c88e880ae311d64842cf339df4bdbf781ddf8052b2f01",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/vcpkg-overlay-ports/drogon/0005-drogon-cross-compile.patch",
+      "sha256": "39021eb41400e74af81dc352eaef29ca55ea0420d6b8daeeaa807ce4cd75f0cc",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/vcpkg-overlay-ports/drogon/0006-prefer-vcpkg-libmariadb.patch",
+      "sha256": "97b3629b7aad3714587aea15a6cc70bf8d7d93270f75bb1635788ab780c16609",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/vcpkg-overlay-ports/drogon/portfile.cmake",
+      "sha256": "38748378a9e8bacab14182e62a32f527e9ce565f9e5b688696590374a7d26eb3",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/vcpkg-overlay-ports/drogon/usage",
+      "sha256": "6653cb4b6a2ebe452a7efa273404ecbe933bdff8c7c07c7195aaa9e328d9a337",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/vcpkg-overlay-ports/drogon/vcpkg.json",
+      "sha256": "b47cd6d6e6ff78b4cbccab814e3e957746f85961a766ceffebdf22f611feef34",
+      "type": "file"
+    },
+    {
+      "mode": "0644",
+      "path": "backend_cpp/vcpkg.json",
+      "sha256": "a6a4526388b77e6dce1e8b6b5aaae9157b3cd22450869a7d6ab92c97cd70638e",
+      "type": "file"
+    }
+  ],
+  "hash_definition": "sha256 of sorted canonical JSONL entries; excludes the source marker",
+  "schema": 1,
+  "snapshot_sha256": "70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd"
+}

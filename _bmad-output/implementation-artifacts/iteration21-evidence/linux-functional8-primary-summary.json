@@ -1,0 +1,62 @@
+[
+  {
+    "run_id": "20261023T173346Z-287a4f344dd5",
+    "backend_path": "/Users/yunjinqi/.cache/woniunote-iter21/builds/candidate-3-6a7b43b5e24dc46a/system-libs/test/cmake-build/woniunote_backend",
+    "sha256": "b69f6cebb8628ccd202008ad343e09e32e7c41abe2e93dfd5884da21a3ab1de1",
+    "binary_binding": "primary command selected immutable candidate-3 binary; runtime metadata was not retained by successful cleanup",
+    "test_source_manifest_sha256": "1d3ba8a81eac025c0261fcfc6466f6a99e6240f40987fadea2d2f928b070066a",
+    "tests": 59,
+    "passed": 59,
+    "failed": 0,
+    "skipped": 0,
+    "process_exit_code": 0,
+    "log_sha256": "31cea14552eb67a87ed6a186b31a480ad885655c38dde7e9bbd43c609da6e0ee",
+    "migration_summaries": {
+      "math-training-migration-summary.json": {
+        "run_id": "20261023T173346Z-287a4f344dd5",
+        "suite": "math-answer-column-migration",
+        "result": "passed"
+      },
+      "comment-vote-migration-summary.json": {
+        "run_id": "20261023T173346Z-287a4f344dd5",
+        "suite": "comment-vote-migration-unit",
+        "result": "passed"
+      },
+      "comment-vote-migration-live-summary.json": {
+        "run_id": "20261023T173346Z-287a4f344dd5",
+        "suite": "comment-vote-migration-live",
+        "result": "passed"
+      }
+    }
+  },
+  {
+    "run_id": "20261023T173707Z-3e7f9804b0ec",
+    "backend_path": "/Users/yunjinqi/.cache/woniunote-iter21/builds/candidate-3-6a7b43b5e24dc46a/vcpkg/test/cmake-build/woniunote_backend",
+    "sha256": "5465450349335c2396bbcf32088e18c05e658d25e542a80a06bf5516096d6e80",
+    "binary_binding": "primary command selected immutable candidate-3 binary; runtime metadata was not retained by successful cleanup",
+    "test_source_manifest_sha256": "1d3ba8a81eac025c0261fcfc6466f6a99e6240f40987fadea2d2f928b070066a",
+    "tests": 59,
+    "passed": 59,
+    "failed": 0,
+    "skipped": 0,
+    "process_exit_code": 0,
+    "log_sha256": "ae627e7251f19cbc31c45d0c2878adf1ec1c38380bde4c6e762559bbd1bfcab1",
+    "migration_summaries": {
+      "math-training-migration-summary.json": {
+        "run_id": "20261023T173707Z-3e7f9804b0ec",
+        "suite": "math-answer-column-migration",
+        "result": "passed"
+      },
+      "comment-vote-migration-summary.json": {
+        "run_id": "20261023T173707Z-3e7f9804b0ec",
+        "suite": "comment-vote-migration-unit",
+        "result": "passed"
+      },
+      "comment-vote-migration-live-summary.json": {
+        "run_id": "20261023T173707Z-3e7f9804b0ec",
+        "suite": "comment-vote-migration-live",
+        "result": "passed"
+      }
+    }
+  }
+]

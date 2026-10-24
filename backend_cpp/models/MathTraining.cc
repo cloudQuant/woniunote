@@ -15,7 +15,9 @@ MathTrainingWrongAnswer::MathTrainingWrongAnswer(const drogon::orm::Row& row)
       user_id_(row["user_id"].as<int64_t>()),
       question_(row["question"].as<std::string>()),
       correct_answer_(row["correct_answer"].as<int>()),
-      user_answer_(row["user_answer"].isNull() ? 0 : row["user_answer"].as<int>()),
+      user_answer_(row["user_answer"].isNull()
+                       ? std::nullopt
+                       : std::optional<double>{row["user_answer"].as<double>()}),
       operation_(row["operation"].as<std::string>()),
       difficulty_(row["difficulty"].as<int>()),
       created_at_(row["created_at"].as<std::string>())
@@ -30,7 +32,8 @@ Json::Value MathTrainingWrongAnswer::toJson() const
     ret["user_id"] = static_cast<Json::Int64>(user_id_);
     ret["question"] = question_;
     ret["correct_answer"] = correct_answer_;
-    ret["user_answer"] = user_answer_;
+    ret["user_answer"] = user_answer_ ? Json::Value(*user_answer_)
+                                       : Json::Value(Json::nullValue);
     ret["operation"] = operation_;
     ret["difficulty"] = difficulty_;
     ret["created_at"] = created_at_;

@@ -236,35 +236,30 @@ jobs:
     runs-on: ubuntu-latest
     needs: repo-hygiene
 
-    # Live dependencies for the real backend: MySQL holds the isolated test
-    # schema; Redis backs rate limiting and refresh-token rotation.
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: testrootpw
-          MYSQL_DATABASE: woniunote_test
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptestrootpw"
-          --health-interval=10s --health-timeout=5s --health-retries=10
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s --health-timeout=5s --health-retries=10
+    # The integration runner owns run-labeled disposable MySQL/Redis
+    # containers; no host DB service is shared with the test process.
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend packages and browser
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
 
       - name: Install build toolchain
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake git curl zip unzip tar pkg-config \
-            libssl-dev default-mysql-client
+            libssl-dev default-mysql-client ripgrep
 
       - name: Cache vcpkg
         uses: actions/cache@v4
@@ -285,32 +280,51 @@ jobs:
       - name: Build backend
         working-directory: backend_cpp
         run: |
-          cmake -S . -B build -DBUILD_TESTING=OFF \
+          cmake -S . -B build -DBUILD_TESTING=ON \
+            -DWONIUNOTE_ENABLE_TEST_CHALLENGE=ON \
+            -DWONIUNOTE_ENABLE_TEST_AUTH_FAULTS=ON \
             -DCMAKE_TOOLCHAIN_FILE=$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build build -j$(nproc) --target woniunote_backend
 
       - name: Install Python test deps
-        run: pip install --quiet requests pytest
+        run: pip install --quiet requests pytest pymysql redis
 
-      - name: Run integration tests
+      - name: Run isolated real backend and Chromium suite
         run: bash backend_cpp/tests/integration/run_integration.sh
         env:
-          WONIUNOTE_TEST_DB_HOST: 127.0.0.1
-          WONIUNOTE_TEST_DB_PORT: "3306"
-          WONIUNOTE_TEST_DB_USER: root
-          WONIUNOTE_TEST_DB_PASSWORD: testrootpw
-          WONIUNOTE_TEST_DB_NAME: woniunote_test
-          WONIUNOTE_TEST_REDIS_HOST: 127.0.0.1
-          WONIUNOTE_TEST_REDIS_PORT: "6379"
-          WONIUNOTE_TEST_PORT: "5273"
-          WONIUNOTE_TEST_RATE_LIMIT: "30"
-          # Release gate: the rate-limit case must observe a real 429 instead
-          # of skipping when Redis is unavailable.
           WONIUNOTE_TEST_STRICT: "1"
-          # Plain command only. Quoting tricks in this value (e.g. addopts='')
-          # survive environment expansion as literal quotes; pytest then reads
-          # the empty value as a path argument for the current directory and
-          # collects the whole repository instead of the integration suite.
-          # The suite's own pytest.ini (passed by the runner with -c) supplies
-          # -v and -p no:cacheprovider.
-          PYTEST_CMD: "python -m pytest"
+          WONIUNOTE_TEST_REAL_E2E: "1"
+          TMPDIR: /tmp
+
+      - name: Verify the product-default rate limit in a fresh service pair
+        id: rate_limit_default
+        run: bash backend_cpp/tests/integration/run_integration.sh
+        env:
+          WONIUNOTE_TEST_STRICT: "1"
+          WONIUNOTE_TEST_SCENARIO: rate-limit
+          TMPDIR: /tmp
+
+      - name: Diagnose the product-default rate limit under sanitizers
+        if: failure() && steps.rate_limit_default.outcome == 'failure'
+        run: |
+          cmake -S backend_cpp -B backend_cpp/build -DBUILD_TESTING=ON \
+            -DWONIUNOTE_ENABLE_TEST_CHALLENGE=ON \
+            -DWONIUNOTE_ENABLE_TEST_AUTH_FAULTS=ON \
+            -DENABLE_SANITIZERS=ON \
+            -DCMAKE_TOOLCHAIN_FILE=$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake
+          cmake --build backend_cpp/build -j2 --target woniunote_backend
+          WONIUNOTE_TEST_STRICT=1 \
+          WONIUNOTE_TEST_SCENARIO=rate-limit \
+          TMPDIR=/tmp \
+          WONIUNOTE_BACKEND_BIN="$GITHUB_WORKSPACE/backend_cpp/build/woniunote_backend" \
+          ASAN_OPTIONS=abort_on_error=1:detect_leaks=0:symbolize=1 \
+          UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+            bash backend_cpp/tests/integration/run_integration.sh
+
+      - name: Upload redacted Iteration 21 reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iter21-real-backend-evidence
+          path: /tmp/woniunote-iter21/results
+          retention-days: 7

@@ -1,0 +1,47 @@
+{
+  "status": "PREPARED_NOT_DEPLOYED",
+  "instance": "woniunote-iter21-systemd-20261024t0028z",
+  "candidate_config": {
+    "previous_sha256": "588cb009a7ebf62bf4cbee1c6a25d7d55ae5d1a8ade731cad89e4ec64258697c",
+    "previous_shape": "fixture_data_dir only, no database clients; rejected by backup identity check",
+    "preserved_at": "/var/lib/woniunote-iter21-data/runtime-config.pre-business-fixture.json",
+    "derived_from_original_sha256": "4dd82289bcba52b6c24c66a15243613abeb2f0e476c7d41feb55e175de8d9987",
+    "sha256": "1f49ab333fd037ee15a601f10f860530fe5d79c5b966a45fd1619179c4b7bd1b",
+    "owner": "root",
+    "mode": "0600",
+    "db_redis_and_jwt_values_preserved": true,
+    "nonsecret_changes": {
+      "app.document_root": "./uploads",
+      "app.upload_path": "./uploads",
+      "app.log.log_path": "/var/lib/woniunote-iter21-data/build/logs",
+      "app.log.logfile_base_name": "candidate",
+      "custom_config.app_name": "WoniuNote Iteration 21 rehearsal"
+    }
+  },
+  "tls": {
+    "certificate_sha256": "578181458e7454ab10205b82af020dcbe7a22cc17ba7941252a896985862a5e6",
+    "source": "original-v2-runtime localhost certificate and key",
+    "destinations": [
+      "/etc/ssl/woniunote/fullchain.pem",
+      "/etc/ssl/woniunote/privkey.pem"
+    ],
+    "copied_bytes_equal": true,
+    "owner": "root",
+    "file_mode": "0600",
+    "directory_mode": "0700"
+  },
+  "preflight_dependency": {
+    "package": "python3-pymysql",
+    "version": "1.0.2-1ubuntu1.22.04.1",
+    "source": "configured Ubuntu apt repository",
+    "install_log_sha256": "e96a65af04044ce9170f395a00bc09fe8c0267f036195ce6c4a3fb7986dc7d85"
+  },
+  "mysql_option_validation": {
+    "version": "8.0.46-0ubuntu0.22.04.4 aarch64",
+    "command_scope": "--no-defaults --validate-config, isolated temp datadir/socket, skip-networking/mysqlx OFF, 32M buffer",
+    "exit": 0,
+    "datadir_empty_after_validation": true,
+    "started_server": false
+  },
+  "secrets_included": false
+}

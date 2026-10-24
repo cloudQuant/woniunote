@@ -54,6 +54,16 @@ Json::Value User::toJson() const
     return ret;
 }
 
+Json::Value User::toPublicJson() const
+{
+    Json::Value ret;
+    ret["userid"] = static_cast<Json::Int64>(userid_);
+    ret["username"] = username_;
+    ret["nickname"] = nickname_;
+    ret["avatar"] = avatar_;
+    return ret;
+}
+
 Json::Value User::toJsonWithoutPassword() const
 {
     Logger::debug("[Model] User toJson", {{"userid", std::to_string(userid_)}, {"username", username_}});

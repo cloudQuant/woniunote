@@ -1,0 +1,16 @@
+{
+  "status": "FINISHED",
+  "command": [
+    "bash",
+    "scripts/tests/iter21-business-runtime/run.sh",
+    "stage",
+    "candidate-2",
+    "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/d04-frozen-candidate-2",
+    "9c597548fc18d3250f68cba8e55bfaa171edacfb",
+    "--confirm-d04-mutation"
+  ],
+  "commit": "9c597548fc18d3250f68cba8e55bfaa171edacfb",
+  "exit": 0,
+  "seconds": 2.873,
+  "log_sha256": "1bbbed062ee7ba355c9a162f8307ea5d63e910bb2860cd1cef9d310cc8972718"
+}

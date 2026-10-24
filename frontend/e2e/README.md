@@ -6,7 +6,8 @@
 
 - **无需真实后端**：所有 `/api/**` 请求由 `support/mockApi.js` 通过 Playwright 的路由拦截返回确定性数据（后端 `{code, message, data}` 信封格式）。因此套件**无需** C++ Drogon 后端、MySQL、Redis 即可运行，结果稳定、可在 CI 跑。
 - **跑的是真实前端**：真实的 Vue Router 守卫、组件渲染、Pinia store、Axios 拦截器、localStorage 持久化等单元测试覆盖不到的集成路径。
-- **可切真实后端**：设置 `E2E_BASE_URL` 指向真实服务地址即可（届时应移除 mock 或让其放行真实请求）。
+- **mock 出口有硬边界**：Playwright 启动专用 Vite preview 配置，`/api/**` 与 `/uploads/**` 没有代理，并由拒绝中间件记录每次漏网请求。全局 teardown 要求该次运行的审计记录存在且拒绝数为零。
+- **真实后端隔离运行**：mock 配置拒绝 `E2E_BASE_URL` 和真实后端代理变量。真实后端测试应使用独立的 real Playwright 配置，不得复用本目录的 route mocks 或 mock preview。
 
 ## 覆盖的关键流程
 
@@ -25,30 +26,22 @@
 # 安装浏览器（首次）
 npx playwright install chromium
 
-# 跑全部 E2E（自动构建 + vite preview，再跑测试）
+# 跑全部 mock E2E（自动构建 + 无 API 代理的专用 vite preview，再跑测试）
 npm run test:e2e
 
 # 交互式 UI 模式（调试用）
 npm run test:e2e:ui
 ```
 
-### 针对已运行的服务跑（更快迭代）
-
-```bash
-# 终端 A：构建并起预览服务
-npm run build && npm run preview -- --port 4173 --strictPort
-
-# 终端 B：指向该服务，跳过内置 webServer
-E2E_BASE_URL=http://localhost:4173 npm run test:e2e
-```
-
 ## 环境变量
 
 | 变量 | 作用 |
 |------|------|
-| `E2E_BASE_URL` | 指向已运行的服务地址；设置后跳过内置的 build+preview webServer |
+| `E2E_BASE_URL` | mock Playwright 配置拒绝此变量，避免绕过出口保护；真实后端配置单独管理 |
 | `E2E_PORT` | 内置 preview 服务端口（默认 4173） |
 | `PW_CHROMIUM_PATH` | 指定 Chromium 可执行文件路径（当只装了完整 Chromium 而非 headless-shell 时使用） |
+
+每轮 mock E2E 会在系统临时目录生成唯一的出口审计记录。preview 启动时写入 ready 标记；任何未被页面 mock 拦截的 `/api` 或 `/uploads` 请求都会被返回 503、记录 method/path，并使全局 teardown 失败。查询参数、请求头和请求体不会写入该记录。
 
 ## 新增一个 E2E 用例
 

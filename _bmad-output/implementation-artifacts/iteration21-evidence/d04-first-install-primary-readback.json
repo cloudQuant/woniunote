@@ -1,0 +1,56 @@
+{
+  "result": "PASS",
+  "current": "/var/lib/woniunote-iter21-business/release-state/releases/9c597548fc18-1792812456-74674",
+  "manifest": {
+    "sha": "9c597548fc18d3250f68cba8e55bfaa171edacfb",
+    "backend": "31bb1f953cb482b7a1bf431b845702eb0f60e1a9e6ce70b66d75de8617f64c59",
+    "index": "db38b40aab715ff7a6a1508d189e5adc5fb84a70120bc7aa3c7062ca3d95cef6",
+    "nginx": "c39445bad1b9dd1bb4c3b800d69ad9d72257a8556b152a6b80fff27fa15c5d0a",
+    "runtime_config": "3080c4cad9d00db9e018ca009476f7e848a1ffec2962cb8662b768c548e0e32d"
+  },
+  "managed_pid": "76934",
+  "managed_executable_identity": "PASS",
+  "rollback": "none_expected_first_maintenance_install",
+  "health": 200,
+  "https_checks": {
+    "/": {
+      "status": 200,
+      "mime": "text/html",
+      "bytes": 2775,
+      "sha256": "db38b40aab715ff7a6a1508d189e5adc5fb84a70120bc7aa3c7062ca3d95cef6"
+    },
+    "/api/articles/types": {
+      "status": 200,
+      "mime": "application/json; charset=utf-8",
+      "bytes": 14402,
+      "sha256": "877523914942fd6a4068c65a1ffc57b06001968535845c884ca3eb24d2e7f466"
+    },
+    "/api/thumb/1.png": {
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 24398,
+      "sha256": "f2362475ae4260d2f7436898bf14b59e5e6f038abea3dc9635dbd219eaf3a340"
+    },
+    "/uploads/uploads/images/2026/10/1792808491869_3700.png": {
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 10491,
+      "sha256": "9802f742ad084d11f8de174b1a0906c0dd43583b02d66ae523788e17d06c6ee3"
+    },
+    "/api/test/challenge": {
+      "status": 404,
+      "mime": "text/html; charset=utf-8",
+      "bytes": 571,
+      "sha256": "36ac4a50ea832256a23c5caecbf0a0e69009965e64930c5ac4cefd79203e8a86"
+    },
+    "/api/test/auth-fault": {
+      "status": 404,
+      "mime": "text/html; charset=utf-8",
+      "bytes": 571,
+      "sha256": "36ac4a50ea832256a23c5caecbf0a0e69009965e64930c5ac4cefd79203e8a86"
+    }
+  },
+  "mysql_pid": 738,
+  "boundary": "First compatible candidate installed; no cross-version upgrade/rollback or human formal login yet.",
+  "incidental_404_note": "The two GET /api/test/* checks in this file are non-contract paths and do not prove test hooks disabled. Actual POST test routes are independently checked in d04-installed-candidate2-formal-routes.json."
+}

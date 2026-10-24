@@ -1,0 +1,43 @@
+{
+  "status": "FAIL",
+  "source_manifest_sha256": "cd50f3b121093b2243b6a0c1ee9f92314520bbd908b1f4839407316358779840",
+  "checks": [
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint:ci"
+      ],
+      "exit": 0,
+      "seconds": 1.93,
+      "log": "source24-frontend-lint.log",
+      "sha256": "19d979f2fa04bb57796c816a754dd4abf6c5952b1ae8176b90410a40fc1c36d3"
+    },
+    {
+      "name": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0,
+      "seconds": 5.1,
+      "log": "source24-frontend-build.log",
+      "sha256": "fb35d49f87ce81766e7c916567ed11f1a62189bef619a19e50893936cc4c7974"
+    },
+    {
+      "name": "audit",
+      "command": [
+        "npm",
+        "audit",
+        "--omit=dev",
+        "--audit-level=moderate"
+      ],
+      "exit": 1,
+      "seconds": 0.88,
+      "log": "source24-frontend-audit.log",
+      "sha256": "8ca4acda36591d0012838ad2bff5d2b8ee402fc27da85a5fdde894aeab2c7351"
+    }
+  ]
+}

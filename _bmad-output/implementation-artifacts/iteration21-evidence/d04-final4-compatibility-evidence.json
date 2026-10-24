@@ -1,0 +1,58 @@
+{
+  "status": "PASS_FOR_PAIR_ADMISSION",
+  "from": "7fb178838c6ae4511c748a77e67d258ca576d5e9",
+  "to": "de510038840d29aa6be5a6806d6c417873dacd16",
+  "reverse_pair_included": true,
+  "actual_ui": {
+    "old_frontend_new_backend": "comment4 POST and visible success, independent DB content hash/user/article match",
+    "new_frontend_old_backend": "comment5 POST and visible success, independent DB content hash/user/article match",
+    "current_existing_session": "same user2 session accepted by both real backends; no credential injection",
+    "manual_reload_recovery": "final frontend restored exact unsaved title after real reload while backend3 served persisted title"
+  },
+  "component_reuse": {
+    "unchanged_auth_component_sha256": {
+      "backend_cpp/core/security.cc": "22badd5b8f1bc143c3178fe250f5b37842ec37343f8e7f95e5c1a2cdcca7f4e2",
+      "backend_cpp/core/security.h": "74751705d9c2478f7710682f1d35e3377364c281c23c5bd97bbb96cad16e57bc",
+      "backend_cpp/controllers/AuthController.h": "b381e36a0aaa25ccbfa6e3a20c284a38ad23039a7d6e44452d0a05febd351f38",
+      "backend_cpp/filters/AuthFilter.cc": "3fbc1b39a803cd11c72727eaf2dc2caa1de85098611a2fe0d9669f526c39ecbb",
+      "backend_cpp/filters/AuthFilter.h": "318244a7cb91e72f33005c22fa22cfefe05ca084a6af2bc6aa74a138aee99a5b",
+      "frontend/src/stores/user.js": "2e3bb997d187b0608ff55a3a992d619da37dde419550cfc3e2b90e318a0bac57",
+      "frontend/src/utils/authSessionStorage.js": "d4b285281769ad03f48a36106f4c5a6d6e418cdd12f915da51bf9ab0899db773",
+      "AuthController.login_refresh_me_logout": "4e9d5173be7fea3e49cedf18b783f6c506e22ac5440604aa84bfdb3930b84ddf",
+      "AuthController.shared_auth_helpers": "f75da85a2c77defb6c7aae564d835ed87919108552207d10337c90fc14dbcbfa",
+      "frontend.refresh_request_pipeline_before_expiry": "b56c85b977847d0b9ab785a74883ae08f16fdf8d4f030b39e2d0d07dabfa067a"
+    },
+    "prior_expired_access_cross_version_refresh_evidence": "d04-session-compatibility-evidence.json",
+    "prior_evidence_sha256": "3c7198a5d1a78d1850705a71eebdc5ea743ed719ede3d9ebe565527c43b4b5d3",
+    "scope": "Candidate4 forced-expiry refresh was not repeated; its login/refresh/logout server code, Redis/security/session code and normal frontend refresh pipeline are byte-identical to candidate3. Prior actual expired-token refresh evidence is reused only for those unchanged components."
+  },
+  "schema": {
+    "sql_files_equal": [
+      "scripts/sql/01_users.sql",
+      "scripts/sql/02_article.sql",
+      "scripts/sql/03_comment.sql",
+      "scripts/sql/04_favorite.sql",
+      "scripts/sql/05_credit.sql",
+      "scripts/sql/06_category.sql",
+      "scripts/sql/07_card_item.sql",
+      "scripts/sql/08_math_training.sql",
+      "scripts/sql/09_article_category.sql",
+      "scripts/sql/migrations/2026-06-01_widen_password_column.sql",
+      "scripts/sql/migrations/2026-07-02_article_category_menu.sql",
+      "scripts/sql/migrations/2026-10-23_math_answers.sql",
+      "scripts/sql/migrations/2026-10-24_article_thumbnail.sql",
+      "scripts/sql/migrations/README.md"
+    ],
+    "live_schema_sha256": "015945a770abd9dcbd0fe58b7f1dcc54e1b20bd98d76c07205b00fb7ade48eb6",
+    "new_migration_required": false
+  },
+  "data_readback": {
+    "file": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-business-readback/20261024T045336Z-99724-final4-preflight-cross.json",
+    "sha256": "0d3285baea05a60769f123e50bccc2fdaa72cbecbb7131e61bd57cd23d52589f"
+  },
+  "limitations": [
+    "Admission evidence is not the managed deploy/rollback outcome",
+    "No remote CI or production claim",
+    "Registration/comment transport failure contract changes are tested separately in source10/source24 real fault regressions"
+  ]
+}

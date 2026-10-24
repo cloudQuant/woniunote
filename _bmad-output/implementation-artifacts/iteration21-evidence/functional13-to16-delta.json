@@ -1,0 +1,81 @@
+{
+  "from": "/tmp/woniunote-iter21-functional-13",
+  "to": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-16",
+  "changed": [
+    {
+      "path": "backend_cpp/tests/integration/README.md",
+      "before": "d2ce893d54a433aa96b8e8b7a35b83328c2845b22587b4addc6b7a012658cb4e",
+      "after": "221e94de1f3afdb40ee5139cc13f982e52680c46be36d82a6b7c4e0eba0963a9"
+    },
+    {
+      "path": "backend_cpp/tests/integration/run_integration.sh",
+      "before": "36ee445ba6cc4712ef70b3a993fdb91d45164fa089d3569cb756927dccd159bb",
+      "after": "755a838f29acef5e9a7b12b4f566c2a9eda95f01afb94bc7afac3834da604cc2"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_iter21_upload_isolation.py",
+      "before": null,
+      "after": "8d8ba1da3dbda6040fe248b8ae599c692131937ff561edc608c6df397f67dbba"
+    },
+    {
+      "path": "frontend/e2e-real/README.md",
+      "before": "ca040d8a877d6055174ba95296aec39acd4c31d6fb69ea9c87fc2f91384c7ca0",
+      "after": "0b32f52694cf607be21403b75b0af8f8f8563f6479f49d83582fa97412fa676b"
+    },
+    {
+      "path": "frontend/e2e-real/business.real.spec.js",
+      "before": "980cdc0880d2b33f047e723c97c0eb67d011f28671ceaf9bed92200076b040a9",
+      "after": "7e70e9db6ca0aa8350fa33bd6a60d2588ede3e27717fc30449def324aa7ca905"
+    },
+    {
+      "path": "frontend/e2e/article-detail.spec.js",
+      "before": "5ef973d260b04f700784356ffb40cc0fecf491c95a642b5e2ba0f6d5d2ed34f3",
+      "after": "ea791ffc3acf60b7f5b05b54fe3af23dc61e4e3bf2a0daa2e84db61fe3967cb2"
+    },
+    {
+      "path": "frontend/e2e/auth-concurrency.spec.js",
+      "before": "2a69ea4cb9a0e52d7f9ecda30868c98c230334f1e5ce28a3bd1c75bf6ec2eb62",
+      "after": "fa4670cd5080ff9acda2005d5347e0d37deaa5849a810cfd05acf4eed7ba1226"
+    },
+    {
+      "path": "frontend/e2e/auth.spec.js",
+      "before": "e3ba3dd362431d937ac24261f45cceb33cb64131982f8fb97fbb53ec7973c603",
+      "after": "7392999e86f113a8e093772b0fd097bd69cb787e17dc322f22b53d76d2f08550"
+    },
+    {
+      "path": "frontend/e2e/support/mockEgress.js",
+      "before": "0bb2413605439d53b4c6ee3a578c1bf9ef3b041eef24b0ee27a044e49b136101",
+      "after": "073fdcac83cbfbd3553fc72d0e548b8e92230f8ce4c1caa0e7e154ce2de8af63"
+    },
+    {
+      "path": "frontend/e2e/support/probeMockPreviewGuard.mjs",
+      "before": "87f2b84f749b16bdb5ad7fc3d9fb6d7d6d18da019cb49cfe903b8d7c5b1d8d5a",
+      "after": "e01d9ef831a0b2d4405d88ac7d9afe59c03ada503f1fde280a28a56a19984d95"
+    },
+    {
+      "path": "frontend/e2e/support/probeStrictMockApi.mjs",
+      "before": "3a6321fb04b31337354c776ea35eab2dd69c1fcba7d1e3c531057408bcf43b55",
+      "after": "fbe163e12f26361dcc1e08edf487b02ac7e3edfd5b0bab2ae2cfb3584626a868"
+    },
+    {
+      "path": "frontend/e2e/support/test.js",
+      "before": "363b6d3994b75f449f478a89abed64af23d322a5ff05a592363374ed1db32c71",
+      "after": "1c39ed4e8804ff2230fffda68eae16f6ec001e1f6229f56cccc1b97dacf710fb"
+    },
+    {
+      "path": "frontend/e2e/ui-polish.spec.js",
+      "before": "9f4ec03513d4bb67abdde005879bdfcef37fae4b11b0ea36e336acd5da90c4a0",
+      "after": "db140eff5320c4446a587eeb8523daa4d6e8a45615c912d3bff5d56d3f019bee"
+    },
+    {
+      "path": "scripts/tests/iter21-linux-runtime/README.md",
+      "before": "01571853d7f551701cf9312b96980bd6231a8121bf0629124410399e66152c95",
+      "after": "b55ae3167bf726984aa47a0e92860aa73ae792d83e5bfa97ac5ccb40f2fdbf01"
+    },
+    {
+      "path": "scripts/tests/iter21-linux-runtime/launcher.py",
+      "before": "d88293c01dde2b5f0b7bdb16b611642be8d009d5eeeae0ae11605482c5b33ee2",
+      "after": "e941ceeee0a1c6b280731c183574747069db3c1ed11e7c0e27d0546cf5726f6e"
+    }
+  ]
+}

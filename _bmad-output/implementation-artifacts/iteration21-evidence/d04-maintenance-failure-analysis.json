@@ -1,0 +1,31 @@
+{
+  "status": "RESOLVED_IN_ISOLATED_REHEARSAL",
+  "scope": "Private maintenance harness and VM configuration only; no new application implementation",
+  "attempts": [
+    {
+      "record": "d04-first-maintenance-stop-and-backup.json",
+      "result": "FAIL",
+      "cause": "Candidate external config was a fixture-only stub; identity check rejected it after exact original-service stop."
+    },
+    {
+      "record": "d04-first-maintenance-backup-business-config.json",
+      "result": "FAIL",
+      "cause": "mysqldump rejected database= in shared mysql client option file."
+    },
+    {
+      "record": "d04-first-maintenance-backup-dump-config.json",
+      "result": "FAIL",
+      "cause": "mysqldump rejected connect-timeout=10; replaced with external timeout 60s."
+    },
+    {
+      "record": "d04-first-maintenance-backup-timeout-fixed.json",
+      "result": "FAIL",
+      "cause": "Dump/archive succeeded; Ubuntu AppArmor denied restore datadir and error log under business evidence path. Kernel DENIED messages independently read."
+    }
+  ],
+  "resolution": "Filtered dump-only private option file, external command timeout, unique root-0700 restore directory under existing AppArmor-allowed /var/lib/mysql-files. No global profile or source MySQL configuration changed.",
+  "successful_attempt": "d04-first-maintenance-backup-apparmor-path.json",
+  "independent_readback": "d04-backup-restore-primary-readback.json",
+  "source_database_migration_before_success": false,
+  "failed_private_artifacts_retained": true
+}

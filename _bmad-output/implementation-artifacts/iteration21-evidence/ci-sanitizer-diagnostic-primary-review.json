@@ -1,0 +1,19 @@
+{
+  "status": "PASS_STATIC_AND_SYNTHETIC_ONLY",
+  "diagnostic_scope": "Only after original default rate-limit step failure; original failure remains. Existing ENABLE_SANITIZERS; no leak-validation claim.",
+  "safe_parser_cases": [
+    "ASAN invalid-free and source frame",
+    "module offset with/without BuildId",
+    "four report phases and report end",
+    "markers outside report rejected",
+    "32-frame cap",
+    "UBSAN safe location",
+    "canary and raw paths omitted"
+  ],
+  "jobs": 6,
+  "files": {
+    "backend_cpp/tests/integration/run_integration.sh": "75419438984e0c86a39528fe057e1d60d13cf617cd85c3cd1f09e27fb4a9d6cc",
+    ".github/workflows/cpp-vue-ci.yml": "18ed58cb414890b2443264246365ad5fb81e9efd4f9f74251a95a550f00b9698"
+  },
+  "actual_sanitizer_runtime": "NOT_RUN"
+}

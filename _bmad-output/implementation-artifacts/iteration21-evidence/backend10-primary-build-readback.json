@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "snapshot": "8fa23d6f6a1d374abd260ab602da94d485fdd4c08312b4244ff736d42fdd5548",
+  "scope": "Final six build variants, log hashes and exact binaries independently read back; first driver stale expected digest rejection retained",
+  "ctest_per_variant": 8,
+  "build_records": [
+    {
+      "file": "backend-source10-build-execution.json",
+      "sha256": "14182e9029c5ea1275b6099671c327fa4109d2a1310139c58c284f44e93b1517"
+    },
+    {
+      "file": "backend-source10-linux-build-execution.json",
+      "sha256": "2170fd3422030111443f2dfbeb91b4469c915e0f8b72705b984910194168b38b"
+    }
+  ]
+}

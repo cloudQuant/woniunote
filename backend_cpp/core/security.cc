@@ -300,7 +300,9 @@ std::string Security::getMd5Hash(const std::string& password)
     return oss.str();
 }
 
-std::string Security::createAccessToken(const std::string& userId, int expireMinutes)
+std::string Security::createAccessToken(const std::string& userId,
+                                        int expireMinutes,
+                                        const std::string& sid)
 {
     const auto& config = Config::instance();
     
@@ -308,21 +310,25 @@ std::string Security::createAccessToken(const std::string& userId, int expireMin
         expireMinutes = config.getAccessTokenExpireMinutes();
     }
 
-    auto token = jwt::create()
+    auto builder = jwt::create()
         .set_issuer("woniunote")
         .set_type("JWT")
         .set_payload_claim("sub", jwt::claim(userId))
         .set_payload_claim("type", jwt::claim(std::string("access")))
         .set_issued_at(std::chrono::system_clock::now())
         .set_expires_at(std::chrono::system_clock::now() + 
-                        std::chrono::minutes(expireMinutes))
-        .sign(jwt::algorithm::hs256{config.getJwtSecret()});
+                        std::chrono::minutes(expireMinutes));
+    if (!sid.empty()) {
+        builder.set_payload_claim("sid", jwt::claim(sid));
+    }
+    auto token = builder.sign(jwt::algorithm::hs256{config.getJwtSecret()});
     
     return token;
 }
 
 std::string Security::createRefreshToken(const std::string& userId, int expireDays,
-                                         const std::string& jti)
+                                         const std::string& jti,
+                                         const std::string& sid)
 {
     const auto& config = Config::instance();
     
@@ -341,6 +347,9 @@ std::string Security::createRefreshToken(const std::string& userId, int expireDa
     if (!jti.empty()) {
         builder.set_payload_claim("jti", jwt::claim(jti));
     }
+    if (!sid.empty()) {
+        builder.set_payload_claim("sid", jwt::claim(sid));
+    }
     return builder.sign(jwt::algorithm::hs256{config.getJwtSecret()});
 }
 
@@ -348,16 +357,27 @@ std::string Security::generateJti()
 {
     unsigned char buf[16];
     if (RAND_bytes(buf, sizeof(buf)) != 1) {
-        // Fallback: still produce something non-empty, but log the weakness.
-        Logger::warning("[Security] RAND_bytes failed generating jti, using fallback");
-        auto now = std::chrono::system_clock::now().time_since_epoch().count();
-        std::ostringstream oss;
-        oss << std::hex << now;
-        return oss.str();
+        Logger::error("[Security] RAND_bytes failed generating jti");
+        return {};
     }
     std::ostringstream oss;
     for (unsigned char c : buf) {
         oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(c);
+    }
+    return oss.str();
+}
+
+std::string Security::generateSessionId()
+{
+    unsigned char buf[16];
+    if (RAND_bytes(buf, sizeof(buf)) != 1) {
+        Logger::error("[Security] RAND_bytes failed generating sid");
+        return {};
+    }
+    std::ostringstream oss;
+    for (unsigned char c : buf) {
+        oss << std::hex << std::setw(2) << std::setfill('0')
+            << static_cast<int>(c);
     }
     return oss.str();
 }
@@ -380,6 +400,9 @@ std::optional<TokenPayload> Security::decodeToken(const std::string& token)
         payload.type = decoded.get_payload_claim("type").as_string();
         if (decoded.has_payload_claim("jti")) {
             payload.jti = decoded.get_payload_claim("jti").as_string();
+        }
+        if (decoded.has_payload_claim("sid")) {
+            payload.sid = decoded.get_payload_claim("sid").as_string();
         }
         payload.exp = decoded.get_expires_at();
         

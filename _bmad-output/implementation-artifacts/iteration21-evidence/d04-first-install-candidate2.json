@@ -1,0 +1,22 @@
+{
+  "status": "FINISHED",
+  "command": [
+    "bash",
+    "/Users/yunjinqi/Documents/woniunote/scripts/tests/iter21-business-runtime/run.sh",
+    "deploy-first",
+    "candidate-2",
+    "9c597548fc18d3250f68cba8e55bfaa171edacfb",
+    "/api/thumb/1.png",
+    "/uploads/uploads/images/2026/10/1792808491869_3700.png",
+    "/var/lib/woniunote-iter21-data/uploads/uploads/uploads/images/2026/10/1792808491869_3700.png",
+    "9802f742ad084d11f8de174b1a0906c0dd43583b02d66ae523788e17d06c6ee3",
+    "first-install-after-maintenance",
+    "--confirm-d04-mutation"
+  ],
+  "exit": 0,
+  "seconds": 193.764,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/d04-first-install-candidate2.log",
+  "log_sha256": "95995b848cd65591fc04053a745c4c7df33f0730392f5f1b6b8aa580f17698b4",
+  "run_helper_sha256": "fa79a135645b22de8c50942eff9e9a994bb6ee7484edce9d226ce5567eaa1aa5",
+  "guest_helper_sha256": "936b08107ac52850577eb9d6c455680c367285e35da0c0d13b7e5466e095fb41"
+}

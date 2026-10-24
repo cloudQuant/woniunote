@@ -1,0 +1,32 @@
+{
+  "status": "PASS_WITH_SCOPE",
+  "scope": "macOS test-variant real HTTP, isolated migrations, six real Chromium business flows; not formal CAPTCHA or D04 upgrade/rollback",
+  "run_id": "20261024T003556Z-689751fabbc9",
+  "source_manifest_sha256": "cdec1ee82d7746bde149f4a84f8760481984edd741e6f861581f1fee98d5bb23",
+  "log_sha256": "f7369d40c829d0119c2f465e7c2c4742b0ef2c3f7ee48cce2a606fe13fa0c8d5",
+  "exit": 0,
+  "http": {
+    "passed": 63,
+    "failed": 0,
+    "seconds": 48.93
+  },
+  "real_chromium": {
+    "passed": 6,
+    "failed": 0,
+    "seconds": 27.7,
+    "business_mocks": false,
+    "preseeded_login": false,
+    "test_challenge": true
+  },
+  "migration_checks": {
+    "math": "PASS",
+    "comment_unit_count": 11,
+    "comment_live": "PASS",
+    "article_thumbnail": "PASS"
+  },
+  "utf8mb4_client_readback": true,
+  "seeded_chinese_categories": "PASS",
+  "owned_run_containers_remaining": 0,
+  "owned_run_volumes_remaining": 0,
+  "backend_binary_sha256": "b551cf9178645e228ca46cb142bc3c353930ded2bd1cb7961722a69122cc93bc"
+}

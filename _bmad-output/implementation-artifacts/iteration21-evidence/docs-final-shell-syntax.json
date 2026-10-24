@@ -1,0 +1,81 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "file": "scripts/tests/iter21-business-runtime/README.md",
+      "block": 1,
+      "exit": 0
+    },
+    {
+      "file": "scripts/tests/iter21-business-runtime/README.md",
+      "block": 2,
+      "exit": 0
+    },
+    {
+      "file": "scripts/tests/iter21-business-runtime/README.md",
+      "block": 3,
+      "exit": 0
+    },
+    {
+      "file": "scripts/tests/iter21-business-runtime/README.md",
+      "block": 4,
+      "exit": 0
+    },
+    {
+      "file": "scripts/tests/iter21-business-runtime/README.md",
+      "block": 5,
+      "exit": 0
+    },
+    {
+      "file": "scripts/tests/iter21-business-runtime/README.md",
+      "block": 6,
+      "exit": 0
+    },
+    {
+      "file": "scripts/tests/iter21-business-runtime/README.md",
+      "block": 7,
+      "exit": 0
+    },
+    {
+      "file": "scripts/tests/iter21-business-runtime/README.md",
+      "block": 8,
+      "exit": 0
+    },
+    {
+      "file": "scripts/tests/iter21-business-runtime/README.md",
+      "block": 9,
+      "exit": 0
+    },
+    {
+      "file": "scripts/tests/iter21-business-runtime/README.md",
+      "block": 10,
+      "exit": 0
+    },
+    {
+      "file": "scripts/tests/iter21-business-runtime/README.md",
+      "block": 11,
+      "exit": 0
+    },
+    {
+      "file": "scripts/tests/iter21-business-runtime/README.md",
+      "block": 12,
+      "exit": 0
+    },
+    {
+      "file": "docs/others/生产发布与恢复.md",
+      "block": 1,
+      "exit": 0
+    },
+    {
+      "file": "docs/others/生产发布与恢复.md",
+      "block": 2,
+      "exit": 0
+    },
+    {
+      "file": "docs/others/生产发布与恢复.md",
+      "block": 3,
+      "exit": 0
+    }
+  ],
+  "scope": "Shell syntax only; commands not executed; illustrative placeholders require reviewed values"
+}

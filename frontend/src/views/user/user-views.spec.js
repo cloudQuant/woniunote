@@ -1,9 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { createPinia } from 'pinia'
 import { mount, flushPromises } from '@vue/test-utils'
 import { installLocalStorage, mountOptions, silenceExpectedConsole } from '@/test/harness'
 
 installLocalStorage()
 silenceExpectedConsole(['error'])
+
+vi.mock('@/utils/authSessionStorage', async () => {
+  const { authSessionStorageMock } = await import('@/test/authSessionStorageMock')
+  return { authSessionStorage: authSessionStorageMock }
+})
+import { authSessionStorageMock } from '@/test/authSessionStorageMock'
 
 // ---- Shared mocks ----
 const push = vi.fn()
@@ -14,17 +21,31 @@ vi.mock('vue-router', () => ({
 
 const success = vi.fn()
 const error = vi.fn()
+const warning = vi.fn()
 // notifyError calls ElMessage({...}) as a function (Epic 18.1); keep the
 // .success/.error methods working for the existing assertions.
 const toast = vi.fn()
 vi.mock('element-plus', () => ({
   ElMessage: Object.assign((...a) => toast(...a), {
     success: (...a) => success(...a),
-    error: (...a) => error(...a)
+    error: (...a) => error(...a),
+    warning: (...a) => warning(...a)
   })
 }))
 
 const api = vi.hoisted(() => ({
+  authApi: {
+    login: vi.fn(({ username }) => Promise.resolve({ data: {
+      access_token: `${username}-access`,
+      refresh_token: `${username}-refresh`,
+      user: {
+        userid: username === 'first' ? 1 : 2,
+        username,
+        nickname: `${username} profile`,
+        qq: `${username}-qq`
+      }
+    } }))
+  },
   articleApi: {
     getMyList: vi.fn(() => Promise.resolve({ data: [{ articleid: 1, headline: 'A', type: 1, drafted: 0 }], total: 1 })),
     delete: vi.fn(() => Promise.resolve({}))
@@ -75,6 +96,7 @@ import MyDrafts from './MyDrafts.vue'
 import MyFavorites from './MyFavorites.vue'
 import MyCredits from './MyCredits.vue'
 import Profile from './Profile.vue'
+import { useUserStore } from '@/stores/user'
 
 // el-pagination 桩：声明 v-model 事件，避免 Vue 对未声明事件的告警（同 MathHistory.spec）。
 const paginationStub = {
@@ -87,6 +109,7 @@ const paginationStub = {
 beforeEach(() => {
   vi.clearAllMocks()
   localStorage.clear()
+  authSessionStorageMock.reset()
   articleStoreMock.fetchArticleTypes.mockReset()
   articleStoreMock.fetchArticleTypes.mockResolvedValue({})
   articleStoreMock.getTypeName.mockImplementation((id) => `type-${id}`)
@@ -470,11 +493,75 @@ describe('Profile.vue', () => {
     localStorage.clear()
   })
 
+  it('resets A profile and password fields and rejects save after B logs in in another tab', async () => {
+    const options = withUser()
+    const storeA = useUserStore(options.global.plugins[0])
+    await storeA.login('first', 'password')
+    const wrapper = mount(Profile, options)
+    await flushPromises()
+
+    wrapper.vm.form.nickname = 'unsaved A nickname'
+    wrapper.vm.form.avatar = '/a-private-avatar.png'
+    wrapper.vm.form.qq = 'A-private-qq'
+    wrapper.vm.passwordForm.old_password = 'A-old-password'
+    wrapper.vm.passwordForm.new_password = 'A-new-password'
+    wrapper.vm.passwordForm.confirm_password = 'A-new-password'
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+
+    // A second tab completes a real store login against the shared durable
+    // session while this mounted tab has not received a storage event yet.
+    const storeB = useUserStore(createPinia())
+    await storeB.login('second', 'password')
+    expect(storeA.user).toMatchObject({ userid: 1, nickname: 'first profile' })
+
+    await wrapper.vm.saveProfile()
+
+    expect(api.userApi.updateProfile).not.toHaveBeenCalled()
+    expect(wrapper.vm.form).toMatchObject({
+      nickname: 'second profile',
+      avatar: '',
+      qq: 'second-qq'
+    })
+    expect(wrapper.vm.passwordForm).toEqual({
+      old_password: '',
+      new_password: '',
+      confirm_password: ''
+    })
+    expect(warning).toHaveBeenCalledWith('登录账号已切换，资料已更新，请核对后再提交。')
+  })
+
   it('uploadAvatar sets avatar url', async () => {
     const wrapper = mount(Profile, withUser())
+    await flushPromises()
     await wrapper.vm.uploadAvatar({ file: new Blob(['x']) })
     expect(wrapper.vm.form.avatar).toBe('/uploads/a.png')
     expect(success).toHaveBeenCalledWith('头像上传成功')
+  })
+
+  it('does not apply a late avatar response to a replacement account', async () => {
+    let resolveUpload
+    api.uploadApi.uploadAvatar.mockImplementationOnce(() => new Promise((resolve) => { resolveUpload = resolve }))
+    const wrapper = mount(Profile, withUser())
+    const store = useUserStore()
+    await store.setTokens('old-token', 'old-refresh')
+    await store.updateUser({ userid: 1, nickname: 'old account' })
+    const pending = wrapper.vm.uploadAvatar({ file: new Blob(['x']) })
+    await vi.waitFor(() => expect(resolveUpload).toBeTypeOf('function'))
+    const session = JSON.parse(localStorage.getItem('woniunote:auth-session'))
+    const nextSession = {
+      ...session,
+      epoch: 'avatar-new-epoch',
+      version: 'avatar-new-version',
+      token: 'new-token',
+      user: { userid: 2, nickname: 'new account' }
+    }
+    authSessionStorageMock.setCurrent(nextSession)
+    localStorage.setItem('woniunote:auth-session', JSON.stringify(nextSession))
+    resolveUpload({ data: { url: '/stale-avatar.png' } })
+    await pending
+
+    expect(wrapper.vm.form.avatar).toBe('')
+    expect(success).not.toHaveBeenCalledWith('头像上传成功')
   })
 
   it('confirm password validator', () => {
@@ -489,10 +576,72 @@ describe('Profile.vue', () => {
 
   it('saveProfile validates, updates and shows success', async () => {
     const wrapper = mount(Profile, withUser())
+    await flushPromises()
     wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
     await wrapper.vm.saveProfile()
-    expect(api.userApi.updateProfile).toHaveBeenCalled()
+    expect(api.userApi.updateProfile).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ _sessionSnapshot: expect.any(Object) })
+    )
     expect(success).toHaveBeenCalledWith('保存成功')
+  })
+
+  it('does not write a late profile response over a newer durable session before storage dispatch', async () => {
+    const firstUser = { userid: 1, username: 'first', nickname: 'First' }
+    localStorage.setItem('user', JSON.stringify(firstUser))
+    localStorage.setItem('token', 'first-token')
+    localStorage.setItem('refreshToken', 'first-refresh')
+
+    let resolveUpdate
+    api.userApi.updateProfile.mockImplementationOnce(() => new Promise((resolve) => {
+      resolveUpdate = resolve
+    }))
+    const wrapper = mount(Profile, withUser())
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+    const savePromise = wrapper.vm.saveProfile()
+    await flushPromises()
+    expect(api.userApi.updateProfile).toHaveBeenCalledOnce()
+
+    const shared = authSessionStorageMock.getCurrent()
+    expect(shared).not.toBeNull()
+    const nextSession = {
+      ...shared,
+      epoch: 'remote-login-epoch',
+      version: 'remote-login-version',
+      token: 'second-token',
+      refreshToken: 'second-refresh',
+      user: { userid: 2, username: 'second', nickname: 'Second' }
+    }
+    // Simulate another tab committing a login before its storage event reaches
+    // this page. The canonical value is already authoritative at response time.
+    authSessionStorageMock.setCurrent(nextSession)
+    expect(authSessionStorageMock.getCurrent().revision).toBe(shared.revision + 1)
+    localStorage.setItem('woniunote:auth-session', JSON.stringify(nextSession))
+    localStorage.setItem('token', nextSession.token)
+    localStorage.setItem('refreshToken', nextSession.refreshToken)
+    localStorage.setItem('user', JSON.stringify(nextSession.user))
+    resolveUpdate({ data: { userid: 1, nickname: 'stale first user' } })
+    await savePromise
+
+    expect(JSON.parse(localStorage.getItem('woniunote:auth-session')).user.userid).toBe(2)
+    expect(JSON.parse(localStorage.getItem('user')).userid).toBe(2)
+    expect(success).not.toHaveBeenCalledWith('保存成功')
+    expect(wrapper.vm.saving).toBe(false)
+  })
+
+  it('does not toast profile success when the store rejects a stale update', async () => {
+    const wrapper = mount(Profile, withUser())
+    const store = useUserStore()
+    await store.setTokens('profile-token', 'profile-refresh')
+    await store.updateUser({ userid: 1, nickname: 'tester' })
+    store.updateUser = vi.fn(() => Promise.resolve(false))
+    wrapper.vm.formRef = { validate: vi.fn(() => Promise.resolve(true)) }
+
+    await wrapper.vm.saveProfile()
+
+    expect(api.userApi.updateProfile).toHaveBeenCalledOnce()
+    expect(success).not.toHaveBeenCalledWith('保存成功')
+    expect(wrapper.vm.saving).toBe(false)
   })
 
   it('saveProfile aborts on invalid form', async () => {
@@ -505,11 +654,15 @@ describe('Profile.vue', () => {
   it('changePassword validates, calls API and resets', async () => {
     const reset = vi.fn()
     const wrapper = mount(Profile, withUser())
+    await flushPromises()
     wrapper.vm.passwordFormRef = { validate: vi.fn(() => Promise.resolve(true)), resetFields: reset }
     wrapper.vm.passwordForm.old_password = 'oldpass'
     wrapper.vm.passwordForm.new_password = 'newpass'
     await wrapper.vm.changePassword()
-    expect(api.userApi.updatePassword).toHaveBeenCalledWith({ old_password: 'oldpass', new_password: 'newpass' })
+    expect(api.userApi.updatePassword).toHaveBeenCalledWith(
+      { old_password: 'oldpass', new_password: 'newpass' },
+      expect.objectContaining({ _sessionSnapshot: expect.any(Object) })
+    )
     expect(reset).toHaveBeenCalled()
   })
 
@@ -522,6 +675,7 @@ describe('Profile.vue', () => {
 
   it('binds v-model inputs to the profile and password forms', async () => {
     const wrapper = mount(Profile, withUser())
+    await flushPromises()
     const inputs = wrapper.findAllComponents({ name: 'el-input' })
     expect(inputs.length).toBe(6)
 
@@ -593,6 +747,34 @@ describe('Profile.vue', () => {
     wrapper.vm.passwordFormRef = null
     await wrapper.vm.changePassword()
     expect(api.userApi.updatePassword).not.toHaveBeenCalled()
+  })
+
+  it('does not report a late password response for a replacement account', async () => {
+    let resolvePassword
+    api.userApi.updatePassword.mockImplementationOnce(() => new Promise((resolve) => { resolvePassword = resolve }))
+    const wrapper = mount(Profile, withUser())
+    const store = useUserStore()
+    await store.setTokens('old-password-token', 'old-password-refresh')
+    await store.updateUser({ userid: 1, nickname: 'old account' })
+    const resetFields = vi.fn()
+    wrapper.vm.passwordFormRef = { validate: vi.fn(() => Promise.resolve(true)), resetFields }
+    const pending = wrapper.vm.changePassword()
+    await vi.waitFor(() => expect(resolvePassword).toBeTypeOf('function'))
+    const session = JSON.parse(localStorage.getItem('woniunote:auth-session'))
+    const nextSession = {
+      ...session,
+      epoch: 'password-new-epoch',
+      version: 'password-new-version',
+      token: 'new-password-token',
+      user: { userid: 2, nickname: 'new account' }
+    }
+    authSessionStorageMock.setCurrent(nextSession)
+    localStorage.setItem('woniunote:auth-session', JSON.stringify(nextSession))
+    resolvePassword({ data: null })
+    await pending
+
+    expect(success).not.toHaveBeenCalledWith('密码修改成功')
+    expect(resetFields).not.toHaveBeenCalled()
   })
 
   it('changePassword handles API failures', async () => {

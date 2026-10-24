@@ -1,0 +1,14 @@
+{
+  "source_manifest_sha256": "a7a2546cf9b1f056e63a50776671661fc808e5b47512c3ac960711bec23d5488",
+  "command": [
+    "bash",
+    "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-18/backend_cpp/tests/integration/run_integration.sh"
+  ],
+  "exit": 1,
+  "seconds": 295.723,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source18-mac-real.log",
+  "sha256": "17b296b395e5ebf2b3519583bc07a1a3d278f64ecc4b4d0e2d69defb604c3efc",
+  "run_ids": [
+    "20261024T000708Z-c5400024fb0c"
+  ]
+}

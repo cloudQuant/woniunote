@@ -1,0 +1,30 @@
+{
+  "result": "PASS",
+  "candidate": "9c597548fc18d3250f68cba8e55bfaa171edacfb",
+  "article_columns": "articleid,userid,drafted,hidden,replycount,headline_sha256,content_sha256,thumbnail",
+  "articles": [
+    "1\t2\t1\t0\t0\tffd6b8c0e1cd5cbd1890acb2a8ac3fbffee924f309b0ffdfd6f994cbddecb0b1\t34437d1cfbd67966b851ea1d0861f54e67e320587906c4f9cd48f563e04a0bc5\t",
+    "2\t2\t0\t0\t1\tc756a9ca206d898b10836c861e5b5a27c3f0860534702cf3ada7181f2b2b0a4a\tb889b0d8017ff75734c2df14890f5f281c7d0c21d8d2b5cff7ccb4136e7f9e4d\t/uploads/uploads/images/2026/10/1792813214971_6357.png"
+  ],
+  "math_record_columns": "id,user_id,total_questions,correct_count,wrong_count",
+  "math_record": "1\t2\t2\t0\t2",
+  "wrong_answer_columns": "id,record_id,user_id,correct_answer,user_answer,operation",
+  "wrong_answers": [
+    "1\t1\t2\t120\t1.25\t*",
+    "2\t1\t2\t87\tNULL\t+"
+  ],
+  "comment_columns": "commentid,userid,articleid,agreecount,opposecount,hidden,content_sha256",
+  "comment": "1\t2\t2\t1\t0\t0\t95b54829b49d49aa2fe08fc255a5dc606e611adef51234658f6b4b28f868de7a",
+  "vote_columns": "id,commentid,userid,vote_type",
+  "vote": "1\t1\t2\t1",
+  "cover": {
+    "url": "/uploads/uploads/images/2026/10/1792813214971_6357.png",
+    "disk_path": "/var/lib/woniunote-iter21-data/uploads/uploads/uploads/images/2026/10/1792813214971_6357.png",
+    "bytes": 10491,
+    "sha256": "9802f742ad084d11f8de174b1a0906c0dd43583b02d66ae523788e17d06c6ee3",
+    "https_bytes_match": true
+  },
+  "session_slot_sha256": "2918e4f954b0ab7d262aafd04c882ed5bb156bac0bb973814add85a43b3d1f72",
+  "session_raw_retained": false,
+  "boundary": "Values were created through formal UI; credentials and article/comment bodies excluded. Original article1 remains a draft."
+}

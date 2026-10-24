@@ -7,6 +7,7 @@
 #define WONIUNOTE_MODELS_MATH_TRAINING_H
 
 #include <string>
+#include <optional>
 #include <vector>
 #include <drogon/orm/Mapper.h>
 #include <drogon/orm/Field.h>
@@ -28,7 +29,7 @@ public:
     int64_t user_id_ = 0;
     std::string question_;
     int correct_answer_ = 0;
-    int user_answer_ = 0;
+    std::optional<double> user_answer_;
     std::string operation_;
     int difficulty_ = 2;
     std::string created_at_;

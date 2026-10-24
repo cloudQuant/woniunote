@@ -12,7 +12,7 @@ vi.mock('@/api', () => ({
 const focusSpy = vi.fn()
 const inputStub = {
   name: 'el-input',
-  props: ['modelValue', 'disabled', 'type', 'size', 'placeholder'],
+  props: ['modelValue', 'disabled', 'type', 'size', 'placeholder', 'min', 'max', 'step'],
   emits: ['update:modelValue'],
   methods: { focus: focusSpy },
   render() {
@@ -77,6 +77,14 @@ describe('MathQuestion.vue', () => {
     expect(wrapper.emitted('update:answer')).toEqual([['42']])
   })
 
+  it('数字输入允许有限小数并限制在存储范围内', () => {
+    const input = mountQ().findComponent({ name: 'el-input' })
+    expect(input.props('type')).toBe('number')
+    expect(input.props('step')).toBe('any')
+    expect(input.props('min')).toBe('-2147483647')
+    expect(input.props('max')).toBe('2147483647')
+  })
+
   it('提交按钮与回车键触发 submit，跳过按钮触发 skip', async () => {
     const wrapper = mountQ()
     const [submitBtn, skipBtn] = actionButtons(wrapper)
@@ -120,6 +128,16 @@ describe('MathQuestion.vue', () => {
     expect(box.classes()).toContain('wrong')
     expect(box.text()).toContain('错误，正确答案是')
     expect(box.text()).toContain('42')
+  })
+
+  it('跳过时明确显示已跳过，不把 null 显示为数字零', () => {
+    const wrapper = mountQ({
+      feedback: { correct: false, correctAnswer: 0, userAnswer: null, seconds: 5 },
+      answerLocked: true
+    })
+    expect(wrapper.get('.feedback-box').text()).toContain('已跳过')
+    expect(wrapper.get('.feedback-box').text()).toContain('0')
+    expect(wrapper.get('.feedback-box').text()).not.toContain('错误，正确答案是')
   })
 
   it('无反馈时不渲染反馈框', () => {

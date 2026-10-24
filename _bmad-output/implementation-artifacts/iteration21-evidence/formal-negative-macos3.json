@@ -1,0 +1,28 @@
+{
+  "binary_sha256": "81205cb32cb9103049a0486c767e9ed4ecee5c4a87c1982fbb25042ac43035bc",
+  "source_digest": "6a7b43b5e24dc46a6df1c624726ac8814c4b4806dc96894cf76a58c1a6fb04ed",
+  "BUILD_TESTING": "ON",
+  "test_challenge": "OFF",
+  "test_auth_faults": "OFF",
+  "scope": "route absence, no database or Redis clients configured; no business writes",
+  "cases": [
+    {
+      "injection_env": false,
+      "http_port": 50581,
+      "health": 200,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      }
+    },
+    {
+      "injection_env": true,
+      "http_port": 50600,
+      "health": 200,
+      "routes": {
+        "/api/captcha/test/challenge": 404,
+        "/api/auth/test/empty-transaction": 404
+      }
+    }
+  ]
+}

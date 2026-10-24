@@ -26,6 +26,15 @@ echo ""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Production startup uses the immutable release manager. Development startup
+# holds the same target lock for its full lifetime so it cannot race a deploy.
+if [ "$MODE" = "prod" ]; then
+    exec bash "$SCRIPT_DIR/scripts/deploy_release.sh" start
+fi
+if [ "$2" != "--locked" ]; then
+    exec bash "$SCRIPT_DIR/scripts/deploy_release.sh" run-locked bash "$0" "$MODE" --locked
+fi
+
 # 端口被占用只能说明进程存在，不能说明应用真的已经可以响应请求。
 # 启动/重启脚本需要等到 HTTP 服务可用后才能报告成功，避免出现“启动成功”
 # 但浏览器实际无法访问的假阳性。

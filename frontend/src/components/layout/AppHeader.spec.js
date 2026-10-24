@@ -15,7 +15,7 @@ vi.mock('vue-router', () => ({
 const m = vi.hoisted(() => ({
   msg: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() }),
   login: vi.fn(() => Promise.resolve({})),
-  logout: vi.fn(),
+  logout: vi.fn(() => Promise.resolve({ revoked: true })),
   fetchArticleTypes: vi.fn(() => Promise.resolve({})),
   user: { login: null, logout: null, user: null, isLoggedIn: false, isAdmin: false },
   articleTypes: null,
@@ -323,12 +323,21 @@ describe('AppHeader.vue', () => {
     }
   })
 
-  it('handleUserCommand logout clears session and goes Home', () => {
+  it('handleUserCommand logout clears session and goes Home', async () => {
     const wrapper = mount(AppHeader, mountOptions())
-    wrapper.vm.handleUserCommand('logout')
+    await wrapper.vm.handleUserCommand('logout')
     expect(logout).toHaveBeenCalled()
     expect(msg.success).toHaveBeenCalledWith('已退出登录')
     expect(push).toHaveBeenCalledWith({ name: 'Home' })
+  })
+
+  it('warns when server-side session revocation cannot be confirmed', async () => {
+    logout.mockResolvedValueOnce({ revoked: false, error: new Error('offline') })
+    const wrapper = mount(AppHeader, mountOptions())
+    await wrapper.vm.handleUserCommand('logout')
+    expect(push).toHaveBeenCalledWith({ name: 'Home' })
+    expect(msg.warning).toHaveBeenCalledWith('本地已退出，但服务端会话撤销未确认，请重新登录确认。')
+    expect(msg.success).not.toHaveBeenCalledWith('已退出登录')
   })
 
   it('handleUserCommand ignores unknown commands', () => {

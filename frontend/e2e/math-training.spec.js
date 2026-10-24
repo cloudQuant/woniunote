@@ -1,5 +1,6 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './support/test'
 import { mockApi, loginAs } from './support/mockApi'
+import { completeApiResponse, waitForApiResponse } from './support/apiLifecycle'
 
 /**
  * E2E coverage for the "数学训练" flow (迭代 17 / Epic 17.5).
@@ -101,7 +102,7 @@ test.describe('Math training — route guard', () => {
   })
 
   test('anonymous visitor is redirected to login', async ({ page }) => {
-    await page.goto('/math-training')
+    await page.goto('/math-training', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/login/)
     await expect(page).toHaveURL(/redirect=(\/|%2F)math-training/)
   })
@@ -114,7 +115,7 @@ test.describe('Math training — session flow', () => {
   })
 
   test('page renders the settings, the history table and the summary', async ({ page }) => {
-    await page.goto('/math-training')
+    await page.goto('/math-training', { waitUntil: 'domcontentloaded' })
 
     await expect(page.locator('.page-header h1')).toContainText('数学训练')
     await expect(page.locator('.start-prompt')).toBeVisible()
@@ -133,7 +134,7 @@ test.describe('Math training — session flow', () => {
   })
 
   test('starting a session shows the first question and the progress counter', async ({ page }) => {
-    await page.goto('/math-training')
+    await page.goto('/math-training', { waitUntil: 'domcontentloaded' })
     await page.getByRole('button', { name: '开始训练' }).first().click()
 
     await expect(page.locator('.question-text')).toHaveText(/^\d+\s*[+\-×÷]\s*\d+ = \?$/)
@@ -144,7 +145,7 @@ test.describe('Math training — session flow', () => {
   })
 
   test('a correct answer shows positive feedback, updates stats and advances', async ({ page }) => {
-    await page.goto('/math-training')
+    await page.goto('/math-training', { waitUntil: 'domcontentloaded' })
     await page.getByRole('button', { name: '开始训练' }).first().click()
     await expect(page.locator('.progress-text')).toHaveText('第 1 / 20 题')
 
@@ -165,7 +166,7 @@ test.describe('Math training — session flow', () => {
   })
 
   test('a wrong answer reveals the correct value and is counted as an error', async ({ page }) => {
-    await page.goto('/math-training')
+    await page.goto('/math-training', { waitUntil: 'domcontentloaded' })
     await page.getByRole('button', { name: '开始训练' }).first().click()
     await expect(page.locator('.progress-text')).toHaveText('第 1 / 20 题')
 
@@ -183,7 +184,7 @@ test.describe('Math training — session flow', () => {
   })
 
   test('skipping counts as a wrong answer and advances', async ({ page }) => {
-    await page.goto('/math-training')
+    await page.goto('/math-training', { waitUntil: 'domcontentloaded' })
     await page.getByRole('button', { name: '开始训练' }).first().click()
     await expect(page.locator('.progress-text')).toHaveText('第 1 / 20 题')
 
@@ -197,7 +198,7 @@ test.describe('Math training — session flow', () => {
   })
 
   test('ending a session early reports the answers collected so far', async ({ page }) => {
-    await page.goto('/math-training')
+    await page.goto('/math-training', { waitUntil: 'domcontentloaded' })
     await page.getByRole('button', { name: '开始训练' }).first().click()
     await expect(page.locator('.progress-text')).toHaveText('第 1 / 20 题')
 
@@ -231,15 +232,21 @@ test.describe('Math training — session flow', () => {
 
   test('a full 20-question round reports a complete record', async ({ page }) => {
     test.setTimeout(90000)
-    await page.goto('/math-training')
+    const initialSummaryResponse = waitForApiResponse(page, 'GET', '/api/math-training/summary')
+    await page.goto('/math-training', { waitUntil: 'domcontentloaded' })
+    await completeApiResponse(initialSummaryResponse)
     await page.getByRole('button', { name: '开始训练' }).first().click()
 
     const requestPromise = waitForRecordPost(page)
+    let refreshedSummaryResponse
 
     for (let i = 0; i < 20; i++) {
       await expect(page.locator('.progress-text')).toHaveText(`第 ${i + 1} / 20 题`)
       // Answer the first 19 correctly and deliberately miss the last one so the
       // payload carries both a correct and a wrong answer.
+      if (i === 19) {
+        refreshedSummaryResponse = waitForApiResponse(page, 'GET', '/api/math-training/summary')
+      }
       await answerCurrentQuestion(page, { correct: i < 19 })
     }
 
@@ -252,5 +259,6 @@ test.describe('Math training — session flow', () => {
 
     await expect(page.locator('.start-prompt')).toBeVisible()
     await expect(page.locator('.stats-grid')).toContainText('95%')
+    await completeApiResponse(refreshedSummaryResponse)
   })
 })

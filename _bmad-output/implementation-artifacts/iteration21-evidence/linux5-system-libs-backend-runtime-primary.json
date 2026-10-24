@@ -1,0 +1,13 @@
+{
+  "run_id": "20261024T004108Z-dc513aafdf45",
+  "instance": "primary",
+  "backend_container_id": "1024e2c90429d5d21200a6828ee751ef68959d2000ff9a3c62ac35853455b580",
+  "binary_sha256": "59caddb5924a294bbfaefd428e3e58b2f1240d08fc7a1505c2c419da8d28c2f5",
+  "runtime_image": "woniunote.iter21/backend-runtime:ubuntu22.04-iter21",
+  "runtime_image_id": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee",
+  "base_image": "woniunote.iter21/system-libs:ubuntu22.04",
+  "base_image_id": "sha256:1ab30b868e397d3575e7f7d491e530e25bdadad33bd7d5bdcdc0e20dc4de7685",
+  "runtime_spec_sha256": "1a9d3db90020ccfe075a208a114c4bcf2c72552c3dd2a305d613481b0a8c2a3c",
+  "http_port": 52406,
+  "credentials_included": false
+}

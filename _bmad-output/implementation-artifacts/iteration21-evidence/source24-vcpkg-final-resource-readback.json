@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "runs": [
+    {
+      "run_id": "20261024T050629Z-9695ff052fdc",
+      "run_manifest_sha256": "e2104162a3ef17bac13fa958bd1dc672b8b1cd838fa85dea347fe79089f0b07d",
+      "containers_absent": {
+        "bacd3e7c287343d1190f41a59737b3e9aff23336d32f2b71e45c39b84d8085e8": true,
+        "b96a712d67ca0dffbb03e9b194a91eb90716d4edd1d3fc1262906abb1eb1c8df": true
+      },
+      "ports_closed": {
+        "56909": true,
+        "56928": true,
+        "56893": true
+      },
+      "mysql_volume_absent": true,
+      "run_label_container_count": 0,
+      "run_label_volume_count": 0
+    }
+  ]
+}

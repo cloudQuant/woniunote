@@ -1,0 +1,96 @@
+{
+  "backend_source_6_binding": {
+    "backend_binary_included": false,
+    "manifest_path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend-source6-manifest.json",
+    "manifest_sha256": "830dbb1cf145da1af1d4306c5fa3e6a4d0527a68b30413ba31500eaefe39d18d",
+    "matches_source22_binding": true,
+    "recompiled": false,
+    "snapshot_sha256": "70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd"
+  },
+  "changes": {
+    "changed_file_count": 1,
+    "diff_constraint": "Current worktree target equals source22 target after replacing exactly the two listed avatar fixture values.",
+    "file": "backend_cpp/tests/integration/test_iter21_user_projection.py",
+    "fixtures": [
+      {
+        "after": "other.png",
+        "after_characters": 9,
+        "before": "/uploads/iter21-other.png",
+        "before_characters": 25
+      },
+      {
+        "after": "owner.png",
+        "after_characters": 9,
+        "before": "/uploads/iter21-owner.png",
+        "before_characters": 25
+      }
+    ],
+    "source22_mode": "0644",
+    "source22_sha256": "f0e57e69d9e3663caf6d06d49589cc3c104bbe0cce2aeba9ea301f2fa08a637d",
+    "source23_mode": "0644",
+    "source23_sha256": "84a008ef5f257d1bf562c6879fcef6afa40c0bce578f4326ea37475a6ea71195",
+    "unchanged_file_count": 427,
+    "worktree_source_mode": "0644",
+    "worktree_source_sha256": "84a008ef5f257d1bf562c6879fcef6afa40c0bce578f4326ea37475a6ea71195"
+  },
+  "created_utc": "2026-10-24T02:41:33.821423+00:00",
+  "destination": {
+    "delta_path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-23-delta.json",
+    "file_count": 428,
+    "manifest_path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-23-manifest.json",
+    "manifest_sha256": "610340df59a9bf04ddda747320ccd858e2b5f5b6cbc4eb1f50d3bbe18c04670c",
+    "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-23",
+    "tree_sha256": "68b2da95b437afc30b643eae7f49a55e9f430d2baf7e94d1d6fa41c7a7470838"
+  },
+  "failure_evidence": {
+    "backend_error": "Data too long for column 'avatar'",
+    "failing_source": {
+      "source22_manifest_path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-22-manifest.json",
+      "source22_manifest_sha256": "8f3264629b5ae66dc6e9af66329f003fc60a8b93f5269c676836dc6eeb0cb5df",
+      "test_mode": "0644",
+      "test_path": "backend_cpp/tests/integration/test_iter21_user_projection.py",
+      "test_sha256": "f0e57e69d9e3663caf6d06d49589cc3c104bbe0cce2aeba9ea301f2fa08a637d"
+    },
+    "fixture_values": [
+      {
+        "after": "other.png",
+        "after_characters": 9,
+        "before": "/uploads/iter21-other.png",
+        "before_characters": 25
+      },
+      {
+        "after": "owner.png",
+        "after_characters": 9,
+        "before": "/uploads/iter21-owner.png",
+        "before_characters": 25
+      }
+    ],
+    "observed_failure": "The other test user profile update returned HTTP 500 in the source22 Mac HTTP run.",
+    "raw_log_sha256": null,
+    "schema_reference": {
+      "comment": "头像文件名",
+      "declaration": "avatar VARCHAR(20)",
+      "path": "scripts/sql/01_users.sql",
+      "sha256": "bccb4cc10362e5ac81813f7d2fc95c8c9a5a4a8ac6a85a83c0ace57270965742"
+    },
+    "scope_limit": "This records the reported source22 run failure only; source23 HTTP behavior remains NOT_RUN.",
+    "source": "Parent-provided report of the private source22 Mac HTTP run and backend log; raw log was not copied into this fixture-only freeze."
+  },
+  "schema": "woniunote.iteration21.source-23-delta.v1",
+  "source": {
+    "file_count": 428,
+    "manifest_path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source-22-manifest.json",
+    "manifest_sha256": "8f3264629b5ae66dc6e9af66329f003fc60a8b93f5269c676836dc6eeb0cb5df",
+    "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-22"
+  },
+  "status": "STATIC_FREEZE_ONLY",
+  "verification": {
+    "HTTP_or_service_execution": "NOT_RUN",
+    "all_other_427_source22_files_byte_and_mode_preserved": true,
+    "all_source22_manifest_files_byte_and_mode_validated": true,
+    "backend_binary_copied": false,
+    "only_test_file_overridden": true,
+    "runtime_generated_extras_copied": 0,
+    "static_ast_parse": "PASS"
+  }
+}

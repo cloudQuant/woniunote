@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './support/test'
 import { mockApi } from './support/mockApi'
 
 const pagesWithArticleSidebar = [
@@ -36,7 +36,7 @@ test.describe('Article sidebar layout', () => {
   for (const pageConfig of pagesWithArticleSidebar) {
     test(`${pageConfig.name}在桌面端将搜索与热门文章置于左侧`, async ({ page }) => {
       await page.setViewportSize({ width: 1440, height: 900 })
-      await page.goto(pageConfig.path)
+      await page.goto(pageConfig.path, { waitUntil: 'domcontentloaded' })
 
       const mainColumn = page.locator(pageConfig.main)
       const sidebarColumn = page.locator(pageConfig.sidebar)

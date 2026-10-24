@@ -1,0 +1,11 @@
+{
+  "command": [
+    "bash",
+    "backend_cpp/scripts/run_cppcheck.sh"
+  ],
+  "cwd": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-5",
+  "exit": 0,
+  "seconds": 0.675,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/backend5-cppcheck-root.log",
+  "sha256": "3f14ccf5f0045873a5fc260840d734dee45eb50236fe5c4c5d8a4380c19649aa"
+}

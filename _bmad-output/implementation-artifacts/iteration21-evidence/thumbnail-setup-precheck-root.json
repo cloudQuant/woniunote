@@ -1,0 +1,55 @@
+{
+  "scope": "extracted installer precheck with mocked mysql/sudo; no database or installer execution",
+  "source_sha256": "14275150d89ee4d204fe3921ed9808d505298a0b87eb6227d917a594ece3a6f0",
+  "cases": [
+    {
+      "name": "valid",
+      "exit": 0,
+      "expected": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "old_width",
+      "exit": 1,
+      "expected": 1,
+      "status": "PASS"
+    },
+    {
+      "name": "missing",
+      "exit": 1,
+      "expected": 1,
+      "status": "PASS"
+    },
+    {
+      "name": "not_null",
+      "exit": 1,
+      "expected": 1,
+      "status": "PASS"
+    },
+    {
+      "name": "wrong_type",
+      "exit": 1,
+      "expected": 1,
+      "status": "PASS"
+    },
+    {
+      "name": "both_queries_fail",
+      "exit": 1,
+      "expected": 1,
+      "status": "PASS"
+    },
+    {
+      "name": "sudo_fallback",
+      "exit": 0,
+      "expected": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "missing_password",
+      "exit": 1,
+      "expected": 1,
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS"
+}

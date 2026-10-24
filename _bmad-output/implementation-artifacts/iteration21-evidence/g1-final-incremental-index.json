@@ -1,0 +1,287 @@
+{
+  "acceptance_claim": false,
+  "evidence_root": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5",
+  "evidence_status": "ALL_PREVIOUSLY_INDEXED_G1_GAPS_HAVE_FOLLOWUP_EVIDENCE_PENDING_ROOT_REVIEW",
+  "existing_g1_evidence_reference": {
+    "incremental_updates": [
+      "formal binary through functional9 runner refused before business scenarios",
+      "malformed copied template rejected before backend/business tests",
+      "missing Python and missing daemon rejected before run creation",
+      "both MySQL and Redis startup exits detected before schema load",
+      "r5 upload isolation passed"
+    ],
+    "index": {
+      "bytes": 10031,
+      "mode": "0o600",
+      "path": "/tmp/woniunote-iter21-evidence/ac21-00-negative-isolation-index-20261024.json",
+      "sha256": "0d9f754878a63a04046f6a20e0caaba75ce95ed106de5a2fc26b67c848357855"
+    },
+    "previously_reported_passes": [
+      "external backend/DB/Redis overrides",
+      "reserved and occupied ports",
+      "real-E2E development proxy refusal",
+      "credential JSON escaping round-trip",
+      "formal test-hook routes absent even with injected environment",
+      "two-run exact-PID TERM isolation"
+    ]
+  },
+  "original_startup_incident": {
+    "log": {
+      "bytes": 791,
+      "mode": "0o644",
+      "path": "/tmp/woniunote-iter21-evidence/integration-functional-first.log",
+      "sha256": "3c1e0533f1d66732973220bc49dc1797f7f8de183a93953eb03184076ce5745b"
+    },
+    "manifest": {
+      "bytes": 1357,
+      "mode": "0o600",
+      "path": "/tmp/woniunote-iter21-evidence/integration-results/20261023T154300Z-b222282fb62e/run.json",
+      "sha256": "85c8abd28103c5b2ebe2372a3de8aab3117cafcac736b1d9a4db490090daa3b9"
+    },
+    "note": "The original incident remains unattributed because its retained artifacts lack container stderr/status. The two new controlled negatives validate runner fail-fast behavior for each service; they do not claim to identify the original cause.",
+    "run_id": "20261023T154300Z-b222282fb62e",
+    "status": "NOT_DIAGNOSED"
+  },
+  "r5_upload_isolation": {
+    "owned_resources_after_term": {
+      "a": {
+        "containers": 0,
+        "volumes": 0
+      },
+      "b": {
+        "containers": 0,
+        "volumes": 0
+      }
+    },
+    "report": {
+      "bytes": 5285,
+      "mode": "0o600",
+      "path": "/tmp/woniunote-iter21-preflight/root-term-only-20261024-r5/report.json",
+      "sha256": "c62d94fc1541988ba09dad4b7e298729ab0375df0ede765e9b2921f6cfd501e0"
+    },
+    "run_ids": {
+      "a": "20261023T183800Z-da146d5a2c57",
+      "b": "20261023T183825Z-7927e03c3c00"
+    },
+    "runner_sha256": "36ee445ba6cc4712ef70b3a993fdb91d45164fa089d3569cb756927dccd159bb",
+    "status": "PASS_ROOT_EXECUTED",
+    "term": {
+      "a": {
+        "elapsed_seconds": 4.001,
+        "expected_shell_status_143": true,
+        "returncode": 143,
+        "signal": "TERM",
+        "signal_sent": true
+      },
+      "b": {
+        "elapsed_seconds": 4.263,
+        "expected_shell_status_143": true,
+        "returncode": 143,
+        "signal": "TERM",
+        "signal_sent": true
+      }
+    },
+    "upload_isolation": {
+      "a_removed_after_a_term": true,
+      "b_removed_after_b_term": true,
+      "b_sha256_after_a_term": "ae864f2dd6e658ee81b470b4fa3725de615ee85743c41ed4f60f3d11404dfb31",
+      "b_unchanged_after_a_term": true,
+      "basename_a": "iter21-term-isolation-sentinel.bin",
+      "basename_b": "iter21-term-isolation-sentinel.bin",
+      "different_paths": true,
+      "initial_hashes_differ": true,
+      "path_a": "/tmp/woniunote-iter21-preflight/root-term-only-20261024-r5/a/tmp/woniunote-iter21/20261023T183800Z-da146d5a2c57/uploads/iter21-term-isolation-sentinel.bin",
+      "path_b": "/tmp/woniunote-iter21-preflight/root-term-only-20261024-r5/b/tmp/woniunote-iter21/20261023T183825Z-7927e03c3c00/uploads/iter21-term-isolation-sentinel.bin",
+      "same_basename": true,
+      "sha256_a": "3eef27eaf074fac94e609556b9c04a9845b4abada929f32fe26f936af134c3d2",
+      "sha256_b": "ae864f2dd6e658ee81b470b4fa3725de615ee85743c41ed4f60f3d11404dfb31"
+    }
+  },
+  "runner_delta_from_functional8": "Prior read-only diff showed functional9 adds only allowlisted backend runtime metadata export/error handling; no runner start, failure, cleanup, or test logic changes.",
+  "scope": "Append-only AC21-00 G1 evidence delta; do not overwrite prior index; no repository runner/product files modified.",
+  "secret_handling": {
+    "docker_global_settings_changed": false,
+    "preexisting_containers_or_volumes_touched": false,
+    "raw_container_and_runner_logs_retained_in_private_case_directories": true,
+    "raw_logs_copied_to_this_index": false,
+    "sanitized_index_contains_credentials": false
+  },
+  "service_start_failure_negative_cases": [
+    {
+      "business_tests_started": false,
+      "cleanup_check": {
+        "bytes": 475,
+        "mode": "0o600",
+        "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/mysql-failure/cleanup-check.json",
+        "sha256": "52f44f0cdb1755563a26bdb65cfc9622fe7c85cb3499ec204cbfcdb3824017d5"
+      },
+      "container_after": {
+        "bytes": 566,
+        "mode": "0o600",
+        "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/mysql-failure/fault/container-after.txt",
+        "sha256": "2e3403b271a7701fee0d79e9a0bf41a8abd33ea2ec12d25026e164ea4f6843c1"
+      },
+      "container_before": {
+        "bytes": 481,
+        "mode": "0o600",
+        "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/mysql-failure/fault/container-before.txt",
+        "sha256": "a0369b92598ae233997767bf76d694e14a46d276542b5874a2a1d8e0c7400852"
+      },
+      "docker_container_stdout_stderr_stream": {
+        "bytes": 1775,
+        "mode": "0o600",
+        "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/mysql-failure/fault/container.stdout-stderr.log",
+        "sha256": "89f533a46d276034a1067e115de9ed2ce82c14f89b9320cdef5eae04e319bd01"
+      },
+      "exact_cleanup_verified": true,
+      "failure_injection": "After successful docker port readback, wrapper re-inspected exact full ID, /name, run-id and service label; while running it sent SIGKILL to that exact ID and observed exited/137.",
+      "peer_service_before_cleanup": {
+        "container_id": "83ceb2858fed70773f76465d23f3682b988f45a23a56d895b6377b61e6730365",
+        "name": "woniunote-i21-20261023T184537Z-c2e725ad84a8-redis",
+        "state": "running"
+      },
+      "restricted_raw_logs": {
+        "note": "Mode-700 case/runtime directories; raw Docker logs are not copied into the sanitized index.",
+        "runner_runtime_mysql_log": {
+          "bytes": 1434,
+          "mode": "0o600",
+          "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/mysql-failure/tmp/woniunote-iter21/20261023T184537Z-c2e725ad84a8/logs/mysql-container.log",
+          "sha256": "f869bc5bfab8fc55f984ba1a66f3be70c9bb024b6f3f4655502ec6842600f1b8"
+        },
+        "runner_runtime_redis_log": {
+          "bytes": 488,
+          "mode": "0o600",
+          "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/mysql-failure/tmp/woniunote-iter21/20261023T184537Z-c2e725ad84a8/logs/redis-container.log",
+          "sha256": "ed8eda051964f4e68745d7b8feaac2f2b91d256a2e77841bf80bee664923fc45"
+        }
+      },
+      "run_id": "20261023T184537Z-c2e725ad84a8",
+      "run_manifest": {
+        "bytes": 2668,
+        "mode": "0o600",
+        "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/mysql-failure/artifacts/20261023T184537Z-c2e725ad84a8/run.json",
+        "sha256": "b3e5af8bdf2e237748bb9708d4125b59040988861324f6938d82cb70eaa9dffc"
+      },
+      "runner_error_observed": true,
+      "runner_exit_code": 2,
+      "runner_log": {
+        "bytes": 1046,
+        "mode": "0o600",
+        "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/mysql-failure/runner.log",
+        "sha256": "5d4ca09f289efa4d4e4e6ed7b147c073d8c36507a53250a0d1c1e3cdf942c518"
+      },
+      "schema_phase_not_reached": true,
+      "service": "mysql",
+      "status": "PASS",
+      "target_container": {
+        "exit_code": 137,
+        "id": "fe7fae6359c700edd19be96cb4bd307a55316ebca77d4688833ace58222c980c",
+        "image_id": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+        "name": "woniunote-i21-20261023T184537Z-c2e725ad84a8-mysql",
+        "repo_digests": [
+          "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+        ],
+        "state": "exited"
+      }
+    },
+    {
+      "business_tests_started": false,
+      "cleanup_check": {
+        "bytes": 475,
+        "mode": "0o600",
+        "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/redis-failure/cleanup-check.json",
+        "sha256": "08cc6cf41c0df91ea14ae541b8eb5df7781c5d79ae84a0aa69ca7d31fa1cdbeb"
+      },
+      "container_after": {
+        "bytes": 566,
+        "mode": "0o600",
+        "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/redis-failure/fault/container-after.txt",
+        "sha256": "8d8fee6e0df73ccaed08c1ac64ed6f96f59a2e7b804faee8960cbfad89dc52c8"
+      },
+      "container_before": {
+        "bytes": 481,
+        "mode": "0o600",
+        "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/redis-failure/fault/container-before.txt",
+        "sha256": "558b5c830f9a334f8b9c26c2758d255c8b152124e7b55b82e496ddd29f5a99ca"
+      },
+      "docker_container_stdout_stderr_stream": {
+        "bytes": 705,
+        "mode": "0o600",
+        "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/redis-failure/fault/container.stdout-stderr.log",
+        "sha256": "074b4517414cf8e29e4995c1ee4759094c184d4acca9389b387e8ff539f68f0e"
+      },
+      "exact_cleanup_verified": true,
+      "failure_injection": "After successful docker port readback, wrapper re-inspected exact full ID, /name, run-id and service label; while running it sent SIGKILL to that exact ID and observed exited/137.",
+      "peer_service_before_cleanup": {
+        "container_id": "7bc8fcc2e5491f7d7ce69fda1aecf683e24444fe2dcbeae99cc2584213ad5440",
+        "name": "woniunote-i21-20261023T184630Z-efaadefdf930-mysql",
+        "state": "running"
+      },
+      "restricted_raw_logs": {
+        "note": "Mode-700 case/runtime directories; raw Docker logs are not copied into the sanitized index.",
+        "runner_runtime_mysql_log": {
+          "bytes": 1656,
+          "mode": "0o600",
+          "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/redis-failure/tmp/woniunote-iter21/20261023T184630Z-efaadefdf930/logs/mysql-container.log",
+          "sha256": "dee45c688c18fb47629b0963600deaca2f84f2cddc23082bd0459aca91c450bc"
+        },
+        "runner_runtime_redis_log": {
+          "bytes": 488,
+          "mode": "0o600",
+          "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/redis-failure/tmp/woniunote-iter21/20261023T184630Z-efaadefdf930/logs/redis-container.log",
+          "sha256": "f4e99cdfe4df95a36e21e7a2fdd66f05fe7f901e972d5ee876eddb79b670f712"
+        }
+      },
+      "run_id": "20261023T184630Z-efaadefdf930",
+      "run_manifest": {
+        "bytes": 2668,
+        "mode": "0o600",
+        "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/redis-failure/artifacts/20261023T184630Z-efaadefdf930/run.json",
+        "sha256": "66e328de512c53a70bf72303206ec47e2e6bed83884eea7e33d3e2273287d54f"
+      },
+      "runner_error_observed": true,
+      "runner_exit_code": 2,
+      "runner_log": {
+        "bytes": 1046,
+        "mode": "0o600",
+        "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/redis-failure/runner.log",
+        "sha256": "eec78ab012d4f7604809415e9cce839e7f7970747c8dfff65446299110dad64f"
+      },
+      "schema_phase_not_reached": true,
+      "service": "redis",
+      "status": "PASS",
+      "target_container": {
+        "exit_code": 137,
+        "id": "919f3d33f6c0af5851473fb9bf6bf77f29a234bde01a008a7eb867cc52c2d036",
+        "image_id": "sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85",
+        "name": "woniunote-i21-20261023T184630Z-efaadefdf930-redis",
+        "repo_digests": [
+          "redis@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85"
+        ],
+        "state": "exited"
+      }
+    }
+  ],
+  "source_pins": {
+    "functional9_runner": {
+      "path": "/tmp/woniunote-iter21-functional-9/backend_cpp/tests/integration/run_integration.sh",
+      "sha256": "36ee445ba6cc4712ef70b3a993fdb91d45164fa089d3569cb756927dccd159bb"
+    },
+    "macos_formal_backend": {
+      "path": "/tmp/woniunote-iter21-formal-macos-3/woniunote_backend",
+      "sha256": "81205cb32cb9103049a0486c767e9ed4ecee5c4a87c1982fbb25042ac43035bc"
+    },
+    "prior_index_unchanged": {
+      "bytes": 10031,
+      "mode": "0o600",
+      "path": "/tmp/woniunote-iter21-evidence/ac21-00-negative-isolation-index-20261024.json",
+      "sha256": "0d9f754878a63a04046f6a20e0caaba75ce95ed106de5a2fc26b67c848357855"
+    },
+    "temporary_docker_wrapper": {
+      "bytes": 7741,
+      "mode": "0o700",
+      "path": "/tmp/woniunote-iter21-evidence/g1-service-startup-20261023T184436Z-d2a0c68075b5/tooling/docker",
+      "sha256": "48ebee98e8f757386af0e924e2ba9ef3dcc58147358fa05fa30a2e18dc1d886b"
+    }
+  }
+}

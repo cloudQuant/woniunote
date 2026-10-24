@@ -1,0 +1,59 @@
+{
+  "run_id": "20261024T044736Z-eb3d20de3a02",
+  "runtime_dir": null,
+  "runtime_retained": false,
+  "restricted_runtime_has_raw_diagnostics": false,
+  "evidence_policy": "sanitized summaries and content-free metadata; raw logs and browser attachments stay in the restricted runtime",
+  "artifact_dir": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-mac10-real-browser-results/20261024T044736Z-eb3d20de3a02",
+  "backend_url": "http://127.0.0.1:57466",
+  "frontend_url": "http://127.0.0.1:57481",
+  "database": "woniunote_test_20261024T044736Zeb3d20de3a02",
+  "scenario": "functional",
+  "rate_limit_per_minute": 1000,
+  "mysql": {
+    "container_name": "woniunote-i21-20261024T044736Z-eb3d20de3a02-mysql",
+    "container_id": "458be3a196873437e5286a370709b86a88a6acb8025f1ce81ffaa3a31efa885e",
+    "host": "127.0.0.1",
+    "port": 57550,
+    "image": "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+    "image_id": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+    "image_version": "8.0.46-1.el9",
+    "repo_digests": [
+      "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+    ],
+    "container_status": "running",
+    "container_exit_code": null,
+    "transport_tls": {
+      "enabled": false,
+      "server_have_ssl": "DISABLED",
+      "scope": "run-owned disposable integration container only",
+      "client_policy": "plaintext fallback enabled only in owned backend and test subprocesses"
+    },
+    "data_volume": {
+      "name": "woniunote-i21-20261024T044736Z-eb3d20de3a02-mysql-data",
+      "driver": "local",
+      "identity": {
+        "run_id": "20261024T044736Z-eb3d20de3a02",
+        "service": "mysql"
+      },
+      "status": "removed"
+    }
+  },
+  "redis": {
+    "container_name": "woniunote-i21-20261024T044736Z-eb3d20de3a02-redis",
+    "container_id": "648a1d09f25f3800a0406c7092bb8eb2521575fd17f3b1ee6a60ace8ded6c31b",
+    "host": "127.0.0.1",
+    "port": 57581,
+    "image": "redis@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85",
+    "image_id": "sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85",
+    "image_version": "7.4.11",
+    "repo_digests": [
+      "redis@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85"
+    ],
+    "container_status": "running",
+    "container_exit_code": null
+  },
+  "backend_binary": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build10/test/woniunote_backend",
+  "backend_pid": 95945,
+  "credentials_included": false
+}

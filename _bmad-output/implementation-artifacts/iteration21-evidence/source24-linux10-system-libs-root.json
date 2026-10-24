@@ -1,0 +1,24 @@
+{
+  "status": "FINISHED",
+  "command": [
+    "bash",
+    "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-24/backend_cpp/tests/integration/run_integration.sh"
+  ],
+  "environment": {
+    "TMPDIR": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/private-source24-linux10-system-libs",
+    "WONIUNOTE_BACKEND_BIN": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-24/scripts/tests/iter21-linux-runtime/launcher",
+    "WONIUNOTE_LINUX_BACKEND_BINARY": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build10/system-libs/test/cmake-build/woniunote_backend",
+    "WONIUNOTE_LINUX_RUNTIME_IMAGE": "sha256:bd21ac36ea81e0c8312ad82499d01c9fb5cc450f89a590326ae713396c2756ee",
+    "WONIUNOTE_TEST_SCENARIO": "functional",
+    "WONIUNOTE_TEST_KEEP_SERVICES": "0",
+    "WONIUNOTE_TEST_REAL_E2E": "0",
+    "WONIUNOTE_TEST_ARTIFACT_ROOT": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-system-libs-results",
+    "PYTEST_CMD": "/Users/yunjinqi/opt/anaconda3/bin/conda run --no-capture-output -n base python -m pytest"
+  },
+  "exit": 0,
+  "seconds": 282.79,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-linux10-system-libs-root.log",
+  "log_sha256": "e95f1062dd5caa0fe8c598114570149f80180ed77c1dcf856b83a4c3195fbebc",
+  "source_manifest_sha256": "cd50f3b121093b2243b6a0c1ee9f92314520bbd908b1f4839407316358779840",
+  "backend_sha256": "2fbc6600f01f27002fc32950ba41831c29a316e7a884914479a5ac3db31afdd6"
+}

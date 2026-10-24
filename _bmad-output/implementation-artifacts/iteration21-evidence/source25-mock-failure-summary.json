@@ -1,0 +1,22 @@
+{
+  "status": "FAIL",
+  "tests": {
+    "passed": 252,
+    "failed": 10,
+    "skipped": 2,
+    "global_teardown_errors": 1
+  },
+  "projects": [
+    "chromium",
+    "firefox",
+    "webkit",
+    "mobile-chrome"
+  ],
+  "workers": 1,
+  "retries": 0,
+  "preview_denied_count": 8,
+  "context_violations": 27,
+  "scope": "All test failures report expected reads still active at test end; exact reason some requests reached preview not established. Guard blocked them. Product assertions alone do not make run PASS. E2E-only fix pending.",
+  "root_record_sha256": "367f469609c3565757d23a70a0b0622ffc845040531ce9d37f409f1261801696",
+  "log_sha256": "6e8b537244712bbeec3fe6aad7d1ca946a26d713762ec970dbaa0225d5101987"
+}

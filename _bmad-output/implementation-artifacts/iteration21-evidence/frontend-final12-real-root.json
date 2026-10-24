@@ -1,0 +1,11 @@
+{
+  "command": [
+    "bash",
+    "/tmp/woniunote-iter21-functional-12/backend_cpp/tests/integration/run_integration.sh"
+  ],
+  "scope": "one health pytest plus real migrations and real Chromium UI; not a full HTTP repeat",
+  "exit_code": 0,
+  "seconds": 73.16,
+  "log": "/tmp/woniunote-iter21-evidence/frontend-final12-real-root.log",
+  "log_sha256": "4a95a62f8297b9ab2265f82777d1a18b99271a5cccfc8372c09da0f194c2e450"
+}

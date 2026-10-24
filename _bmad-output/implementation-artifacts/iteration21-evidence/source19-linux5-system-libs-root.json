@@ -1,0 +1,25 @@
+{
+  "source_manifest_sha256": "cdec1ee82d7746bde149f4a84f8760481984edd741e6f861581f1fee98d5bb23",
+  "command": [
+    "bash",
+    "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-19/backend_cpp/tests/integration/run_integration.sh"
+  ],
+  "environment": {
+    "TMPDIR": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/private-linux5-system-libs",
+    "WONIUNOTE_BACKEND_BIN": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-19/scripts/tests/iter21-linux-runtime/launcher",
+    "WONIUNOTE_LINUX_BACKEND_BINARY": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build5/system-libs/test/cmake-build/woniunote_backend",
+    "WONIUNOTE_LINUX_RUNTIME_IMAGE": "woniunote.iter21/backend-runtime:ubuntu22.04-iter21",
+    "WONIUNOTE_LINUX_BASE_IMAGE": "woniunote.iter21/system-libs:ubuntu22.04",
+    "WONIUNOTE_TEST_SCENARIO": "functional",
+    "WONIUNOTE_TEST_KEEP_SERVICES": "0",
+    "WONIUNOTE_TEST_REAL_E2E": "0",
+    "WONIUNOTE_TEST_ARTIFACT_ROOT": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-results"
+  },
+  "exit": 0,
+  "seconds": 183.013,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source19-linux5-system-libs-root.log",
+  "sha256": "5bd4a43a76d2e32f4c560fc005b1a080985f909628c2a15977fc391afbae759c",
+  "run_ids": [
+    "20261024T004108Z-dc513aafdf45"
+  ]
+}

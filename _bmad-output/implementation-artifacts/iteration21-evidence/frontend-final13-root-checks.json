@@ -1,0 +1,72 @@
+[
+  {
+    "name": "node",
+    "command": [
+      "node",
+      "--version"
+    ],
+    "exit_code": 0,
+    "seconds": 0.09,
+    "log": "/tmp/woniunote-iter21-evidence/frontend-final13-node-root.log",
+    "log_sha256": "eedf4a8e103f4e071c070963a242093d56e05a04ee224d6bf3960ea171110c91"
+  },
+  {
+    "name": "lint",
+    "command": [
+      "npm",
+      "run",
+      "lint:ci"
+    ],
+    "exit_code": 0,
+    "seconds": 1.42,
+    "log": "/tmp/woniunote-iter21-evidence/frontend-final13-lint-root.log",
+    "log_sha256": "19d979f2fa04bb57796c816a754dd4abf6c5952b1ae8176b90410a40fc1c36d3"
+  },
+  {
+    "name": "silent-catch",
+    "command": [
+      "node",
+      "scripts/check-silent-catch.mjs"
+    ],
+    "exit_code": 0,
+    "seconds": 0.07,
+    "log": "/tmp/woniunote-iter21-evidence/frontend-final13-silent-catch-root.log",
+    "log_sha256": "f1213194850e888714e36c42a397b7480550c057fe52290d1ed8bc848e823bc2"
+  },
+  {
+    "name": "coverage",
+    "command": [
+      "npm",
+      "run",
+      "test:coverage"
+    ],
+    "exit_code": 0,
+    "seconds": 6.9,
+    "log": "/tmp/woniunote-iter21-evidence/frontend-final13-coverage-root.log",
+    "log_sha256": "4ed187b0c848badd931ace969374070d12b4a1c30524dc7578d7f30b567994eb"
+  },
+  {
+    "name": "build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit_code": 0,
+    "seconds": 3.87,
+    "log": "/tmp/woniunote-iter21-evidence/frontend-final13-build-root.log",
+    "log_sha256": "cd7040f1b1e5430d8455a3617404347f802ea97bd6dd145810f4ed2f5f4ff9e6"
+  },
+  {
+    "name": "audit",
+    "command": [
+      "npm",
+      "run",
+      "audit:ci"
+    ],
+    "exit_code": 0,
+    "seconds": 1.0,
+    "log": "/tmp/woniunote-iter21-evidence/frontend-final13-audit-root.log",
+    "log_sha256": "0ae81aa55573c0ed11ee6445648364362523678485911f80d56d2cb9ab8c26dc"
+  }
+]

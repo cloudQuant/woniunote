@@ -1,5 +1,11 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './support/test'
 import { mockApi } from './support/mockApi'
+import {
+  completeApiResponse,
+  waitForApiResponse,
+  waitForArticleThumbnailResponses,
+  waitForHomeResponses
+} from './support/apiLifecycle'
 
 test.describe('Home & navigation', () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +13,9 @@ test.describe('Home & navigation', () => {
   })
 
   test('loads the home page with header, article list and footer', async ({ page }) => {
-    await page.goto('/')
+    const homeResponses = waitForHomeResponses(page)
+    const thumbnailResponses = waitForArticleThumbnailResponses(page)
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
     // Brand title is set from route meta.
     await expect(page).toHaveTitle(/cloudQuant/)
     // Header logo + footer copyright present.
@@ -15,11 +23,15 @@ test.describe('Home & navigation', () => {
     await expect(page.locator('.app-footer')).toContainText('版权所有')
     // Articles from the mocked list render.
     await expect(page.getByText('量化投资入门').first()).toBeVisible()
+    await Promise.all([...homeResponses, ...thumbnailResponses].map(completeApiResponse))
   })
 
   test('keeps search and popular articles on the left at desktop widths', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/')
+    const homeResponses = waitForHomeResponses(page)
+    const thumbnailResponses = waitForArticleThumbnailResponses(page)
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await Promise.all([...homeResponses, ...thumbnailResponses].map(completeApiResponse))
 
     const mainColumn = page.locator('.home-main-column')
     const sidebarColumn = page.locator('.home-sidebar-column')
@@ -48,25 +60,43 @@ test.describe('Home & navigation', () => {
   })
 
   test('navigates to an article detail from the list', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
     await page.getByText('量化投资入门').first().click()
     await expect(page).toHaveURL(/\/article\/1/)
     await expect(page.locator('.article-body, .article-content, article').first()).toBeVisible()
   })
 
   test('navigates to a category via the nav dropdown route', async ({ page }) => {
-    await page.goto('/type/101/1')
+    const articleResponse = waitForApiResponse(page, 'GET', '/api/articles')
+    const hotResponse = waitForApiResponse(page, 'GET', '/api/articles/hot')
+    const typeResponse = waitForApiResponse(page, 'GET', '/api/articles/types')
+    const thumbnailResponses = waitForArticleThumbnailResponses(page)
+    await page.goto('/type/101/1', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/type\/101/)
+    await Promise.all([
+      articleResponse,
+      hotResponse,
+      typeResponse,
+      ...thumbnailResponses
+    ].map(completeApiResponse))
   })
 
   test('shows the 404 page for unknown routes', async ({ page }) => {
-    await page.goto('/this/does/not/exist')
+    await page.goto('/this/does/not/exist', { waitUntil: 'domcontentloaded' })
     await expect(page.getByText('404')).toBeVisible()
     await expect(page.getByText('页面未找到')).toBeVisible()
   })
 
   test('search navigation works from the URL', async ({ page }) => {
-    await page.goto('/search?keyword=python')
+    const articleResponse = waitForApiResponse(page, 'GET', '/api/articles')
+    const hotResponse = waitForApiResponse(page, 'GET', '/api/articles/hot')
+    const thumbnailResponses = waitForArticleThumbnailResponses(page)
+    await page.goto('/search?keyword=python', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveURL(/\/search/)
+    await Promise.all([
+      articleResponse,
+      hotResponse,
+      ...thumbnailResponses
+    ].map(completeApiResponse))
   })
 })

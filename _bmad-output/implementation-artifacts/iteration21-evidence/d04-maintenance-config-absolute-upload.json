@@ -1,0 +1,15 @@
+{
+  "status": "PREPARED_NOT_DEPLOYED",
+  "previous_config_sha256": "1f49ab333fd037ee15a601f10f860530fe5d79c5b966a45fd1619179c4b7bd1b",
+  "previous_preserved_at": "/var/lib/woniunote-iter21-data/runtime-config.pre-absolute-upload.json",
+  "candidate_config_sha256": "3080c4cad9d00db9e018ca009476f7e848a1ffec2962cb8662b768c548e0e32d",
+  "original_config_sha256": "4dd82289bcba52b6c24c66a15243613abeb2f0e476c7d41feb55e175de8d9987",
+  "reason": "Persistent deployment links backend/build/uploads to DATA/build/uploads, while original uploaded image lives under DATA/uploads; preserve original absolute static root and upload path.",
+  "document_root": "/var/lib/woniunote-iter21-data/uploads",
+  "upload_path": "/var/lib/woniunote-iter21-data/uploads/uploads",
+  "db_redis_and_jwt_values_preserved": true,
+  "root_owned_mode": "0600",
+  "original_and_managed_services_inactive_during_write": true,
+  "primary_readback": "PASS; exact config hash, DB/Redis equality, both upload path equality to original, owner/mode and inactive units verified.",
+  "secrets_included": false
+}

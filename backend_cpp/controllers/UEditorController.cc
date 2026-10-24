@@ -442,10 +442,8 @@ void UEditorController::serveUpload(const HttpRequestPtr& req,
         return;
     }
 
-    auto resp = HttpResponse::newFileResponse(filePath);
-
     // 根据文件扩展名设置 Content-Type
-    std::string ext = fs::path(filePath).extension().string();
+    const std::string ext = fs::path(filePath).extension().string();
     std::string contentType = "application/octet-stream";
 
     if (ext == ".pdf") {
@@ -462,7 +460,7 @@ void UEditorController::serveUpload(const HttpRequestPtr& req,
         contentType = "image/webp";
     }
 
-    resp->addHeader("Content-Type", contentType);
+    auto resp = HttpResponse::newFileResponse(filePath, "", CT_NONE, contentType);
 
     // 添加 CORS 头，允许前端访问文件
     auto origin = req->getHeader("Origin");

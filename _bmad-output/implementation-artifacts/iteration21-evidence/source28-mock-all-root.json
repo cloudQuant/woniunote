@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "snapshot": "source-28",
+  "command": [
+    "npm",
+    "run",
+    "test:e2e",
+    "--",
+    "--workers=1",
+    "--retries=0"
+  ],
+  "exit": 0,
+  "seconds": 618.4,
+  "node_version": "v22.13.0",
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source28-mock-all.log",
+  "log_sha256": "827eaf1d5f66b7fe1fa6f7b4f5db35ce354369f1e9183dce0abe8a5d570676cf",
+  "source_manifest_sha256": "48b35a289eb05791a30c0b5c2c1fa5f89ac5a4c1a6eb80aa5c1443e1d5591a65"
+}

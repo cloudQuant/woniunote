@@ -1,0 +1,333 @@
+{
+  "build_policy": {
+    "docker_cpus": 1,
+    "failure_policy": "stop on first nonzero phase",
+    "jobs": 1,
+    "no_parallel_builds": true,
+    "order": [
+      "macOS-test",
+      "macOS-release",
+      "Linux-system-libs-test",
+      "Linux-system-libs-release",
+      "Linux-vcpkg-test",
+      "Linux-vcpkg-release"
+    ],
+    "variants_sequential": true
+  },
+  "cleanup": {
+    "builder_images_rebuilt_or_restarted": false,
+    "ctest_containers_checked_absent": [
+      "woniunote-i21-build6-system-libs-test-ctest",
+      "woniunote-i21-build6-system-libs-release-ctest",
+      "woniunote-i21-build6-vcpkg-test-ctest",
+      "woniunote-i21-build6-vcpkg-release-ctest"
+    ],
+    "docker_run_containers_used_rm": true,
+    "docker_volumes_created": []
+  },
+  "images": {
+    "system-libs": {
+      "id": "sha256:1ab30b868e397d3575e7f7d491e530e25bdadad33bd7d5bdcdc0e20dc4de7685",
+      "repo_digest": "woniunote.iter21/system-libs@sha256:1ab30b868e397d3575e7f7d491e530e25bdadad33bd7d5bdcdc0e20dc4de7685",
+      "tag": "woniunote.iter21/system-libs:ubuntu22.04"
+    },
+    "vcpkg": {
+      "id": "sha256:4251dca37073d35800c454e264e6caab96ec0d6826bdf36e792901f6a157d8e6",
+      "repo_digest": "woniunote.iter21/vcpkg@sha256:4251dca37073d35800c454e264e6caab96ec0d6826bdf36e792901f6a157d8e6",
+      "tag": "woniunote.iter21/vcpkg:ubuntu22.04"
+    }
+  },
+  "schema": 1,
+  "scope_note": "C++ build and unit CTest evidence only; no HTTP integration, browser, deployment, or production acceptance.",
+  "shared_vcpkg_installed_directory": {
+    "mounted_read_only": true,
+    "path": "/Users/yunjinqi/.cache/woniunote-iter21/builds/fefab0570c370bebd796df9c683343805d850d18/vcpkg-early-prep/vcpkg_installed"
+  },
+  "source_snapshot": {
+    "manifest": "backend-source6-manifest.json",
+    "manifest_sha256": "830dbb1cf145da1af1d4306c5fa3e6a4d0527a68b30413ba31500eaefe39d18d",
+    "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6",
+    "provenance": "backend-source6-provenance.json",
+    "provenance_sha256": "5e05fc354f8955f052940ff3e7d2f27368b8d9199d8c0e8ee50f17a82763ec11",
+    "sha256": "70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd",
+    "working_tree_inventory": "backend-source6-working-tree-inventory.json",
+    "working_tree_inventory_sha256": "e1b72e3395f09bfa782e110fe8f7f9394ae546276fde5c2d44906048ad43fac5"
+  },
+  "status": "completed",
+  "variants": [
+    {
+      "backend_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/test/woniunote_backend",
+        "sha256": "ec454ec733784494bc0c5a44ed6aa2cd69e67d3de40a3c54c69f766fdf98eea5"
+      },
+      "builder": "macOS-vcpkg",
+      "cmake_cache": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/test/CMakeCache.txt",
+      "cmake_cache_verified": {
+        "BUILD_TESTING": "ON",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "ON",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "ON"
+      },
+      "ctest": "8/8 passed",
+      "exit_code": 0,
+      "name": "macOS-test",
+      "phases": [
+        {
+          "command": "cmake -S /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6/backend_cpp -B /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/test -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/Users/yunjinqi/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_INSTALLED_DIR=/Users/yunjinqi/Documents/woniunote/backend_cpp/build-iter20-check/vcpkg_installed -DVCPKG_MANIFEST_INSTALL=OFF -DBUILD_TESTING=ON -DWONIUNOTE_ENABLE_TEST_CHALLENGE=ON -DWONIUNOTE_ENABLE_TEST_AUTH_FAULTS=ON",
+          "exit_code": 0,
+          "log": "backend6-mac-test-configure.log",
+          "log_sha256": "e81a4e3a058cec7a7485c526ee7ecc99fde3badb5d1a6f0b13ef45343a247127",
+          "name": "configure"
+        },
+        {
+          "command": "cmake --build /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/test --config Release --parallel 1",
+          "exit_code": 0,
+          "log": "backend6-mac-test-build.log",
+          "log_sha256": "464e98d93af526ed60b39a96f1c7c87757b522b15de1cbe66aa29732100110ef",
+          "name": "build"
+        },
+        {
+          "command": "ctest --test-dir /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/test --output-on-failure --no-tests=error",
+          "exit_code": 0,
+          "log": "backend6-mac-test-ctest.log",
+          "log_sha256": "0d39acae27d4e21a3d65b1814bd931c33787f99127fa86b54776fdf43f2e3959",
+          "name": "ctest"
+        }
+      ],
+      "status": "completed",
+      "test_auth_sessions_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/test/tests/test_auth_sessions",
+        "sha256": "7e5bd58bc286e28590dc009f1da43a99ea0139f529336ec7ef029e4fee82d96e"
+      },
+      "variant": "test"
+    },
+    {
+      "backend_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/release/woniunote_backend",
+        "sha256": "ed369ca39096b6536e5be274572c08bc4824b6a363a8475cd7ce6754689b8f96"
+      },
+      "builder": "macOS-vcpkg",
+      "cmake_cache": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/release/CMakeCache.txt",
+      "cmake_cache_verified": {
+        "BUILD_TESTING": "ON",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "OFF",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "OFF"
+      },
+      "ctest": "8/8 passed",
+      "exit_code": 0,
+      "name": "macOS-release",
+      "phases": [
+        {
+          "command": "cmake -S /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6/backend_cpp -B /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/Users/yunjinqi/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_INSTALLED_DIR=/Users/yunjinqi/Documents/woniunote/backend_cpp/build-iter20-check/vcpkg_installed -DVCPKG_MANIFEST_INSTALL=OFF -DBUILD_TESTING=ON -DWONIUNOTE_ENABLE_TEST_CHALLENGE=OFF -DWONIUNOTE_ENABLE_TEST_AUTH_FAULTS=OFF",
+          "exit_code": 0,
+          "log": "backend6-mac-release-configure.log",
+          "log_sha256": "0e34b7730a7ad167bdee4e020f53f1326b3e040c5cf75762fd2b10e361596b5a",
+          "name": "configure"
+        },
+        {
+          "command": "cmake --build /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/release --config Release --parallel 1",
+          "exit_code": 0,
+          "log": "backend6-mac-release-build.log",
+          "log_sha256": "464e98d93af526ed60b39a96f1c7c87757b522b15de1cbe66aa29732100110ef",
+          "name": "build"
+        },
+        {
+          "command": "ctest --test-dir /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/release --output-on-failure --no-tests=error",
+          "exit_code": 0,
+          "log": "backend6-mac-release-ctest.log",
+          "log_sha256": "db03a8ca55b89d257ff3691cce8c2a897c66584b2ee5b25350e8d25a97fe8826",
+          "name": "ctest"
+        }
+      ],
+      "status": "completed",
+      "test_auth_sessions_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build6/release/tests/test_auth_sessions",
+        "sha256": "7e5bd58bc286e28590dc009f1da43a99ea0139f529336ec7ef029e4fee82d96e"
+      },
+      "variant": "release"
+    },
+    {
+      "backend_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/test/cmake-build/woniunote_backend",
+        "sha256": "90cd75545a599767d34053abb4000b46380891381983c63fb0f77e47b51dfab5"
+      },
+      "builder": "system-libs",
+      "cmake_cache": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/test/cmake-build/CMakeCache.txt",
+      "cmake_cache_verified": {
+        "BUILD_TESTING": "ON",
+        "USE_SYSTEM_LIBS": "ON",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "ON",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "ON"
+      },
+      "ctest": "8/8 passed",
+      "exit_code": 0,
+      "name": "Linux-system-libs-test",
+      "phases": [
+        {
+          "command": "bash scripts/iter21-linux/bootstrap.sh prepare --builder system-libs --snapshot /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6 --snapshot-sha256 70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd --variant test --output /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/test --jobs 1 --cpus 1",
+          "exit_code": 0,
+          "log": "backend6-linux-system-libs-test-prepare.log",
+          "log_sha256": "f6e402f5536f2bee201bdd2f05696951d319168e470e065dcadb3c862124be9b",
+          "name": "prepare"
+        },
+        {
+          "command": "bash scripts/iter21-linux/bootstrap.sh build --builder system-libs --snapshot /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6 --snapshot-sha256 70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd --variant test --output /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/test --jobs 1 --cpus 1",
+          "exit_code": 0,
+          "log": "backend6-linux-system-libs-test-build.log",
+          "log_sha256": "162d302ab57d6037d2bb9ea71219e2448af2bb15f21e3dcd14d9a13f3d05720c",
+          "name": "build"
+        },
+        {
+          "command": "docker run --rm --init --name woniunote-i21-build6-system-libs-test-ctest --label com.woniunote.iteration=21 --label com.woniunote.purpose=backend-source6-ctest --cpus 1 --user 501:20 --mount type=bind,src=/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6,dst=/workspace/source,readonly --mount type=bind,src=/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/test,dst=/workspace/output woniunote.iter21/system-libs:ubuntu22.04 ctest --test-dir /workspace/output/cmake-build --output-on-failure --no-tests=error",
+          "exit_code": 0,
+          "log": "backend6-linux-system-libs-test-ctest.log",
+          "log_sha256": "e5f6cbedd6f6e6f3a560f4a7ebcca18741091843513be6479a15d9bb96a0ee2d",
+          "name": "ctest"
+        }
+      ],
+      "status": "completed",
+      "test_auth_sessions_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/test/cmake-build/tests/test_auth_sessions",
+        "sha256": "79b76a097df2f0f5df44628325cffbff58e9d562228cdf93d219501d21c77ab4"
+      },
+      "variant": "test"
+    },
+    {
+      "backend_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/release/cmake-build/woniunote_backend",
+        "sha256": "c6bd04e727069cf246b5344225917d5f216df134810c6d36d5d612898a641a7f"
+      },
+      "builder": "system-libs",
+      "cmake_cache": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/release/cmake-build/CMakeCache.txt",
+      "cmake_cache_verified": {
+        "BUILD_TESTING": "ON",
+        "USE_SYSTEM_LIBS": "ON",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "OFF",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "OFF"
+      },
+      "ctest": "8/8 passed",
+      "exit_code": 0,
+      "name": "Linux-system-libs-release",
+      "phases": [
+        {
+          "command": "bash scripts/iter21-linux/bootstrap.sh prepare --builder system-libs --snapshot /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6 --snapshot-sha256 70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd --variant release --output /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/release --jobs 1 --cpus 1",
+          "exit_code": 0,
+          "log": "backend6-linux-system-libs-release-prepare.log",
+          "log_sha256": "6f7ffa2ea7429128b102476efff15fde75c1dd45678f9237e4392c5036512f47",
+          "name": "prepare"
+        },
+        {
+          "command": "bash scripts/iter21-linux/bootstrap.sh build --builder system-libs --snapshot /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6 --snapshot-sha256 70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd --variant release --output /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/release --jobs 1 --cpus 1",
+          "exit_code": 0,
+          "log": "backend6-linux-system-libs-release-build.log",
+          "log_sha256": "6d5c25a1d1f5b0e97507ec22f0eee4c414a4b317e67c2aa0b0c2d18a32a2dc0b",
+          "name": "build"
+        },
+        {
+          "command": "docker run --rm --init --name woniunote-i21-build6-system-libs-release-ctest --label com.woniunote.iteration=21 --label com.woniunote.purpose=backend-source6-ctest --cpus 1 --user 501:20 --mount type=bind,src=/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6,dst=/workspace/source,readonly --mount type=bind,src=/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/release,dst=/workspace/output woniunote.iter21/system-libs:ubuntu22.04 ctest --test-dir /workspace/output/cmake-build --output-on-failure --no-tests=error",
+          "exit_code": 0,
+          "log": "backend6-linux-system-libs-release-ctest.log",
+          "log_sha256": "6692b84b36a69d958c9fc49c7b0ed5014369bacd08aeb4d01536e0db96e17a91",
+          "name": "ctest"
+        }
+      ],
+      "status": "completed",
+      "test_auth_sessions_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/system-libs/release/cmake-build/tests/test_auth_sessions",
+        "sha256": "79b76a097df2f0f5df44628325cffbff58e9d562228cdf93d219501d21c77ab4"
+      },
+      "variant": "release"
+    },
+    {
+      "backend_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/test/cmake-build/woniunote_backend",
+        "sha256": "575b4e1fc29d6c3957aa5c5e2f89e65a5765049811bf3a91798ef25268aa4919"
+      },
+      "builder": "vcpkg",
+      "cmake_cache": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/test/cmake-build/CMakeCache.txt",
+      "cmake_cache_verified": {
+        "BUILD_TESTING": "ON",
+        "USE_SYSTEM_LIBS": "OFF",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "ON",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "ON"
+      },
+      "ctest": "8/8 passed",
+      "exit_code": 0,
+      "name": "Linux-vcpkg-test",
+      "phases": [
+        {
+          "command": "bash scripts/iter21-linux/bootstrap.sh prepare --builder vcpkg --snapshot /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6 --snapshot-sha256 70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd --variant test --output /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/test --jobs 1 --cpus 1 --vcpkg-installed-dir /Users/yunjinqi/.cache/woniunote-iter21/builds/fefab0570c370bebd796df9c683343805d850d18/vcpkg-early-prep/vcpkg_installed --cmake-define VCPKG_MANIFEST_INSTALL=OFF",
+          "exit_code": 0,
+          "log": "backend6-linux-vcpkg-test-prepare.log",
+          "log_sha256": "23c98abf3c4ced97046c7efaef8a228eff6af4b873997d637e7ed113a72ca013",
+          "name": "prepare"
+        },
+        {
+          "command": "bash scripts/iter21-linux/bootstrap.sh build --builder vcpkg --snapshot /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6 --snapshot-sha256 70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd --variant test --output /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/test --jobs 1 --cpus 1 --vcpkg-installed-dir /Users/yunjinqi/.cache/woniunote-iter21/builds/fefab0570c370bebd796df9c683343805d850d18/vcpkg-early-prep/vcpkg_installed --cmake-define VCPKG_MANIFEST_INSTALL=OFF",
+          "exit_code": 0,
+          "log": "backend6-linux-vcpkg-test-build.log",
+          "log_sha256": "a752a189fcad361e20e533250809ebdd50f91b4209568f95195aec76b58f8f21",
+          "name": "build"
+        },
+        {
+          "command": "docker run --rm --init --name woniunote-i21-build6-vcpkg-test-ctest --label com.woniunote.iteration=21 --label com.woniunote.purpose=backend-source6-ctest --cpus 1 --user 501:20 --mount type=bind,src=/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6,dst=/workspace/source,readonly --mount type=bind,src=/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/test,dst=/workspace/output --mount type=bind,src=/Users/yunjinqi/.cache/woniunote-iter21/builds/fefab0570c370bebd796df9c683343805d850d18/vcpkg-early-prep/vcpkg_installed,dst=/workspace/shared-vcpkg-installed,readonly woniunote.iter21/vcpkg:ubuntu22.04 ctest --test-dir /workspace/output/cmake-build --output-on-failure --no-tests=error",
+          "exit_code": 0,
+          "log": "backend6-linux-vcpkg-test-ctest.log",
+          "log_sha256": "abd1820bc8aca9d92c876adfd79e3a5b0509af541c0457f54c26539288b745aa",
+          "name": "ctest"
+        }
+      ],
+      "status": "completed",
+      "test_auth_sessions_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/test/cmake-build/tests/test_auth_sessions",
+        "sha256": "e014c140311d7023b9addf31c062de3063beb8a023e5a339c1dc9d7bd8e7a16a"
+      },
+      "variant": "test"
+    },
+    {
+      "backend_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/release/cmake-build/woniunote_backend",
+        "sha256": "ae71b6623bd431797238fab946ac232132d18b11dc1108567ed1a5401b3b4e51"
+      },
+      "builder": "vcpkg",
+      "cmake_cache": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/release/cmake-build/CMakeCache.txt",
+      "cmake_cache_verified": {
+        "BUILD_TESTING": "ON",
+        "USE_SYSTEM_LIBS": "OFF",
+        "WONIUNOTE_ENABLE_TEST_AUTH_FAULTS": "OFF",
+        "WONIUNOTE_ENABLE_TEST_CHALLENGE": "OFF"
+      },
+      "ctest": "8/8 passed",
+      "exit_code": 0,
+      "name": "Linux-vcpkg-release",
+      "phases": [
+        {
+          "command": "bash scripts/iter21-linux/bootstrap.sh prepare --builder vcpkg --snapshot /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6 --snapshot-sha256 70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd --variant release --output /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/release --jobs 1 --cpus 1 --vcpkg-installed-dir /Users/yunjinqi/.cache/woniunote-iter21/builds/fefab0570c370bebd796df9c683343805d850d18/vcpkg-early-prep/vcpkg_installed --cmake-define VCPKG_MANIFEST_INSTALL=OFF",
+          "exit_code": 0,
+          "log": "backend6-linux-vcpkg-release-prepare.log",
+          "log_sha256": "604fe8337846eb9f42cf35fe4a296158c73f102c44ffa1c358e8e5215022e760",
+          "name": "prepare"
+        },
+        {
+          "command": "bash scripts/iter21-linux/bootstrap.sh build --builder vcpkg --snapshot /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6 --snapshot-sha256 70e9f79837a4b3cea0d2a841d7d3d095e15e4b5c90ec82294c82370029794dbd --variant release --output /Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/release --jobs 1 --cpus 1 --vcpkg-installed-dir /Users/yunjinqi/.cache/woniunote-iter21/builds/fefab0570c370bebd796df9c683343805d850d18/vcpkg-early-prep/vcpkg_installed --cmake-define VCPKG_MANIFEST_INSTALL=OFF",
+          "exit_code": 0,
+          "log": "backend6-linux-vcpkg-release-build.log",
+          "log_sha256": "eee45dc53b3a4d2e1feefc3b9f1ff774673f5beeb042eb1aa27aec4908b9d1dd",
+          "name": "build"
+        },
+        {
+          "command": "docker run --rm --init --name woniunote-i21-build6-vcpkg-release-ctest --label com.woniunote.iteration=21 --label com.woniunote.purpose=backend-source6-ctest --cpus 1 --user 501:20 --mount type=bind,src=/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/backend-source-6,dst=/workspace/source,readonly --mount type=bind,src=/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/release,dst=/workspace/output --mount type=bind,src=/Users/yunjinqi/.cache/woniunote-iter21/builds/fefab0570c370bebd796df9c683343805d850d18/vcpkg-early-prep/vcpkg_installed,dst=/workspace/shared-vcpkg-installed,readonly woniunote.iter21/vcpkg:ubuntu22.04 ctest --test-dir /workspace/output/cmake-build --output-on-failure --no-tests=error",
+          "exit_code": 0,
+          "log": "backend6-linux-vcpkg-release-ctest.log",
+          "log_sha256": "22a18040256f69471b9e545f4f1ffc0c515e8b519303b23351d60fd99b35fe0a",
+          "name": "ctest"
+        }
+      ],
+      "status": "completed",
+      "test_auth_sessions_binary": {
+        "path": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/linux-build6/vcpkg/release/cmake-build/tests/test_auth_sessions",
+        "sha256": "e014c140311d7023b9addf31c062de3063beb8a023e5a339c1dc9d7bd8e7a16a"
+      },
+      "variant": "release"
+    }
+  ]
+}

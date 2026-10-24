@@ -59,7 +59,7 @@
         </el-form>
         
         <div class="register-footer">
-          已有账号？<router-link to="/login">立即登录</router-link>
+          已有账号？<router-link :to="loginTarget">立即登录</router-link>
         </div>
       </div>
     </div>
@@ -72,18 +72,21 @@
  * @description 用户注册页面组件
  * 提供用户注册表单，包含用户名、昵称、密码及确认密码的验证逻辑。
  */
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { notifyError } from '@/utils/errorToast'
+import { authEntryTarget } from '@/utils/authNavigation'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 const formRef = ref(null)
 const loading = ref(false)
+const loginTarget = computed(() => authEntryTarget('Login', route.query.redirect, router))
 
 const form = reactive({
   username: '',
@@ -129,10 +132,16 @@ async function handleRegister() {
       password: form.password
     })
     ElMessage.success('注册成功，请登录')
-    router.push({ name: 'Login' })
+    router.push(authEntryTarget('Login', route.query.redirect, router))
   } catch (error) {
     console.error('注册失败:', error)
-    notifyError(error, '注册失败')
+    if (error?.errorCode === 'WRITE_OUTCOME_UNKNOWN' ||
+        error?.response?.data?.error_code === 'WRITE_OUTCOME_UNKNOWN' ||
+        error?.response?.data?.data?.error_code === 'WRITE_OUTCOME_UNKNOWN') {
+      ElMessage.warning('注册结果暂未确认，请尝试正常登录，不要重复提交注册。')
+    } else {
+      notifyError(error, '注册失败')
+    }
   } finally {
     loading.value = false
   }

@@ -35,6 +35,9 @@ public:
     ADD_METHOD_TO(AuthController::refresh, "/api/auth/refresh", drogon::Post, "woniunote::RateLimitFilter");
     ADD_METHOD_TO(AuthController::me, "/api/auth/me", drogon::Get, "woniunote::AuthFilter");
     ADD_METHOD_TO(AuthController::logout, "/api/auth/logout", drogon::Post, "woniunote::OptionalAuthFilter");
+#ifdef WONIUNOTE_ENABLE_TEST_AUTH_FAULTS
+    ADD_METHOD_TO(AuthController::testEmptyTransaction, "/api/auth/test/empty-transaction", drogon::Post, "woniunote::RateLimitFilter");
+#endif
     METHOD_LIST_END
 
     /**
@@ -76,6 +79,13 @@ public:
      */
     void logout(const drogon::HttpRequestPtr& req,
                 std::function<void(const drogon::HttpResponsePtr&)>&& callback);
+
+#ifdef WONIUNOTE_ENABLE_TEST_AUTH_FAULTS
+    // Available only in a separately compiled, isolated test binary.
+    void testEmptyTransaction(
+        const drogon::HttpRequestPtr& req,
+        std::function<void(const drogon::HttpResponsePtr&)>&& callback);
+#endif
 
 private:
     // Helper to create standard JSON responses

@@ -1,0 +1,36 @@
+{
+  "status": "PASS_LOCAL",
+  "scope": "Three paths real HTTP and SQL, Mac real Chromium test challenge; independent cleanup summaries separate",
+  "runs": [
+    {
+      "run_id": "20261024T044736Z-eb3d20de3a02",
+      "root_file": "source24-mac10-real-browser-root.json",
+      "root_sha256": "05439888379a5399c43ceef140ba1290362284f986a2d1f99c2f91820c072710",
+      "http_passed": 71,
+      "http_failed": 0,
+      "http_skipped": 0,
+      "real_chromium_passed": 6,
+      "migrations": "PASS"
+    },
+    {
+      "run_id": "20261024T045847Z-34866da15f22",
+      "root_file": "source24-linux10-system-libs-root.json",
+      "root_sha256": "e5cd75e215f03566ca6fc3ead6be13588b4595c7450afaebf8a3c147609f1bba",
+      "http_passed": 71,
+      "http_failed": 0,
+      "http_skipped": 0,
+      "real_chromium_passed": "NOT_RUN",
+      "migrations": "PASS"
+    },
+    {
+      "run_id": "20261024T050629Z-9695ff052fdc",
+      "root_file": "source24-linux10-vcpkg-root.json",
+      "root_sha256": "4ac11e7c033fa5afdec7ab409a573817c97beaab6cf2546e0828dc874f4e807c",
+      "http_passed": 71,
+      "http_failed": 0,
+      "http_skipped": 0,
+      "real_chromium_passed": "NOT_RUN",
+      "migrations": "PASS"
+    }
+  ]
+}

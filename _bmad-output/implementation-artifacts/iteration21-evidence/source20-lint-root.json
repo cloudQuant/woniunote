@@ -1,0 +1,14 @@
+{
+  "source_manifest_sha256": "829ea7394c3b13929de63b465f840e968b1e758baf236ed7dd66185b2e30cf8c",
+  "command": [
+    "./node_modules/.bin/eslint",
+    "e2e/support/mockApi.js",
+    "e2e/write-article.spec.js"
+  ],
+  "browsers": "all",
+  "exit": 0,
+  "seconds": 0.907,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-lint-root.log",
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "audit": null
+}

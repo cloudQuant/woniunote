@@ -9,8 +9,11 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
+#include <utility>
 #include "core/config.h"
 #include "core/logger.h"
+#include "core/auth_redis_config.h"
 
 using namespace drogon;
 
@@ -33,10 +36,24 @@ int main(int argc, char* argv[])
             configFile = "config.local.json";
         }
         woniunote::Logger::info("Loading configuration from " + configFile);
-        app().loadConfigFile(configFile);
+
+        std::ifstream configStream(configFile);
+        Json::Value config;
+        if (!configStream.good() || !woniunote::parseDrogonConfig(configStream, config)) {
+            throw std::runtime_error("configuration file could not be parsed");
+        }
+        const bool authRedisConfigured =
+            woniunote::addAuthSessionRedisClient(config);
+        app().loadConfigJson(std::move(config));
+        if (!authRedisConfigured) {
+            woniunote::Logger::warning(
+                "Authentication session Redis client is not configured; "
+                "authentication session operations will return 503");
+        }
         woniunote::Logger::info("Configuration loaded successfully");
-    } catch (const std::exception& e) {
-        woniunote::Logger::error("Failed to load configuration: " + std::string(e.what()));
+    } catch (const std::exception&) {
+        woniunote::Logger::error(
+            "Failed to load configuration or prepare Redis clients");
         return 1;
     }
 

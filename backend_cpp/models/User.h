@@ -58,6 +58,7 @@ public:
 
     // JSON serialization
     Json::Value toJson() const;
+    Json::Value toPublicJson() const;
     Json::Value toJsonWithoutPassword() const;
 
     // Check if user is admin

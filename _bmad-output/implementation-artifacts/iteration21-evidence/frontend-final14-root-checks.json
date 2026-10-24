@@ -1,0 +1,55 @@
+{
+  "source_manifest": "frontend-final-14-source-manifest.json",
+  "node": "22.13.0",
+  "audit": "/tmp/woniunote-iter21-evidence/frontend-final14-mock-egress-fe359eddfcf84e54af0408a04380b831.json",
+  "results": [
+    {
+      "phase": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint:ci"
+      ],
+      "exit_code": 0,
+      "seconds": 1.94,
+      "log": "/tmp/woniunote-iter21-evidence/frontend-final14-lint-root.log",
+      "sha256": "19d979f2fa04bb57796c816a754dd4abf6c5952b1ae8176b90410a40fc1c36d3"
+    },
+    {
+      "phase": "preview-guard",
+      "command": [
+        "node",
+        "e2e/support/probeMockPreviewGuard.mjs"
+      ],
+      "exit_code": 0,
+      "seconds": 0.35,
+      "log": "/tmp/woniunote-iter21-evidence/frontend-final14-preview-guard-root.log",
+      "sha256": "8adcb4a8260854de70e3ed726e1cf49493aeb1571de37dd3c61037794d299fc9"
+    },
+    {
+      "phase": "strict-guard",
+      "command": [
+        "node",
+        "e2e/support/probeStrictMockApi.mjs"
+      ],
+      "exit_code": 0,
+      "seconds": 0.85,
+      "log": "/tmp/woniunote-iter21-evidence/frontend-final14-strict-guard-root.log",
+      "sha256": "5dbe13267acc7c723ec7a41eb6682ef158d478616409dafe697349e0a3a2938f"
+    },
+    {
+      "phase": "mock",
+      "command": [
+        "npx",
+        "playwright",
+        "test",
+        "--workers=2",
+        "--retries=0"
+      ],
+      "exit_code": 1,
+      "seconds": 263.44,
+      "log": "/tmp/woniunote-iter21-evidence/frontend-final14-mock-root.log",
+      "sha256": "dca0dca5f906a561d5bf1a9746fd09dcf5bec5b0f0438c609d5c2ee7173878a0"
+    }
+  ]
+}

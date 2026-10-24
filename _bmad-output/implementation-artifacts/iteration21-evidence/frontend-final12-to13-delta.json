@@ -1,0 +1,13 @@
+{
+  "frozen12_manifest_sha256": "42e444af8317d31d75456e8675f82707c2f5b40116ff13127969c5c36b1283f5",
+  "frozen13_manifest_sha256": "4d9b8e4bb398a98fd9efb137171fae7abaa0fb176b5494fe90ee28d852906915",
+  "changed_paths": [
+    "frontend/e2e/auth.spec.js",
+    "frontend/src/api/index.spec.js",
+    "frontend/src/stores/user.spec.js",
+    "frontend/src/views/WriteArticle.spec.js"
+  ],
+  "product_build_runtime_changes": false,
+  "unchanged_file_count": 367,
+  "real_browser_evidence_binding": "functional12/frontend and final12/frontend have identical product/build/runtime inputs to final13; only the four listed unit/mock tests differ"
+}

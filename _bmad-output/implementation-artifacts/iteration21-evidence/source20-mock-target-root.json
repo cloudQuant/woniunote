@@ -1,0 +1,20 @@
+{
+  "source_manifest_sha256": "829ea7394c3b13929de63b465f840e968b1e758baf236ed7dd66185b2e30cf8c",
+  "command": [
+    "npm",
+    "run",
+    "test:e2e",
+    "--",
+    "e2e/write-article.spec.js",
+    "--grep",
+    "saving a draft in edit mode",
+    "--workers=1",
+    "--retries=0"
+  ],
+  "browsers": "all",
+  "exit": 0,
+  "seconds": 14.46,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-mock-target-root.log",
+  "sha256": "093f4797b53c8a24fdb75a0a4f9b1a18241f83f473d31bb2ccacd90b69f3652c",
+  "audit": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source20-mock-target-c933cb52-cad9-4e18-a4db-07b37240730f.json"
+}

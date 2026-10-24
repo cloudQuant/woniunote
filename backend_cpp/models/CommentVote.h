@@ -14,7 +14,7 @@ namespace models {
 
 class CommentVote {
 public:
-    static constexpr const char* tableName = "comment_vote";
+    static constexpr const char* tableName = "comment_votes";
     static constexpr const char* primaryKeyName = "id";
 
     CommentVote() = default;

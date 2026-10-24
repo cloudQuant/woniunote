@@ -1,0 +1,22 @@
+{
+  "status": "FINISHED",
+  "command": [
+    "bash",
+    "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/source-24/backend_cpp/tests/integration/run_integration.sh"
+  ],
+  "environment": {
+    "TMPDIR": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/private-source24-formal10-runner",
+    "WONIUNOTE_BACKEND_BIN": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/mac-build10/release/woniunote_backend",
+    "WONIUNOTE_TEST_SCENARIO": "functional",
+    "WONIUNOTE_TEST_KEEP_SERVICES": "0",
+    "WONIUNOTE_TEST_REAL_E2E": "0",
+    "WONIUNOTE_TEST_ARTIFACT_ROOT": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-formal10-runner-results"
+  },
+  "source_manifest_sha256": "cd50f3b121093b2243b6a0c1ee9f92314520bbd908b1f4839407316358779840",
+  "backend_sha256": "df379f9b65c4cf81d66e5f2ec39c33bff7d1b54c58eaad4d6e88b8c399a4d57a",
+  "expected_exit": 2,
+  "exit": 2,
+  "seconds": 38.78,
+  "log": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/source24-formal10-runner-root.log",
+  "log_sha256": "4d3beaefd09a555f511115c272a8ceef46b0fe90013653db512f579a2ef90ab1"
+}

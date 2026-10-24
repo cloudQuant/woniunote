@@ -1,0 +1,33 @@
+{
+  "changes": [
+    {
+      "path": "backend_cpp/tests/integration/run_integration.sh",
+      "before": "0b103ab0237a6a8d3bc23b364098ea0850eeeeb369a12c15553505fd6e6bc5c1",
+      "after": "557f562eb0e19f65844df43aad56cccacd32d373179d6ce4a072ceba0c6c2249"
+    },
+    {
+      "path": "backend_cpp/tests/integration/test_api_integration.py",
+      "before": "2e96996459f2a66368144d5c8f6cfcc8f3e351140f9c1467d19b7dc42842a639",
+      "after": "6adf1fcefc5057fcca14be0eb9c1d117f0c32a640dcc9354acf3ebb60e55fd9f"
+    },
+    {
+      "path": "frontend/e2e-real/auth.real.spec.js",
+      "before": "dd597e7058e0956f5f2a74d560d2c5103a246dc4873e2b13e22681a9df1812e2",
+      "after": "b145c85c47c0d4f5f5ff00cf2212ad99d20dc290984d521fba07bb1952c4e8b6"
+    },
+    {
+      "path": "frontend/e2e-real/business.real.spec.js",
+      "before": "98bd7cf178db824751c33047a1a16c4c786aa338dfc3799954ba51cbe1f485be",
+      "after": "5df79db229c699fdf6bfd72ccd4a56e39fc2723c90eb25eb3c9721e55faa8331"
+    },
+    {
+      "path": "frontend/e2e-real/support/realBusinessHelpers.js",
+      "before": "56c361df34004a6c3a43c763184084dcd27513d64868932f8de2a2f7524a8e6f",
+      "after": "2932b20a041b787a009a91cd086f4d8c776bf2c26584bf2c2d9a39cce807b3fb"
+    }
+  ],
+  "product_frontend_unchanged": true,
+  "backend_binary_unchanged": true,
+  "previous_manifest_sha256": "a7a2546cf9b1f056e63a50776671661fc808e5b47512c3ac960711bec23d5488",
+  "manifest_sha256": "cdec1ee82d7746bde149f4a84f8760481984edd741e6f861581f1fee98d5bb23"
+}

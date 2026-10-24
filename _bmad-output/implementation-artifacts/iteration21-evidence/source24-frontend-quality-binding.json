@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "scope": "coverage/lint/build product and unit inputs unchanged from source24 and current tree; pending E2E-only edits excluded",
+  "frontend_paths_checked": 361,
+  "source24_manifest_file_sha256": "cd50f3b121093b2243b6a0c1ee9f92314520bbd908b1f4839407316358779840",
+  "source24_snapshot_digest": "05b9d86d8ecf87f74e936c67eff0ce28a1a205005480e6ade797945dc3958657",
+  "coverage_log_sha256": "c7b5ad7cfbcc8b736c3a5c78b845aaf4e4edf585969db994f5372f6776484c51",
+  "coverage_tests": 648,
+  "coverage_thresholds_unchanged": true
+}

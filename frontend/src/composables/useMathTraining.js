@@ -97,6 +97,7 @@ export function useMathTraining({ focusAnswer = () => {} } = {}) {
   const pageSize = 10
 
   const summary = ref(null)
+  const pendingRecordSnapshots = ref([])
 
   const currentQuestion = computed(() => questions.value[currentIndex.value] || null)
 
@@ -252,7 +253,7 @@ export function useMathTraining({ focusAnswer = () => {} } = {}) {
     const endTime = new Date()
     const totalMs = Date.now() - sessionStartMs.value
     const total = correct.value + wrong.value
-    const acc = total === 0 ? 0 : (correct.value / total) * 100
+    const acc = total === 0 ? 0 : Math.round((correct.value / total) * 10000) / 100
 
     const payload = {
       difficulty: difficulty.value,
@@ -263,7 +264,7 @@ export function useMathTraining({ focusAnswer = () => {} } = {}) {
       start_time: sessionStartTime.value.toISOString(),
       end_time: endTime.toISOString(),
       duration_seconds: Math.round(totalMs / 1000),
-      wrong_answers: wrongAnswers.value
+      wrong_answers: wrongAnswers.value.map((item) => ({ ...item }))
     }
 
     isRunning.value = false
@@ -276,8 +277,21 @@ export function useMathTraining({ focusAnswer = () => {} } = {}) {
       ElMessage.success('训练记录已保存')
       loadHistory()
       loadSummary()
-    } catch {
-      ElMessage.error('保存训练记录失败')
+    } catch (error) {
+      const isUnknownOutcome =
+        error?.response?.data?.error_code === 'WRITE_OUTCOME_UNKNOWN' || !error?.response
+      if (isUnknownOutcome) {
+        pendingRecordSnapshots.value.push({
+          requestId: error?.response?.data?.request_id || null,
+          payload: Object.freeze({
+            ...payload,
+            wrong_answers: Object.freeze(payload.wrong_answers.map((item) => Object.freeze({ ...item })))
+          })
+        })
+        ElMessage.warning('训练记录提交结果尚未确认，请刷新历史记录核实；系统未自动重试。')
+      } else {
+        ElMessage.error('保存训练记录失败')
+      }
     }
   }
 
@@ -302,6 +316,7 @@ export function useMathTraining({ focusAnswer = () => {} } = {}) {
     feedback.value = {
       correct: correctFlag,
       correctAnswer: correctAnswerValue,
+      userAnswer: userAns,
       seconds: elapsedSeconds
     }
 
@@ -333,12 +348,17 @@ export function useMathTraining({ focusAnswer = () => {} } = {}) {
   function submitAnswer() {
     if (!isRunning.value || !currentQuestion.value || answerLocked.value) return
 
-    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - questionStartMs.value) / 1000))
-    const value = Number(answer.value)
+    const rawAnswer = String(answer.value ?? '').trim()
+    if (!rawAnswer) {
+      ElMessage.warning('请输入答案；如需不作答请点击跳过')
+      return
+    }
 
-    if (!Number.isFinite(value)) {
-      wrong.value += 1
-      finishCurrent(false, currentQuestion.value.answer, elapsedSeconds, null)
+    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - questionStartMs.value) / 1000))
+    const value = Number(rawAnswer)
+
+    if (!Number.isFinite(value) || Math.abs(value) > 2147483647) {
+      ElMessage.warning('答案必须是范围内的有限数字')
       return
     }
 
@@ -426,6 +446,7 @@ export function useMathTraining({ focusAnswer = () => {} } = {}) {
     historyTotal,
     pageSize,
     summary,
+    pendingRecordSnapshots,
     // 计算属性
     currentQuestion,
     progressPercent,
