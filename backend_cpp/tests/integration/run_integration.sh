@@ -115,6 +115,12 @@ BASE_URL=""
 FRONTEND_URL=""
 SERVICES_READY=0
 RUN_COMPLETED=0
+BACKEND_SHUTDOWN_TERM_SENT=0
+BACKEND_SHUTDOWN_WAIT_EXIT_CODE=""
+BACKEND_SHUTDOWN_FORCED_KILL=0
+BACKEND_SHUTDOWN_RESULT="not_started"
+BACKEND_SHUTDOWN_ABNORMAL=0
+SERVER_LOG_INDEX_REFERENCE=""
 
 choose_port() {
   "${PYTHON_RUN[@]}" - <<'PY'
@@ -168,6 +174,13 @@ write_manifest() {
   export WN_I21_MYSQL_VOLUME_NAME="$MYSQL_VOLUME_NAME"
   export WN_I21_MYSQL_VOLUME_DRIVER="$MYSQL_VOLUME_DRIVER"
   export WN_I21_MYSQL_VOLUME_STATUS="$MYSQL_VOLUME_STATUS"
+  export WN_I21_BACKEND_SHUTDOWN_TERM_SENT="$BACKEND_SHUTDOWN_TERM_SENT"
+  export WN_I21_BACKEND_SHUTDOWN_WAIT_EXIT_CODE="$BACKEND_SHUTDOWN_WAIT_EXIT_CODE"
+  export WN_I21_BACKEND_SHUTDOWN_FORCED_KILL="$BACKEND_SHUTDOWN_FORCED_KILL"
+  export WN_I21_BACKEND_SHUTDOWN_RESULT="$BACKEND_SHUTDOWN_RESULT"
+  export WN_I21_BACKEND_SHUTDOWN_ABNORMAL="$BACKEND_SHUTDOWN_ABNORMAL"
+  export WN_I21_SERVER_LOG="$SERVER_LOG"
+  export WN_I21_SERVER_LOG_INDEX_REFERENCE="$SERVER_LOG_INDEX_REFERENCE"
   export WN_I21_MYSQL_ID="$MYSQL_CONTAINER_ID" WN_I21_REDIS_ID="$REDIS_CONTAINER_ID"
   export WN_I21_MYSQL_PORT="$MYSQL_PORT" WN_I21_REDIS_PORT="$REDIS_PORT"
   export WN_I21_TEST_PORT="$TEST_PORT" WN_I21_FRONTEND_PORT="$FRONTEND_PORT"
@@ -183,8 +196,10 @@ write_manifest() {
   export WN_I21_REDIS_CONTAINER_EXIT_CODE="$REDIS_CONTAINER_EXIT_CODE"
   export WN_I21_REDIS_IMAGE_ID="$REDIS_IMAGE_ID" WN_I21_REDIS_IMAGE_VERSION="$REDIS_IMAGE_VERSION"
   "${PYTHON_RUN[@]}" - <<'PY'
+import hashlib
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 
@@ -211,6 +226,63 @@ def optional_int(name):
 mysql_image = image_metadata(os.environ["WN_I21_MYSQL_IMAGE"], "MYSQL_VERSION")
 redis_image = image_metadata(os.environ["WN_I21_REDIS_IMAGE"], "REDIS_VERSION")
 mysql_tls_status = os.environ.get("WN_I21_MYSQL_TLS_STATUS")
+server_log_path = Path(os.environ["WN_I21_SERVER_LOG"])
+try:
+    server_log_data = server_log_path.read_bytes()
+except OSError:
+    server_log_data = None
+
+if server_log_data is None:
+    diagnostic_categories = {
+        "assertion_failure": False,
+        "terminate_called": False,
+        "allocator_double_free": False,
+        "allocator_corruption": False,
+        "resource_deadlock_avoided": False,
+    }
+    exception_type = None
+else:
+    lowered_log = server_log_data.lower()
+    diagnostic_categories = {
+        "assertion_failure": re.search(
+            rb"\bassertion\b[^\n]{0,512}\bfailed\b", server_log_data, re.IGNORECASE,
+        ) is not None,
+        "terminate_called": b"terminate called" in lowered_log,
+        "allocator_double_free": b"double free" in lowered_log,
+        "allocator_corruption": any(
+            marker in lowered_log for marker in
+            (b"corruption", b"corrupted", b"invalid pointer", b"heap corruption")
+        ),
+        "resource_deadlock_avoided": b"resource deadlock avoided" in lowered_log,
+    }
+    exception_match = re.search(
+        rb"""terminate called after throwing an instance of ['"](std::[A-Za-z_]{1,64})['"]""",
+        server_log_data,
+    )
+    exception_value = exception_match.group(1) if exception_match else b""
+    exception_type = (
+        exception_value.decode("ascii")
+        if re.fullmatch(rb"std::[A-Za-z_]{1,64}", exception_value)
+        else None
+    )
+
+if server_log_data is None:
+    server_log_digest = {"sha256": None, "bytes": None, "reference": None}
+elif os.environ.get("WN_I21_SERVER_LOG_INDEX_REFERENCE"):
+    server_log_digest = {
+        "sha256": None,
+        "bytes": None,
+        "reference": {
+            "index": os.environ["WN_I21_SERVER_LOG_INDEX_REFERENCE"],
+            "entry": server_log_path.name,
+        },
+    }
+else:
+    server_log_digest = {
+        "sha256": hashlib.sha256(server_log_data).hexdigest(),
+        "bytes": len(server_log_data),
+        "reference": None,
+    }
 
 manifest = {
     "run_id": os.environ["WN_I21_RUN_ID"],
@@ -266,11 +338,31 @@ manifest = {
     },
     "backend_binary": os.environ["WN_I21_BACKEND_BIN"],
     "backend_pid": int(os.environ["WN_I21_SERVER_PID"]) if os.environ["WN_I21_SERVER_PID"] else None,
+    "backend_shutdown": {
+        "term_sent": os.environ["WN_I21_BACKEND_SHUTDOWN_TERM_SENT"] == "1",
+        "wait_exit_code": optional_int("WN_I21_BACKEND_SHUTDOWN_WAIT_EXIT_CODE"),
+        "forced_kill": os.environ["WN_I21_BACKEND_SHUTDOWN_FORCED_KILL"] == "1",
+        "result": os.environ["WN_I21_BACKEND_SHUTDOWN_RESULT"],
+        "abnormal": os.environ["WN_I21_BACKEND_SHUTDOWN_ABNORMAL"] == "1",
+    },
+    "backend_log_diagnostics": {
+        "stream": "combined_stdout_stderr",
+        "available": server_log_data is not None,
+        "digest": server_log_digest,
+        "categories": diagnostic_categories,
+        "exception_type": exception_type,
+    },
     "credentials_included": False,
 }
 path = Path(os.environ["WN_I21_MANIFEST_PATH"])
 path.write_text(json.dumps(manifest, indent=2) + "\n")
 path.chmod(0o600)
+if manifest["backend_shutdown"]["abnormal"]:
+    console_diagnostics = dict(diagnostic_categories)
+    console_diagnostics["exception_type"] = exception_type
+    print("Backend diagnostic categories: " + json.dumps(
+        console_diagnostics, sort_keys=True, separators=(",", ":"),
+    ))
 PY
 }
 
@@ -543,6 +635,63 @@ collect_and_cleanup_owned_volume() {
   done <<< "$candidates"
 }
 
+stop_backend_process() {
+  local child_pid="$1"
+  local process_state wait_status
+  BACKEND_SHUTDOWN_TERM_SENT=0
+  BACKEND_SHUTDOWN_WAIT_EXIT_CODE=""
+  BACKEND_SHUTDOWN_FORCED_KILL=0
+  BACKEND_SHUTDOWN_RESULT="not_started"
+  BACKEND_SHUTDOWN_ABNORMAL=0
+  [[ "$child_pid" =~ ^[0-9]+$ ]] || return 0
+
+  process_state="$(ps -p "$child_pid" -o stat= 2>/dev/null | tr -d '[:space:]')"
+  if [[ -n "$process_state" && "${process_state:0:1}" != Z ]]; then
+    if kill -TERM "$child_pid" 2>/dev/null; then
+      BACKEND_SHUTDOWN_TERM_SENT=1
+    fi
+    for _ in $(seq 1 40); do
+      process_state="$(ps -p "$child_pid" -o stat= 2>/dev/null | tr -d '[:space:]')"
+      [[ -n "$process_state" && "${process_state:0:1}" != Z ]] || break
+      sleep 0.25
+    done
+    process_state="$(ps -p "$child_pid" -o stat= 2>/dev/null | tr -d '[:space:]')"
+    if [[ -n "$process_state" && "${process_state:0:1}" != Z ]] &&
+        kill -KILL "$child_pid" 2>/dev/null; then
+      BACKEND_SHUTDOWN_FORCED_KILL=1
+    fi
+  fi
+
+  if wait "$child_pid" 2>/dev/null; then
+    wait_status=0
+  else
+    wait_status=$?
+  fi
+  BACKEND_SHUTDOWN_WAIT_EXIT_CODE="$wait_status"
+
+  if [[ "$BACKEND_SHUTDOWN_FORCED_KILL" == 1 ]]; then
+    BACKEND_SHUTDOWN_RESULT="forced_kill"
+    BACKEND_SHUTDOWN_ABNORMAL=1
+  elif [[ "$BACKEND_SHUTDOWN_TERM_SENT" == 1 && "$wait_status" == 0 ]]; then
+    BACKEND_SHUTDOWN_RESULT="term_exit_0"
+  elif [[ "$BACKEND_SHUTDOWN_TERM_SENT" == 1 && "$wait_status" == 143 ]]; then
+    BACKEND_SHUTDOWN_RESULT="term_exit_143"
+  elif [[ "$BACKEND_SHUTDOWN_TERM_SENT" == 0 && "$wait_status" == 0 ]]; then
+    BACKEND_SHUTDOWN_RESULT="already_exited_0"
+  else
+    BACKEND_SHUTDOWN_RESULT="unexpected_exit"
+    BACKEND_SHUTDOWN_ABNORMAL=1
+  fi
+  echo "Backend shutdown: result=$BACKEND_SHUTDOWN_RESULT term_sent=$BACKEND_SHUTDOWN_TERM_SENT wait_exit_code=$BACKEND_SHUTDOWN_WAIT_EXIT_CODE forced_kill=$BACKEND_SHUTDOWN_FORCED_KILL" >&2
+}
+
+mark_backend_shutdown_failure() {
+  if [[ "$status" == 0 && "$RUN_COMPLETED" == 1 && "$BACKEND_SHUTDOWN_ABNORMAL" == 1 ]]; then
+    echo "ERROR: backend exited abnormally during a completed integration run (result=$BACKEND_SHUTDOWN_RESULT, wait_exit_code=$BACKEND_SHUTDOWN_WAIT_EXIT_CODE)." >&2
+    status=1
+  fi
+}
+
 cleanup() {
   status=$?
   trap - EXIT INT TERM
@@ -552,6 +701,8 @@ cleanup() {
     status=2
   fi
   if [[ "$KEEP_SERVICES" == 1 && "$SERVICES_READY" == 1 && "$RUN_COMPLETED" == 1 && "$status" == 0 ]]; then
+    BACKEND_SHUTDOWN_RESULT="services_kept"
+    SERVER_LOG_INDEX_REFERENCE=""
     chmod -R go-rwx "$RUN_DIR"
     export WN_I21_RUNTIME_RETAINED=1 WN_I21_ARTIFACT_DIR=""
     write_manifest
@@ -562,14 +713,9 @@ cleanup() {
     exit 0
   fi
 
-  if [[ -n "$SERVER_PID" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
-    kill -TERM "$SERVER_PID" 2>/dev/null
-    for _ in $(seq 1 40); do
-      kill -0 "$SERVER_PID" 2>/dev/null || break
-      sleep 0.25
-    done
-    if kill -0 "$SERVER_PID" 2>/dev/null; then kill -KILL "$SERVER_PID" 2>/dev/null; fi
-    wait "$SERVER_PID" 2>/dev/null
+  if [[ -n "$SERVER_PID" ]]; then
+    stop_backend_process "$SERVER_PID"
+    mark_backend_shutdown_failure
   fi
   terminate_registered_child "$RUN_DIR/fault-proxy-runtime/backend.pid" "$BACKEND_BIN" \
     "$RUN_DIR/fault-proxy-runtime/config/config.json"
@@ -583,6 +729,10 @@ cleanup() {
   rm -rf "$RUN_DIR/uploads"
   rm -rf "$BACKEND_CWD"
   export WN_I21_RUNTIME_RETAINED=0 WN_I21_ARTIFACT_DIR="$RESULT_DIR"
+  SERVER_LOG_INDEX_REFERENCE=""
+  if [[ -f "$SERVER_LOG" && ! -e "$RESULT_DIR" && ! -L "$RESULT_DIR" ]]; then
+    SERVER_LOG_INDEX_REFERENCE="log-index.json"
+  fi
   if [[ "$status" != 0 ]]; then WN_I21_RUNTIME_RETAINED=1; export WN_I21_RUNTIME_RETAINED; fi
   write_manifest
   mkdir -p "$RESULT_ROOT"

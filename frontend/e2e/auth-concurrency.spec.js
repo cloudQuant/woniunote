@@ -298,7 +298,10 @@ test.describe('Authentication across tabs', () => {
     try {
       await Promise.all([mockApi(page, optionsForTab('A', page)), mockApi(pageB, optionsForTab('B', pageB))])
       await Promise.all([loginAs(page, 'user'), loginAs(pageB, 'user')])
-      await Promise.all([page.goto('/', { waitUntil: 'domcontentloaded' }), pageB.goto('/', { waitUntil: 'domcontentloaded' })])
+      await Promise.all([
+        page.goto('/user', { waitUntil: 'domcontentloaded' }),
+        pageB.goto('/user', { waitUntil: 'domcontentloaded' })
+      ])
       await expect(page.locator('.user-link')).toContainText('tester')
       await expect(pageB.locator('.user-link')).toContainText('tester')
       const initialSessions = await Promise.all([page, pageB].map(readDurableSession))
@@ -324,12 +327,13 @@ test.describe('Authentication across tabs', () => {
       const initial401Responses = Promise.all([page, pageB].map((tab) =>
         tab.waitForResponse((response) => isMyArticlesRequest(response.request()) && response.status() === 401)
       ))
-      const openMyArticles = async (tab) => {
-        await tab.locator('.user-link').click()
-        await tab.getByText('我的文章', { exact: true }).click()
-        await expect(tab).toHaveURL(/\/user\/articles$/)
+      const openArticleCategories = async (tab) => {
+        await tab.locator('.user-sidebar')
+          .getByRole('menuitem', { name: '分类管理', exact: true })
+          .click()
+        await expect(tab).toHaveURL(/\/user\/categories$/)
       }
-      await Promise.all([openMyArticles(page), openMyArticles(pageB)])
+      await Promise.all([openArticleCategories(page), openArticleCategories(pageB)])
       await initial401Responses
       await firstRefreshStarted.promise
       await expect.poll(async () => page.evaluate(async () => {
