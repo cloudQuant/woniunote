@@ -1,0 +1,59 @@
+{
+  "status": "PASS_LOCAL_SCOPED_REMOTE_PENDING",
+  "parent_sha": "dc4ce0e919cb63175047d0a4bdc6f17f35b0b5e8",
+  "changed_file_sha256": {
+    "backend_cpp/filters/AdminFilter.cc": "6822657c49076ac4f078402eadfbc634ae571361bfd2d19f339ad36b1cb1f628",
+    ".github/workflows/cpp-vue-ci.yml": "6e7a4b4072d64307f1483e5335ac635b63c86e5ae64c5cf34095159e642d9588",
+    "frontend/e2e/auth-concurrency.spec.js": "b10fba48d97c06502e2be2c92d3c326f5ebba4c1cbe984b717b1c3140a8875dd"
+  },
+  "primary_review": {
+    "admin_filter": "Exactly three local cancelTimer identifiers renamed shouldCancelTimer; inverse byte comparison equals parent; member function and behavior unchanged",
+    "workflow": "Only backend-integration apt install adds ripgrep; six jobs and triggers unchanged; YAML parsed",
+    "e2e": "Only four-line foreground/visible addition to first race test; inverse byte comparison equals parent. Both 5000ms checks, real lock, durable session, Header modal and real response completion assertions retained."
+  },
+  "local_cppcheck": {
+    "status": "PASS_LOCAL_RENAME_REVIEW",
+    "file": "backend_cpp/filters/AdminFilter.cc",
+    "previous_head": "dc4ce0e919cb63175047d0a4bdc6f17f35b0b5e8",
+    "old_sha256": "3f16fadfeaa40625f8b1bde804b5beb11b63404f854c8e2e9e58ce62d3c1bfb9",
+    "new_sha256": "6822657c49076ac4f078402eadfbc634ae571361bfd2d19f339ad36b1cb1f628",
+    "changed_identifier_occurrences": 3,
+    "inverse_rename_is_byte_identical": true,
+    "scope": "armTimeout local variable only; member function, synchronization, deadlines and behavior unchanged",
+    "cppcheck_version": "Cppcheck 2.17.1",
+    "cppcheck_exit_code": 0,
+    "cppcheck_log_sha256": "49e9a5dff6ea1701ac4716b55328dbb450967333c2edefdd076f32b31ccc3742",
+    "ci_original_version": "2.13.0",
+    "ci_original_run": 40073471951,
+    "ci_original_job": 120811747090,
+    "ci_original_finding": "AdminFilter.cc:70 shadowFunction; shadows member function at line131",
+    "next_check": "Remote cppcheck 2.13 and full required jobs must pass for the revised candidate; local2.17.1 does not substitute for that"
+  },
+  "targeted_playwright": {
+    "node": "22.13.0",
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "workers": 1,
+    "retries": 0,
+    "exit_code": 0,
+    "projects": [
+      "chromium",
+      "firefox",
+      "mobile-chrome",
+      "webkit"
+    ],
+    "log_sha256": "453c69e0e4b7edc5de80abd4c2a04c4a764b0b5454a5a366af5e82f83af3f89b",
+    "contexts": 4,
+    "contexts_closed": 4,
+    "context_violations": 0,
+    "preview_denied": 0,
+    "source_equals_worktree": true
+  },
+  "boundaries": [
+    "No product frontend code or dependency lockfile changed",
+    "No timeout, retry, coverage or skip relaxation",
+    "New backend compilation and full remote CI remain required",
+    "Local D04 is existing scoped evidence; no claim the new binary is byte-identical"
+  ]
+}

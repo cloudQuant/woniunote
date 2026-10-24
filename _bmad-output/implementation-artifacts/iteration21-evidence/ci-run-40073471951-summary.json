@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "status": "FAIL",
+  "scope": "G5 first remote CI attempt; retains actual failures, not release acceptance",
+  "repository": "cloudQuant/woniunote",
+  "pr": 1,
+  "run": {
+    "id": 40073471951,
+    "url": "https://github.com/cloudQuant/woniunote/actions/runs/40073471951",
+    "head_sha": "dc4ce0e919cb63175047d0a4bdc6f17f35b0b5e8",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "failure"
+  },
+  "checkout": {
+    "sha": "1d6dd0a7457463e298680b618bde084adb860cad",
+    "tree": "27ad91522492442c2a53868efca56cf8395f57b4",
+    "candidate_tree_equal": true,
+    "parents": [
+      "fefab0570c370bebd796df9c683343805d850d18",
+      "dc4ce0e919cb63175047d0a4bdc6f17f35b0b5e8"
+    ]
+  },
+  "jobs": [
+    {
+      "id": 120811720096,
+      "name": "Repo hygiene (tracked secrets + generated artifacts)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120811747080,
+      "name": "Backend (HTTP integration tests)",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Run isolated real backend and Chromium suite"
+      ]
+    },
+    {
+      "id": 120811747090,
+      "name": "Backend (cppcheck static analysis)",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Run cppcheck (blocking)"
+      ]
+    },
+    {
+      "id": 120811747114,
+      "name": "Frontend (Playwright E2E)",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Run E2E tests (chromium + firefox + webkit + mobile)"
+      ]
+    },
+    {
+      "id": 120811747123,
+      "name": "Backend (C++ build + tests)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120811747173,
+      "name": "Frontend (build + vitest)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    }
+  ],
+  "results": {
+    "ctest": {
+      "passed": 8,
+      "failed": 0
+    },
+    "vitest": {
+      "files": 43,
+      "passed": 648,
+      "coverage": {
+        "statements": 98.91,
+        "lines": 98.91,
+        "branches": 95.03,
+        "functions": 96.15
+      }
+    },
+    "audit": {
+      "production": 0,
+      "advisory_total": 8,
+      "advisory_severity": {
+        "moderate": 4,
+        "high": 1,
+        "critical": 3
+      },
+      "scope": "Development dependency findings; counts include transitive propagation and do not mean eight demonstrated exploit paths. Iteration22 review draft records follow-up."
+    },
+    "cppcheck": {
+      "version": "2.13.0",
+      "finding": "AdminFilter.cc local cancelTimer shadows member cancelTimer()",
+      "code": "shadowFunction"
+    },
+    "integration": {
+      "exit_code": 2,
+      "preflight_error": "ERROR: missing rg",
+      "business_tests_run": false,
+      "migration_tests_run": false,
+      "real_browser_tests_run": false
+    },
+    "mock_e2e": {
+      "passed": 265,
+      "failed": 1,
+      "skipped": 2,
+      "workers": 1,
+      "retries": 0,
+      "failure": "WebKit late-refresh race: response released after 8969.0875ms, exceeding existing 5000ms contract",
+      "artifact": {
+        "id": 12552835335,
+        "name": "playwright-report",
+        "sha256": "6f3315a412ed36947534106ba18986c10601901c5f92dd0935906bccf72254bf"
+      },
+      "trace_inference": "Long action stability waits are consistent with background-tab scheduling. Foregrounding the operated tab is being verified; root cause is not proven by timing alone."
+    }
+  },
+  "boundaries": [
+    "G1-G4 local evidence remains separately scoped",
+    "G5 remains FAIL/INCOMPLETE pending new candidate run",
+    "No merge, tag, release or production deployment",
+    "Raw logs, browser trace and runtime credentials remain outside repository"
+  ],
+  "private_job_log_sha256": {
+    "repo-hygiene.log": "766190d5ec901e46e63ca0cf3cace6e48c33f9f9e2f48b9f9e22cb74f179c74a",
+    "frontend-vue.log": "b0f2d2466da7ea0f2c5336a85c6d9076ded70b55c69abbfb69efb24a58799343",
+    "backend-cpp.log": "174c06e2cef24b59b6a79a2b9c8d5edbfd1c4db9ac74a7d8aa02ce8b5407ade0",
+    "frontend-e2e.log": "7daebbbb4157b1b2ce3626d825af8b5157c54c40c4777fdc4c2cb064831c68b7",
+    "backend-integration.log": "75ce951da811cb65a911900ade40d99e97ba6735916f8d8c14cb9efae9e85abe",
+    "cppcheck.log": "e4ceb210d39c191392227f56112e27806b67752854e77a5e736d27c6d43c3d4b"
+  }
+}

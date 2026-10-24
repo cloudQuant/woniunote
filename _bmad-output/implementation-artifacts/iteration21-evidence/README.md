@@ -99,3 +99,5 @@ source28 增量：已归档编辑器受控基线失败/修复四项目通过摘�
 最终待提交源码入口：`source-29-manifest.json`与`source29-whitespace-artifact-binding.json`。source29仅删除7个文件的EOF空行，其余423个输入不变；重建315个前端产物与source28字节一致，沿用既有功能与D04证据。`final-local-acceptance-summary.json`保留为清理前的功能验收记录。提交清单检查另见`final-private-index-hygiene.json`，最终索引234份；主索引保持空，G5远端CI仍未执行。
 
 远端只读预检：`remote-ci-readonly-preflight.json`确认GitHub基线及候选分支/PR空缺，并发现origin双推送配置；后续请求改为仅使用github remote。此记录不代表推送或CI通过，最终索引235份。
+
+首轮远端CI：PR #1 / head dc4ce0e / run 40073471951，三项通过、三项失败；C++8/8、前端648通过，cppcheck局部命名遮蔽、runner缺rg、WebKit竞争用例超出原5秒窗口均保留在ci-run-40073471951-summary.json。ci-first-fixes-primary-review.json记录三项最小修正和本地四项目定向4/4、隔离零违规；不冒充完整远端复验。当前索引237份，G5仍FAIL/INCOMPLETE。

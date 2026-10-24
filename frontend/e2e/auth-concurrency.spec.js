@@ -136,6 +136,10 @@ test.describe('Authentication across tabs', () => {
       expect(await page.evaluate(() => typeof navigator.locks?.request)).toBe('function')
       expect(await pageB.evaluate(() => typeof navigator.locks?.request)).toBe('function')
 
+      // Bring tab B to the foreground before its logout and login actions.
+      await pageB.bringToFront()
+      await expect.poll(() => pageB.evaluate(() => document.visibilityState)).toBe('visible')
+
       // Hold the real browser lock while tab B begins logout. Its canonical
       // session must not clear until the lock is released.
       browserLockPromise = page.evaluate(() => navigator.locks.request(

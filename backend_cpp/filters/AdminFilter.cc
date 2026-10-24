@@ -67,17 +67,17 @@ public:
         const auto timerId = loop->runAfter(5.0, [self]() {
             self->respond(filterError(503, "认证服务暂时不可用"));
         });
-        bool cancelTimer = false;
+        bool shouldCancelTimer = false;
         {
             std::lock_guard<std::mutex> lock(mutex_);
             if (completed_.load(std::memory_order_acquire)) {
-                cancelTimer = true;
+                shouldCancelTimer = true;
             } else {
                 loop_ = loop;
                 timerId_ = timerId;
             }
         }
-        if (cancelTimer) {
+        if (shouldCancelTimer) {
             loop->runInLoop([loop, timerId]() { loop->invalidateTimer(timerId); });
         }
     }
