@@ -14,8 +14,8 @@
 #include "core/response.h"
 #include <drogon/HttpResponse.h>
 #include <drogon/drogon.h>
-#include <atomic>
 #include <memory>
+#include <string>
 
 using namespace drogon;
 
@@ -29,14 +29,43 @@ constexpr const char* kRateLimitLua =
     "local c = redis.call('INCR', KEYS[1]) "
     "if c == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end "
     "return c";
+
+struct RateLimitCompletion
+{
+    RateLimitCompletion(FilterCallback&& callbackIn,
+                        FilterChainCallback&& chainCallbackIn)
+        : callback_(std::move(callbackIn)),
+          chainCallback_(std::move(chainCallbackIn))
+    {
+    }
+
+    bool tryComplete(FilterCallback& completedCallback,
+                     FilterChainCallback& completedChainCallback)
+    {
+        if (completed)
+        {
+            return false;
+        }
+
+        completed = true;
+        completedCallback = std::move(callback_);
+        completedChainCallback = std::move(chainCallback_);
+        return true;
+    }
+
+    FilterCallback callback_;
+    FilterChainCallback chainCallback_;
+    bool completed{false};
+};
 } // namespace
 
 void RateLimitFilter::doFilter(const HttpRequestPtr& req,
                                FilterCallback&& callback,
                                FilterChainCallback&& chainCallback)
 {
-    std::string clientIp = req->getPeerAddr().toIp();
-    Logger::debug("[RateLimit] Check", {{"ip", clientIp}, {"path", req->getPath()}});
+    const std::string clientIp = req->getPeerAddr().toIp();
+    const std::string requestPath = req->getPath();
+    Logger::debug("[RateLimit] Check", {{"ip", clientIp}, {"path", requestPath}});
 
     const bool failClosed = Config::instance().getRateLimitFailClosed();
 
@@ -56,68 +85,144 @@ void RateLimitFilter::doFilter(const HttpRequestPtr& req,
     const int limit = Config::instance().getRateLimitPerMinute();
     std::string key = "rate_limit:" + clientIp;
 
-    auto sharedChain = std::make_shared<FilterChainCallback>(std::move(chainCallback));
-    auto sharedCallback = std::make_shared<FilterCallback>(std::move(callback));
-    auto completed = std::make_shared<std::atomic_bool>(false);
+    auto requestConnection = req->getConnectionPtr().lock();
+    auto* requestLoop = requestConnection
+                            ? requestConnection->getLoop()
+                            : trantor::EventLoop::getEventLoopOfCurrentThread();
+    if (!requestLoop)
+    {
+        Logger::error("[RateLimit] Request event loop unavailable");
+        if (failClosed)
+        {
+            callback(Response::error(503, "服务暂时不可用，请稍后再试",
+                                     drogon::k503ServiceUnavailable));
+        }
+        else
+        {
+            chainCallback();
+        }
+        return;
+    }
 
-    app().getLoop()->runAfter(1.0, [req, sharedCallback, sharedChain, completed, failClosed]() {
-        bool expected = false;
-        if (!completed->compare_exchange_strong(expected, true)) {
+    const auto weakConnection = req->getConnectionPtr();
+    auto completion = std::make_shared<RateLimitCompletion>(
+        std::move(callback), std::move(chainCallback));
+    const std::weak_ptr<RateLimitCompletion> weakCompletion = completion;
+
+    requestLoop->runAfter(1.0,
+                          [completion, clientIp, requestPath, failClosed]() {
+        FilterCallback timeoutCallback;
+        FilterChainCallback timeoutChainCallback;
+        if (!completion->tryComplete(timeoutCallback, timeoutChainCallback))
+        {
             return;
         }
 
         Logger::warning("[RateLimit] Redis check timed out", {
-            {"ip", req->getPeerAddr().toIp()},
-            {"path", req->getPath()}
+            {"ip", clientIp},
+            {"path", requestPath}
         });
         if (failClosed) {
-            (*sharedCallback)(Response::error(503, "服务暂时不可用，请稍后再试",
-                                              drogon::k503ServiceUnavailable));
+            timeoutCallback(Response::error(503, "服务暂时不可用，请稍后再试",
+                                            drogon::k503ServiceUnavailable));
         } else {
-            (*sharedChain)();
+            timeoutChainCallback();
         }
     });
 
     redisClient->execCommandAsync(
-        [req, sharedCallback, sharedChain, completed, limit]
+        [weakCompletion, weakConnection, clientIp, limit]
         (const nosql::RedisResult& result) {
-            bool expected = false;
-            if (!completed->compare_exchange_strong(expected, true)) {
+            const bool hasIntegerResult =
+                result.type() == nosql::RedisResultType::kInteger;
+            const int64_t count = hasIntegerResult ? result.asInteger() : 0;
+
+            auto connection = weakConnection.lock();
+            if (!connection)
+            {
+                return;
+            }
+            auto* loop = connection->getLoop();
+            if (!loop)
+            {
                 return;
             }
 
-            int64_t count = 0;
-            if (result.type() == nosql::RedisResultType::kInteger) {
-                count = result.asInteger();
-            } else {
-                // Unexpected reply shape -> allow rather than block legitimate traffic.
-                (*sharedChain)();
-                return;
-            }
+            loop->queueInLoop([weakCompletion, clientIp, limit,
+                               hasIntegerResult, count]() {
+                auto activeCompletion = weakCompletion.lock();
+                if (!activeCompletion)
+                {
+                    return;
+                }
 
-            if (count > limit) {
-                Logger::warning("[RateLimit] Exceeded", {{"ip", req->getPeerAddr().toIp()}, {"count", std::to_string(count)}});
-                auto resp = Response::tooManyRequests("请求过于频繁，请稍后再试");
-                resp->addHeader("Retry-After", "60");
-                (*sharedCallback)(resp);
-                return;
-            }
+                FilterCallback resultCallback;
+                FilterChainCallback resultChainCallback;
+                if (!activeCompletion->tryComplete(resultCallback,
+                                                   resultChainCallback))
+                {
+                    return;
+                }
 
-            (*sharedChain)();
+                if (!hasIntegerResult)
+                {
+                    // Unexpected reply shape -> allow rather than block legitimate traffic.
+                    resultChainCallback();
+                    return;
+                }
+
+                if (count > limit)
+                {
+                    Logger::warning("[RateLimit] Exceeded",
+                                    {{"ip", clientIp},
+                                     {"count", std::to_string(count)}});
+                    auto resp =
+                        Response::tooManyRequests("请求过于频繁，请稍后再试");
+                    resp->addHeader("Retry-After", "60");
+                    resultCallback(resp);
+                    return;
+                }
+
+                resultChainCallback();
+            });
         },
-        [sharedCallback, sharedChain, completed, failClosed](const nosql::RedisException& e) {
-            bool expected = false;
-            if (!completed->compare_exchange_strong(expected, true)) {
+        [weakCompletion, weakConnection, failClosed]
+        (const nosql::RedisException& e) {
+            const std::string error = e.what();
+            auto connection = weakConnection.lock();
+            if (!connection)
+            {
+                return;
+            }
+            auto* loop = connection->getLoop();
+            if (!loop)
+            {
                 return;
             }
 
-            Logger::error("[RateLimit] Redis error: " + std::string(e.what()));
-            if (failClosed) {
-                (*sharedCallback)(Response::error(503, "服务暂时不可用，请稍后再试",
+            loop->queueInLoop([weakCompletion, failClosed, error]() {
+                auto activeCompletion = weakCompletion.lock();
+                if (!activeCompletion)
+                {
+                    return;
+                }
+
+                FilterCallback errorCallback;
+                FilterChainCallback errorChainCallback;
+                if (!activeCompletion->tryComplete(errorCallback,
+                                                   errorChainCallback))
+                {
+                    return;
+                }
+
+                Logger::error("[RateLimit] Redis error: " + error);
+                if (failClosed) {
+                    errorCallback(Response::error(503, "服务暂时不可用，请稍后再试",
                                                   drogon::k503ServiceUnavailable));
-            } else {
-                (*sharedChain)();
-            }
+                } else {
+                    errorChainCallback();
+                }
+            });
         },
         "EVAL %s 1 %s 60", kRateLimitLua, key.c_str()
     );
