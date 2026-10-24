@@ -121,6 +121,10 @@ test.describe('Authentication across tabs', () => {
       // soon as A's deliberately delayed refresh starts.
       await pageB.goto('/user/articles', { waitUntil: 'domcontentloaded' })
       await expect(pageB.locator('.user-link')).toContainText('tester')
+      // Prepare B's real logout dropdown before A starts the held refresh.
+      await pageB.bringToFront()
+      await pageB.locator('.user-link').click()
+      await expect(pageB.getByText('退出登录', { exact: true })).toBeVisible()
 
       const refreshRequestPromise = page.waitForRequest(isRefreshRequest, { timeout: 10000 })
       await page.goto('/user/articles', { waitUntil: 'domcontentloaded' })
@@ -136,7 +140,7 @@ test.describe('Authentication across tabs', () => {
       expect(await page.evaluate(() => typeof navigator.locks?.request)).toBe('function')
       expect(await pageB.evaluate(() => typeof navigator.locks?.request)).toBe('function')
 
-      // Bring tab B to the foreground before its logout and login actions.
+      // Bring tab B back to the foreground for its timed logout and login actions.
       await pageB.bringToFront()
       await expect.poll(() => pageB.evaluate(() => document.visibilityState)).toBe('visible')
 
@@ -152,7 +156,6 @@ test.describe('Authentication across tabs', () => {
       await expect.poll(() => page.evaluate(() => window.__iter21AuthLockHeld === true)).toBe(true)
       lockHeld = true
 
-      await pageB.locator('.user-link').click()
       await pageB.getByText('退出登录', { exact: true }).click()
       await expect(pageB).toHaveURL(/\/$/)
       await expect.poll(() => readDurableSession(pageB))
@@ -175,15 +178,14 @@ test.describe('Authentication across tabs', () => {
       await loginDialog.getByPlaceholder('请输入你的登录密码').fill('secret123')
       await loginDialog.getByPlaceholder('请输入右侧的验证码').fill('1234')
       await loginDialog.locator('.login-footer .el-button--primary').click()
-      await expect(loginDialog).toBeHidden()
-      await expect(pageB.locator('.user-link')).toContainText('admin')
+      await expect.poll(() => readDurableSession(pageB))
+        .toMatchObject({ token: 'e2e-access', user: { userid: 99, nickname: 'admin' } })
       const newSession = await readDurableSession(pageB)
       expect(newSession.user).toMatchObject({ userid: 99, nickname: 'admin' })
       expect(newSession.token).toBe('e2e-access')
       const newEpochPersistedAt = performance.now()
       expect(refreshNetwork.requestStartedAt).toBeLessThan(newEpochPersistedAt)
       expect(mockRefreshStartedAt).toBeLessThan(newEpochPersistedAt)
-      await expect(page.locator('.user-link')).toContainText('admin')
 
       // Release A's old response only after B's new epoch is durable in the
       // authoritative IndexedDB record. Local storage only announces changes.
@@ -206,9 +208,11 @@ test.describe('Authentication across tabs', () => {
       expect(refreshNetwork.responseReceivedAt).toBeGreaterThanOrEqual(refreshReleasedAt)
       expect(refreshNetwork.responseReceivedAt).toBeGreaterThan(newEpochPersistedAt)
       expect(refreshNetwork.requestFinishedAt - refreshNetwork.requestStartedAt).toBeLessThan(5000)
+      await expect(loginDialog).toBeHidden()
+      await expect(pageB.locator('.user-link')).toContainText('admin')
+      await expect(page.locator('.user-link')).toContainText('admin')
       await expect(page.getByText('登录已过期，请重新登录').first()).toBeVisible()
       await expect(page).toHaveURL(/\/user\/articles$/)
-      await expect(page.locator('.user-link')).toContainText('admin')
 
       const settledSession = await readDurableSession(page)
       expect(settledSession).toMatchObject({
