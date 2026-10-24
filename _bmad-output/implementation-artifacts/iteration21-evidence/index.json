@@ -1176,6 +1176,16 @@
       "file": "remote-ci-readonly-preflight.json",
       "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/evidence/remote-ci-readonly-preflight.json",
       "sha256": "6994fe573658f3bc6cf8dd9faaa76584948384b838eac087bf613e782dbccb72"
+    },
+    {
+      "file": "ci-run-40073471951-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/ci",
+      "sha256": "491cfe67f3a0cb8963583043e51c8a8ed6a477992aaa55e7f5178bd9be4b7820"
+    },
+    {
+      "file": "ci-first-fixes-primary-review.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/ci",
+      "sha256": "5cbd8b31d868d57060993e75044731e3b9ae810e359de4e59e838f2d1e40c3de"
     }
   ]
 }
