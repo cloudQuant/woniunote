@@ -1186,6 +1186,31 @@
       "file": "ci-first-fixes-primary-review.json",
       "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/ci",
       "sha256": "5cbd8b31d868d57060993e75044731e3b9ae810e359de4e59e838f2d1e40c3de"
+    },
+    {
+      "file": "ci-run-40074751399-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/ci",
+      "sha256": "252595d98de2520ac04ea6b3614ee00b41140c86edc5e500d7dd798213aaa80a"
+    },
+    {
+      "file": "ci-run-40075774716-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/ci",
+      "sha256": "65dd52526234fd14f5af52cc86bb07349b0bcc1d3d4b3b08adde25eed7154a57"
+    },
+    {
+      "file": "ci-race-and-shutdown-primary-review.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/ci",
+      "sha256": "e2ac11aa578a430d00cb5dec383ad54dad8074a133351f3d578a9e110165dcd8"
+    },
+    {
+      "file": "ci-run-40077255747-summary.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/ci/run-40077255747",
+      "sha256": "af58ce859938d9ce4002cd3539223559dcedacaacb471e72109666059b080f7c"
+    },
+    {
+      "file": "ci-sanitizer-diagnostic-primary-review.json",
+      "source": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/ci",
+      "sha256": "14dfe8debd54e5d48df304b475f265052f85b3f29549ac490ac8d0a4eb9e7b6a"
     }
   ]
 }

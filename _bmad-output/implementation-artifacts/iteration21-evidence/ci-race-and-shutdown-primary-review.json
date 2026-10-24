@@ -1,0 +1,94 @@
+{
+  "status": "PASS_LOCAL_SCOPED_REMOTE_PENDING",
+  "candidate_sha": "2fb3791775e3d6623c5a58f22251cd30872e5a9e",
+  "changed_file_sha256": {
+    "backend_cpp/tests/integration/run_integration.sh": "ebbe90b1a28941d0d20eef054e46ed80eada5a7a0c25acbcd6cc664975c7ddbd",
+    "frontend/e2e/auth-concurrency.spec.js": "babf2f30784676cd4a91ca20a88e8bebe24345b1bc3b23531bb89e7f2811fe15"
+  },
+  "late_refresh_ordering_fix": {
+    "status": "PASS_LOCAL_TARGETED_REMOTE_PENDING",
+    "test_sha256": "8e702db53cdb570a44ccad1c38c8caef786c44aeda9c58d68fe9c2642220d3fe",
+    "log_sha256": "d265be11475731167c512d41d75b8bafbcc15d783b639a04f574b44c1e26e9d6",
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "workers": 1,
+    "retries": 0,
+    "exit_code": 0,
+    "closed_contexts": 4,
+    "violations": 0,
+    "denied_count": 0,
+    "review": "Only first race test changes. Prepare real menu before refresh; canonical new session persists before old response release; UI transition assertions after completed old response. Existing 5000ms deadlines, lock, real Header login, no replay and final durable session assertions retained. No product code, forced input, timer or animation overrides."
+  },
+  "category_refresh_fix": {
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "node": "22.13.0",
+    "workers": 1,
+    "retries": 0,
+    "exit_code": 0,
+    "log_sha256": "95a6205926bbc7fc892ea5ff034e28e3a855a6a901933e20755d8f781e2703ca",
+    "contexts_created": 4,
+    "contexts_closed": 4,
+    "context_violations": 0,
+    "denied_requests": 0,
+    "source_equals_worktree": true,
+    "review": "Real sidebar from /user to standalone /user/categories. Real Web Lock, global single refresh, per-tab 401 and exactly one replay preserved. No product changes, timeout/skip/retry relaxation."
+  },
+  "backend_shutdown_guard": {
+    "real_child_cases": 7,
+    "primary_log_sha256": "13e2035bd2016c4909a218253b0d78610cf4c758d5c21ccbd0f6c2858f20014e",
+    "cases": [
+      "TERM exits0",
+      "TERM exits143",
+      "SIGABRT134",
+      "already exited23",
+      "forced KILL137",
+      "prior runner23 preserved",
+      "prior runner143 preserved"
+    ],
+    "primary_diagnostic_review": {
+      "manifest_source_equals_worktree": true,
+      "diagnostic_checks": [
+        {
+          "index_reference": false,
+          "abnormal": true,
+          "passed": true
+        },
+        {
+          "index_reference": true,
+          "abnormal": true,
+          "passed": true
+        },
+        {
+          "index_reference": true,
+          "abnormal": false,
+          "passed": true
+        }
+      ],
+      "malformed_exception_excluded": true,
+      "targeted_test_source_sha256": "babf2f30784676cd4a91ca20a88e8bebe24345b1bc3b23531bb89e7f2811fe15",
+      "contexts": 4,
+      "closed": 4,
+      "violations": 0,
+      "denied": 0,
+      "shutdown_real_children_previous_primary_run": "/Users/yunjinqi/.cache/woniunote-iter21/acceptance-20261024/ci/backend-shutdown-probe/primary-run.log"
+    },
+    "review": "Always wait owned backend; completed run with abnormal exit fails while cleanup continues. Fixed diagnostic categories only; raw contents not exported."
+  },
+  "boundaries": [
+    "Actual backend Abort root cause unresolved",
+    "Ubuntu22 ARM64 controlled probes did not reproduce; not equivalent to GitHub Ubuntu24 AMD64",
+    "Full remote candidate CI required",
+    "Existing D04 product evidence separately scoped"
+  ],
+  "independent_evidence_review": {
+    "reviewer": "ci_evidence_map",
+    "status": "MATCHED",
+    "index_entries_checked": 240,
+    "missing": 0,
+    "hash_mismatches": 0,
+    "scope": "Historical runs27/28 summaries, both trees, 12 job logs, 4 artifact ZIPs, actual test counts and shutdown markers, targeted tests and child-process evidence. Read-only; does not close G5."
+  }
+}

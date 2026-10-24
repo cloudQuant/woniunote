@@ -101,3 +101,7 @@ source28 增量：已归档编辑器受控基线失败/修复四项目通过摘�
 远端只读预检：`remote-ci-readonly-preflight.json`确认GitHub基线及候选分支/PR空缺，并发现origin双推送配置；后续请求改为仅使用github remote。此记录不代表推送或CI通过，最终索引235份。
 
 首轮远端CI：PR #1 / head dc4ce0e / run 40073471951，三项通过、三项失败；C++8/8、前端648通过，cppcheck局部命名遮蔽、runner缺rg、WebKit竞争用例超出原5秒窗口均保留在ci-run-40073471951-summary.json。ci-first-fixes-primary-review.json记录三项最小修正和本地四项目定向4/4、隔离零违规；不冒充完整远端复验。当前索引237份，G5仍FAIL/INCOMPLETE。
+
+后续远端CI：新增run 40074751399、40075774716两轮完整摘要及ci-race-and-shutdown-primary-review.json，索引240份全部SHA核对。业务HTTP71/迁移/UI6通过与限流清理Abort分开记录；旧runner未传播异常退出不得记为正常。候选2fb3791第四轮复验中，G5仍INCOMPLETE。
+
+第四轮40077255747：完整mock266/0/2已通过；functional后端TERM0，rate-limit后端TERM134触发真实失败。ci-run-40077255747-summary.json记录allocator分类但不推断根因；ci-sanitizer-diagnostic-primary-review.json仅为条件诊断的静态/合成验证。当前索引242份，全部SHA核对，实际sanitizer及G5未通过。

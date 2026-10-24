@@ -203,6 +203,181 @@ import re
 import subprocess
 from pathlib import Path
 
+def classify_backend_log(server_log_data):
+    categories = {
+        "assertion_failure": False,
+        "terminate_called": False,
+        "allocator_double_free": False,
+        "allocator_corruption": False,
+        "resource_deadlock_avoided": False,
+        "ubsan_runtime_error": False,
+    }
+    exception_type = None
+    asan_error_type = None
+    asan_frames = []
+    ubsan_location = None
+    if server_log_data is None:
+        return categories, exception_type, asan_error_type, asan_frames, ubsan_location
+
+    lowered_log = server_log_data.lower()
+    categories.update({
+        "assertion_failure": re.search(
+            rb"\bassertion\b[^\n]{0,512}\bfailed\b", server_log_data, re.IGNORECASE,
+        ) is not None,
+        "terminate_called": b"terminate called" in lowered_log,
+        "allocator_double_free": b"double free" in lowered_log,
+        "allocator_corruption": any(
+            marker in lowered_log for marker in
+            (b"corruption", b"corrupted", b"invalid pointer", b"heap corruption")
+        ),
+        "resource_deadlock_avoided": b"resource deadlock avoided" in lowered_log,
+        "ubsan_runtime_error": b"runtime error:" in lowered_log,
+    })
+    exception_match = re.search(
+        rb"""terminate called after throwing an instance of ['"](std::[A-Za-z_]{1,64})['"]""",
+        server_log_data,
+    )
+    exception_value = exception_match.group(1) if exception_match else b""
+    if re.fullmatch(rb"std::[A-Za-z_]{1,64}", exception_value):
+        exception_type = exception_value.decode("ascii")
+
+    asan_error_prefixes = (
+        (b"attempting free on address which was not malloc()-ed", "invalid_free"),
+        (b"attempting double-free", "double_free"),
+        (b"heap-use-after-free", "heap_use_after_free"),
+        (b"stack-use-after-return", "stack_use_after_return"),
+        (b"stack-use-after-scope", "stack_use_after_scope"),
+        (b"heap-buffer-overflow", "heap_buffer_overflow"),
+        (b"stack-buffer-overflow", "stack_buffer_overflow"),
+        (b"global-buffer-overflow", "global_buffer_overflow"),
+        (b"use-after-poison", "use_after_poison"),
+        (b"alloc-dealloc-mismatch", "alloc_dealloc_mismatch"),
+        (b"new-delete-type-mismatch", "new_delete_type_mismatch"),
+        (b"container-overflow", "container_overflow"),
+        (b"stack-overflow", "stack_overflow"),
+        (b"odr-violation", "odr_violation"),
+        (b"initialization-order-fiasco", "initialization_order_fiasco"),
+        (b"negative-size-param", "negative_size_param"),
+        (b"memcpy-param-overlap", "memcpy_param_overlap"),
+        (b"allocation-size-too-big", "allocation_size_too_big"),
+        (b"unknown-crash", "unknown_crash"),
+    )
+    asan_header = re.compile(
+        rb"^(?:==[0-9]+==)?ERROR: AddressSanitizer: ([^\r\n]+)$"
+    )
+    source_location = re.compile(
+        rb"(?P<path>(?:/[A-Za-z0-9_./+-]+|(?:\.\.?/)?[A-Za-z0-9_./+-]+))"
+        rb":(?P<line>[0-9]{1,10})(?::[0-9]{1,10})?$"
+    )
+    ubsan_header = re.compile(
+        rb"^(?P<path>(?:/[A-Za-z0-9_./+-]+|(?:\.\.?/)?[A-Za-z0-9_./+-]+))"
+        rb":(?P<line>[0-9]{1,10}):(?P<column>[0-9]{1,10}): runtime error: [^\r\n]+$"
+    )
+    module_location = re.compile(
+        rb"(?P<path>(?:/[A-Za-z0-9_./+-]+|[A-Za-z0-9_./+-]+))"
+        rb"\+0x(?P<offset>[0-9a-fA-F]{1,16})"
+    )
+    frame_line = re.compile(
+        rb"^\s*#(?P<index>[0-9]{1,6})\s+0x[0-9a-fA-F]{1,16}\s+"
+        rb"(?P<body>.{1,4096}?)\s*$"
+    )
+    phase = None
+    report_active = False
+    for line in server_log_data.splitlines():
+        header = asan_header.fullmatch(line)
+        if header:
+            report_active = True
+            phase = "error"
+            header_text = header.group(1)
+            for prefix, enum_value in asan_error_prefixes:
+                if header_text.startswith(prefix):
+                    asan_error_type = enum_value
+                    break
+            continue
+        if re.fullmatch(
+            rb"(?:==[0-9]+==)?(?:SUMMARY: AddressSanitizer:.*|==[0-9]+==ABORTING)",
+            line,
+        ):
+            report_active = False
+            phase = None
+            continue
+        if report_active and re.fullmatch(rb"\s*freed by thread T[0-9]+ here:\s*", line):
+            phase = "freed"
+            continue
+        if report_active and re.fullmatch(
+            rb"\s*(?:previously )?allocated by thread T[0-9]+ here:\s*", line,
+        ):
+            phase = "allocated"
+            continue
+        if report_active and re.fullmatch(
+            rb"\s*Thread T[0-9]+ created by T[0-9]+ here:\s*", line,
+        ):
+            phase = "thread_created"
+            continue
+        if ubsan_location is None:
+            ubsan_match = ubsan_header.fullmatch(line)
+            if ubsan_match:
+                basename = ubsan_match.group("path").rsplit(b"/", 1)[-1]
+                if re.fullmatch(rb"[A-Za-z0-9_.+-]{1,128}", basename):
+                    ubsan_location = {
+                        "basename": basename.decode("ascii"),
+                        "line": int(ubsan_match.group("line")),
+                        "column": int(ubsan_match.group("column")),
+                    }
+        if phase is None or len(asan_frames) >= 32:
+            continue
+        frame = frame_line.fullmatch(line)
+        if not frame:
+            continue
+
+        body = frame.group("body").strip()
+        has_symbol_section = body.startswith(b"in ")
+        location_text = body[3:].strip() if has_symbol_section else body
+        location_text = re.sub(
+            rb"\s+\(BuildId: [0-9a-fA-F]{1,128}\)$", b"", location_text,
+        )
+        location_match = source_location.search(location_text)
+        location_kind = None
+        location_value = None
+        if location_match:
+            path = location_match.group("path")
+            basename = path.rsplit(b"/", 1)[-1]
+            if not re.fullmatch(rb"[A-Za-z0-9_.+-]{1,128}", basename):
+                continue
+            location_kind = "source"
+            location_value = {
+                "basename": basename.decode("ascii"),
+                "line": int(location_match.group("line")),
+            }
+            symbol_text = location_text[:location_match.start()].rstrip()
+        else:
+            final_token = location_text.rsplit(None, 1)[-1]
+            if final_token.startswith(b"(") and final_token.endswith(b")"):
+                final_token = final_token[1:-1]
+            module_match = module_location.fullmatch(final_token)
+            if not module_match:
+                continue
+            path = module_match.group("path")
+            basename = path.rsplit(b"/", 1)[-1]
+            if not re.fullmatch(rb"[A-Za-z0-9_.+-]{1,128}", basename):
+                continue
+            location_kind = "module"
+            location_value = {
+                "basename": basename.decode("ascii"),
+                "offset": "0x" + module_match.group("offset").decode("ascii").lower(),
+            }
+            module_start = location_text.rfind(final_token)
+            symbol_text = location_text[:module_start].rstrip().rstrip(b"(").rstrip()
+
+        record = {"phase": phase, "index": int(frame.group("index"))}
+        symbol_match = re.match(rb"([A-Za-z0-9_:~]{1,128})", symbol_text)
+        if has_symbol_section and symbol_match:
+            record["symbol"] = symbol_match.group(1).decode("ascii")
+        record[location_kind] = location_value
+        asan_frames.append(record)
+
+    return categories, exception_type, asan_error_type, asan_frames, ubsan_location
+
 def image_metadata(image, version_variable):
     try:
         raw = subprocess.check_output(
@@ -232,39 +407,9 @@ try:
 except OSError:
     server_log_data = None
 
-if server_log_data is None:
-    diagnostic_categories = {
-        "assertion_failure": False,
-        "terminate_called": False,
-        "allocator_double_free": False,
-        "allocator_corruption": False,
-        "resource_deadlock_avoided": False,
-    }
-    exception_type = None
-else:
-    lowered_log = server_log_data.lower()
-    diagnostic_categories = {
-        "assertion_failure": re.search(
-            rb"\bassertion\b[^\n]{0,512}\bfailed\b", server_log_data, re.IGNORECASE,
-        ) is not None,
-        "terminate_called": b"terminate called" in lowered_log,
-        "allocator_double_free": b"double free" in lowered_log,
-        "allocator_corruption": any(
-            marker in lowered_log for marker in
-            (b"corruption", b"corrupted", b"invalid pointer", b"heap corruption")
-        ),
-        "resource_deadlock_avoided": b"resource deadlock avoided" in lowered_log,
-    }
-    exception_match = re.search(
-        rb"""terminate called after throwing an instance of ['"](std::[A-Za-z_]{1,64})['"]""",
-        server_log_data,
-    )
-    exception_value = exception_match.group(1) if exception_match else b""
-    exception_type = (
-        exception_value.decode("ascii")
-        if re.fullmatch(rb"std::[A-Za-z_]{1,64}", exception_value)
-        else None
-    )
+diagnostic_categories, exception_type, asan_error_type, asan_frames, ubsan_location = classify_backend_log(
+    server_log_data,
+)
 
 if server_log_data is None:
     server_log_digest = {"sha256": None, "bytes": None, "reference": None}
@@ -351,6 +496,9 @@ manifest = {
         "digest": server_log_digest,
         "categories": diagnostic_categories,
         "exception_type": exception_type,
+        "asan_error_type": asan_error_type,
+        "asan_frames": asan_frames,
+        "ubsan_location": ubsan_location,
     },
     "credentials_included": False,
 }
@@ -360,6 +508,9 @@ path.chmod(0o600)
 if manifest["backend_shutdown"]["abnormal"]:
     console_diagnostics = dict(diagnostic_categories)
     console_diagnostics["exception_type"] = exception_type
+    console_diagnostics["asan_error_type"] = asan_error_type
+    console_diagnostics["asan_frames"] = asan_frames
+    console_diagnostics["ubsan_location"] = ubsan_location
     print("Backend diagnostic categories: " + json.dumps(
         console_diagnostics, sort_keys=True, separators=(",", ":"),
     ))

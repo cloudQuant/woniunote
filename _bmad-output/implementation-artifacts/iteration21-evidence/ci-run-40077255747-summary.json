@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "status": "FAIL",
+  "scope": "G5 fourth remote attempt; shutdown guard correctly rejects allocator-aborting backend",
+  "repository": "cloudQuant/woniunote",
+  "pr": 1,
+  "run": {
+    "id": 40077255747,
+    "url": "https://github.com/cloudQuant/woniunote/actions/runs/40077255747",
+    "head_sha": "2fb3791775e3d6623c5a58f22251cd30872e5a9e",
+    "status": "completed",
+    "conclusion": "failure"
+  },
+  "checkout": {
+    "sha": "820c823e11810fa68ca7fc67e887c64b23a241e8",
+    "tree": "9419b1fcb63f0a81a2840e0062377d00ce425209",
+    "candidate_tree_equal": true,
+    "parents": [
+      "fefab0570c370bebd796df9c683343805d850d18",
+      "2fb3791775e3d6623c5a58f22251cd30872e5a9e"
+    ]
+  },
+  "jobs": [
+    {
+      "id": 120823186542,
+      "name": "Repo hygiene (tracked secrets + generated artifacts)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120823212176,
+      "name": "Backend (C++ build + tests)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120823212204,
+      "name": "Frontend (build + vitest)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120823212256,
+      "name": "Frontend (Playwright E2E)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120823212277,
+      "name": "Backend (cppcheck static analysis)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120823212282,
+      "name": "Backend (HTTP integration tests)",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Verify the product-default rate limit in a fresh service pair"
+      ]
+    }
+  ],
+  "results": {
+    "ctest": {
+      "passed": 8,
+      "failed": 0
+    },
+    "vitest": {
+      "files": 43,
+      "passed": 648,
+      "coverage": {
+        "statements": 98.91,
+        "lines": 98.91,
+        "branches": 95.03,
+        "functions": 96.15
+      }
+    },
+    "cppcheck": "PASS",
+    "production_audit_findings": 0,
+    "mock_e2e": {
+      "passed": 266,
+      "failed": 0,
+      "skipped": 2,
+      "workers": 1,
+      "retries": 0,
+      "minutes": 9.0,
+      "scope": "All four projects; both auth concurrency tests pass. Existing two mobile hover exemptions retained."
+    },
+    "integration": {
+      "acceptance": "FAIL_BACKEND_SHUTDOWN",
+      "runs": [
+        {
+          "run_id": "20261024T082102Z-b46d6e861211",
+          "scenario": "functional",
+          "http": {
+            "tests": 71,
+            "passed": 71,
+            "failed": 0,
+            "skipped": 0
+          },
+          "migrations_passed": [
+            "article-thumbnail-migration-summary.json",
+            "comment-vote-migration-summary.json",
+            "comment-vote-migration-live-summary.json",
+            "math-training-migration-summary.json"
+          ],
+          "real_browser": {
+            "passed": 6,
+            "failed": 0
+          },
+          "backend_shutdown": {
+            "term_sent": true,
+            "wait_exit_code": 0,
+            "forced_kill": false,
+            "result": "term_exit_0",
+            "abnormal": false
+          },
+          "backend_log_diagnostics": {
+            "stream": "combined_stdout_stderr",
+            "available": false,
+            "digest": {
+              "sha256": null,
+              "bytes": null,
+              "reference": null
+            },
+            "categories": {
+              "assertion_failure": false,
+              "terminate_called": false,
+              "allocator_double_free": false,
+              "allocator_corruption": false,
+              "resource_deadlock_avoided": false
+            },
+            "exception_type": null
+          },
+          "runtime_retained": false,
+          "credentials_included": false
+        },
+        {
+          "run_id": "20261024T082429Z-4aa732ee3df3",
+          "scenario": "rate-limit",
+          "http": {
+            "tests": 1,
+            "passed": 1,
+            "failed": 0,
+            "skipped": 0
+          },
+          "migrations_passed": [],
+          "real_browser": {
+            "status": "NOT_RUN"
+          },
+          "backend_shutdown": {
+            "term_sent": true,
+            "wait_exit_code": 134,
+            "forced_kill": false,
+            "result": "unexpected_exit",
+            "abnormal": true
+          },
+          "backend_log_diagnostics": {
+            "stream": "combined_stdout_stderr",
+            "available": true,
+            "digest": {
+              "sha256": null,
+              "bytes": null,
+              "reference": {
+                "index": "log-index.json",
+                "entry": "backend.log"
+              }
+            },
+            "categories": {
+              "assertion_failure": false,
+              "terminate_called": false,
+              "allocator_double_free": false,
+              "allocator_corruption": true,
+              "resource_deadlock_avoided": false
+            },
+            "exception_type": null
+          },
+          "runtime_retained": true,
+          "credentials_included": false
+        }
+      ],
+      "root_cause": "Unresolved. Safe allocator_corruption category is not a stack location or a proven source-level cause."
+    }
+  },
+  "artifacts": [
+    {
+      "id": 12554360572,
+      "name": "iter21-real-backend-evidence",
+      "sha256": "4edf739e9de43a633fb0629d64e1c6f3b3a58edc4c4d4b3bc9ed521c84b13193",
+      "sha_verified": true
+    },
+    {
+      "id": 12554225441,
+      "name": "playwright-report",
+      "sha256": "aab7efe84d5077132a1a916d896cc156e9e9f284042570cad31b565cda821f90",
+      "sha_verified": true
+    }
+  ],
+  "private_job_log_sha256": {
+    "backend-cpp.log": "62e98c40c1c89a1b16e746c8bb2e84bfcf92178b7859de7b067dd8b311f53454",
+    "backend-integration.log": "13568a142772821866f57ace467365474316b22bbccc625b1ce50c2a6812031f",
+    "cppcheck.log": "96a5d0dbf85b5b92ac4c27c56b4b1b5e2027a14c2ee2fdb11b26c0b69c10a1d6",
+    "frontend-e2e.log": "8e69ddab9b47f7ab60c6ce83807e50b9dfdee34030911301cd914b4bf5146cbd",
+    "frontend-vue.log": "cf6907f9af78ae1bad412585ade0acdbf869dcd4737cf37198933bd5ef1751b6",
+    "repo-hygiene.log": "40ef968e1f44b6f0615b564832fb75d05600f6804e87b13062668aab10ad67cb"
+  },
+  "boundaries": [
+    "All functional HTTP/migration/real UI checks pass before shutdown; rate-limit shutdown still aborts134",
+    "G5 remains INCOMPLETE/NO-GO",
+    "ASAN diagnosis is a follow-up, not a passing retry",
+    "No merge, release or production action"
+  ]
+}

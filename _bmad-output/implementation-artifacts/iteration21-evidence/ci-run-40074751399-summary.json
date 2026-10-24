@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "status": "FAIL",
+  "scope": "G5 historical remote CI attempt",
+  "repository": "cloudQuant/woniunote",
+  "pr": 1,
+  "run": {
+    "id": 40074751399,
+    "url": "https://github.com/cloudQuant/woniunote/actions/runs/40074751399",
+    "head_sha": "e1e91566ac50014c3286a6d81a6de86df089b4b5",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "failure"
+  },
+  "checkout": {
+    "sha": "c0d007938b8f33c28daa6f9760ecdf1abcad4cf8",
+    "tree": "18fdb9928ec818311a9331e4d8155a2feccd3064",
+    "candidate_tree_equal": true,
+    "parents": [
+      "fefab0570c370bebd796df9c683343805d850d18",
+      "e1e91566ac50014c3286a6d81a6de86df089b4b5"
+    ]
+  },
+  "jobs": [
+    {
+      "id": 120815609431,
+      "name": "Repo hygiene (tracked secrets + generated artifacts)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120815637401,
+      "name": "Frontend (Playwright E2E)",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Run E2E tests (chromium + firefox + webkit + mobile)"
+      ]
+    },
+    {
+      "id": 120815637414,
+      "name": "Backend (cppcheck static analysis)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120815637425,
+      "name": "Backend (HTTP integration tests)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120815637446,
+      "name": "Frontend (build + vitest)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120815637455,
+      "name": "Backend (C++ build + tests)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    }
+  ],
+  "results": {
+    "ctest": {
+      "passed": 8,
+      "failed": 0
+    },
+    "vitest": {
+      "files": 43,
+      "passed": 648,
+      "coverage": {
+        "statements": 98.91,
+        "lines": 98.91,
+        "branches": 95.03,
+        "functions": 96.15
+      }
+    },
+    "cppcheck": {
+      "version": "2.13.0",
+      "status": "PASS"
+    },
+    "production_dependency_audit": {
+      "findings": 0
+    },
+    "development_dependency_advisory": {
+      "total": 8,
+      "moderate": 4,
+      "high": 1,
+      "critical": 3,
+      "scope": "Includes transitive propagation; not eight demonstrated exploit paths"
+    },
+    "integration": {
+      "job_conclusion": "success",
+      "acceptance": "GAP_BACKEND_SHUTDOWN",
+      "runs": [
+        {
+          "run_id": "20261024T074903Z-da5707bdbc1c",
+          "scenario": "functional",
+          "http": {
+            "tests": 71,
+            "passed": 71,
+            "failed": 0,
+            "skipped": 0
+          },
+          "migrations": [
+            {
+              "file": "article-thumbnail-migration-summary.json",
+              "result": "passed"
+            },
+            {
+              "file": "comment-vote-migration-live-summary.json",
+              "result": "passed"
+            },
+            {
+              "file": "comment-vote-migration-summary.json",
+              "result": "passed"
+            },
+            {
+              "file": "math-training-migration-summary.json",
+              "result": "passed"
+            }
+          ],
+          "real_browser": {
+            "passed": 6,
+            "failed": 0
+          },
+          "runtime_retained": false,
+          "credentials_included": false,
+          "mysql_volume_status": "removed",
+          "backend_shutdown": "NOT_RECORDED_BY_OLD_RUNNER"
+        },
+        {
+          "run_id": "20261024T075225Z-f9a77d80f07d",
+          "scenario": "rate-limit",
+          "http": {
+            "tests": 1,
+            "passed": 1,
+            "failed": 0,
+            "skipped": 0
+          },
+          "migrations": [],
+          "real_browser": {
+            "status": "NOT_RUN"
+          },
+          "runtime_retained": false,
+          "credentials_included": false,
+          "mysql_volume_status": "removed",
+          "backend_shutdown": "NOT_RECORDED_BY_OLD_RUNNER"
+        }
+      ],
+      "issue": "Rate-limit pytest passed, then backend aborted during TERM cleanup; old runner ignored wait result. No raw diagnostic log was archived; root cause unknown.",
+      "cleanup_boundary": "Container states captured before removal; removed MySQL volume recorded. Not independent final resource readback."
+    },
+    "mock_e2e": {
+      "passed": 265,
+      "failed": 1,
+      "skipped": 2,
+      "workers": 1,
+      "retries": 0,
+      "failure": "WebKit first late-refresh test exceeded unchanged 5000ms bound: 8257.541ms",
+      "first_late_refresh_test": "FAIL_WEBKIT"
+    }
+  },
+  "artifacts": [
+    {
+      "id": 12553251023,
+      "name": "iter21-real-backend-evidence",
+      "sha256": "8926ffcf1d9c0cb8f987cbf7acd0f1f3ea9d172eed20bac51fb5a4128d83502e",
+      "sha_verified": true
+    },
+    {
+      "id": 12552504790,
+      "name": "playwright-report",
+      "sha256": "1273741983b381a217a5e5f86b8c35559b8b7c3f8f7f33fb8e1fcb9b128b2b0e",
+      "sha_verified": true
+    }
+  ],
+  "private_job_log_sha256": {
+    "backend-cpp.log": "cf32a879a1159571a78a8a8ad2bb43b520cf2e71cf377bba08397bbd9441ab00",
+    "backend-integration.log": "023567971a752ebc413144990867f12faadb13e006b773f1adbc92d3f62d5021",
+    "cppcheck.log": "6100f5a716004d1c2278b4d74f3f500024b7b071e5610db449e56b3b988f3afa",
+    "frontend-e2e.log": "e5bb569f525cbdb9132f066c451c21a5752f2b28866117d3213ef6d6ab26df4b",
+    "frontend-vue.log": "b1f7feb4ce83244286dcbc74e179f258a0a1b7c1c5ca21da868b2c4ee1a79e0c",
+    "hygiene.log": "97af8e3c314a357a05d4005bf1eb3108d820fcd004fa7510728dcb1017ee7b49"
+  },
+  "boundaries": [
+    "Local G1-G4 evidence separately scoped",
+    "G5 remains FAIL/INCOMPLETE",
+    "No merge, tag, release or production deployment",
+    "Raw logs, browser traces and runtime credentials remain outside repository"
+  ]
+}

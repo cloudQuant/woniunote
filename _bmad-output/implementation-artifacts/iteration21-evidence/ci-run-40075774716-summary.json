@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "status": "FAIL",
+  "scope": "G5 historical remote CI attempt",
+  "repository": "cloudQuant/woniunote",
+  "pr": 1,
+  "run": {
+    "id": 40075774716,
+    "url": "https://github.com/cloudQuant/woniunote/actions/runs/40075774716",
+    "head_sha": "b0d136d613121850694fcc5810e21ffceaa22cc9",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "failure"
+  },
+  "checkout": {
+    "sha": "064bce3a0419b87f3526e2361eb830101aff4e83",
+    "tree": "bbf03dfc40a14a1d19b0710028ce780f161b457f",
+    "candidate_tree_equal": true,
+    "parents": [
+      "fefab0570c370bebd796df9c683343805d850d18",
+      "b0d136d613121850694fcc5810e21ffceaa22cc9"
+    ]
+  },
+  "jobs": [
+    {
+      "id": 120818667154,
+      "name": "Repo hygiene (tracked secrets + generated artifacts)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120818688600,
+      "name": "Frontend (Playwright E2E)",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Run E2E tests (chromium + firefox + webkit + mobile)"
+      ]
+    },
+    {
+      "id": 120818688642,
+      "name": "Backend (cppcheck static analysis)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120818688644,
+      "name": "Backend (C++ build + tests)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120818688647,
+      "name": "Backend (HTTP integration tests)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 120818688648,
+      "name": "Frontend (build + vitest)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    }
+  ],
+  "results": {
+    "ctest": {
+      "passed": 8,
+      "failed": 0
+    },
+    "vitest": {
+      "files": 43,
+      "passed": 648,
+      "coverage": {
+        "statements": 98.91,
+        "lines": 98.91,
+        "branches": 95.03,
+        "functions": 96.15
+      }
+    },
+    "cppcheck": {
+      "version": "2.13.0",
+      "status": "PASS"
+    },
+    "production_dependency_audit": {
+      "findings": 0
+    },
+    "development_dependency_advisory": {
+      "total": 8,
+      "moderate": 4,
+      "high": 1,
+      "critical": 3,
+      "scope": "Includes transitive propagation; not eight demonstrated exploit paths"
+    },
+    "integration": {
+      "job_conclusion": "success",
+      "acceptance": "GAP_BACKEND_SHUTDOWN",
+      "runs": [
+        {
+          "run_id": "20261024T075923Z-6d955b6988c8",
+          "scenario": "functional",
+          "http": {
+            "tests": 71,
+            "passed": 71,
+            "failed": 0,
+            "skipped": 0
+          },
+          "migrations": [
+            {
+              "file": "article-thumbnail-migration-summary.json",
+              "result": "passed"
+            },
+            {
+              "file": "comment-vote-migration-live-summary.json",
+              "result": "passed"
+            },
+            {
+              "file": "comment-vote-migration-summary.json",
+              "result": "passed"
+            },
+            {
+              "file": "math-training-migration-summary.json",
+              "result": "passed"
+            }
+          ],
+          "real_browser": {
+            "passed": 6,
+            "failed": 0
+          },
+          "runtime_retained": false,
+          "credentials_included": false,
+          "mysql_volume_status": "removed",
+          "backend_shutdown": "NOT_RECORDED_BY_OLD_RUNNER"
+        },
+        {
+          "run_id": "20261024T080255Z-2c7b984bf75f",
+          "scenario": "rate-limit",
+          "http": {
+            "tests": 1,
+            "passed": 1,
+            "failed": 0,
+            "skipped": 0
+          },
+          "migrations": [],
+          "real_browser": {
+            "status": "NOT_RUN"
+          },
+          "runtime_retained": false,
+          "credentials_included": false,
+          "mysql_volume_status": "removed",
+          "backend_shutdown": "NOT_RECORDED_BY_OLD_RUNNER"
+        }
+      ],
+      "issue": "Rate-limit pytest passed, then backend aborted during TERM cleanup; old runner ignored wait result. No raw diagnostic log was archived; root cause unknown.",
+      "cleanup_boundary": "Container states captured before removal; removed MySQL volume recorded. Not independent final resource readback."
+    },
+    "mock_e2e": {
+      "passed": 265,
+      "failed": 1,
+      "skipped": 2,
+      "workers": 1,
+      "retries": 0,
+      "failure": "Second same-session refresh test expected one rotated-token HTTP200 per tab but observed two; same URL requested by parent and hidden category component",
+      "first_late_refresh_test": "PASS_ALL_FOUR_PROJECTS"
+    }
+  },
+  "artifacts": [
+    {
+      "id": 12553650891,
+      "name": "iter21-real-backend-evidence",
+      "sha256": "3854ef2d00759ebd326a1599b8111ede28b7a4be5f21cef0a6cbc19caa682c97",
+      "sha_verified": true
+    },
+    {
+      "id": 12553161917,
+      "name": "playwright-report",
+      "sha256": "a817fe3185a1c71b502d3ff25e1736562532fd830ab7e49ca7918ac08a5e154b",
+      "sha_verified": true
+    }
+  ],
+  "private_job_log_sha256": {
+    "backend-cpp.log": "771aabd324161e016701ebdc4d9ea2caa9d17a8e6f06b3ee91dfece6bf2898c7",
+    "backend-integration.log": "89820fc2b29fd17d2a1bddbc9cd7fc250af49afdccf895a04b71f743f12e0434",
+    "cppcheck.log": "89378c835f014640af227a05af865dafeda003de352983b13ed2fb4c8c4372c3",
+    "frontend-e2e.log": "d81c82066e253c45bc061e334de3f2511fc442ae81562f6e2a12e11a5eeef782",
+    "frontend-vue.log": "919d8fb56180f189fc64d375b3272669e486a7d334f7a8f1d997df0c164857ae",
+    "repo-hygiene.log": "1d017aacb432f6fc7433c5fee0593c468fe601aa8f522aeec31a71f1e9cc298b"
+  },
+  "boundaries": [
+    "Local G1-G4 evidence separately scoped",
+    "G5 remains FAIL/INCOMPLETE",
+    "No merge, tag, release or production deployment",
+    "Raw logs, browser traces and runtime credentials remain outside repository"
+  ]
+}

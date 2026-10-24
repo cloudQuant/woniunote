@@ -297,11 +297,29 @@ jobs:
           TMPDIR: /tmp
 
       - name: Verify the product-default rate limit in a fresh service pair
+        id: rate_limit_default
         run: bash backend_cpp/tests/integration/run_integration.sh
         env:
           WONIUNOTE_TEST_STRICT: "1"
           WONIUNOTE_TEST_SCENARIO: rate-limit
           TMPDIR: /tmp
+
+      - name: Diagnose the product-default rate limit under sanitizers
+        if: failure() && steps.rate_limit_default.outcome == 'failure'
+        run: |
+          cmake -S backend_cpp -B backend_cpp/build -DBUILD_TESTING=ON \
+            -DWONIUNOTE_ENABLE_TEST_CHALLENGE=ON \
+            -DWONIUNOTE_ENABLE_TEST_AUTH_FAULTS=ON \
+            -DENABLE_SANITIZERS=ON \
+            -DCMAKE_TOOLCHAIN_FILE=$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake
+          cmake --build backend_cpp/build -j2 --target woniunote_backend
+          WONIUNOTE_TEST_STRICT=1 \
+          WONIUNOTE_TEST_SCENARIO=rate-limit \
+          TMPDIR=/tmp \
+          WONIUNOTE_BACKEND_BIN="$GITHUB_WORKSPACE/backend_cpp/build/woniunote_backend" \
+          ASAN_OPTIONS=abort_on_error=1:detect_leaks=0:symbolize=1 \
+          UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+            bash backend_cpp/tests/integration/run_integration.sh
 
       - name: Upload redacted Iteration 21 reports
         if: always()
